@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { FeedPanel } from './components/FeedPanel'
 import { ArticleList } from './components/ArticleList'
+import { ReadingPane } from './components/ReadingPane'
 import './App.css'
 
 const queryClient = new QueryClient({
@@ -38,7 +39,7 @@ function MainLayout() {
           <Route path="*" element={<AllArticles />} />
         </Routes>
       }
-      readingPane={<div style={{ padding: 16, color: '#666' }}>Select an article to read</div>}
+      readingPane={<ReadingPane />}
     />
   )
 }

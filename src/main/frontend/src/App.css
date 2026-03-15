@@ -208,3 +208,72 @@ html, body, #root {
   color: var(--accent);
   cursor: pointer;
 }
+
+/* Reading Pane */
+.reading-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-active);
+}
+
+.reading-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+}
+
+.reading-empty .hint { font-size: 12px; margin-top: 8px; opacity: 0.6; }
+
+.reading-toolbar {
+  padding: 8px 16px;
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.reading-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.article-title {
+  font-size: 22px;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.article-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.article-body {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.article-body img { max-width: 100%; height: auto; border-radius: 4px; margin: 12px 0; }
+
+.article-body pre {
+  background: var(--bg-primary);
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 13px;
+}
+
+.article-body a { color: var(--accent); }
+
+.article-body blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+  margin: 12px 0;
+  color: var(--text-muted);
+}
