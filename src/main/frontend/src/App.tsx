@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
@@ -8,6 +8,7 @@ import { ReadingPane } from './components/ReadingPane'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useArticles } from './hooks/useArticles'
 import { useUIStore } from './stores/uiStore'
+import { AddFeedDialog } from './components/AddFeedDialog'
 import './App.css'
 
 const queryClient = new QueryClient({
@@ -30,6 +31,7 @@ function AllArticles() {
 }
 
 function MainLayout() {
+  const [addFeedOpen, setAddFeedOpen] = useState(false)
   const selectedFeedId = useUIStore((s) => s.selectedFeedId)
   const { data } = useArticles(selectedFeedId ? { feedId: selectedFeedId } : {})
   const articles = useMemo(() => data?.pages.flatMap((p) => p.articles) ?? [], [data])
@@ -37,20 +39,23 @@ function MainLayout() {
   useKeyboardShortcuts(articles)
 
   return (
-    <AppShell
-      feedPanel={<FeedPanel />}
-      articleList={
-        <Routes>
-          <Route path="/feed/:feedId" element={<FeedArticles />} />
-          <Route path="/folder/:folderId" element={<AllArticles />} />
-          <Route path="/starred" element={<StarredArticles />} />
-          <Route path="/boards" element={<AllArticles />} />
-          <Route path="/board/:boardId" element={<AllArticles />} />
-          <Route path="*" element={<AllArticles />} />
-        </Routes>
-      }
-      readingPane={<ReadingPane />}
-    />
+    <>
+      <AppShell
+        feedPanel={<FeedPanel onAddFeed={() => setAddFeedOpen(true)} />}
+        articleList={
+          <Routes>
+            <Route path="/feed/:feedId" element={<FeedArticles />} />
+            <Route path="/folder/:folderId" element={<AllArticles />} />
+            <Route path="/starred" element={<StarredArticles />} />
+            <Route path="/boards" element={<AllArticles />} />
+            <Route path="/board/:boardId" element={<AllArticles />} />
+            <Route path="*" element={<AllArticles />} />
+          </Routes>
+        }
+        readingPane={<ReadingPane />}
+      />
+      <AddFeedDialog open={addFeedOpen} onClose={() => setAddFeedOpen(false)} />
+    </>
   )
 }
 

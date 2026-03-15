@@ -5,7 +5,11 @@ import { useUIStore } from '../stores/uiStore'
 import { useNavigate } from 'react-router-dom'
 import type { Feed } from '../types'
 
-export function FeedPanel() {
+interface FeedPanelProps {
+  onAddFeed?: () => void
+}
+
+export function FeedPanel({ onAddFeed }: FeedPanelProps) {
   const { data: feeds = [] } = useFeeds()
   const { data: folders = [] } = useFolders()
   const { data: counts = {} } = useUnreadCounts()
@@ -113,7 +117,7 @@ export function FeedPanel() {
       </div>
 
       <div className="feed-panel-footer">
-        <button className="footer-btn">+ Add Feed</button>
+        <button className="footer-btn" onClick={onAddFeed}>+ Add Feed</button>
         <button className="footer-btn" onClick={() => navigate('/settings')}>Settings</button>
       </div>
     </div>
