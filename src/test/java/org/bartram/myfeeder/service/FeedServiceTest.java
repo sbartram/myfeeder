@@ -4,6 +4,7 @@ import org.bartram.myfeeder.config.MyfeederProperties;
 import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.parser.FeedParser;
 import org.bartram.myfeeder.repository.FeedRepository;
+import org.bartram.myfeeder.scheduler.FeedPollingScheduler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,7 @@ class FeedServiceTest {
     @Mock private FeedParser feedParser;
     @Mock private RestClient.Builder restClientBuilder;
     @Mock private MyfeederProperties properties;
+    @Mock private FeedPollingScheduler feedPollingScheduler;
 
     @InjectMocks
     private FeedService feedService;
@@ -52,6 +54,7 @@ class FeedServiceTest {
     @Test
     void shouldDeleteFeed() {
         feedService.delete(1L);
+        verify(feedPollingScheduler).cancelFeed(1L);
         verify(feedRepository).deleteById(1L);
     }
 
@@ -69,5 +72,28 @@ class FeedServiceTest {
         var result = feedService.update(1L, updates);
 
         assertThat(result.getTitle()).isEqualTo("New Title");
+        verify(feedPollingScheduler).registerFeed(result);
+    }
+
+    @Test
+    void shouldCancelPollingOnDelete() {
+        feedService.delete(42L);
+        verify(feedPollingScheduler).cancelFeed(42L);
+    }
+
+    @Test
+    void shouldRegisterFeedOnUpdate() {
+        var feed = new Feed();
+        feed.setId(5L);
+        feed.setTitle("Existing");
+        feed.setPollIntervalMinutes(30);
+        when(feedRepository.findById(5L)).thenReturn(Optional.of(feed));
+        when(feedRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var updates = new Feed();
+        updates.setPollIntervalMinutes(60);
+        var result = feedService.update(5L, updates);
+
+        verify(feedPollingScheduler).registerFeed(result);
     }
 }

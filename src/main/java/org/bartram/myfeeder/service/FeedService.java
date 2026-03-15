@@ -6,6 +6,7 @@ import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.parser.FeedParser;
 import org.bartram.myfeeder.parser.ParsedFeed;
 import org.bartram.myfeeder.repository.FeedRepository;
+import org.bartram.myfeeder.scheduler.FeedPollingScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -21,6 +22,7 @@ public class FeedService {
     private final FeedParser feedParser;
     private final RestClient.Builder restClientBuilder;
     private final MyfeederProperties properties;
+    private final FeedPollingScheduler feedPollingScheduler;
 
     public List<Feed> findAll() {
         return feedRepository.findAll();
@@ -48,7 +50,9 @@ public class FeedService {
         feed.setPollIntervalMinutes(properties.getPolling().getDefaultIntervalMinutes());
         feed.setCreatedAt(Instant.now());
 
-        return feedRepository.save(feed);
+        Feed saved = feedRepository.save(feed);
+        feedPollingScheduler.registerFeed(saved);
+        return saved;
     }
 
     public Feed update(Long id, Feed updates) {
@@ -62,10 +66,13 @@ public class FeedService {
             feed.setPollIntervalMinutes(updates.getPollIntervalMinutes());
         }
 
-        return feedRepository.save(feed);
+        Feed saved = feedRepository.save(feed);
+        feedPollingScheduler.registerFeed(saved);
+        return saved;
     }
 
     public void delete(Long id) {
+        feedPollingScheduler.cancelFeed(id);
         feedRepository.deleteById(id);
     }
 }
