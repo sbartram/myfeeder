@@ -1,5 +1,6 @@
 import { useCallback, useRef, type ReactNode, type MouseEvent } from 'react'
 import { useUIStore } from '../stores/uiStore'
+import { useTheme } from '../hooks/useTheme'
 
 interface AppShellProps {
   feedPanel: ReactNode
@@ -8,6 +9,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ feedPanel, articleList, readingPane }: AppShellProps) {
+  useTheme()
   const panelWidths = useUIStore((s) => s.panelWidths)
   const setPanelWidths = useUIStore((s) => s.setPanelWidths)
   const keyboardFocus = useUIStore((s) => s.keyboardFocus)

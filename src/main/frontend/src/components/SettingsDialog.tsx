@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { usePreferences } from '../stores/preferencesStore'
 import { integrationsApi } from '../api/integrations'
+import { themeList } from '../themes'
 
 interface SettingsDialogProps {
   open: boolean
@@ -27,8 +28,27 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
         <h2>Settings</h2>
 
         <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: 14, marginBottom: 8 }}>Appearance</h3>
+          <label style={{ display: 'block', fontSize: 13, color: 'var(--text-muted)' }}>
+            Theme
+            <select
+              className="dialog-input"
+              value={prefs.theme}
+              onChange={(e) => prefs.setTheme(e.target.value)}
+              style={{ marginTop: 4 }}
+            >
+              {themeList.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.type})
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
           <h3 style={{ fontSize: 14, marginBottom: 8 }}>Reading</h3>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: '#aaa' }}>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-muted)' }}>
             Auto-mark as read delay (ms, 0 to disable)
             <input
               className="dialog-input"
@@ -38,7 +58,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
               style={{ marginTop: 4 }}
             />
           </label>
-          <label style={{ display: 'block', fontSize: 13, color: '#aaa' }}>
+          <label style={{ display: 'block', fontSize: 13, color: 'var(--text-muted)' }}>
             Sort order
             <select
               className="dialog-input"

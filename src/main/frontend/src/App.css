@@ -11,6 +11,12 @@
   --accent: #6c63ff;
   --border: #333;
   --divider-width: 4px;
+  --hover-bg: rgba(108, 99, 255, 0.15);
+  --toast-error-bg: #3d1515;
+  --toast-error-text: #e74c3c;
+  --toast-success-bg: #153d1a;
+  --toast-success-text: #2ecc71;
+  --accent-text: #ffffff;
 }
 
 html, body, #root {
@@ -68,7 +74,7 @@ html, body, #root {
   color: var(--text-secondary);
 }
 
-.smart-view:hover, .smart-view.active { background: rgba(108, 99, 255, 0.15); color: var(--text-primary); }
+.smart-view:hover, .smart-view.active { background: var(--hover-bg); color: var(--text-primary); }
 
 .feed-tree { flex: 1; overflow-y: auto; padding: 0 12px; }
 
@@ -93,7 +99,7 @@ html, body, #root {
 .feed-row { padding-left: 24px; }
 
 .folder-row:hover, .feed-row:hover, .folder-row.active, .feed-row.active {
-  background: rgba(108, 99, 255, 0.15);
+  background: var(--hover-bg);
   color: var(--text-primary);
 }
 
@@ -166,14 +172,14 @@ html, body, #root {
 
 .article-item {
   padding: 10px 12px;
-  border-bottom: 1px solid rgba(51, 51, 51, 0.5);
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
 }
 
-.article-item:hover { background: rgba(108, 99, 255, 0.08); }
+.article-item:hover { background: var(--hover-bg); }
 
 .article-item.selected {
-  background: rgba(108, 99, 255, 0.15);
+  background: var(--hover-bg);
   border-left: 3px solid var(--accent);
 }
 
@@ -313,14 +319,14 @@ html, body, #root {
 
 .dialog-input:focus { border-color: var(--accent); }
 
-.dialog-error { color: #e74c3c; font-size: 13px; margin-top: 8px; }
+.dialog-error { color: var(--toast-error-text); font-size: 13px; margin-top: 8px; }
 
 .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
 
 .btn-primary {
   padding: 8px 16px;
   background: var(--accent);
-  color: white;
+  color: var(--accent-text);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -351,7 +357,7 @@ html, body, #root {
 }
 
 .board-picker-item:hover {
-  background: rgba(108, 99, 255, 0.15);
+  background: var(--hover-bg);
 }
 
 /* Shortcut Overlay */
@@ -364,7 +370,7 @@ html, body, #root {
   justify-content: space-between;
   align-items: center;
   padding: 6px 0;
-  border-bottom: 1px solid rgba(51, 51, 51, 0.3);
+  border-bottom: 1px solid var(--border);
 }
 
 .shortcut-key {
@@ -402,15 +408,15 @@ html, body, #root {
 }
 
 .toast-error {
-  background: #3d1515;
-  border: 1px solid #e74c3c;
-  color: #e74c3c;
+  background: var(--toast-error-bg);
+  border: 1px solid var(--toast-error-text);
+  color: var(--toast-error-text);
 }
 
 .toast-success {
-  background: #153d1a;
-  border: 1px solid #2ecc71;
-  color: #2ecc71;
+  background: var(--toast-success-bg);
+  border: 1px solid var(--toast-success-text);
+  color: var(--toast-success-text);
 }
 
 @keyframes toast-in {
