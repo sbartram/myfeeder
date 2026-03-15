@@ -1,6 +1,6 @@
 package org.bartram.myfeeder.integration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.bartram.myfeeder.config.MyfeederProperties;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.IntegrationConfig;

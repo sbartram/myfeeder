@@ -1,4 +1,12 @@
 spring:
+  ai:
+    anthropic:
+      api-key: test-dummy-key
+    vertex:
+      ai:
+        embedding:
+          project-id: test-project
+          location: us-central1
   datasource:
     hikari:
       connection-timeout: 30000
@@ -6,3 +14,14 @@ spring:
   flyway:
     connect-retries: 5
     connect-retries-interval: 2
+
+myfeeder:
+  polling:
+    default-interval-minutes: 15
+    max-interval-minutes: 1440
+    backoff-threshold: 5
+  retention:
+    full-content-days: 30
+    cleanup-cron: "0 0 3 * * *"
+  raindrop:
+    api-base-url: https://api.raindrop.io/rest/v1
