@@ -1,0 +1,91 @@
+package org.bartram.myfeeder.controller;
+
+import org.bartram.myfeeder.integration.RaindropService;
+import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.service.ArticleService;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(ArticleController.class)
+class ArticleControllerTest {
+
+    @Autowired private MockMvc mockMvc;
+    @MockitoBean private ArticleService articleService;
+    @MockitoBean private RaindropService raindropService;
+
+    @Test
+    void shouldListArticles() throws Exception {
+        var article = new Article();
+        article.setId(1L);
+        article.setTitle("Test Article");
+        article.setFetchedAt(Instant.now());
+        when(articleService.findAll()).thenReturn(List.of(article));
+
+        mockMvc.perform(get("/api/articles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Test Article"));
+    }
+
+    @Test
+    void shouldGetArticleById() throws Exception {
+        var article = new Article();
+        article.setId(1L);
+        article.setTitle("Test");
+        article.setContent("<p>Full content</p>");
+        when(articleService.findById(1L)).thenReturn(Optional.of(article));
+
+        mockMvc.perform(get("/api/articles/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").value("<p>Full content</p>"));
+    }
+
+    @Test
+    void shouldPatchArticleState() throws Exception {
+        var article = new Article();
+        article.setId(1L);
+        article.setRead(true);
+        when(articleService.updateState(1L, true, null)).thenReturn(article);
+
+        mockMvc.perform(patch("/api/articles/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"read\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.read").value(true));
+    }
+
+    @Test
+    void shouldBulkMarkRead() throws Exception {
+        mockMvc.perform(post("/api/articles/mark-read")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"articleIds\":[1,2,3]}"))
+                .andExpect(status().isNoContent());
+
+        verify(articleService).markRead(List.of(1L, 2L, 3L), null);
+    }
+
+    @Test
+    void shouldSaveToRaindrop() throws Exception {
+        var article = new Article();
+        article.setId(1L);
+        article.setTitle("Test");
+        article.setUrl("https://example.com");
+        when(articleService.findById(1L)).thenReturn(Optional.of(article));
+
+        mockMvc.perform(post("/api/articles/1/raindrop"))
+                .andExpect(status().isOk());
+
+        verify(raindropService).saveToRaindrop(article);
+    }
+}
