@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    hikari:
+      connection-timeout: 30000
+      initialization-fail-timeout: 30000
+  flyway:
+    connect-retries: 5
+    connect-retries-interval: 2

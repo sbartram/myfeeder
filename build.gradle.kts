@@ -38,7 +38,7 @@ dependencies {
 	implementation("org.springframework.ai:spring-ai-starter-model-vertex-ai-embedding")
 	implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
 	implementation("com.rometools:rome:2.1.0")
-	implementation("org.flywaydb:flyway-core")
+	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	implementation("org.flywaydb:flyway-database-postgresql")
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
@@ -68,4 +68,7 @@ dependencyManagement {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///Users/scottb/.rd/docker.sock")
+	environment("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE", System.getenv("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE") ?: "/var/run/docker.sock")
+	environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")
 }
