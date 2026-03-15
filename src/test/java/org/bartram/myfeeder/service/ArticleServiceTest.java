@@ -1,0 +1,70 @@
+package org.bartram.myfeeder.service;
+
+import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.repository.ArticleRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class ArticleServiceTest {
+
+    @Mock private ArticleRepository articleRepository;
+    @InjectMocks private ArticleService articleService;
+
+    @Test
+    void shouldFindArticleById() {
+        var article = new Article();
+        article.setId(1L);
+        article.setTitle("Test");
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+
+        var result = articleService.findById(1L);
+        assertThat(result).isPresent();
+        assertThat(result.get().getTitle()).isEqualTo("Test");
+    }
+
+    @Test
+    void shouldMarkArticleAsRead() {
+        var article = new Article();
+        article.setId(1L);
+        article.setRead(false);
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(articleRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var result = articleService.updateState(1L, true, null);
+        assertThat(result.isRead()).isTrue();
+    }
+
+    @Test
+    void shouldToggleStarred() {
+        var article = new Article();
+        article.setId(1L);
+        article.setStarred(false);
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(articleRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var result = articleService.updateState(1L, null, true);
+        assertThat(result.isStarred()).isTrue();
+    }
+
+    @Test
+    void shouldBulkMarkReadByIds() {
+        articleService.markRead(List.of(1L, 2L), null);
+        verify(articleRepository).markReadByIds(List.of(1L, 2L));
+    }
+
+    @Test
+    void shouldBulkMarkReadByFeedId() {
+        articleService.markRead(null, 5L);
+        verify(articleRepository).markAllReadByFeedId(5L);
+    }
+}
