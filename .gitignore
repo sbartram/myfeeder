@@ -40,6 +40,9 @@ out/
 src/main/resources/static/
 src/main/frontend/node_modules/
 
+### Brainstorming artifacts ###
+.superpowers/
+
 .claude/settings.local.json
 tmp/
 *.log
