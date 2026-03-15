@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { FeedPanel } from './components/FeedPanel'
+import { ArticleList } from './components/ArticleList'
 import './App.css'
 
 const queryClient = new QueryClient({
@@ -10,15 +11,45 @@ const queryClient = new QueryClient({
   },
 })
 
+function FeedArticles() {
+  const { feedId } = useParams()
+  return <ArticleList filters={{ feedId: Number(feedId) }} title="Feed" />
+}
+
+function StarredArticles() {
+  return <ArticleList filters={{ starred: true }} title="Starred" />
+}
+
+function AllArticles() {
+  return <ArticleList filters={{}} title="All Articles" />
+}
+
+function MainLayout() {
+  return (
+    <AppShell
+      feedPanel={<FeedPanel />}
+      articleList={
+        <Routes>
+          <Route path="/feed/:feedId" element={<FeedArticles />} />
+          <Route path="/folder/:folderId" element={<AllArticles />} />
+          <Route path="/starred" element={<StarredArticles />} />
+          <Route path="/boards" element={<AllArticles />} />
+          <Route path="/board/:boardId" element={<AllArticles />} />
+          <Route path="*" element={<AllArticles />} />
+        </Routes>
+      }
+      readingPane={<div style={{ padding: 16, color: '#666' }}>Select an article to read</div>}
+    />
+  )
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AppShell
-          feedPanel={<FeedPanel />}
-          articleList={<div style={{ padding: 12, color: '#888' }}>Article List</div>}
-          readingPane={<div style={{ padding: 12, color: '#888' }}>Reading Pane</div>}
-        />
+        <Routes>
+          <Route path="/*" element={<MainLayout />} />
+        </Routes>
       </BrowserRouter>
     </QueryClientProvider>
   )
