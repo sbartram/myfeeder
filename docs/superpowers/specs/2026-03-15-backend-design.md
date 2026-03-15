@@ -37,7 +37,7 @@ All entities use Spring Data JDBC (`@Table`/`@Id` from `org.springframework.data
 | `author` | String | Nullable |
 | `content` | String | Nullable, full HTML, cleared after retention window |
 | `summary` | String | Nullable, short excerpt, kept permanently |
-| `publishedAt` | Instant | |
+| `publishedAt` | Instant | Nullable, falls back to `fetchedAt` if feed omits it |
 | `fetchedAt` | Instant | |
 | `read` | boolean | Default false |
 | `starred` | boolean | Default false |
@@ -49,7 +49,7 @@ Deduplication: unique constraint on `(feedId, guid)`.
 | Field | Type | Notes |
 |-------|------|-------|
 | `id` | Long | Auto-generated |
-| `type` | Enum | RAINDROP (extensible) |
+| `type` | Enum | RAINDROP (extensible), unique constraint |
 | `config` | String | JSON blob (API token, collection ID, etc.) |
 | `enabled` | boolean | |
 
@@ -88,6 +88,7 @@ org.bartram.myfeeder
 
 - Cache parsed feed metadata to avoid re-parsing
 - Cache article lists for short durations to reduce DB load on repeated UI refreshes
+- Caching is gracefully degradable — if Redis is unavailable, the app operates without caching
 
 ## REST API
 
@@ -110,7 +111,9 @@ org.bartram.myfeeder
 | `GET` | `/api/articles/{id}` | Get single article with full content |
 | `PATCH` | `/api/articles/{id}` | Update state (read/unread, starred) |
 | `POST` | `/api/articles/{id}/raindrop` | Save article to Raindrop.io |
-| `POST` | `/api/articles/mark-read` | Bulk mark read (list of IDs or all for a feed) |
+| `POST` | `/api/articles/mark-read` | Bulk mark read |
+
+**Bulk mark-read request body:** `{ "articleIds": [Long] }` or `{ "feedId": Long }`. Exactly one field must be provided. `articleIds` marks specific articles; `feedId` marks all articles for that feed.
 
 **Article list query params:** `feedId`, `read`, `starred`, `since`, `page`, `size`, `sort` (default: `publishedAt,desc`, page size 20).
 
@@ -119,7 +122,7 @@ org.bartram.myfeeder
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/integrations` | List configured integrations |
-| `PUT` | `/api/integrations/raindrop` | Set/update Raindrop config |
+| `PUT` | `/api/integrations/raindrop` | Upsert Raindrop config |
 | `DELETE` | `/api/integrations/raindrop` | Remove Raindrop config |
 
 ## Feed Polling & Parsing
@@ -143,8 +146,8 @@ org.bartram.myfeeder
 ### Error Handling
 
 - On failure: increment `errorCount`, store `lastError`
-- After 5 consecutive failures: double poll interval (backoff), max 24 hours
-- Successful poll: reset `errorCount`, restore configured interval
+- After `backoff-threshold` consecutive failures: effective interval = `min(pollIntervalMinutes * 2^(errorCount / backoffThreshold), maxIntervalMinutes)`. The stored `pollIntervalMinutes` is never modified; backoff is computed at scheduling time.
+- Successful poll: reset `errorCount`, re-schedule at the stored `pollIntervalMinutes`
 - Resilience4j circuit breaker wraps HTTP fetch
 
 ### Parsing
@@ -156,7 +159,7 @@ org.bartram.myfeeder
 ### Retention Cleanup
 
 - `RetentionService` runs daily (configurable cron)
-- Nullifies `content` on articles where `fetched_at` is older than the retention window
+- Nullifies `content` on articles where `fetchedAt` is older than the retention window
 - `summary` is always retained
 
 ## Raindrop.io Integration
@@ -217,4 +220,9 @@ Existing (already in `build.gradle.kts`):
 - Testcontainers — test infrastructure
 
 To add:
-- `com.rometools:rome` — RSS/Atom feed parsing
+- `com.rometools:rome:2.1.0` — RSS/Atom feed parsing
+- `org.flywaydb:flyway-core` + `org.flywaydb:flyway-database-postgresql` — schema migration
+
+### Schema Migration
+
+Flyway manages database schema. Migration scripts go in `src/main/resources/db/migration/` using the naming convention `V{n}__{description}.sql`.
