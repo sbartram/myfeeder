@@ -2,10 +2,12 @@ package org.bartram.myfeeder.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.model.UnreadCount;
 import org.bartram.myfeeder.repository.ArticleRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -56,5 +58,20 @@ public class ArticleService {
         } else {
             throw new IllegalArgumentException("Either articleIds or feedId must be provided");
         }
+    }
+
+    public List<Article> findFiltered(Long feedId, Boolean read, Boolean starred, Long before, int limit) {
+        if (before != null) {
+            return articleRepository.findFilteredBefore(feedId, read, starred, before, limit);
+        }
+        return articleRepository.findFiltered(feedId, read, starred, limit);
+    }
+
+    public Map<Long, Long> countUnreadByFeed() {
+        return articleRepository.countUnreadByFeed().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        UnreadCount::feedId,
+                        UnreadCount::count
+                ));
     }
 }

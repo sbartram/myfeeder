@@ -72,3 +72,27 @@ tasks.withType<Test> {
 	environment("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE", System.getenv("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE") ?: "/var/run/docker.sock")
 	environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")
 }
+
+val npmInstall by tasks.registering(Exec::class) {
+	workingDir = file("src/main/frontend")
+	commandLine("npm", "install")
+	inputs.file("src/main/frontend/package.json")
+	inputs.file("src/main/frontend/package-lock.json")
+	outputs.dir("src/main/frontend/node_modules")
+}
+
+val npmBuild by tasks.registering(Exec::class) {
+	dependsOn(npmInstall)
+	workingDir = file("src/main/frontend")
+	commandLine("npm", "run", "build")
+	inputs.dir("src/main/frontend/src")
+	inputs.file("src/main/frontend/index.html")
+	inputs.file("src/main/frontend/vite.config.ts")
+	inputs.file("src/main/frontend/tsconfig.json")
+	inputs.file("src/main/frontend/package-lock.json")
+	outputs.dir("src/main/resources/static")
+}
+
+tasks.named("processResources") {
+	dependsOn(npmBuild)
+}

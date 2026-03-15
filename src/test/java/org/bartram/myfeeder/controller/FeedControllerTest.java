@@ -4,6 +4,7 @@ import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.model.FeedType;
 import org.bartram.myfeeder.service.FeedPollingService;
 import org.bartram.myfeeder.service.FeedService;
+import org.bartram.myfeeder.service.FolderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -27,6 +28,7 @@ class FeedControllerTest {
     @Autowired private MockMvc mockMvc;
     @MockitoBean private FeedService feedService;
     @MockitoBean private FeedPollingService feedPollingService;
+    @MockitoBean private FolderService folderService;
 
     @Test
     void shouldListFeeds() throws Exception {

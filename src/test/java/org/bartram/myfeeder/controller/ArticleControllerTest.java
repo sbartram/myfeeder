@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
@@ -31,11 +32,21 @@ class ArticleControllerTest {
         article.setId(1L);
         article.setTitle("Test Article");
         article.setFetchedAt(Instant.now());
-        when(articleService.findAll()).thenReturn(List.of(article));
+        when(articleService.findFiltered(null, null, null, null, 51)).thenReturn(List.of(article));
 
         mockMvc.perform(get("/api/articles"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Test Article"));
+                .andExpect(jsonPath("$.articles[0].title").value("Test Article"));
+    }
+
+    @Test
+    void shouldReturnUnreadCounts() throws Exception {
+        when(articleService.countUnreadByFeed()).thenReturn(Map.of(1L, 5L, 2L, 3L));
+
+        mockMvc.perform(get("/api/articles/counts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.1").value(5))
+                .andExpect(jsonPath("$.2").value(3));
     }
 
     @Test

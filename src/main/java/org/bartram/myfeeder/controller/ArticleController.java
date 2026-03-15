@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/articles")
@@ -19,21 +20,24 @@ public class ArticleController {
     private final RaindropService raindropService;
 
     @GetMapping
-    public List<Article> listArticles(
+    public PaginatedResponse<Article> listArticles(
             @RequestParam(required = false) Long feedId,
             @RequestParam(required = false) Boolean read,
-            @RequestParam(required = false) Boolean starred) {
+            @RequestParam(required = false) Boolean starred,
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(required = false) Long before) {
+        List<Article> articles = articleService.findFiltered(feedId, read, starred, before, limit + 1);
+        boolean hasMore = articles.size() > limit;
+        if (hasMore) {
+            articles = articles.subList(0, limit);
+        }
+        Long nextCursor = hasMore ? articles.getLast().getId() : null;
+        return new PaginatedResponse<>(articles, nextCursor);
+    }
 
-        if (feedId != null) {
-            return articleService.findByFeedId(feedId);
-        }
-        if (Boolean.TRUE.equals(starred)) {
-            return articleService.findStarred();
-        }
-        if (Boolean.FALSE.equals(read)) {
-            return articleService.findUnread();
-        }
-        return articleService.findAll();
+    @GetMapping("/counts")
+    public Map<Long, Long> unreadCounts() {
+        return articleService.countUnreadByFeed();
     }
 
     @GetMapping("/{id}")

@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.service.FeedPollingService;
 import org.bartram.myfeeder.service.FeedService;
+import org.bartram.myfeeder.service.FolderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/feeds")
@@ -17,6 +19,7 @@ public class FeedController {
 
     private final FeedService feedService;
     private final FeedPollingService feedPollingService;
+    private final FolderService folderService;
 
     @GetMapping
     public List<Feed> listFeeds() {
@@ -51,5 +54,10 @@ public class FeedController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void triggerPoll(@PathVariable Long id) {
         feedPollingService.pollFeed(id);
+    }
+
+    @PutMapping("/{id}/folder")
+    public Feed moveFeedToFolder(@PathVariable Long id, @RequestBody Map<String, Long> request) {
+        return folderService.moveFeedToFolder(id, request.get("folderId"));
     }
 }
