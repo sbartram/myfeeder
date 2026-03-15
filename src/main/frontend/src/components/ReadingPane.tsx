@@ -5,7 +5,12 @@ import { useArticles, useUpdateArticleState, useSaveToRaindrop } from '../hooks/
 import { usePreferences } from '../stores/preferencesStore'
 import { BoardManager } from './BoardManager'
 
-export function ReadingPane() {
+interface ReadingPaneProps {
+  boardOpen?: boolean
+  onBoardClose?: () => void
+}
+
+export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: ReadingPaneProps = {}) {
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
   const selectedFeedId = useUIStore((s) => s.selectedFeedId)
   const { data } = useArticles(
@@ -24,7 +29,12 @@ export function ReadingPane() {
   const updateState = useUpdateArticleState()
   const saveToRaindrop = useSaveToRaindrop()
   const autoMarkReadDelay = usePreferences((s) => s.autoMarkReadDelay)
-  const [boardOpen, setBoardOpen] = useState(false)
+  const [internalBoardOpen, setInternalBoardOpen] = useState(false)
+  const boardOpen = externalBoardOpen || internalBoardOpen
+  const closeBoardDialog = () => {
+    setInternalBoardOpen(false)
+    onBoardClose?.()
+  }
 
   // Auto-mark as read when article is selected
   useEffect(() => {
@@ -71,7 +81,7 @@ export function ReadingPane() {
         <button className="toolbar-btn" onClick={handleStar}>
           {article.starred ? 'Unstar' : 'Star'}
         </button>
-        <button className="toolbar-btn" onClick={() => setBoardOpen(true)}>Board</button>
+        <button className="toolbar-btn" onClick={() => setInternalBoardOpen(true)}>Board</button>
         <button className="toolbar-btn" onClick={handleRaindrop}>Raindrop</button>
         <button className="toolbar-btn" onClick={handleCopyLink}>Copy Link</button>
         <button className="toolbar-btn" onClick={handleOpenOriginal} style={{ marginLeft: 'auto' }}>
@@ -93,7 +103,7 @@ export function ReadingPane() {
           dangerouslySetInnerHTML={{ __html: sanitizedContent }}
         />
       </div>
-      <BoardManager open={boardOpen} articleId={article?.id ?? null} onClose={() => setBoardOpen(false)} />
+      <BoardManager open={boardOpen} articleId={article?.id ?? null} onClose={() => closeBoardDialog()} />
     </div>
   )
 }

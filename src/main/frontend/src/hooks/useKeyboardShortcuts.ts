@@ -1,11 +1,15 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../stores/uiStore'
-import { useUpdateArticleState, useMarkRead } from './useArticles'
-import { usePollFeed } from './useFeeds'
-import type { Article } from '../types'
+import { useUpdateArticleState, useMarkRead, useSaveToRaindrop } from './useArticles'
+import { usePollFeed, useFeeds } from './useFeeds'
+import type { Article, Feed } from '../types'
 
-export function useKeyboardShortcuts(articles: Article[]) {
+interface KeyboardShortcutCallbacks {
+  onOpenBoard?: () => void
+}
+
+export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardShortcutCallbacks = {}) {
   const navigate = useNavigate()
   const chordRef = useRef<string | null>(null)
   const chordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -13,15 +17,21 @@ export function useKeyboardShortcuts(articles: Article[]) {
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
   const selectedFeedId = useUIStore((s) => s.selectedFeedId)
   const setSelectedArticle = useUIStore((s) => s.setSelectedArticle)
+  const setSelectedFeed = useUIStore((s) => s.setSelectedFeed)
   const cycleFocus = useUIStore((s) => s.cycleFocus)
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
 
   const updateState = useUpdateArticleState()
   const markRead = useMarkRead()
   const pollFeed = usePollFeed()
+  const saveToRaindrop = useSaveToRaindrop()
+  const { data: feeds = [] } = useFeeds()
 
   const currentIndex = articles.findIndex((a) => a.id === selectedArticleId)
   const currentArticle = currentIndex >= 0 ? articles[currentIndex] : null
+
+  // Build ordered feed list for n/p navigation
+  const feedIds = feeds.map((f: Feed) => f.id)
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -60,6 +70,24 @@ export function useKeyboardShortcuts(articles: Article[]) {
         case 'Enter':
           // Confirm selection (article is already shown in reading pane)
           break
+        case 'n': {
+          // Next feed
+          if (feedIds.length === 0) break
+          const currentFeedIdx = selectedFeedId ? feedIds.indexOf(selectedFeedId) : -1
+          const nextFeedIdx = currentFeedIdx < feedIds.length - 1 ? currentFeedIdx + 1 : 0
+          setSelectedFeed(feedIds[nextFeedIdx])
+          navigate(`/feed/${feedIds[nextFeedIdx]}`)
+          break
+        }
+        case 'p': {
+          // Previous feed
+          if (feedIds.length === 0) break
+          const curFeedIdx = selectedFeedId ? feedIds.indexOf(selectedFeedId) : 0
+          const prevFeedIdx = curFeedIdx > 0 ? curFeedIdx - 1 : feedIds.length - 1
+          setSelectedFeed(feedIds[prevFeedIdx])
+          navigate(`/feed/${feedIds[prevFeedIdx]}`)
+          break
+        }
         case 'm':
           if (currentArticle) {
             updateState.mutate({ id: currentArticle.id, state: { read: !currentArticle.read } })
@@ -73,10 +101,14 @@ export function useKeyboardShortcuts(articles: Article[]) {
         case 'o':
           if (currentArticle) window.open(currentArticle.url, '_blank', 'noopener')
           break
+        case 'b':
+          if (currentArticle && callbacks.onOpenBoard) {
+            callbacks.onOpenBoard()
+          }
+          break
         case 'v':
           if (currentArticle) {
-            // Dispatch custom event for ReadingPane to handle Raindrop save
-            document.dispatchEvent(new CustomEvent('save-to-raindrop', { detail: currentArticle.id }))
+            saveToRaindrop.mutate(currentArticle.id)
           }
           break
         case 'r':
@@ -110,7 +142,7 @@ export function useKeyboardShortcuts(articles: Article[]) {
           break
       }
     },
-    [articles, currentIndex, currentArticle, selectedFeedId, navigate, setSelectedArticle, cycleFocus, setSearchQuery, updateState, markRead, pollFeed]
+    [articles, currentIndex, currentArticle, selectedFeedId, feedIds, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setSearchQuery, updateState, markRead, pollFeed, saveToRaindrop, callbacks]
   )
 
   useEffect(() => {
