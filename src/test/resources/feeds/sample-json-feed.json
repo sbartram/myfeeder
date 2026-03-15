@@ -1,0 +1,17 @@
+{
+  "version": "https://jsonfeed.org/version/1.1",
+  "title": "Example JSON Feed",
+  "home_page_url": "https://example.com",
+  "description": "An example JSON Feed",
+  "items": [
+    {
+      "id": "json-item-1",
+      "title": "JSON Feed Entry",
+      "url": "https://example.com/json-entry",
+      "content_html": "<p>JSON feed content</p>",
+      "summary": "Summary of JSON entry",
+      "authors": [{"name": "JSON Author"}],
+      "date_published": "2026-03-01T12:00:00Z"
+    }
+  ]
+}
