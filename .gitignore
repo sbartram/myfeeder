@@ -46,3 +46,4 @@ src/main/frontend/node_modules/
 .claude/settings.local.json
 tmp/
 *.log
+.worktrees/
