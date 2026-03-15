@@ -2,7 +2,7 @@
 
 ## Overview
 
-Add a theme system to myfeeder's frontend so users can switch between 6 built-in themes (4 dark, 2 light). Theme preference is persisted in localStorage via the existing preferences store.
+Add a theme system to myfeeder's frontend so users can switch between 6 built-in themes (3 dark, 3 light). Theme preference is persisted in localStorage via the existing preferences store.
 
 ## Decisions
 
@@ -43,7 +43,10 @@ Each theme defines all of these variables:
 --toast-error-text  Toast error text/border
 --toast-success-bg  Toast success background
 --toast-success-text Toast success text/border
+--accent-text       Text color on accent-colored buttons (white or dark)
 ```
+
+**Maintenance constraint:** All themes must define the complete set of variables. The `useTheme` hook applies variables via `element.style.setProperty`, which means stale values from a prior theme persist if a variable is missing. Any future theme must include all variables.
 
 ### Full Theme Values
 
@@ -63,6 +66,7 @@ Each theme defines all of these variables:
 --toast-error-text: #e74c3c
 --toast-success-bg: #153d1a
 --toast-success-text: #2ecc71
+--accent-text: #ffffff
 ```
 
 **Solarized Dark:**
@@ -81,6 +85,7 @@ Each theme defines all of these variables:
 --toast-error-text: #dc322f
 --toast-success-bg: #153d1a
 --toast-success-text: #859900
+--accent-text: #fdf6e3
 ```
 
 **Solarized Light:**
@@ -99,6 +104,7 @@ Each theme defines all of these variables:
 --toast-error-text: #dc322f
 --toast-success-bg: #e8fde8
 --toast-success-text: #859900
+--accent-text: #fdf6e3
 ```
 
 **Sky Blue:**
@@ -117,6 +123,7 @@ Each theme defines all of these variables:
 --toast-error-text: #d32f2f
 --toast-success-bg: #e8fde8
 --toast-success-text: #388e3c
+--accent-text: #ffffff
 ```
 
 **Light:**
@@ -135,6 +142,7 @@ Each theme defines all of these variables:
 --toast-error-text: #e53e3e
 --toast-success-bg: #e8fde8
 --toast-success-text: #38a169
+--accent-text: #ffffff
 ```
 
 **Nord:**
@@ -153,6 +161,7 @@ Each theme defines all of these variables:
 --toast-error-text: #bf616a
 --toast-success-bg: #153d1a
 --toast-success-text: #a3be8c
+--accent-text: #2e3440
 ```
 
 ## Components
@@ -208,12 +217,21 @@ Add a "Theme" section to the existing Settings dialog with a `<select>` dropdown
 
 Replace hardcoded colors with new CSS variables:
 
-1. **Hover backgrounds** — all `rgba(108, 99, 255, 0.15)` and `rgba(108, 99, 255, 0.08)` become `var(--hover-bg)`
-2. **Toast styles** — `.toast-error` background/border/color use `var(--toast-error-bg)` and `var(--toast-error-text)`. Same for `.toast-success`.
-3. **Article item border-bottom** — `rgba(51, 51, 51, 0.5)` becomes `1px solid var(--border)`
-4. **Shortcut row border** — same treatment
+1. **`:root` block** — Add the new variables (`--hover-bg`, `--toast-error-bg`, `--toast-error-text`, `--toast-success-bg`, `--toast-success-text`, `--accent-text`) with Midnight defaults. This ensures the app renders correctly before JS loads.
+2. **Hover backgrounds** — all `rgba(108, 99, 255, 0.15)` and `rgba(108, 99, 255, 0.08)` become `var(--hover-bg)`
+3. **Toast styles** — `.toast-error` background/border/color use `var(--toast-error-bg)` and `var(--toast-error-text)`. Same for `.toast-success`.
+4. **Article item border-bottom** — `rgba(51, 51, 51, 0.5)` becomes `1px solid var(--border)`
+5. **Shortcut row border** — same treatment
+6. **`.btn-primary` color** — `color: white` becomes `color: var(--accent-text)` for proper contrast on all themes
+7. **`.dialog-error` color** — `#e74c3c` becomes `var(--toast-error-text)` for theme consistency
 
-The `:root` block stays as-is (Midnight defaults) so the app works before JS loads.
+### `SettingsDialog.tsx`
+
+Fix hardcoded `color: '#aaa'` on label elements — change to `color: var(--text-muted)` for light theme compatibility.
+
+### Theme flash on page load
+
+When a non-Midnight theme is selected, there will be a brief flash of Midnight colors before `useTheme` fires. This is an accepted trade-off for simplicity. The `:root` block provides Midnight defaults, and `useEffect` applies the saved theme within milliseconds of React hydration. For a Vite SPA this is imperceptible in practice. A `<script>` block in `index.html` could eliminate this entirely but adds complexity disproportionate to the benefit.
 
 ## Testing
 
