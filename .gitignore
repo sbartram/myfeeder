@@ -38,4 +38,5 @@ out/
 .claude/settings.local.json
 
 ### Frontend ###
+src/main/resources/static/
 src/main/frontend/node_modules/
