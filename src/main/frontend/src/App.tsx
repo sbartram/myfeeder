@@ -9,6 +9,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useArticles } from './hooks/useArticles'
 import { useUIStore } from './stores/uiStore'
 import { AddFeedDialog } from './components/AddFeedDialog'
+import { SettingsDialog } from './components/SettingsDialog'
 import './App.css'
 
 const queryClient = new QueryClient({
@@ -32,6 +33,7 @@ function AllArticles() {
 
 function MainLayout() {
   const [addFeedOpen, setAddFeedOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const selectedFeedId = useUIStore((s) => s.selectedFeedId)
   const { data } = useArticles(selectedFeedId ? { feedId: selectedFeedId } : {})
   const articles = useMemo(() => data?.pages.flatMap((p) => p.articles) ?? [], [data])
@@ -41,7 +43,7 @@ function MainLayout() {
   return (
     <>
       <AppShell
-        feedPanel={<FeedPanel onAddFeed={() => setAddFeedOpen(true)} />}
+        feedPanel={<FeedPanel onAddFeed={() => setAddFeedOpen(true)} onSettings={() => setSettingsOpen(true)} />}
         articleList={
           <Routes>
             <Route path="/feed/:feedId" element={<FeedArticles />} />
@@ -55,6 +57,7 @@ function MainLayout() {
         readingPane={<ReadingPane />}
       />
       <AddFeedDialog open={addFeedOpen} onClose={() => setAddFeedOpen(false)} />
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   )
 }

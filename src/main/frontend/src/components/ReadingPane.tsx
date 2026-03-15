@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import DOMPurify from 'dompurify'
 import { useUIStore } from '../stores/uiStore'
 import { useArticles, useUpdateArticleState, useSaveToRaindrop } from '../hooks/useArticles'
+import { usePreferences } from '../stores/preferencesStore'
 
 export function ReadingPane() {
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
@@ -21,16 +22,17 @@ export function ReadingPane() {
 
   const updateState = useUpdateArticleState()
   const saveToRaindrop = useSaveToRaindrop()
+  const autoMarkReadDelay = usePreferences((s) => s.autoMarkReadDelay)
 
   // Auto-mark as read when article is selected
   useEffect(() => {
-    if (article && !article.read) {
+    if (article && !article.read && autoMarkReadDelay > 0) {
       const timer = setTimeout(() => {
         updateState.mutate({ id: article.id, state: { read: true } })
-      }, 1000)
+      }, autoMarkReadDelay)
       return () => clearTimeout(timer)
     }
-  }, [article?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [article?.id, autoMarkReadDelay]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!article) {
     return (

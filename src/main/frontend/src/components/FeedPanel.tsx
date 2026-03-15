@@ -7,9 +7,10 @@ import type { Feed } from '../types'
 
 interface FeedPanelProps {
   onAddFeed?: () => void
+  onSettings?: () => void
 }
 
-export function FeedPanel({ onAddFeed }: FeedPanelProps) {
+export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
   const { data: feeds = [] } = useFeeds()
   const { data: folders = [] } = useFolders()
   const { data: counts = {} } = useUnreadCounts()
@@ -118,7 +119,7 @@ export function FeedPanel({ onAddFeed }: FeedPanelProps) {
 
       <div className="feed-panel-footer">
         <button className="footer-btn" onClick={onAddFeed}>+ Add Feed</button>
-        <button className="footer-btn" onClick={() => navigate('/settings')}>Settings</button>
+        <button className="footer-btn" onClick={onSettings}>Settings</button>
       </div>
     </div>
   )
