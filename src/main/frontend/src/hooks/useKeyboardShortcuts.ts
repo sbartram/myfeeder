@@ -7,6 +7,7 @@ import type { Article, Feed } from '../types'
 
 interface KeyboardShortcutCallbacks {
   onOpenBoard?: () => void
+  onShowShortcuts?: () => void
 }
 
 export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardShortcutCallbacks = {}) {
@@ -130,7 +131,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           chordTimerRef.current = setTimeout(() => { chordRef.current = null }, 1000)
           break
         case '?':
-          // TODO: show shortcut overlay in future
+          if (callbacks.onShowShortcuts) callbacks.onShowShortcuts()
           break
         case 'Tab':
           e.preventDefault()

@@ -104,7 +104,10 @@ export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
                 <div key={feed.id}
                      className={`feed-row ${selectedFeedId === feed.id ? 'active' : ''}`}
                      onClick={() => handleFeedClick(feed.id)}>
-                  <span>{feed.title}</span>
+                  <span>
+                    {feed.errorCount > 0 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
+                    {feed.title}
+                  </span>
                   {feedUnread(feed.id) > 0 && (
                     <span className="count">{feedUnread(feed.id)}</span>
                   )}
@@ -117,7 +120,10 @@ export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
           <div key={feed.id}
                className={`feed-row ${selectedFeedId === feed.id ? 'active' : ''}`}
                onClick={() => handleFeedClick(feed.id)}>
-            <span>{feed.title}</span>
+            <span>
+              {feed.errorCount > 0 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
+              {feed.title}
+            </span>
             {feedUnread(feed.id) > 0 && (
               <span className="count">{feedUnread(feed.id)}</span>
             )}

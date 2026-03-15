@@ -9,23 +9,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Run Commands
 
 ```bash
-# Build
+# Build (includes frontend via Gradle npmBuild task)
 ./gradlew build
 
-# Run tests (requires Docker for Testcontainers)
+# Run backend tests (requires Docker for Testcontainers)
 ./gradlew test
+
+# Run frontend tests
+cd src/main/frontend && npm test
 
 # Run a single test class
 ./gradlew test --tests "org.bartram.myfeeder.MyfeederApplicationTests"
-
-# Run a single test method
-./gradlew test --tests "org.bartram.myfeeder.MyfeederApplicationTests.contextLoads"
 
 # Run app with Testcontainers-managed services (no external Docker Compose needed)
 ./gradlew bootTestRun
 
 # Run app with Docker Compose services
 ./gradlew bootRun
+
+# Frontend dev server (proxies /api to :8080)
+cd src/main/frontend && npm run dev
 ```
 
 ## Architecture
@@ -44,13 +47,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 org.bartram.myfeeder
-├── config/           MyfeederProperties (@ConfigurationProperties)
-├── model/            Feed, Article, IntegrationConfig entities; FeedType, IntegrationType enums
-├── repository/       FeedRepository, ArticleRepository, IntegrationConfigRepository (Spring Data JDBC)
+├── config/           MyfeederProperties, SpaForwardController
+├── model/            Feed, Article, Folder, Board, BoardArticle, IntegrationConfig, UnreadCount
+├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig repositories
 ├── parser/           FeedParser (ROME + Jackson), ParsedFeed, ParsedArticle, FeedParseException
-├── service/          FeedService, ArticleService, FeedPollingService, RetentionService
+├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService
 ├── integration/      RaindropService, RaindropConfig
-├── controller/       FeedController, ArticleController, IntegrationConfigController + request DTOs
+├── controller/       Feed/Article/Folder/Board/IntegrationConfig controllers + PaginatedResponse + request DTOs
 ├── scheduler/        FeedPollingScheduler (dynamic per-feed scheduling with backoff)
 └── MyfeederApplication.java (@EnableScheduling, @ConfigurationPropertiesScan)
 ```
@@ -65,12 +68,27 @@ org.bartram.myfeeder
 - **RaindropService**: Saves articles to Raindrop.io bookmarking service via their REST API.
 - **Controllers**: REST endpoints for feeds (`/api/feeds`), articles (`/api/articles`), and integration config (`/api/integrations`).
 
+## Frontend
+
+- **Location**: `src/main/frontend/` (React + TypeScript, built with Vite)
+- **Tech Stack**: React 19, TypeScript, TanStack Query, Zustand, React Router v6, DOMPurify
+- **Layout**: Three-panel (feed tree / article list / reading pane) with resizable dividers
+- **Build**: `npm run build` outputs to `src/main/resources/static/`; Gradle `npmBuild` task wires this into `./gradlew build`
+- **Dev workflow**: `./gradlew bootTestRun` (backend) + `cd src/main/frontend && npm run dev` (Vite on :5173, proxies `/api` to :8080)
+- **Tests**: Vitest + React Testing Library; run with `cd src/main/frontend && npm test`
+- **Key conventions**:
+  - API client in `src/api/` — thin fetch wrappers per domain (feeds, articles, folders, boards, integrations)
+  - TanStack Query hooks in `src/hooks/` — one file per domain
+  - Zustand stores in `src/stores/` — `uiStore` (selection, panel state), `preferencesStore` (localStorage-persisted settings)
+  - Components in `src/components/` — AppShell, FeedPanel, ArticleList, ReadingPane, BoardArticleList, dialogs
+  - Keyboard shortcuts: vim-style (j/k/n/p/m/s/o/b/v/r), g-chords, managed by `useKeyboardShortcuts` hook
+
 ## Infrastructure
 
 - `compose.yaml` defines Postgres and Redis for local dev (`bootRun`)
 - `TestcontainersConfiguration` provides Postgres and Redis containers for tests and `bootTestRun`
 - Docker must be running for both tests and local development
-- Flyway migration: `V1__initial_schema.sql` creates feeds, articles, and integration_configs tables
+- Flyway migrations: `V1__initial_schema.sql` (feeds, articles, integration_configs), `V2__folders_boards_and_feed_folder.sql` (folders, boards, board_articles, feed.folder_id)
 
 ## Key Conventions
 

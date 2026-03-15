@@ -353,3 +353,83 @@ html, body, #root {
 .board-picker-item:hover {
   background: rgba(108, 99, 255, 0.15);
 }
+
+/* Shortcut Overlay */
+.shortcut-overlay { width: 480px; }
+
+.shortcut-list { max-height: 400px; overflow-y: auto; margin-bottom: 16px; }
+
+.shortcut-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(51, 51, 51, 0.3);
+}
+
+.shortcut-key {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--accent);
+  min-width: 80px;
+  text-align: center;
+}
+
+.shortcut-action { font-size: 13px; color: var(--text-secondary); }
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  animation: toast-in 0.2s ease-out;
+  max-width: 360px;
+}
+
+.toast-error {
+  background: #3d1515;
+  border: 1px solid #e74c3c;
+  color: #e74c3c;
+}
+
+.toast-success {
+  background: #153d1a;
+  border: 1px solid #2ecc71;
+  color: #2ecc71;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Feed Error Icon */
+.feed-error-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  text-align: center;
+  background: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: bold;
+  margin-right: 4px;
+  cursor: help;
+}

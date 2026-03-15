@@ -12,12 +12,20 @@ import { useFeeds } from './hooks/useFeeds'
 import { useUIStore } from './stores/uiStore'
 import { AddFeedDialog } from './components/AddFeedDialog'
 import { SettingsDialog } from './components/SettingsDialog'
+import { ShortcutOverlay } from './components/ShortcutOverlay'
+import { ToastContainer, useToastStore } from './components/Toast'
+import { MutationCache } from '@tanstack/react-query'
 import './App.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 30_000, retry: 1 },
   },
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      useToastStore.getState().addToast(error.message || 'An error occurred')
+    },
+  }),
 })
 
 function FeedArticles() {
@@ -58,11 +66,15 @@ function MainLayout() {
   const [addFeedOpen, setAddFeedOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [boardOpen, setBoardOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const selectedFeedId = useUIStore((s) => s.selectedFeedId)
   const { data } = useArticles(selectedFeedId ? { feedId: selectedFeedId } : {})
   const articles = useMemo(() => data?.pages.flatMap((p) => p.articles) ?? [], [data])
 
-  useKeyboardShortcuts(articles, { onOpenBoard: () => setBoardOpen(true) })
+  useKeyboardShortcuts(articles, {
+    onOpenBoard: () => setBoardOpen(true),
+    onShowShortcuts: () => setShortcutsOpen(true),
+  })
 
   return (
     <>
@@ -82,6 +94,8 @@ function MainLayout() {
       />
       <AddFeedDialog open={addFeedOpen} onClose={() => setAddFeedOpen(false)} />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ShortcutOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      <ToastContainer />
     </>
   )
 }
