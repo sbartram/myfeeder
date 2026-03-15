@@ -339,3 +339,17 @@ html, body, #root {
   cursor: pointer;
   font-size: 13px;
 }
+
+/* Board Picker */
+.board-picker-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.board-picker-item:hover {
+  background: rgba(108, 99, 255, 0.15);
+}

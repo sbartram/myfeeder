@@ -1,8 +1,9 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { useUIStore } from '../stores/uiStore'
 import { useArticles, useUpdateArticleState, useSaveToRaindrop } from '../hooks/useArticles'
 import { usePreferences } from '../stores/preferencesStore'
+import { BoardManager } from './BoardManager'
 
 export function ReadingPane() {
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
@@ -23,6 +24,7 @@ export function ReadingPane() {
   const updateState = useUpdateArticleState()
   const saveToRaindrop = useSaveToRaindrop()
   const autoMarkReadDelay = usePreferences((s) => s.autoMarkReadDelay)
+  const [boardOpen, setBoardOpen] = useState(false)
 
   // Auto-mark as read when article is selected
   useEffect(() => {
@@ -69,7 +71,7 @@ export function ReadingPane() {
         <button className="toolbar-btn" onClick={handleStar}>
           {article.starred ? 'Unstar' : 'Star'}
         </button>
-        <button className="toolbar-btn">Board</button>
+        <button className="toolbar-btn" onClick={() => setBoardOpen(true)}>Board</button>
         <button className="toolbar-btn" onClick={handleRaindrop}>Raindrop</button>
         <button className="toolbar-btn" onClick={handleCopyLink}>Copy Link</button>
         <button className="toolbar-btn" onClick={handleOpenOriginal} style={{ marginLeft: 'auto' }}>
@@ -91,6 +93,7 @@ export function ReadingPane() {
           dangerouslySetInnerHTML={{ __html: sanitizedContent }}
         />
       </div>
+      <BoardManager open={boardOpen} articleId={article?.id ?? null} onClose={() => setBoardOpen(false)} />
     </div>
   )
 }
