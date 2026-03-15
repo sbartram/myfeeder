@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import org.bartram.myfeeder.model.FeedType;
+
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -61,6 +63,7 @@ public class OpmlImportService {
                 feed.setSiteUrl(opmlFeed.htmlUrl() != null && !opmlFeed.htmlUrl().isEmpty()
                         ? opmlFeed.htmlUrl() : null);
                 feed.setFolderId(folderId);
+                feed.setFeedType(FeedType.RSS);
                 feed.setPollIntervalMinutes(properties.getPolling().getDefaultIntervalMinutes());
                 feed.setCreatedAt(Instant.now());
                 Feed saved = feedRepository.save(feed);

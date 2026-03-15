@@ -1,6 +1,7 @@
 package org.bartram.myfeeder.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bartram.myfeeder.parser.OpmlParseException;
 import org.bartram.myfeeder.service.FeedService;
 import org.bartram.myfeeder.service.FolderService;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/opml")
 @RequiredArgsConstructor
@@ -29,8 +31,10 @@ public class OpmlController {
             OpmlImportResult result = opmlImportService.importOpml(file.getInputStream());
             return ResponseEntity.ok(result);
         } catch (OpmlParseException e) {
+            log.error("OPML parse error", e);
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
+            log.error("OPML import error", e);
             return ResponseEntity.badRequest().build();
         }
     }
