@@ -24,4 +24,5 @@ public class Feed {
     private String etag;
     private String lastModifiedHeader;
     private Instant createdAt;
+    private Long folderId;
 }
