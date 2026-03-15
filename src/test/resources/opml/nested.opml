@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head><title>Nested Feeds</title></head>
+  <body>
+    <outline text="Tech">
+      <outline text="Programming">
+        <outline type="rss" text="Deep Feed" title="Deep Feed"
+                 xmlUrl="https://example.com/deep.xml"
+                 htmlUrl="https://example.com/deep"/>
+      </outline>
+      <outline type="rss" text="Shallow Feed" title="Shallow Feed"
+               xmlUrl="https://example.com/shallow.xml"
+               htmlUrl="https://example.com/shallow"/>
+    </outline>
+  </body>
+</opml>

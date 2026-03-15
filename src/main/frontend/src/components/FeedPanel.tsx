@@ -1,9 +1,11 @@
+import { useRef } from 'react'
 import { useFeeds } from '../hooks/useFeeds'
 import { EmptyState } from './EmptyState'
 import { useFolders } from '../hooks/useFolders'
 import { useUnreadCounts } from '../hooks/useArticles'
 import { useUIStore } from '../stores/uiStore'
 import { useNavigate } from 'react-router-dom'
+import { useImportOpml, exportOpml } from '../hooks/useOpml'
 import type { Feed } from '../types'
 
 interface FeedPanelProps {
@@ -16,6 +18,17 @@ export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
   const { data: folders = [] } = useFolders()
   const { data: counts = {} } = useUnreadCounts()
   const navigate = useNavigate()
+  const importMutation = useImportOpml()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImportClick = () => fileInputRef.current?.click()
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      importMutation.mutate(file)
+      e.target.value = ''
+    }
+  }
 
   const selectedFeedId = useUIStore((s) => s.selectedFeedId)
   const selectedFolderId = useUIStore((s) => s.selectedFolderId)
@@ -135,7 +148,16 @@ export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
 
       <div className="feed-panel-footer">
         <button className="footer-btn" onClick={onAddFeed}>+ Add Feed</button>
+        <button className="footer-btn" onClick={handleImportClick}>Import</button>
+        <button className="footer-btn" onClick={exportOpml}>Export</button>
         <button className="footer-btn" onClick={onSettings}>Settings</button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".opml,.xml"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
       </div>
     </div>
   )
