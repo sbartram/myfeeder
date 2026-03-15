@@ -69,6 +69,7 @@ public class ArticleService {
 
     public Map<Long, Long> countUnreadByFeed() {
         return articleRepository.countUnreadByFeed().stream()
+                .filter(uc -> uc.feedId() != null)
                 .collect(java.util.stream.Collectors.toMap(
                         UnreadCount::feedId,
                         UnreadCount::count
