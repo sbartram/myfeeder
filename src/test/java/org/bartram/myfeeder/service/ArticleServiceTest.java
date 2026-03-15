@@ -1,6 +1,7 @@
 package org.bartram.myfeeder.service;
 
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.model.UnreadCount;
 import org.bartram.myfeeder.repository.ArticleRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,5 +68,38 @@ class ArticleServiceTest {
     void shouldBulkMarkReadByFeedId() {
         articleService.markRead(null, 5L);
         verify(articleRepository).markAllReadByFeedId(5L);
+    }
+
+    @Test
+    void shouldFindFilteredWithoutCursor() {
+        var article = new Article();
+        article.setId(1L);
+        when(articleRepository.findFiltered(null, false, null, 10)).thenReturn(List.of(article));
+
+        var result = articleService.findFiltered(null, false, null, null, 10);
+        assertThat(result).hasSize(1);
+        verify(articleRepository).findFiltered(null, false, null, 10);
+    }
+
+    @Test
+    void shouldFindFilteredWithCursor() {
+        var article = new Article();
+        article.setId(5L);
+        when(articleRepository.findFilteredBefore(1L, null, null, 10L, 10)).thenReturn(List.of(article));
+
+        var result = articleService.findFiltered(1L, null, null, 10L, 10);
+        assertThat(result).hasSize(1);
+        verify(articleRepository).findFilteredBefore(1L, null, null, 10L, 10);
+    }
+
+    @Test
+    void shouldCountUnreadByFeed() {
+        when(articleRepository.countUnreadByFeed()).thenReturn(List.of(
+                new UnreadCount(1L, 3L),
+                new UnreadCount(2L, 7L)
+        ));
+
+        Map<Long, Long> counts = articleService.countUnreadByFeed();
+        assertThat(counts).containsEntry(1L, 3L).containsEntry(2L, 7L);
     }
 }

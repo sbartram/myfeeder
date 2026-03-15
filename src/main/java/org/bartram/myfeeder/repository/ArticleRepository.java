@@ -1,6 +1,7 @@
 package org.bartram.myfeeder.repository;
 
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.model.UnreadCount;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
@@ -33,4 +34,13 @@ public interface ArticleRepository extends ListCrudRepository<Article, Long> {
 
     @Query("SELECT EXISTS(SELECT 1 FROM article WHERE feed_id = :feedId AND guid = :guid)")
     boolean existsByFeedIdAndGuid(Long feedId, String guid);
+
+    @Query("SELECT * FROM article WHERE (:feedId IS NULL OR feed_id = :feedId) AND (:read IS NULL OR \"read\" = :read) AND (:starred IS NULL OR starred = :starred) ORDER BY id DESC LIMIT :limit")
+    List<Article> findFiltered(Long feedId, Boolean read, Boolean starred, int limit);
+
+    @Query("SELECT * FROM article WHERE (:feedId IS NULL OR feed_id = :feedId) AND (:read IS NULL OR \"read\" = :read) AND (:starred IS NULL OR starred = :starred) AND id < :before ORDER BY id DESC LIMIT :limit")
+    List<Article> findFilteredBefore(Long feedId, Boolean read, Boolean starred, Long before, int limit);
+
+    @Query("SELECT feed_id AS feedId, COUNT(*) AS count FROM article WHERE \"read\" = false GROUP BY feed_id")
+    List<UnreadCount> countUnreadByFeed();
 }
