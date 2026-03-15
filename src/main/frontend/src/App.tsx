@@ -1,9 +1,13 @@
+import { useMemo } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { FeedPanel } from './components/FeedPanel'
 import { ArticleList } from './components/ArticleList'
 import { ReadingPane } from './components/ReadingPane'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useArticles } from './hooks/useArticles'
+import { useUIStore } from './stores/uiStore'
 import './App.css'
 
 const queryClient = new QueryClient({
@@ -26,6 +30,12 @@ function AllArticles() {
 }
 
 function MainLayout() {
+  const selectedFeedId = useUIStore((s) => s.selectedFeedId)
+  const { data } = useArticles(selectedFeedId ? { feedId: selectedFeedId } : {})
+  const articles = useMemo(() => data?.pages.flatMap((p) => p.articles) ?? [], [data])
+
+  useKeyboardShortcuts(articles)
+
   return (
     <AppShell
       feedPanel={<FeedPanel />}
