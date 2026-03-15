@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useArticles, useMarkRead } from '../hooks/useArticles'
 import { useUIStore } from '../stores/uiStore'
+import { EmptyState } from './EmptyState'
 import type { Article, ArticleFilters } from '../types'
 
 interface ArticleListProps {
@@ -53,15 +54,24 @@ export function ArticleList({ filters, title }: ArticleListProps) {
     return `${Math.floor(hours / 24)}d ago`
   }
 
-  if (filtered.length === 0 && !searchQuery) {
+  if (filtered.length === 0) {
+    let emptyMessage = 'No articles yet'
+    if (searchQuery) {
+      emptyMessage = `No matches for "${searchQuery}"`
+    } else if (filters.starred) {
+      emptyMessage = 'No starred articles'
+    } else if (filters.read === false) {
+      emptyMessage = 'All caught up!'
+    } else if (allArticles.length > 0) {
+      emptyMessage = 'No matching articles'
+    }
+
     return (
       <div className="article-list">
         <div className="article-list-toolbar">
           <span className="toolbar-title">{title}</span>
         </div>
-        <div className="empty-state">
-          {allArticles.length === 0 ? 'No articles yet' : 'All caught up'}
-        </div>
+        <EmptyState message={emptyMessage} />
       </div>
     )
   }

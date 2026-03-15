@@ -1,4 +1,5 @@
 import { useFeeds } from '../hooks/useFeeds'
+import { EmptyState } from './EmptyState'
 import { useFolders } from '../hooks/useFolders'
 import { useUnreadCounts } from '../hooks/useArticles'
 import { useUIStore } from '../stores/uiStore'
@@ -76,7 +77,14 @@ export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
       </div>
 
       <div className="feed-tree">
-        <div className="section-label">FOLDERS &amp; FEEDS</div>
+        {feeds.length === 0 ? (
+          <EmptyState
+            message="Add your first feed to get started"
+            action={onAddFeed ? { label: '+ Add Feed', onClick: onAddFeed } : undefined}
+          />
+        ) : (
+          <>
+            <div className="section-label">FOLDERS &amp; FEEDS</div>
 
         {folders.map((folder) => (
           <div key={folder.id}>
@@ -115,6 +123,8 @@ export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
             )}
           </div>
         ))}
+          </>
+        )}
       </div>
 
       <div className="feed-panel-footer">
