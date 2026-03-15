@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
+import { FeedPanel } from './components/FeedPanel'
 import './App.css'
 
 const queryClient = new QueryClient({
@@ -14,7 +15,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AppShell
-          feedPanel={<div style={{ padding: 12, color: '#888' }}>Feed Panel</div>}
+          feedPanel={<FeedPanel />}
           articleList={<div style={{ padding: 12, color: '#888' }}>Article List</div>}
           readingPane={<div style={{ padding: 12, color: '#888' }}>Reading Pane</div>}
         />

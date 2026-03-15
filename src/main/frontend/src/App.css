@@ -47,3 +47,76 @@ html, body, #root {
 .divider:hover {
   background: var(--accent);
 }
+
+/* Feed Panel */
+.feed-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-secondary);
+}
+
+.smart-views { padding: 12px; }
+
+.smart-view {
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.smart-view:hover, .smart-view.active { background: rgba(108, 99, 255, 0.15); color: var(--text-primary); }
+
+.feed-tree { flex: 1; overflow-y: auto; padding: 0 12px; }
+
+.section-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.folder-row, .feed-row {
+  padding: 5px 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  border-radius: 4px;
+}
+
+.feed-row { padding-left: 24px; }
+
+.folder-row:hover, .feed-row:hover, .folder-row.active, .feed-row.active {
+  background: rgba(108, 99, 255, 0.15);
+  color: var(--text-primary);
+}
+
+.folder-toggle { margin-right: 6px; font-size: 10px; }
+
+.count { color: var(--accent); font-size: 12px; }
+
+.feed-panel-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.footer-btn {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.footer-btn:hover { color: var(--text-primary); }
