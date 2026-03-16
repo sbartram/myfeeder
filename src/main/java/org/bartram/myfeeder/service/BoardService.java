@@ -27,6 +27,11 @@ public class BoardService {
         return boardRepository.save(board);
     }
 
+    public Board getOrCreateByName(String name) {
+        return boardRepository.findByNameIgnoreCase(name)
+            .orElseGet(() -> create(name, null));
+    }
+
     public Board update(Long id, String name, String description) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Board not found: " + id));

@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify'
 import { useUIStore } from '../stores/uiStore'
 import { useArticles, useUpdateArticleState, useSaveToRaindrop } from '../hooks/useArticles'
 import { usePreferences } from '../stores/preferencesStore'
+import { useReadLater } from '../hooks/useBoards'
 import { BoardManager } from './BoardManager'
 
 interface ReadingPaneProps {
@@ -29,6 +30,7 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
   const updateState = useUpdateArticleState()
   const saveToRaindrop = useSaveToRaindrop()
   const autoMarkReadDelay = usePreferences((s) => s.autoMarkReadDelay)
+  const readLater = useReadLater()
   const [internalBoardOpen, setInternalBoardOpen] = useState(false)
   const boardOpen = externalBoardOpen || internalBoardOpen
   const closeBoardDialog = () => {
@@ -79,13 +81,14 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
     <div className="reading-pane">
       <div className="reading-toolbar">
         <button className="toolbar-btn" onClick={handleStar}>
-          {article.starred ? 'Unstar' : 'Star'}
+          {article.starred ? '★ Unstar' : '★ Star'}
         </button>
-        <button className="toolbar-btn" onClick={() => setInternalBoardOpen(true)}>Board</button>
-        <button className="toolbar-btn" onClick={handleRaindrop}>Raindrop</button>
-        <button className="toolbar-btn" onClick={handleCopyLink}>Copy Link</button>
+        <button className="toolbar-btn" onClick={() => setInternalBoardOpen(true)}>📋 Board</button>
+        <button className="toolbar-btn" onClick={() => readLater.mutate(article.id)}>🔖 Read Later</button>
+        <button className="toolbar-btn" onClick={handleRaindrop}>💧 Raindrop</button>
+        <button className="toolbar-btn" onClick={handleCopyLink}>🔗 Copy Link</button>
         <button className="toolbar-btn" onClick={handleOpenOriginal} style={{ marginLeft: 'auto' }}>
-          Open Original
+          ↗ Open Original
         </button>
       </div>
 

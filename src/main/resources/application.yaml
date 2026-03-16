@@ -12,3 +12,20 @@ myfeeder:
     cleanup-cron: "0 0 3 * * *"
   raindrop:
     api-base-url: https://api.raindrop.io/rest/v1
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      raindrop:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+  retry:
+    instances:
+      raindrop:
+        max-attempts: 3
+        wait-duration: 1s
+        exponential-backoff-multiplier: 2

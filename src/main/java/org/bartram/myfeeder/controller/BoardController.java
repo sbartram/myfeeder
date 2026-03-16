@@ -18,6 +18,11 @@ public class BoardController {
     @GetMapping
     public List<Board> listBoards() { return boardService.findAll(); }
 
+    @PostMapping("/by-name")
+    public Board getOrCreateByName(@RequestBody Map<String, String> body) {
+        return boardService.getOrCreateByName(body.get("name"));
+    }
+
     @PostMapping
     public ResponseEntity<Board> createBoard(@RequestBody Map<String, String> request) {
         Board board = boardService.create(request.get("name"), request.get("description"));

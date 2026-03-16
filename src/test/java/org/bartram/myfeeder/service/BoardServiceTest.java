@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -37,5 +38,29 @@ class BoardServiceTest {
         when(boardArticleRepository.existsByBoardIdAndArticleId(1L, 2L)).thenReturn(false);
         boardService.addArticle(1L, 2L);
         verify(boardArticleRepository).save(any(BoardArticle.class));
+    }
+
+    @Test
+    void shouldReturnExistingBoardByName() {
+        Board existing = new Board();
+        existing.setId(1L);
+        existing.setName("Read Later");
+        when(boardRepository.findByNameIgnoreCase("Read Later")).thenReturn(Optional.of(existing));
+
+        Board result = boardService.getOrCreateByName("Read Later");
+
+        assertThat(result.getId()).isEqualTo(1L);
+        verify(boardRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldCreateBoardWhenNameNotFound() {
+        when(boardRepository.findByNameIgnoreCase("Read Later")).thenReturn(Optional.empty());
+        when(boardRepository.save(any())).thenAnswer(inv -> { Board b = inv.getArgument(0); b.setId(2L); return b; });
+
+        Board result = boardService.getOrCreateByName("Read Later");
+
+        assertThat(result.getName()).isEqualTo("Read Later");
+        verify(boardRepository).save(any());
     }
 }

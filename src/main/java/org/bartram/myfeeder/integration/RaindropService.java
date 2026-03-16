@@ -7,6 +7,8 @@ import org.bartram.myfeeder.config.MyfeederProperties;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.IntegrationType;
 import org.bartram.myfeeder.repository.IntegrationConfigRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -22,6 +24,8 @@ public class RaindropService {
     private final MyfeederProperties properties;
     private final ObjectMapper objectMapper;
 
+    @CircuitBreaker(name = "raindrop", fallbackMethod = "saveToRaindropFallback")
+    @Retry(name = "raindrop")
     public void saveToRaindrop(Article article) {
         var integrationConfig = configRepository.findByType(IntegrationType.RAINDROP)
                 .orElseThrow(() -> new IllegalStateException("Raindrop.io is not configured"));
@@ -52,5 +56,9 @@ public class RaindropService {
                 .toBodilessEntity();
 
         log.info("Saved article '{}' to Raindrop.io", article.getTitle());
+    }
+
+    private void saveToRaindropFallback(Article article, Throwable throwable) {
+        throw new IllegalStateException("Raindrop.io is currently unavailable", throwable);
     }
 }

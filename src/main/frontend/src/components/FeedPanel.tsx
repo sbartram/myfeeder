@@ -6,6 +6,7 @@ import { useUnreadCounts } from '../hooks/useArticles'
 import { useUIStore } from '../stores/uiStore'
 import { useNavigate } from 'react-router-dom'
 import { useImportOpml, exportOpml } from '../hooks/useOpml'
+import { usePreferences } from '../stores/preferencesStore'
 import type { Feed } from '../types'
 
 interface FeedPanelProps {
@@ -44,6 +45,10 @@ export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
     feeds.filter((f) => f.folderId === folderId)
 
   const feedUnread = (feedId: number) => counts[String(feedId)] || 0
+  const hideReadFeeds = usePreferences((s) => s.hideReadFeeds)
+
+  const visibleFeeds = (feedList: Feed[]) =>
+    hideReadFeeds ? feedList.filter((f) => feedUnread(f.id) > 0 || f.id === selectedFeedId) : feedList
 
   const handleAllClick = () => {
     setSelectedFeed(null)
@@ -109,11 +114,11 @@ export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
               </span>
               <span>{folder.name}</span>
               <span className="count">
-                {feedsByFolder(folder.id).reduce((sum, f) => sum + feedUnread(f.id), 0) || ''}
+                {visibleFeeds(feedsByFolder(folder.id)).reduce((sum, f) => sum + feedUnread(f.id), 0) || ''}
               </span>
             </div>
             {expandedFolders.has(folder.id) &&
-              feedsByFolder(folder.id).map((feed) => (
+              visibleFeeds(feedsByFolder(folder.id)).map((feed) => (
                 <div key={feed.id}
                      className={`feed-row ${selectedFeedId === feed.id ? 'active' : ''}`}
                      onClick={() => handleFeedClick(feed.id)}>
@@ -129,7 +134,7 @@ export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
           </div>
         ))}
 
-        {uncategorized.map((feed) => (
+        {visibleFeeds(uncategorized).map((feed) => (
           <div key={feed.id}
                className={`feed-row ${selectedFeedId === feed.id ? 'active' : ''}`}
                onClick={() => handleFeedClick(feed.id)}>

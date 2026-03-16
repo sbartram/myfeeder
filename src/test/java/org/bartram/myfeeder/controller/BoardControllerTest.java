@@ -38,4 +38,16 @@ class BoardControllerTest {
     void shouldDeleteBoard() throws Exception {
         mockMvc.perform(delete("/api/boards/1")).andExpect(status().isNoContent());
     }
+
+    @Test
+    void shouldGetOrCreateBoardByName() throws Exception {
+        Board board = new Board(); board.setId(1L); board.setName("Read Later"); board.setCreatedAt(Instant.now());
+        when(boardService.getOrCreateByName("Read Later")).thenReturn(board);
+
+        mockMvc.perform(post("/api/boards/by-name")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Read Later\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Read Later"));
+    }
 }

@@ -44,6 +44,14 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
               ))}
             </select>
           </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>
+            <input
+              type="checkbox"
+              checked={prefs.hideReadFeeds}
+              onChange={(e) => prefs.setHideReadFeeds(e.target.checked)}
+            />
+            Hide feeds with no unread articles
+          </label>
         </div>
 
         <div style={{ marginBottom: 20 }}>

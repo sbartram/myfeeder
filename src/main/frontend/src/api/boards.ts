@@ -8,6 +8,8 @@ export const boardsApi = {
   update: (id: number, name: string, description?: string) =>
     apiPut<Board>(`/boards/${id}`, { name, description }),
   delete: (id: number) => apiDelete(`/boards/${id}`),
+  getOrCreateByName: (name: string) =>
+    apiPost<Board>('/boards/by-name', { name }),
   getArticles: (id: number, limit = 50, before?: number) => {
     const params = new URLSearchParams({ limit: String(limit) })
     if (before != null) params.set('before', String(before))
