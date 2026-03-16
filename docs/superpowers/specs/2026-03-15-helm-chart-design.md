@@ -9,7 +9,7 @@ A self-contained Helm chart to deploy the myfeeder Spring Boot application along
 - **Approach**: Single custom chart with inline Postgres/Redis templates (no Bitnami subcharts). Keeps things simple and fully visible for a local deployment.
 - **Secrets**: Gitignored `values-secrets.yaml` file passed at install time. No external secret managers.
 - **Networking**: MetalLB LoadBalancer service for the app; ClusterIP for Postgres and Redis (internal only).
-- **Storage**: PVCs with `nfs-client` storageClass for both Postgres (5Gi) and Redis (1Gi).
+- **Storage**: PVC with `nfs-client` storageClass for Postgres (5Gi). Redis uses `emptyDir` (cache-only, ephemeral).
 - **Image build**: Spring Boot `bootBuildImage` (Cloud Native Buildpacks), pushed to `gitea.bartram.org:3000`.
 - **No Dockerfile**: Not needed — `bootBuildImage` handles it.
 
@@ -30,8 +30,7 @@ helm/myfeeder/
 │   ├── postgres-service.yaml
 │   ├── postgres-pvc.yaml
 │   ├── redis-deployment.yaml
-│   ├── redis-service.yaml
-│   └── redis-pvc.yaml
+│   └── redis-service.yaml
 └── .helmignore
 ```
 
@@ -68,9 +67,6 @@ redis:
   image:
     repository: redis
     tag: "7"
-  storage:
-    storageClass: nfs-client
-    size: 1Gi
 
 spring:
   profiles: ""
@@ -78,9 +74,7 @@ spring:
 secrets:
   postgresPassword: ""
   anthropicApiKey: ""
-  vertexAiProjectId: ""
-  vertexAiLocation: "us-central1"
-  raindropApiToken: ""
+  googleApplicationCredentials: ""   # base64-encoded GCP service account JSON (optional)
 ```
 
 ### `values-secrets.yaml` (gitignored, user-created)
@@ -89,8 +83,8 @@ secrets:
 secrets:
   postgresPassword: "actual-password"
   anthropicApiKey: "sk-ant-..."
-  vertexAiProjectId: "my-gcp-project"
-  raindropApiToken: "..."
+  # Optional: base64-encoded GCP service account JSON for Vertex AI embeddings
+  # googleApplicationCredentials: "<base64-encoded-json>"
 ```
 
 ### Frequently updated values (not hardcoded in templates)
@@ -98,7 +92,7 @@ secrets:
 - `app.image.tag` — updated on each build/deploy
 - `app.service.annotations` — MetalLB IP
 - `postgres.image.tag`, `redis.image.tag` — infrastructure version bumps
-- `postgres.storage.size`, `redis.storage.size` — capacity changes
+- `postgres.storage.size` — capacity changes
 - All `secrets.*` values
 
 ## Workload Details
@@ -109,15 +103,13 @@ secrets:
 - **ConfigMap** provides non-secret environment variables:
   - `SPRING_DATASOURCE_URL=jdbc:postgresql://<release>-postgres:5432/<db>`
   - `SPRING_DATA_REDIS_HOST=<release>-redis`
+  - `SPRING_DATA_REDIS_PORT=6379`
   - `SPRING_PROFILES_ACTIVE` (if set)
-  - `MYFEEDER_RAINDROP_API_BASE_URL=https://api.raindrop.io/rest/v1`
 - **Secret** provides credentials as env vars:
   - `SPRING_DATASOURCE_USERNAME`
   - `SPRING_DATASOURCE_PASSWORD`
   - `SPRING_AI_ANTHROPIC_API_KEY`
-  - `SPRING_AI_VERTEX_AI_EMBEDDING_PROJECT_ID`
-  - `SPRING_AI_VERTEX_AI_EMBEDDING_LOCATION`
-  - `MYFEEDER_RAINDROP_API_TOKEN` (if the app uses one)
+- **GCP credentials** (optional, for Vertex AI embeddings): If `secrets.googleApplicationCredentials` is set, the Secret includes a `gcp-credentials.json` file mounted into the pod, with `GOOGLE_APPLICATION_CREDENTIALS` env var pointing to the mount path. If not set, Vertex AI embeddings are unavailable.
 - **Init container**: `postgres` image running `pg_isready` loop — blocks until Postgres is accepting connections, preventing Flyway migration failures on first deploy.
 - **Readiness probe**: HTTP GET `/actuator/health`, `initialDelaySeconds: 30`, `periodSeconds: 10`
 - **Liveness probe**: HTTP GET `/actuator/health`, `initialDelaySeconds: 60`, `periodSeconds: 30`, `failureThreshold: 5`
@@ -136,9 +128,15 @@ secrets:
 
 - Single-replica Deployment, official `redis` image
 - No authentication (internal-only, local cluster)
-- **PVC**: `nfs-client`, 1Gi, mounted at `/data`
+- **No PVC**: Redis is used purely as a Spring Cache layer — cache data is ephemeral and repopulated automatically. Uses `emptyDir` volume to avoid unnecessary NFS latency.
 - **Readiness probe**: `exec redis-cli ping`, `periodSeconds: 5`
 - **Service**: ClusterIP, port 6379
+
+### Application Configuration
+
+Application-level config (`myfeeder.polling.*`, `myfeeder.retention.*`, `resilience4j.*`) uses defaults from the bundled `application.yaml` inside the JAR. These are not exposed in the Helm values. Override via additional env vars in the ConfigMap's `spring.extraEnv` if needed.
+
+The Raindrop.io API token is configured at runtime through the app's Settings UI, not at deploy time — it is stored in the `integration_configs` database table.
 
 ## Startup Order
 
