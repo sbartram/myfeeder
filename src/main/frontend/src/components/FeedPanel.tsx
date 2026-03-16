@@ -12,9 +12,10 @@ import type { Feed } from '../types'
 interface FeedPanelProps {
   onAddFeed?: () => void
   onSettings?: () => void
+  onHelp?: () => void
 }
 
-export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
+export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
   const { data: feeds = [] } = useFeeds()
   const { data: folders = [] } = useFolders()
   const { data: counts = {} } = useUnreadCounts()
@@ -156,6 +157,7 @@ export function FeedPanel({ onAddFeed, onSettings }: FeedPanelProps) {
         <button className="footer-btn" onClick={handleImportClick}>Import</button>
         <button className="footer-btn" onClick={exportOpml}>Export</button>
         <button className="footer-btn" onClick={onSettings}>Settings</button>
+        <button className="footer-btn" onClick={onHelp}>Help</button>
         <input
           ref={fileInputRef}
           type="file"

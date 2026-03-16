@@ -79,7 +79,7 @@ function MainLayout() {
   return (
     <>
       <AppShell
-        feedPanel={<FeedPanel onAddFeed={() => setAddFeedOpen(true)} onSettings={() => setSettingsOpen(true)} />}
+        feedPanel={<FeedPanel onAddFeed={() => setAddFeedOpen(true)} onSettings={() => setSettingsOpen(true)} onHelp={() => setShortcutsOpen(true)} />}
         articleList={
           <Routes>
             <Route path="/feed/:feedId" element={<FeedArticles />} />
