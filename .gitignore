@@ -47,3 +47,6 @@ src/main/frontend/node_modules/
 tmp/
 *.log
 .worktrees/
+
+### Helm ###
+helm/myfeeder/values-secrets.yaml
