@@ -50,10 +50,10 @@ org.bartram.myfeeder
 ├── config/           MyfeederProperties, SpaForwardController
 ├── model/            Feed, Article, Folder, Board, BoardArticle, IntegrationConfig, UnreadCount
 ├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig repositories
-├── parser/           FeedParser (ROME + Jackson), ParsedFeed, ParsedArticle, FeedParseException
-├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService
-├── integration/      RaindropService, RaindropConfig
-├── controller/       Feed/Article/Folder/Board/IntegrationConfig controllers + PaginatedResponse + request DTOs
+├── parser/           FeedParser (ROME + Jackson), ParsedFeed, ParsedArticle, FeedParseException, OpmlFeed, OpmlParseException
+├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService
+├── integration/      RaindropService (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig
+├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml controllers + PaginatedResponse + request DTOs
 ├── scheduler/        FeedPollingScheduler (dynamic per-feed scheduling with backoff)
 └── MyfeederApplication.java (@EnableScheduling, @ConfigurationPropertiesScan)
 ```
@@ -65,8 +65,10 @@ org.bartram.myfeeder
 - **FeedPollingService**: Fetches feed content via RestClient, parses, and upserts new articles (deduplication by GUID).
 - **FeedPollingScheduler**: Uses Spring `TaskScheduler` for dynamic per-feed polling. Registers on `ApplicationReadyEvent`. Supports exponential backoff on repeated errors.
 - **RetentionService**: `@Scheduled` cron job to clear old article content (configurable via `myfeeder.retention.*`).
-- **RaindropService**: Saves articles to Raindrop.io bookmarking service via their REST API.
-- **Controllers**: REST endpoints for feeds (`/api/feeds`), articles (`/api/articles`), and integration config (`/api/integrations`).
+- **RaindropService**: Saves articles to Raindrop.io bookmarking service via their REST API. Protected with Resilience4j `@CircuitBreaker` + `@Retry` annotations.
+- **OpmlService**: Parses and generates OPML XML with XXE protection. Stateless, no database access.
+- **OpmlImportService**: Orchestrates OPML import — creates feeds/folders, deduplicates by URL, registers new feeds with scheduler post-commit.
+- **Controllers**: REST endpoints for feeds (`/api/feeds`), articles (`/api/articles`), integration config (`/api/integrations`), and OPML import/export (`/api/opml`).
 
 ## Frontend
 
@@ -82,6 +84,7 @@ org.bartram.myfeeder
   - Zustand stores in `src/stores/` — `uiStore` (selection, panel state), `preferencesStore` (localStorage-persisted settings)
   - Components in `src/components/` — AppShell, FeedPanel, ArticleList, ReadingPane, BoardArticleList, dialogs
   - Keyboard shortcuts: vim-style (j/k/n/p/m/s/o/b/v/r), g-chords, managed by `useKeyboardShortcuts` hook
+  - Theme system: 6 themes (3 dark, 3 light) defined in `src/themes.ts`, applied via `useTheme` hook, persisted in `preferencesStore`
 
 ## Infrastructure
 
@@ -96,6 +99,8 @@ org.bartram.myfeeder
 - Uses Spring Data JDBC (not JPA) -- entities use `@Table`/`@Id` annotations from `org.springframework.data.annotation`, not `jakarta.persistence`
 - Gradle Kotlin DSL for build configuration
 - BOM-managed versions for Spring AI and Spring Cloud (do not specify versions on individual dependencies)
+- Resilience4j: Use `@CircuitBreaker(name = "...")` (outer) + `@Retry(name = "...")` (inner) annotations on external service calls. Config in `application.yaml` under `resilience4j.circuitbreaker.instances` and `resilience4j.retry.instances`
+- Spring Data JDBC does not support derived query methods like JPA — use `@Query` annotation for custom queries
 
 ## Spring Boot 4 / Jackson 3.x Notes
 
@@ -107,7 +112,7 @@ org.bartram.myfeeder
 ## Test Patterns
 
 - **Unit tests**: Mockito with `@ExtendWith(MockitoExtension.class)`, `@Mock`/`@InjectMocks` for services
-- **Controller tests**: `@WebMvcTest` with `MockMvc` and `@MockBean` for dependencies
+- **Controller tests**: `@WebMvcTest` with `MockMvc` and `@MockitoBean` for dependencies
 - **Repository tests**: `@DataJdbcTest` with `@Import(TestcontainersConfiguration.class)` for real Postgres
 - **Parser tests**: Plain unit tests with sample feed files in `src/test/resources/feeds/`
 - **Integration test**: `@SpringBootTest` + `@Import(TestcontainersConfiguration.class)` verifying all beans wire correctly
