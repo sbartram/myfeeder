@@ -1,0 +1,23 @@
+# Docker Registry deployed at registry.bartram.org
+# TLS terminated at the registry pod using cert-manager-issued certificate
+# No ingress controller — exposed directly via MetalLB LoadBalancer
+
+storage: filesystem
+
+persistence:
+  enabled: true
+  size: 30Gi
+  storageClass: nfs-client
+
+# TLS at the registry pod — mount the cert-manager TLS secret
+tlsSecretName: registry-bartram-org-tls
+
+service:
+  type: LoadBalancer
+  port: 443
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: "192.168.44.205"
+
+# No ingress — TLS is handled by the registry itself
+ingress:
+  enabled: false
