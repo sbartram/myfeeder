@@ -14,8 +14,8 @@ export const articlesApi = {
   getById: (id: number) => apiGet<Article>(`/articles/${id}`),
   updateState: (id: number, state: { read?: boolean; starred?: boolean }) =>
     apiPatch<Article>(`/articles/${id}`, state),
-  markRead: (articleIds?: number[], feedId?: number) =>
-    apiPost<void>('/articles/mark-read', { articleIds, feedId }),
+  markRead: (articleIds?: number[], feedId?: number, olderThanDays?: number) =>
+    apiPost<void>('/articles/mark-read', { articleIds, feedId, olderThanDays }),
   counts: () => apiGet<Record<string, number>>('/articles/counts'),
   saveToRaindrop: (id: number) => apiPost<void>(`/articles/${id}/raindrop`),
 }

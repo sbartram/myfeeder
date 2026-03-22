@@ -35,8 +35,8 @@ export function useUpdateArticleState() {
 export function useMarkRead() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (params: { articleIds?: number[]; feedId?: number }) =>
-      articlesApi.markRead(params.articleIds, params.feedId),
+    mutationFn: (params: { articleIds?: number[]; feedId?: number; olderThanDays?: number }) =>
+      articlesApi.markRead(params.articleIds, params.feedId, params.olderThanDays),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['articles'] })
       qc.invalidateQueries({ queryKey: ['unreadCounts'] })
