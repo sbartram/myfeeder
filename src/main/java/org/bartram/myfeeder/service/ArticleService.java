@@ -6,6 +6,8 @@ import org.bartram.myfeeder.model.UnreadCount;
 import org.bartram.myfeeder.repository.ArticleRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,8 +53,18 @@ public class ArticleService {
     }
 
     public void markRead(List<Long> articleIds, Long feedId) {
+        markRead(articleIds, feedId, null);
+    }
+
+    public void markRead(List<Long> articleIds, Long feedId, Integer olderThanDays) {
         if (articleIds != null && !articleIds.isEmpty()) {
             articleRepository.markReadByIds(articleIds);
+        } else if (feedId != null && olderThanDays != null) {
+            if (olderThanDays < 1) {
+                throw new IllegalArgumentException("olderThanDays must be >= 1");
+            }
+            Instant cutoff = Instant.now().minus(olderThanDays, ChronoUnit.DAYS);
+            articleRepository.markReadByFeedIdOlderThan(feedId, cutoff);
         } else if (feedId != null) {
             articleRepository.markAllReadByFeedId(feedId);
         } else {

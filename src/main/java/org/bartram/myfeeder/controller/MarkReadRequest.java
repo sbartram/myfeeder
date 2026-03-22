@@ -7,4 +7,5 @@ import java.util.List;
 public class MarkReadRequest {
     private List<Long> articleIds;
     private Long feedId;
+    private Integer olderThanDays;
 }

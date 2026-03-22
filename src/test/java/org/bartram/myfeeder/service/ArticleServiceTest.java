@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -90,6 +91,18 @@ class ArticleServiceTest {
         var result = articleService.findFiltered(1L, null, null, 10L, 10);
         assertThat(result).hasSize(1);
         verify(articleRepository).findFilteredBefore(1L, null, null, 10L, 10);
+    }
+
+    @Test
+    void shouldMarkReadByFeedIdOlderThanDays() {
+        articleService.markRead(null, 5L, 7);
+        verify(articleRepository).markReadByFeedIdOlderThan(eq(5L), any(Instant.class));
+    }
+
+    @Test
+    void shouldRejectOlderThanDaysWithoutFeedId() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> articleService.markRead(null, null, 7));
     }
 
     @Test
