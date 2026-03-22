@@ -4,6 +4,11 @@
 
 - [X] create helm chart to deploy redis, postgres, and apps
 - [X] option to mark articles older than _X_ days as read
+- [ ] add a setting to hide read articles in the article list pane with the default enabled
+- [ ] the article list pane in "title view" mode should only show the title plus truncated text, stripping out html tags
+- [ ] add support for "magazine view" in the article list pane
+- [ ] change the presets in the "mark read" dialog to 1, 3, 7, and 14 days
+- [ ] allow custom names for feeds (some defaults are very long) or truncate them
 - [ ] share via email
 - [ ] "read later" tag?
 - [ ] copy link to clipboard
@@ -14,16 +19,23 @@
 
 ## Article Reader
 
-- youtube feeds are not showing the video description
-- links like this one - https://theeurotvplace.com/2025/12/euro-tv-premieres-in-january-2026-land-of-sin-sophie-cross-stayer-more/ - are not displaying correctly
-- this link displays all the text (formatting is so-so) but doesn't display the image - https://relix.com/news/detail/jerry-garcias-tiger-guitar-among-historic-instruments-sold-at-jim-irsay-collection-auction-opening/
-- suppress twitter and instagram links like on this page? https://relix.com/news/detail/marc-maron-to-headline-benefit-comedy-show-for-divided-sky-foundation-in-los-angeles/
+- [ ] youtube feeds are not showing the video description
+- [ ] links like this one - https://theeurotvplace.com/2025/12/euro-tv-premieres-in-january-2026-land-of-sin-sophie-cross-stayer-more/ - are not displaying correctly
+- [ ] this link displays all the text (formatting is so-so) but doesn't display the image - https://relix.com/news/detail/jerry-garcias-tiger-guitar-among-historic-instruments-sold-at-jim-irsay-collection-auction-opening/
+- [ ] suppress twitter and instagram links like on this page? https://relix.com/news/detail/marc-maron-to-headline-benefit-comedy-show-for-divided-sky-foundation-in-los-angeles/
 
 ## Dropbox and Google Drive
 
-- auto export saved articles (boards?, read later?) to PDF or HTML
-- auto export feed list to OPML
-- export history of saved articles
+- [ ] auto export saved articles (boards?, read later?) to PDF or HTML
+- [ ] auto export feed list to OPML
+- [ ] export history of saved articles
+
+## Testing
+
+- raindrop
+- boards
+- read later
+
 
 ## Done
 
