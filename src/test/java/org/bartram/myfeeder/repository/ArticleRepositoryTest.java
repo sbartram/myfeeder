@@ -65,6 +65,23 @@ class ArticleRepositoryTest {
     }
 
     @Test
+    void shouldMarkReadByFeedIdOlderThan() {
+        var old = createArticle("old-guid", "Old Article");
+        old.setPublishedAt(Instant.now().minus(10, java.time.temporal.ChronoUnit.DAYS));
+        old = articleRepository.save(old);
+
+        var recent = createArticle("recent-guid", "Recent Article");
+        recent.setPublishedAt(Instant.now().minus(1, java.time.temporal.ChronoUnit.DAYS));
+        recent = articleRepository.save(recent);
+
+        Instant cutoff = Instant.now().minus(7, java.time.temporal.ChronoUnit.DAYS);
+        articleRepository.markReadByFeedIdOlderThan(savedFeed.getId(), cutoff);
+
+        assertThat(articleRepository.findById(old.getId()).get().isRead()).isTrue();
+        assertThat(articleRepository.findById(recent.getId()).get().isRead()).isFalse();
+    }
+
+    @Test
     void shouldClearOldContent() {
         var old = createArticle("old-guid", "Old Article");
         old.setFetchedAt(Instant.now().minusSeconds(60 * 60 * 24 * 60)); // 60 days ago

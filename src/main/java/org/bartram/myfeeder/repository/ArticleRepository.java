@@ -29,6 +29,10 @@ public interface ArticleRepository extends ListCrudRepository<Article, Long> {
     void markAllReadByFeedId(Long feedId);
 
     @Modifying
+    @Query("UPDATE article SET read = true WHERE feed_id = :feedId AND published_at < :cutoff AND read = false")
+    void markReadByFeedIdOlderThan(Long feedId, Instant cutoff);
+
+    @Modifying
     @Query("UPDATE article SET content = NULL WHERE fetched_at < :cutoff AND content IS NOT NULL")
     void clearContentOlderThan(Instant cutoff);
 
