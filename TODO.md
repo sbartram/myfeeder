@@ -2,14 +2,15 @@
 
 ## General
 
-- create helm chart to deploy redis, postgres, and apps
-- share via email
-- "read later" tag?
-- copy link to clipboard
-- sort setting for feeds (latest, oldest)
-- hide empty feeds in feed nav
-- add notes to an article
-- dropbox and google drive
+- [X] create helm chart to deploy redis, postgres, and apps
+- [X] option to mark articles older than _X_ days as read
+- [ ] share via email
+- [ ] "read later" tag?
+- [ ] copy link to clipboard
+- [ ] sort setting for feeds (latest, oldest)
+- [ ] hide empty feeds in feed nav
+- [ ] add notes to an article
+- [ ] dropbox and google drive
 
 ## Article Reader
 
