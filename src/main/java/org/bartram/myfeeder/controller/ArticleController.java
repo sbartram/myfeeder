@@ -56,7 +56,7 @@ public class ArticleController {
     @PostMapping("/mark-read")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void markRead(@RequestBody MarkReadRequest request) {
-        articleService.markRead(request.getArticleIds(), request.getFeedId());
+        articleService.markRead(request.getArticleIds(), request.getFeedId(), request.getOlderThanDays());
     }
 
     @PostMapping("/{id}/raindrop")

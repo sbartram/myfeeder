@@ -83,7 +83,17 @@ class ArticleControllerTest {
                         .content("{\"articleIds\":[1,2,3]}"))
                 .andExpect(status().isNoContent());
 
-        verify(articleService).markRead(List.of(1L, 2L, 3L), null);
+        verify(articleService).markRead(List.of(1L, 2L, 3L), null, null);
+    }
+
+    @Test
+    void shouldMarkReadOlderThanDays() throws Exception {
+        mockMvc.perform(post("/api/articles/mark-read")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"feedId\":5,\"olderThanDays\":7}"))
+                .andExpect(status().isNoContent());
+
+        verify(articleService).markRead(null, 5L, 7);
     }
 
     @Test
