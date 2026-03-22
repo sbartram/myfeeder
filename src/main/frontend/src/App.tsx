@@ -30,7 +30,9 @@ const queryClient = new QueryClient({
 
 function FeedArticles() {
   const { feedId } = useParams()
-  return <ArticleList filters={{ feedId: Number(feedId) }} title="Feed" />
+  const { data: feeds = [] } = useFeeds()
+  const feed = feeds.find((f) => f.id === Number(feedId))
+  return <ArticleList filters={{ feedId: Number(feedId) }} title={feed?.title || 'Feed'} feedName={feed?.title} />
 }
 
 function FolderArticles() {

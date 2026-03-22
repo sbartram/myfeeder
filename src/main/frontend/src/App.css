@@ -439,3 +439,47 @@ html, body, #root {
   margin-right: 4px;
   cursor: help;
 }
+
+/* Split button */
+.split-btn-group { position: relative; display: flex; align-items: center; }
+.split-btn-toggle { padding: 4px 6px; font-size: 11px; border-left: 1px solid var(--border); }
+.split-btn-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 160px;
+  margin-top: 2px;
+}
+.split-btn-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+}
+.split-btn-menu-item:hover { background: var(--bg-hover); }
+
+/* Preset buttons */
+.preset-buttons { display: flex; gap: 8px; margin-bottom: 12px; }
+.preset-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+}
+.preset-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+.preset-btn.active { border-color: var(--accent); background: var(--accent); color: white; }
+
+.dialog-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; }

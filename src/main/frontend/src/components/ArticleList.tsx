@@ -1,21 +1,37 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useArticles, useMarkRead } from '../hooks/useArticles'
 import { useUIStore } from '../stores/uiStore'
 import { EmptyState } from './EmptyState'
+import { MarkOlderReadDialog } from './MarkOlderReadDialog'
 import type { Article, ArticleFilters } from '../types'
 
 interface ArticleListProps {
   filters: ArticleFilters
   title: string
+  feedName?: string
 }
 
-export function ArticleList({ filters, title }: ArticleListProps) {
+export function ArticleList({ filters, title, feedName }: ArticleListProps) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useArticles(filters)
   const markRead = useMarkRead()
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
   const setSelectedArticle = useUIStore((s) => s.setSelectedArticle)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
+  const [showOlderDialog, setShowOlderDialog] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showDropdown) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showDropdown])
 
   const allArticles = useMemo(
     () => data?.pages.flatMap((p) => p.articles) ?? [],
@@ -43,6 +59,13 @@ export function ArticleList({ filters, title }: ArticleListProps) {
       const ids = allArticles.filter((a) => !a.read).map((a) => a.id)
       if (ids.length > 0) markRead.mutate({ articleIds: ids })
     }
+  }
+
+  const handleMarkOlderRead = (days: number) => {
+    if (filters.feedId) {
+      markRead.mutate({ feedId: filters.feedId, olderThanDays: days })
+    }
+    setShowOlderDialog(false)
   }
 
   const formatTime = (dateStr: string | null) => {
@@ -81,7 +104,25 @@ export function ArticleList({ filters, title }: ArticleListProps) {
       <div className="article-list-toolbar">
         <span className="toolbar-title">{title}</span>
         <div className="toolbar-actions">
-          <button className="toolbar-btn" onClick={handleMarkAllRead}>Mark all read</button>
+          <div className="split-btn-group" ref={dropdownRef}>
+            <button className="toolbar-btn" onClick={handleMarkAllRead}>Mark all read</button>
+            {filters.feedId && (
+              <button
+                className="toolbar-btn split-btn-toggle"
+                onClick={() => setShowDropdown((v) => !v)}
+                aria-label="More mark-read options"
+              >
+                ▾
+              </button>
+            )}
+            {showDropdown && (
+              <div className="split-btn-menu" onClick={() => setShowDropdown(false)}>
+                <button className="split-btn-menu-item" onClick={() => setShowOlderDialog(true)}>
+                  Mark older than…
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -119,6 +160,12 @@ export function ArticleList({ filters, title }: ArticleListProps) {
           </button>
         )}
       </div>
+      <MarkOlderReadDialog
+        open={showOlderDialog}
+        feedName={feedName || title}
+        onConfirm={handleMarkOlderRead}
+        onClose={() => setShowOlderDialog(false)}
+      />
     </div>
   )
 }
