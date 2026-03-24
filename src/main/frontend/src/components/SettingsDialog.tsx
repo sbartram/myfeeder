@@ -52,6 +52,14 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             />
             Hide feeds with no unread articles
           </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>
+            <input
+              type="checkbox"
+              checked={prefs.hideReadArticles}
+              onChange={(e) => prefs.setHideReadArticles(e.target.checked)}
+            />
+            Hide read articles
+          </label>
         </div>
 
         <div style={{ marginBottom: 20 }}>
