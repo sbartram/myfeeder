@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
 import { MarkOlderReadDialog } from './MarkOlderReadDialog'
 
 describe('MarkOlderReadDialog', () => {
@@ -9,6 +9,11 @@ describe('MarkOlderReadDialog', () => {
     onConfirm: vi.fn(),
     onClose: vi.fn(),
   }
+
+  beforeEach(() => {
+    defaultProps.onConfirm.mockClear()
+    defaultProps.onClose.mockClear()
+  })
 
   it('renders preset buttons', () => {
     render(<MarkOlderReadDialog {...defaultProps} />)

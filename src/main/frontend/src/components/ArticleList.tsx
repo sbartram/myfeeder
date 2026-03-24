@@ -62,8 +62,10 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
   }
 
   const handleMarkOlderRead = (days: number) => {
-    if (filters.feedId) {
+    if (filters.feedId != null) {
       markRead.mutate({ feedId: filters.feedId, olderThanDays: days })
+    } else {
+      console.error('handleMarkOlderRead called without feedId')
     }
     setShowOlderDialog(false)
   }

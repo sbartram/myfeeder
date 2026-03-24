@@ -97,6 +97,17 @@ class ArticleControllerTest {
     }
 
     @Test
+    void shouldReturn400ForInvalidOlderThanDays() throws Exception {
+        doThrow(new IllegalArgumentException("olderThanDays must be >= 1"))
+                .when(articleService).markRead(null, 5L, 0);
+
+        mockMvc.perform(post("/api/articles/mark-read")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"feedId\":5,\"olderThanDays\":0}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void shouldSaveToRaindrop() throws Exception {
         var article = new Article();
         article.setId(1L);

@@ -106,6 +106,18 @@ class ArticleServiceTest {
     }
 
     @Test
+    void shouldRejectOlderThanDaysZero() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> articleService.markRead(null, 5L, 0));
+    }
+
+    @Test
+    void shouldRejectOlderThanDaysNegative() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> articleService.markRead(null, 5L, -3));
+    }
+
+    @Test
     void shouldCountUnreadByFeed() {
         when(articleRepository.countUnreadByFeed()).thenReturn(List.of(
                 new UnreadCount(1L, 3L),

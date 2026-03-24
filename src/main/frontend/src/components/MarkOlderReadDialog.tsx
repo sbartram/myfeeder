@@ -41,7 +41,7 @@ export function MarkOlderReadDialog({ open, feedName, onConfirm, onClose }: Mark
       <div className="dialog" onClick={(e) => e.stopPropagation()}>
         <h2>Mark older articles as read</h2>
         <p className="dialog-subtitle">
-          Mark unread articles older than X days in <strong>{feedName}</strong>
+          Mark unread articles older than the selected number of days in <strong>{feedName}</strong>
         </p>
         <form onSubmit={handleSubmit}>
           <div className="preset-buttons">
@@ -60,6 +60,7 @@ export function MarkOlderReadDialog({ open, feedName, onConfirm, onClose }: Mark
             className="dialog-input"
             type="number"
             min="1"
+            step="1"
             placeholder="Custom"
             value={days}
             onChange={handleCustomChange}
