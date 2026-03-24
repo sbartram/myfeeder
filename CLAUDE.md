@@ -48,27 +48,25 @@ cd src/main/frontend && npm run dev
 ```
 org.bartram.myfeeder
 ├── config/           MyfeederProperties, SpaForwardController
-├── model/            Feed, Article, Folder, Board, BoardArticle, IntegrationConfig, UnreadCount
+├── model/            Feed, FeedType, Article, Folder, Board, BoardArticle, IntegrationConfig, IntegrationType, UnreadCount
 ├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig repositories
 ├── parser/           FeedParser (ROME + Jackson), ParsedFeed, ParsedArticle, FeedParseException, OpmlFeed, OpmlParseException
-├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService
+├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, OpmlImportResult
 ├── integration/      RaindropService (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig
-├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml controllers + PaginatedResponse + request DTOs
+├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml controllers + PaginatedResponse + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest)
 ├── scheduler/        FeedPollingScheduler (dynamic per-feed scheduling with backoff)
 └── MyfeederApplication.java (@EnableScheduling, @ConfigurationPropertiesScan)
 ```
 
-## Key Components
+## Key Behaviors
 
-- **FeedParser**: Detects feed type (RSS/Atom/JSON Feed) and parses using ROME for XML formats, Jackson for JSON Feed. Returns `ParsedFeed`/`ParsedArticle` records.
-- **FeedService**: CRUD for feed subscriptions. On create/update, registers feed with `FeedPollingScheduler`.
-- **FeedPollingService**: Fetches feed content via RestClient, parses, and upserts new articles (deduplication by GUID).
-- **FeedPollingScheduler**: Uses Spring `TaskScheduler` for dynamic per-feed polling. Registers on `ApplicationReadyEvent`. Supports exponential backoff on repeated errors.
-- **RetentionService**: `@Scheduled` cron job to clear old article content (configurable via `myfeeder.retention.*`).
-- **RaindropService**: Saves articles to Raindrop.io bookmarking service via their REST API. Protected with Resilience4j `@CircuitBreaker` + `@Retry` annotations.
-- **OpmlService**: Parses and generates OPML XML with XXE protection. Stateless, no database access.
-- **OpmlImportService**: Orchestrates OPML import — creates feeds/folders, deduplicates by URL, registers new feeds with scheduler post-commit.
-- **Controllers**: REST endpoints for feeds (`/api/feeds`), articles (`/api/articles`), integration config (`/api/integrations`), and OPML import/export (`/api/opml`).
+- **FeedService** registers feeds with `FeedPollingScheduler` on create/update — don't forget this coupling
+- **FeedPollingService** deduplicates articles by GUID on upsert
+- **FeedPollingScheduler** uses `ApplicationReadyEvent` to register all feeds at startup; supports exponential backoff on errors
+- **RetentionService** is a `@Scheduled` cron job — config under `myfeeder.retention.*`
+- **OpmlService** has XXE protection enabled — maintain this when modifying XML parsing
+- **OpmlImportService** registers new feeds with scheduler post-commit (not inline)
+- **API endpoints**: `/api/feeds`, `/api/articles`, `/api/integrations`, `/api/opml`, `/api/boards`, `/api/folders`
 
 ## Frontend
 
@@ -79,10 +77,10 @@ org.bartram.myfeeder
 - **Dev workflow**: `./gradlew bootTestRun` (backend) + `cd src/main/frontend && npm run dev` (Vite on :5173, proxies `/api` to :8080)
 - **Tests**: Vitest + React Testing Library; run with `cd src/main/frontend && npm test`
 - **Key conventions**:
-  - API client in `src/api/` — thin fetch wrappers per domain (feeds, articles, folders, boards, integrations)
-  - TanStack Query hooks in `src/hooks/` — one file per domain
+  - API client in `src/api/` — thin fetch wrappers per domain (feeds, articles, folders, boards, integrations, opml)
+  - TanStack Query hooks in `src/hooks/` — one file per domain (useArticles, useFeeds, useFolders, useBoards, useOpml)
   - Zustand stores in `src/stores/` — `uiStore` (selection, panel state), `preferencesStore` (localStorage-persisted settings)
-  - Components in `src/components/` — AppShell, FeedPanel, ArticleList, ReadingPane, BoardArticleList, dialogs
+  - Components in `src/components/` — AppShell, FeedPanel, ArticleList, ReadingPane, BoardArticleList, BoardManager, SettingsDialog, ShortcutOverlay, Toast, dialogs
   - Keyboard shortcuts: vim-style (j/k/n/p/m/s/o/b/v/r), g-chords, managed by `useKeyboardShortcuts` hook
   - Theme system: 6 themes (3 dark, 3 light) defined in `src/themes.ts`, applied via `useTheme` hook, persisted in `preferencesStore`
 
@@ -108,6 +106,14 @@ org.bartram.myfeeder
 - Spring Boot auto-configures `tools.jackson.databind.ObjectMapper` as a bean (not the old `com.fasterxml` one).
 - Test annotations `@WebMvcTest`, `@DataJdbcTest`, `@SpringBootTest` are in `org.springframework.boot.*.test.autoconfigure` packages (e.g., `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`).
 - Test starter dependencies follow the pattern `spring-boot-starter-<module>-test` (e.g., `spring-boot-starter-webmvc-test`).
+
+## Gotchas
+
+- **Docker required**: Must be running for both `./gradlew test` (Testcontainers) and `./gradlew bootRun` (Docker Compose)
+- **Zustand persist + new preferences**: Adding a new field to `preferencesStore` with a default value only applies to fresh installs. Existing users with a `myfeeder-prefs` localStorage key get `undefined` for the new field (Zustand merges stored state over defaults). Use a `merge` function or version migration if the default must apply to everyone.
+- **Spring Data JDBC ≠ JPA**: No lazy loading, no derived query methods, no `@Entity` — use `@Table`/`@Id` from `org.springframework.data.annotation` and `@Query` for custom queries
+- **Jackson 3.x imports**: Must use `tools.jackson.databind.*`, not `com.fasterxml.jackson.databind.*`
+- **FeedPollingScheduler coupling**: Creating/updating a feed must register it with the scheduler — `FeedService` handles this, so don't bypass it with direct repository calls
 
 ## Test Patterns
 
