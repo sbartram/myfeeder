@@ -3,7 +3,7 @@ fullnameOverride: ""
 
 app:
   image:
-    repository: gitea.bartram.org:3000/bartram/myfeeder
+    repository: registry.bartram.org/bartram/myfeeder
     tag: latest
     pullPolicy: Always
   imagePullSecrets: []
