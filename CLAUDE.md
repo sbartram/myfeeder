@@ -96,8 +96,8 @@ org.bartram.myfeeder
 - **Registry**: `registry.bartram.org/bartram/myfeeder`
 - **Cluster**: k3s (`k3s-ansible` context), namespace `myfeeder`
 - **Helm chart**: `helm/myfeeder/` — deploys app + Redis; Postgres is external at `pg.bartram.org`
-- **Build image**: `./gradlew bootBuildImage --imageName=registry.bartram.org/bartram/myfeeder:latest -x npmInstall -x npmBuild -x test` (frontend must be pre-built)
-- **Deploy**: `./deploy.sh` (requires `MYFEEDER_PG_PASSWORD` and `MYFEEDER_ANTHROPIC_API_KEY` env vars)
+- **Build image**: `./gradlew bootBuildImage --imageName=registry.bartram.org/bartram/myfeeder:$(./gradlew currentVersion -q | awk '{print $NF}') -x npmInstall -x npmBuild -x test` (frontend must be pre-built; version comes from axion-release git tags)
+- **Deploy**: `./deploy.sh` (requires `MYFEEDER_PG_PASSWORD` and `MYFEEDER_ANTHROPIC_API_KEY` env vars; automatically sets image tag to current version)
 
 
 ## Key Conventions
