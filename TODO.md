@@ -5,6 +5,8 @@
 - [X] create helm chart to deploy redis, postgres, and apps
 - [X] option to mark articles older than _X_ days as read
 - [X] add a setting to hide read articles in the article list pane with the default enabled
+- [X] do not deploy postgres in the helm chart - use pg.bartram.org
+- [X] update the frontend libraries
 - [ ] the article list pane in "title view" mode should only show the title plus truncated text, stripping out html tags
 - [ ] add support for "magazine view" in the article list pane
 - [ ] change the presets in the "mark read" dialog to 1, 3, 7, and 14 days
