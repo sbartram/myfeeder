@@ -37,7 +37,7 @@ cd src/main/frontend && npm run dev
 - **Language**: Java 21, Lombok for boilerplate reduction
 - **Database**: PostgreSQL via Spring Data JDBC (not JPA), Flyway migrations
 - **Caching**: Redis via Spring Cache abstraction
-- **AI**: Spring AI with Anthropic Claude (chat) and Vertex AI (embeddings)
+- **AI**: Spring AI with Anthropic Claude (chat only)
 - **Resilience**: Resilience4j circuit breaker via Spring Cloud
 - **HTTP Client**: Spring RestClient for outbound calls
 - **Monitoring**: Spring Boot Actuator
@@ -91,6 +91,15 @@ org.bartram.myfeeder
 - Docker must be running for both tests and local development
 - Flyway migrations: `V1__initial_schema.sql` (feeds, articles, integration_configs), `V2__folders_boards_and_feed_folder.sql` (folders, boards, board_articles, feed.folder_id)
 
+## Deployment
+
+- **Registry**: `registry.bartram.org/bartram/myfeeder`
+- **Cluster**: k3s (`k3s-ansible` context), namespace `myfeeder`
+- **Helm chart**: `helm/myfeeder/` — deploys app + Redis; Postgres is external at `pg.bartram.org`
+- **Build image**: `./gradlew bootBuildImage --imageName=registry.bartram.org/bartram/myfeeder:latest -x npmInstall -x npmBuild -x test` (frontend must be pre-built)
+- **Deploy**: `./deploy.sh` (requires `MYFEEDER_PG_PASSWORD` and `MYFEEDER_ANTHROPIC_API_KEY` env vars)
+- **Gradle npmInstall fails in some shells** — Gradle's Exec task can't find `npm`; build frontend separately with `cd src/main/frontend && npm install && npm run build`, then use `-x npmInstall -x npmBuild` flags
+
 ## Key Conventions
 
 - Base package: `org.bartram.myfeeder`
@@ -114,6 +123,7 @@ org.bartram.myfeeder
 - **Spring Data JDBC ≠ JPA**: No lazy loading, no derived query methods, no `@Entity` — use `@Table`/`@Id` from `org.springframework.data.annotation` and `@Query` for custom queries
 - **Jackson 3.x imports**: Must use `tools.jackson.databind.*`, not `com.fasterxml.jackson.databind.*`
 - **FeedPollingScheduler coupling**: Creating/updating a feed must register it with the scheduler — `FeedService` handles this, so don't bypass it with direct repository calls
+- **Paketo MaxDirectMemorySize**: Buildpack hardcodes `-XX:MaxDirectMemorySize=10M` regardless of container memory limit. Netty (used by Lettuce/Redis) needs more. Override via `JDK_JAVA_OPTIONS` env var (processed after `JAVA_TOOL_OPTIONS`, so last-value-wins). Do NOT use `_JAVA_OPTIONS` or `JAVA_TOOL_OPTIONS` — they won't override the buildpack's value.
 
 ## Test Patterns
 
@@ -122,4 +132,4 @@ org.bartram.myfeeder
 - **Repository tests**: `@DataJdbcTest` with `@Import(TestcontainersConfiguration.class)` for real Postgres
 - **Parser tests**: Plain unit tests with sample feed files in `src/test/resources/feeds/`
 - **Integration test**: `@SpringBootTest` + `@Import(TestcontainersConfiguration.class)` verifying all beans wire correctly
-- Test `application.yaml` must include `myfeeder.*` properties and dummy Spring AI keys (`spring.ai.anthropic.api-key`, `spring.ai.vertex.ai.embedding.*`)
+- Test `application.yaml` must include `myfeeder.*` properties and a dummy `spring.ai.anthropic.api-key`
