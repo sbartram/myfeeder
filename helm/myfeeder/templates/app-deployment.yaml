@@ -45,6 +45,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "myfeeder.fullname" . }}-secret
                   key: spring-ai-anthropic-api-key
+            - name: JDK_JAVA_OPTIONS
+              value: "-XX:MaxDirectMemorySize=64M"
             {{- if .Values.secrets.googleApplicationCredentials }}
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: /var/secrets/gcp/gcp-credentials.json
