@@ -9,6 +9,7 @@ export const articlesApi = {
     if (filters.starred != null) params.set('starred', String(filters.starred))
     params.set('limit', String(limit))
     if (before != null) params.set('before', String(before))
+    if (filters.sort) params.set('sort', filters.sort)
     return apiGet<PaginatedArticles>(`/articles?${params}`)
   },
   getById: (id: number) => apiGet<Article>(`/articles/${id}`),

@@ -148,11 +148,6 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
               {formatTime(article.publishedAt)}
               {article.starred && ' starred'}
             </div>
-            {article.summary && (
-              <div className="article-item-snippet">
-                {article.summary.slice(0, 100)}
-              </div>
-            )}
           </div>
         ))}
 

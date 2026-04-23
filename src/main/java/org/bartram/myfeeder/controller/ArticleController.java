@@ -25,8 +25,10 @@ public class ArticleController {
             @RequestParam(required = false) Boolean read,
             @RequestParam(required = false) Boolean starred,
             @RequestParam(defaultValue = "50") int limit,
-            @RequestParam(required = false) Long before) {
-        List<Article> articles = articleService.findFiltered(feedId, read, starred, before, limit + 1);
+            @RequestParam(required = false) Long before,
+            @RequestParam(defaultValue = "desc") String sort) {
+        boolean ascending = "asc".equalsIgnoreCase(sort);
+        List<Article> articles = articleService.findFiltered(feedId, read, starred, before, limit + 1, ascending);
         boolean hasMore = articles.size() > limit;
         if (hasMore) {
             articles = articles.subList(0, limit);

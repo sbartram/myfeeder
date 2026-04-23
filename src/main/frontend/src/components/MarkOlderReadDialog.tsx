@@ -7,7 +7,7 @@ interface MarkOlderReadDialogProps {
   onClose: () => void
 }
 
-const PRESETS = [7, 30, 90]
+const PRESETS = [1, 3, 7, 14]
 
 export function MarkOlderReadDialog({ open, feedName, onConfirm, onClose }: MarkOlderReadDialogProps) {
   const [days, setDays] = useState<number | ''>('')

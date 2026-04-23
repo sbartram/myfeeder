@@ -8,17 +8,17 @@
 - [X] do not deploy postgres in the helm chart - use pg.bartram.org
 - [X] update the frontend libraries
 - [ ] when an article is selected and then marked as read, it's removed from the article list while still selected
-- [ ] when the unread count in a feed, then hide it in the feed list
-- [ ] get rid of the description text in the article list
+- [ ] when the unread count reaches zero in a feed, then hide it in the feed list
+- [X] get rid of the description text in the article list
 - [ ] the article list pane in "title view" mode should only show the title plus truncated text, stripping out html tags
 - [ ] add support for "magazine view" in the article list pane
-- [ ] change the presets in the "mark read" dialog to 1, 3, 7, and 14 days
+- [X] change the presets in the "mark read" dialog to 1, 3, 7, and 14 days
 - [ ] allow custom names for feeds (some defaults are very long) or truncate them
 - [ ] share via email
 - [ ] "read later" tag?
-- [ ] copy link to clipboard
-- [ ] sort setting for feeds (latest, oldest)
-- [ ] hide empty feeds in feed nav
+- [X] copy link to clipboard
+- [X] sort setting for feeds (latest, oldest)
+- [X] hide empty feeds in feed nav
 - [ ] add notes to an article
 - [ ] dropbox and google drive
 

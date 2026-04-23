@@ -77,7 +77,7 @@ class ArticleServiceTest {
         article.setId(1L);
         when(articleRepository.findFiltered(null, false, null, 10)).thenReturn(List.of(article));
 
-        var result = articleService.findFiltered(null, false, null, null, 10);
+        var result = articleService.findFiltered(null, false, null, null, 10, false);
         assertThat(result).hasSize(1);
         verify(articleRepository).findFiltered(null, false, null, 10);
     }
@@ -88,7 +88,7 @@ class ArticleServiceTest {
         article.setId(5L);
         when(articleRepository.findFilteredBefore(1L, null, null, 10L, 10)).thenReturn(List.of(article));
 
-        var result = articleService.findFiltered(1L, null, null, 10L, 10);
+        var result = articleService.findFiltered(1L, null, null, 10L, 10, false);
         assertThat(result).hasSize(1);
         verify(articleRepository).findFilteredBefore(1L, null, null, 10L, 10);
     }

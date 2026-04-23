@@ -189,13 +189,6 @@ html, body, #root {
 
 .article-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
-.article-item-snippet {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 4px;
-  opacity: 0.7;
-}
-
 .empty-state {
   display: flex;
   align-items: center;

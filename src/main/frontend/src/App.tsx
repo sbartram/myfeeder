@@ -33,8 +33,10 @@ function FeedArticles() {
   const { feedId } = useParams()
   const { data: feeds = [] } = useFeeds()
   const hideReadArticles = usePreferences((s) => s.hideReadArticles)
+  const sortOrder = usePreferences((s) => s.articleSortOrder)
+  const sort = sortOrder === 'oldest-first' ? 'asc' as const : 'desc' as const
   const feed = feeds.find((f) => f.id === Number(feedId))
-  const filters = { feedId: Number(feedId), ...(hideReadArticles ? { read: false } : {}) }
+  const filters = { feedId: Number(feedId), sort, ...(hideReadArticles ? { read: false } : {}) }
   return <ArticleList filters={filters} title={feed?.title || 'Feed'} feedName={feed?.title} />
 }
 
@@ -42,6 +44,8 @@ function FolderArticles() {
   const { folderId } = useParams()
   const { data: feeds = [] } = useFeeds()
   const hideReadArticles = usePreferences((s) => s.hideReadArticles)
+  const sortOrder = usePreferences((s) => s.articleSortOrder)
+  const sort = sortOrder === 'oldest-first' ? 'asc' as const : 'desc' as const
   const folderFeeds = feeds.filter((f) => f.folderId === Number(folderId))
   const folderName = `Folder`
   const readFilter = hideReadArticles ? { read: false } : {}
@@ -50,19 +54,23 @@ function FolderArticles() {
   // A proper implementation would need a backend endpoint for folder-level queries
   // For now, if there's only one feed in the folder, show that feed's articles
   if (folderFeeds.length === 1) {
-    return <ArticleList filters={{ feedId: folderFeeds[0].id, ...readFilter }} title={folderName} />
+    return <ArticleList filters={{ feedId: folderFeeds[0].id, sort, ...readFilter }} title={folderName} />
   }
   // For multiple feeds, show all (backend doesn't support multi-feed filter yet)
-  return <ArticleList filters={{ ...readFilter }} title={folderName} />
+  return <ArticleList filters={{ sort, ...readFilter }} title={folderName} />
 }
 
 function StarredArticles() {
-  return <ArticleList filters={{ starred: true }} title="Starred" />
+  const sortOrder = usePreferences((s) => s.articleSortOrder)
+  const sort = sortOrder === 'oldest-first' ? 'asc' as const : 'desc' as const
+  return <ArticleList filters={{ starred: true, sort }} title="Starred" />
 }
 
 function AllArticles() {
   const hideReadArticles = usePreferences((s) => s.hideReadArticles)
-  return <ArticleList filters={hideReadArticles ? { read: false } : {}} title="All Articles" />
+  const sortOrder = usePreferences((s) => s.articleSortOrder)
+  const sort = sortOrder === 'oldest-first' ? 'asc' as const : 'desc' as const
+  return <ArticleList filters={hideReadArticles ? { read: false, sort } : { sort }} title="All Articles" />
 }
 
 function BoardArticles() {
@@ -77,8 +85,10 @@ function MainLayout() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const selectedFeedId = useUIStore((s) => s.selectedFeedId)
   const hideReadArticles = usePreferences((s) => s.hideReadArticles)
+  const sortOrder = usePreferences((s) => s.articleSortOrder)
+  const sort = sortOrder === 'oldest-first' ? 'asc' as const : 'desc' as const
   const readFilter = hideReadArticles ? { read: false as const } : {}
-  const { data } = useArticles(selectedFeedId ? { feedId: selectedFeedId, ...readFilter } : { ...readFilter })
+  const { data } = useArticles(selectedFeedId ? { feedId: selectedFeedId, sort, ...readFilter } : { sort, ...readFilter })
   const articles = useMemo(() => data?.pages.flatMap((p) => p.articles) ?? [], [data])
 
   useKeyboardShortcuts(articles, {

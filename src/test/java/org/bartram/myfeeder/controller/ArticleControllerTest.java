@@ -32,7 +32,7 @@ class ArticleControllerTest {
         article.setId(1L);
         article.setTitle("Test Article");
         article.setFetchedAt(Instant.now());
-        when(articleService.findFiltered(null, null, null, null, 51)).thenReturn(List.of(article));
+        when(articleService.findFiltered(null, null, null, null, 51, false)).thenReturn(List.of(article));
 
         mockMvc.perform(get("/api/articles"))
                 .andExpect(status().isOk())

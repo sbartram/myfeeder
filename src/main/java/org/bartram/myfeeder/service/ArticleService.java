@@ -72,9 +72,15 @@ public class ArticleService {
         }
     }
 
-    public List<Article> findFiltered(Long feedId, Boolean read, Boolean starred, Long before, int limit) {
-        if (before != null) {
-            return articleRepository.findFilteredBefore(feedId, read, starred, before, limit);
+    public List<Article> findFiltered(Long feedId, Boolean read, Boolean starred, Long cursor, int limit, boolean ascending) {
+        if (ascending) {
+            if (cursor != null) {
+                return articleRepository.findFilteredAfter(feedId, read, starred, cursor, limit);
+            }
+            return articleRepository.findFilteredAsc(feedId, read, starred, limit);
+        }
+        if (cursor != null) {
+            return articleRepository.findFilteredBefore(feedId, read, starred, cursor, limit);
         }
         return articleRepository.findFiltered(feedId, read, starred, limit);
     }

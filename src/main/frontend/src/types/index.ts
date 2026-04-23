@@ -54,4 +54,5 @@ export interface ArticleFilters {
   feedId?: number
   read?: boolean
   starred?: boolean
+  sort?: 'asc' | 'desc'
 }

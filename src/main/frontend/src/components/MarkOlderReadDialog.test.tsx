@@ -17,16 +17,17 @@ describe('MarkOlderReadDialog', () => {
 
   it('renders preset buttons', () => {
     render(<MarkOlderReadDialog {...defaultProps} />)
+    expect(screen.getByText('1 days')).toBeInTheDocument()
+    expect(screen.getByText('3 days')).toBeInTheDocument()
     expect(screen.getByText('7 days')).toBeInTheDocument()
-    expect(screen.getByText('30 days')).toBeInTheDocument()
-    expect(screen.getByText('90 days')).toBeInTheDocument()
+    expect(screen.getByText('14 days')).toBeInTheDocument()
   })
 
   it('calls onConfirm with preset value', () => {
     render(<MarkOlderReadDialog {...defaultProps} />)
-    fireEvent.click(screen.getByText('30 days'))
+    fireEvent.click(screen.getByText('3 days'))
     fireEvent.click(screen.getByText('Mark as read'))
-    expect(defaultProps.onConfirm).toHaveBeenCalledWith(30)
+    expect(defaultProps.onConfirm).toHaveBeenCalledWith(3)
   })
 
   it('accepts custom input', () => {
