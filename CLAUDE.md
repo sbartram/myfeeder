@@ -98,7 +98,7 @@ org.bartram.myfeeder
 - **Helm chart**: `helm/myfeeder/` — deploys app + Redis; Postgres is external at `pg.bartram.org`
 - **Build image**: `./gradlew bootBuildImage --imageName=registry.bartram.org/bartram/myfeeder:latest -x npmInstall -x npmBuild -x test` (frontend must be pre-built)
 - **Deploy**: `./deploy.sh` (requires `MYFEEDER_PG_PASSWORD` and `MYFEEDER_ANTHROPIC_API_KEY` env vars)
-- **Gradle npmInstall fails in some shells** — Gradle's Exec task can't find `npm`; build frontend separately with `cd src/main/frontend && npm install && npm run build`, then use `-x npmInstall -x npmBuild` flags
+
 
 ## Key Conventions
 

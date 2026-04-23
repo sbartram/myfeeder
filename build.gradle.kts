@@ -76,9 +76,12 @@ tasks.withType<Test> {
 	environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")
 }
 
+val npmExec: String = sequenceOf("/opt/homebrew/bin/npm", "/usr/local/bin/npm")
+	.firstOrNull { file(it).exists() } ?: "npm"
+
 val npmInstall by tasks.registering(Exec::class) {
 	workingDir = file("src/main/frontend")
-	commandLine("npm", "install")
+	commandLine(npmExec, "install")
 	inputs.file("src/main/frontend/package.json")
 	inputs.file("src/main/frontend/package-lock.json")
 	outputs.dir("src/main/frontend/node_modules")
@@ -87,7 +90,7 @@ val npmInstall by tasks.registering(Exec::class) {
 val npmBuild by tasks.registering(Exec::class) {
 	dependsOn(npmInstall)
 	workingDir = file("src/main/frontend")
-	commandLine("npm", "run", "build")
+	commandLine(npmExec, "run", "build")
 	inputs.dir("src/main/frontend/src")
 	inputs.file("src/main/frontend/index.html")
 	inputs.file("src/main/frontend/vite.config.ts")
