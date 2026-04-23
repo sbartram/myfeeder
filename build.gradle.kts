@@ -35,7 +35,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-restclient")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.springframework.ai:spring-ai-starter-model-anthropic")
-	implementation("org.springframework.ai:spring-ai-starter-model-vertex-ai-embedding")
+
 	implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
 	implementation("com.rometools:rome:2.1.0")
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
@@ -56,7 +56,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-restclient-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
-	testImplementation("org.springframework.ai:spring-ai-spring-boot-testcontainers")
+
 	testImplementation("org.testcontainers:testcontainers-junit-jupiter")
 	testImplementation("org.testcontainers:testcontainers-postgresql")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")

@@ -2,11 +2,6 @@ spring:
   ai:
     anthropic:
       api-key: test-dummy-key
-    vertex:
-      ai:
-        embedding:
-          project-id: test-project
-          location: us-central1
   datasource:
     hikari:
       connection-timeout: 30000
