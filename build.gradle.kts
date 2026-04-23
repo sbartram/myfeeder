@@ -2,10 +2,11 @@ plugins {
 	java
 	id("org.springframework.boot") version "4.0.3"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("pl.allegro.tech.build.axion-release") version "1.21.1"
 }
 
 group = "org.bartram"
-version = "0.0.1-SNAPSHOT"
+version = scmVersion.version
 description = "Feed Manager"
 
 java {
