@@ -11,19 +11,15 @@ app:
     type: LoadBalancer
     port: 8080
     annotations:
-      metallb.universe.tf/loadBalancerIPs: "192.168.44.203"
+      metallb.universe.tf/loadBalancerIPs: "192.168.44.204"
   resources: {}
   replicaCount: 1
 
-postgres:
-  image:
-    repository: postgres
-    tag: "16"
+externalPostgres:
+  host: pg.bartram.org
+  port: 5432
   database: myfeeder
   username: myfeeder
-  storage:
-    storageClass: nfs-client
-    size: 5Gi
 
 redis:
   image:

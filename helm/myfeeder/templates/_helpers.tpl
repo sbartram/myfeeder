@@ -39,14 +39,6 @@ app.kubernetes.io/component: app
 {{- end }}
 
 {{/*
-Postgres selector labels
-*/}}
-{{- define "myfeeder.postgresSelectorLabels" -}}
-app.kubernetes.io/name: {{ include "myfeeder.fullname" . }}
-app.kubernetes.io/component: postgres
-{{- end }}
-
-{{/*
 Redis selector labels
 */}}
 {{- define "myfeeder.redisSelectorLabels" -}}

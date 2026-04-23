@@ -20,17 +20,6 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      initContainers:
-        - name: wait-for-postgres
-          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
-          command:
-            - sh
-            - -c
-            - |
-              until pg_isready -h {{ include "myfeeder.fullname" . }}-postgres -p 5432 -U {{ .Values.postgres.username }}; do
-                echo "Waiting for postgres..."
-                sleep 2
-              done
       containers:
         - name: myfeeder
           image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"

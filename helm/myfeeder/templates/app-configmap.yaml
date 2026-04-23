@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "myfeeder.labels" . | nindent 4 }}
 data:
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://{{ include "myfeeder.fullname" . }}-postgres:5432/{{ .Values.postgres.database }}"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://{{ .Values.externalPostgres.host }}:{{ .Values.externalPostgres.port }}/{{ .Values.externalPostgres.database }}"
   SPRING_DATA_REDIS_HOST: "{{ include "myfeeder.fullname" . }}-redis"
   SPRING_DATA_REDIS_PORT: "6379"
   {{- if .Values.spring.profiles }}
