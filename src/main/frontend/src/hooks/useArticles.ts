@@ -12,6 +12,14 @@ export function useArticles(filters: ArticleFilters = {}) {
   })
 }
 
+export function useArticle(id: number | null) {
+  return useQuery({
+    queryKey: ['article', id],
+    queryFn: () => articlesApi.getById(id!),
+    enabled: id !== null,
+  })
+}
+
 export function useUnreadCounts() {
   return useQuery({
     queryKey: ['unreadCounts'],
@@ -25,8 +33,9 @@ export function useUpdateArticleState() {
   return useMutation({
     mutationFn: ({ id, state }: { id: number; state: { read?: boolean; starred?: boolean } }) =>
       articlesApi.updateState(id, state),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ['articles'] })
+      qc.invalidateQueries({ queryKey: ['article', variables.id] })
       qc.invalidateQueries({ queryKey: ['unreadCounts'] })
     },
   })

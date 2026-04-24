@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { useUIStore } from '../stores/uiStore'
-import { useArticles, useUpdateArticleState, useSaveToRaindrop } from '../hooks/useArticles'
+import { useArticle, useUpdateArticleState, useSaveToRaindrop } from '../hooks/useArticles'
 import { usePreferences } from '../stores/preferencesStore'
 import { useReadLater } from '../hooks/useBoards'
 import { BoardManager } from './BoardManager'
@@ -13,19 +13,7 @@ interface ReadingPaneProps {
 
 export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: ReadingPaneProps = {}) {
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
-  const selectedFeedId = useUIStore((s) => s.selectedFeedId)
-  const { data } = useArticles(
-    selectedFeedId ? { feedId: selectedFeedId } : {}
-  )
-
-  const article = useMemo(() => {
-    if (!selectedArticleId || !data) return null
-    for (const page of data.pages) {
-      const found = page.articles.find((a) => a.id === selectedArticleId)
-      if (found) return found
-    }
-    return null
-  }, [selectedArticleId, data])
+  const { data: article } = useArticle(selectedArticleId)
 
   const updateState = useUpdateArticleState()
   const saveToRaindrop = useSaveToRaindrop()
