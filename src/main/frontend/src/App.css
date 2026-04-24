@@ -433,6 +433,35 @@ html, body, #root {
   cursor: help;
 }
 
+/* Feed Context Menu */
+.feed-context-menu {
+  position: fixed;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 0;
+  min-width: 140px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 150;
+}
+
+.feed-context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+}
+
+.feed-context-menu-item:hover { background: var(--hover-bg); }
+
+.feed-context-menu-danger { color: #e74c3c; }
+.feed-context-menu-danger:hover { background: rgba(231, 76, 60, 0.15); }
+
 /* Split button */
 .split-btn-group { position: relative; display: flex; align-items: center; }
 .split-btn-toggle { padding: 4px 6px; font-size: 11px; border-left: 1px solid var(--border); }

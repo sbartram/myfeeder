@@ -22,8 +22,15 @@
 - [ ] add notes to an article
 - [ ] dropbox and google drive
 
+## Feed list
+
+- [X] need a way to unsubscribe from a feed
+- [X] need a way to force refresh a feed
+
 ## Article Reader
 
+- [ ] when choosing to "continue reading" an article, the link should be opened in a new tab
+- [ ] add a feature to mark an article as unread after reading
 - [ ] youtube feeds are not showing the video description
 - [ ] links like this one - https://theeurotvplace.com/2025/12/euro-tv-premieres-in-january-2026-land-of-sin-sophie-cross-stayer-more/ - are not displaying correctly
 - [ ] this link displays all the text (formatting is so-so) but doesn't display the image - https://relix.com/news/detail/jerry-garcias-tiger-guitar-among-historic-instruments-sold-at-jim-irsay-collection-auction-opening/

@@ -14,8 +14,14 @@ export function useSubscribeFeed() {
 }
 
 export function usePollFeed() {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => feedsApi.poll(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['feeds'] })
+      qc.invalidateQueries({ queryKey: ['articles'] })
+      qc.invalidateQueries({ queryKey: ['unreadCounts'] })
+    },
   })
 }
 
@@ -23,6 +29,10 @@ export function useDeleteFeed() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => feedsApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['feeds'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['feeds'] })
+      qc.invalidateQueries({ queryKey: ['articles'] })
+      qc.invalidateQueries({ queryKey: ['unreadCounts'] })
+    },
   })
 }

@@ -1,5 +1,5 @@
-import { useRef } from 'react'
-import { useFeeds } from '../hooks/useFeeds'
+import { useRef, useState, useEffect, useCallback } from 'react'
+import { useFeeds, useDeleteFeed, usePollFeed } from '../hooks/useFeeds'
 import { EmptyState } from './EmptyState'
 import { useFolders } from '../hooks/useFolders'
 import { useUnreadCounts } from '../hooks/useArticles'
@@ -22,6 +22,47 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
   const navigate = useNavigate()
   const importMutation = useImportOpml()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const deleteFeed = useDeleteFeed()
+  const pollFeed = usePollFeed()
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; feed: Feed } | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Feed | null>(null)
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, feed: Feed) => {
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY, feed })
+  }, [])
+
+  useEffect(() => {
+    if (!contextMenu) return
+    const close = () => setContextMenu(null)
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [contextMenu])
+
+  const handleRefreshFeed = () => {
+    if (contextMenu) {
+      pollFeed.mutate(contextMenu.feed.id)
+      setContextMenu(null)
+    }
+  }
+
+  const handleUnsubscribeFeed = () => {
+    if (contextMenu) {
+      setConfirmDelete(contextMenu.feed)
+      setContextMenu(null)
+    }
+  }
+
+  const confirmUnsubscribe = () => {
+    if (confirmDelete) {
+      deleteFeed.mutate(confirmDelete.id)
+      if (selectedFeedId === confirmDelete.id) {
+        setSelectedFeed(null)
+        navigate('/')
+      }
+      setConfirmDelete(null)
+    }
+  }
 
   const handleImportClick = () => fileInputRef.current?.click()
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,7 +163,8 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
               visibleFeeds(feedsByFolder(folder.id)).map((feed) => (
                 <div key={feed.id}
                      className={`feed-row ${selectedFeedId === feed.id ? 'active' : ''}`}
-                     onClick={() => handleFeedClick(feed.id)}>
+                     onClick={() => handleFeedClick(feed.id)}
+                     onContextMenu={(e) => handleContextMenu(e, feed)}>
                   <span>
                     {feed.errorCount > 0 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
                     {feed.title}
@@ -138,7 +180,8 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
         {visibleFeeds(uncategorized).map((feed) => (
           <div key={feed.id}
                className={`feed-row ${selectedFeedId === feed.id ? 'active' : ''}`}
-               onClick={() => handleFeedClick(feed.id)}>
+               onClick={() => handleFeedClick(feed.id)}
+               onContextMenu={(e) => handleContextMenu(e, feed)}>
             <span>
               {feed.errorCount > 0 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
               {feed.title}
@@ -151,6 +194,34 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
           </>
         )}
       </div>
+
+      {contextMenu && (
+        <div className="feed-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }}>
+          <button className="feed-context-menu-item" onClick={handleRefreshFeed}>
+            Refresh
+          </button>
+          <button className="feed-context-menu-item feed-context-menu-danger" onClick={handleUnsubscribeFeed}>
+            Unsubscribe
+          </button>
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div className="dialog-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="dialog" onClick={(e) => e.stopPropagation()}>
+            <h2>Unsubscribe from feed?</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+              This will remove <strong>{confirmDelete.title}</strong> and all its articles. This cannot be undone.
+            </p>
+            <div className="dialog-actions">
+              <button className="btn-secondary" onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button className="btn-primary" style={{ background: 'var(--toast-error-text)' }} onClick={confirmUnsubscribe}>
+                Unsubscribe
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="feed-panel-footer">
         <button className="footer-btn" onClick={onAddFeed}>+ Add Feed</button>
