@@ -166,7 +166,7 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
                      onClick={() => handleFeedClick(feed.id)}
                      onContextMenu={(e) => handleContextMenu(e, feed)}>
                   <span>
-                    {feed.errorCount > 0 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
+                    {feed.errorCount >= 3 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
                     {feed.title}
                   </span>
                   {feedUnread(feed.id) > 0 && (
@@ -183,7 +183,7 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
                onClick={() => handleFeedClick(feed.id)}
                onContextMenu={(e) => handleContextMenu(e, feed)}>
             <span>
-              {feed.errorCount > 0 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
+              {feed.errorCount >= 3 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
               {feed.title}
             </span>
             {feedUnread(feed.id) > 0 && (
