@@ -63,6 +63,8 @@ org.bartram.myfeeder
 - **FeedService** registers feeds with `FeedPollingScheduler` on create/update — don't forget this coupling
 - **FeedPollingService** deduplicates articles by GUID on upsert
 - **FeedPollingScheduler** uses `ApplicationReadyEvent` to register all feeds at startup; supports exponential backoff on errors
+- **Article sort order**: Articles are sorted by `COALESCE(published_at, fetched_at)` not by `id`. Batch-fetched articles get sequential IDs but varied publication dates, so `ORDER BY id` does not produce chronological order. Cursor pagination uses composite `(published_at, id)` comparison — the cursor is still a single article ID, but the service looks up the cursor article's date for the SQL comparison.
+- **ReadingPane fetches by ID**: The reading pane uses `useArticle(id)` to fetch the selected article directly (`GET /api/articles/{id}`), not by searching through the paginated list query. This avoids filter/sort mismatches between the article list and reading pane.
 - **RetentionService** is a `@Scheduled` cron job — config under `myfeeder.retention.*`
 - **OpmlService** has XXE protection enabled — maintain this when modifying XML parsing
 - **OpmlImportService** registers new feeds with scheduler post-commit (not inline)
@@ -124,6 +126,10 @@ org.bartram.myfeeder
 - **Jackson 3.x imports**: Must use `tools.jackson.databind.*`, not `com.fasterxml.jackson.databind.*`
 - **FeedPollingScheduler coupling**: Creating/updating a feed must register it with the scheduler — `FeedService` handles this, so don't bypass it with direct repository calls
 - **Paketo MaxDirectMemorySize**: Buildpack hardcodes `-XX:MaxDirectMemorySize=10M` regardless of container memory limit. Netty (used by Lettuce/Redis) needs more. Override via `JDK_JAVA_OPTIONS` env var (processed after `JAVA_TOOL_OPTIONS`, so last-value-wins). Do NOT use `_JAVA_OPTIONS` or `JAVA_TOOL_OPTIONS` — they won't override the buildpack's value.
+- **Frontend not in image**: `bootBuildImage -x npmBuild` reuses `build/resources/main/static/` from the last `processResources` run. After frontend-only changes, run `./gradlew clean bootBuildImage` or `./gradlew processResources` first to ensure the new bundle is packaged.
+- **SNAPSHOT tags + pullPolicy**: `imagePullPolicy: IfNotPresent` causes k8s to reuse stale images when the same SNAPSHOT tag is pushed. Use `Always` during development; `IfNotPresent` is only safe with immutable release tags.
+- **Gradle terminal escapes in scripts**: `./gradlew currentVersion -q` outputs terminal control sequences. In shell scripts, pipe through `grep 'Project version'` before parsing to avoid contaminating variables.
+- **Clipboard API requires HTTPS**: The app is served over HTTP (`192.168.44.204`), so `navigator.clipboard` is unavailable. Use `document.execCommand('copy')` fallback for clipboard operations.
 
 ## Test Patterns
 
