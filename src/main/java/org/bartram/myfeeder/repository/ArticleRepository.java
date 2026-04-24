@@ -39,17 +39,17 @@ public interface ArticleRepository extends ListCrudRepository<Article, Long> {
     @Query("SELECT EXISTS(SELECT 1 FROM article WHERE feed_id = :feedId AND guid = :guid)")
     boolean existsByFeedIdAndGuid(Long feedId, String guid);
 
-    @Query("SELECT * FROM article WHERE (:feedId IS NULL OR feed_id = :feedId) AND (:read IS NULL OR \"read\" = :read) AND (:starred IS NULL OR starred = :starred) ORDER BY id DESC LIMIT :limit")
+    @Query("SELECT * FROM article WHERE (:feedId IS NULL OR feed_id = :feedId) AND (:read IS NULL OR \"read\" = :read) AND (:starred IS NULL OR starred = :starred) ORDER BY COALESCE(published_at, fetched_at) DESC, id DESC LIMIT :limit")
     List<Article> findFiltered(Long feedId, Boolean read, Boolean starred, int limit);
 
-    @Query("SELECT * FROM article WHERE (:feedId IS NULL OR feed_id = :feedId) AND (:read IS NULL OR \"read\" = :read) AND (:starred IS NULL OR starred = :starred) AND id < :before ORDER BY id DESC LIMIT :limit")
-    List<Article> findFilteredBefore(Long feedId, Boolean read, Boolean starred, Long before, int limit);
+    @Query("SELECT * FROM article WHERE (:feedId IS NULL OR feed_id = :feedId) AND (:read IS NULL OR \"read\" = :read) AND (:starred IS NULL OR starred = :starred) AND (COALESCE(published_at, fetched_at) < :cursorDate OR (COALESCE(published_at, fetched_at) = :cursorDate AND id < :cursorId)) ORDER BY COALESCE(published_at, fetched_at) DESC, id DESC LIMIT :limit")
+    List<Article> findFilteredBefore(Long feedId, Boolean read, Boolean starred, Instant cursorDate, Long cursorId, int limit);
 
-    @Query("SELECT * FROM article WHERE (:feedId IS NULL OR feed_id = :feedId) AND (:read IS NULL OR \"read\" = :read) AND (:starred IS NULL OR starred = :starred) ORDER BY id ASC LIMIT :limit")
+    @Query("SELECT * FROM article WHERE (:feedId IS NULL OR feed_id = :feedId) AND (:read IS NULL OR \"read\" = :read) AND (:starred IS NULL OR starred = :starred) ORDER BY COALESCE(published_at, fetched_at) ASC, id ASC LIMIT :limit")
     List<Article> findFilteredAsc(Long feedId, Boolean read, Boolean starred, int limit);
 
-    @Query("SELECT * FROM article WHERE (:feedId IS NULL OR feed_id = :feedId) AND (:read IS NULL OR \"read\" = :read) AND (:starred IS NULL OR starred = :starred) AND id > :after ORDER BY id ASC LIMIT :limit")
-    List<Article> findFilteredAfter(Long feedId, Boolean read, Boolean starred, Long after, int limit);
+    @Query("SELECT * FROM article WHERE (:feedId IS NULL OR feed_id = :feedId) AND (:read IS NULL OR \"read\" = :read) AND (:starred IS NULL OR starred = :starred) AND (COALESCE(published_at, fetched_at) > :cursorDate OR (COALESCE(published_at, fetched_at) = :cursorDate AND id > :cursorId)) ORDER BY COALESCE(published_at, fetched_at) ASC, id ASC LIMIT :limit")
+    List<Article> findFilteredAfter(Long feedId, Boolean read, Boolean starred, Instant cursorDate, Long cursorId, int limit);
 
     @Query("SELECT feed_id, COUNT(*) AS count FROM article WHERE \"read\" = false GROUP BY feed_id")
     List<UnreadCount> countUnreadByFeed();

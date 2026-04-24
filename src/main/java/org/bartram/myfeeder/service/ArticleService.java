@@ -73,14 +73,18 @@ public class ArticleService {
     }
 
     public List<Article> findFiltered(Long feedId, Boolean read, Boolean starred, Long cursor, int limit, boolean ascending) {
-        if (ascending) {
-            if (cursor != null) {
-                return articleRepository.findFilteredAfter(feedId, read, starred, cursor, limit);
-            }
-            return articleRepository.findFilteredAsc(feedId, read, starred, limit);
-        }
         if (cursor != null) {
-            return articleRepository.findFilteredBefore(feedId, read, starred, cursor, limit);
+            Article cursorArticle = articleRepository.findById(cursor)
+                    .orElseThrow(() -> new IllegalArgumentException("Cursor article not found: " + cursor));
+            Instant cursorDate = cursorArticle.getPublishedAt() != null
+                    ? cursorArticle.getPublishedAt() : cursorArticle.getFetchedAt();
+            if (ascending) {
+                return articleRepository.findFilteredAfter(feedId, read, starred, cursorDate, cursor, limit);
+            }
+            return articleRepository.findFilteredBefore(feedId, read, starred, cursorDate, cursor, limit);
+        }
+        if (ascending) {
+            return articleRepository.findFilteredAsc(feedId, read, starred, limit);
         }
         return articleRepository.findFiltered(feedId, read, starred, limit);
     }

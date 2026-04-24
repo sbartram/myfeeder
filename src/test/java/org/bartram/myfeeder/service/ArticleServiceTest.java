@@ -84,13 +84,19 @@ class ArticleServiceTest {
 
     @Test
     void shouldFindFilteredWithCursor() {
+        var cursorArticle = new Article();
+        cursorArticle.setId(10L);
+        var publishedAt = Instant.parse("2026-04-20T12:00:00Z");
+        cursorArticle.setPublishedAt(publishedAt);
+        when(articleRepository.findById(10L)).thenReturn(Optional.of(cursorArticle));
+
         var article = new Article();
         article.setId(5L);
-        when(articleRepository.findFilteredBefore(1L, null, null, 10L, 10)).thenReturn(List.of(article));
+        when(articleRepository.findFilteredBefore(1L, null, null, publishedAt, 10L, 10)).thenReturn(List.of(article));
 
         var result = articleService.findFiltered(1L, null, null, 10L, 10, false);
         assertThat(result).hasSize(1);
-        verify(articleRepository).findFilteredBefore(1L, null, null, 10L, 10);
+        verify(articleRepository).findFilteredBefore(1L, null, null, publishedAt, 10L, 10);
     }
 
     @Test
