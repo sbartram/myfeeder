@@ -38,15 +38,33 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
     [data]
   )
 
+  // Preserve selected article so it stays visible after being marked read
+  const [preservedArticle, setPreservedArticle] = useState<Article | null>(null)
+  useEffect(() => {
+    if (selectedArticleId) {
+      const found = allArticles.find((a) => a.id === selectedArticleId)
+      if (found) setPreservedArticle({ ...found })
+    } else {
+      setPreservedArticle(null)
+    }
+  }, [selectedArticleId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const filtered = useMemo(() => {
-    if (!searchQuery) return allArticles
-    const q = searchQuery.toLowerCase()
-    return allArticles.filter(
-      (a) =>
-        a.title.toLowerCase().includes(q) ||
-        (a.summary && a.summary.toLowerCase().includes(q))
-    )
-  }, [allArticles, searchQuery])
+    let articles = allArticles
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      articles = articles.filter(
+        (a) =>
+          a.title.toLowerCase().includes(q) ||
+          (a.summary && a.summary.toLowerCase().includes(q))
+      )
+    }
+    // If the selected article was filtered out (e.g. marked read), keep it in the list
+    if (preservedArticle && !articles.some((a) => a.id === preservedArticle.id)) {
+      articles = [...articles, { ...preservedArticle, read: true }]
+    }
+    return articles
+  }, [allArticles, searchQuery, preservedArticle])
 
   const handleArticleClick = (article: Article) => {
     setSelectedArticle(article.id)

@@ -7,10 +7,8 @@
 - [X] add a setting to hide read articles in the article list pane with the default enabled
 - [X] do not deploy postgres in the helm chart - use pg.bartram.org
 - [X] update the frontend libraries
-- [ ] when an article is selected and then marked as read, it's removed from the article list while still selected
-- [ ] when the unread count reaches zero in a feed, then hide it in the feed list
 - [X] get rid of the description text in the article list
-- [ ] the article list pane in "title view" mode should only show the title plus truncated text, stripping out html tags
+- [X] the article list pane in "title view" mode should only show the title plus truncated text, stripping out html tags
 - [ ] add support for "magazine view" in the article list pane
 - [X] change the presets in the "mark read" dialog to 1, 3, 7, and 14 days
 - [ ] allow custom names for feeds (some defaults are very long) or truncate them
@@ -24,12 +22,20 @@
 
 ## Feed list
 
+- [ ] change the color or highlighting of feed groups to make them more obvious
+- [X] when the unread count reaches zero in a feed, then hide it in the feed list
 - [X] need a way to unsubscribe from a feed
 - [X] need a way to force refresh a feed
 
+## Article List
+
+- [ ] Add an option to show unread or all for the currently selected feed
+
 ## Article Reader
 
-- [ ] when choosing to "continue reading" an article, the link should be opened in a new tab
+- [X] "Copy Link" does not appear to be working
+- [X] when an article is selected and then marked as read, it should not be removed from the article list while still selected
+- [X] links inside an article content should be opened in a new tab
 - [ ] add a feature to mark an article as unread after reading
 - [ ] youtube feeds are not showing the video description
 - [ ] links like this one - https://theeurotvplace.com/2025/12/euro-tv-premieres-in-january-2026-land-of-sin-sophie-cross-stayer-more/ - are not displaying correctly

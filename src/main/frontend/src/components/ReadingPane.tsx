@@ -58,7 +58,26 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
   }
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(article.url)
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(article.url)
+    } else {
+      const textarea = document.createElement('textarea')
+      textarea.value = article.url
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+  }
+
+  const handleContentClick = (e: React.MouseEvent) => {
+    const link = (e.target as HTMLElement).closest('a')
+    if (link?.href) {
+      e.preventDefault()
+      window.open(link.href, '_blank', 'noopener')
+    }
   }
 
   const handleRaindrop = () => {
@@ -91,6 +110,7 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
         </div>
         <div
           className="article-body"
+          onClick={handleContentClick}
           dangerouslySetInnerHTML={{ __html: sanitizedContent }}
         />
       </div>
