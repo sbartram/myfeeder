@@ -30,6 +30,7 @@
 ## Article List
 
 - [ ] Add an option to show unread or all for the currently selected feed
+- [ ] After "mark all read" is pressed and processed, automatically move to the next feed with unread articles 
 
 ## Article Reader
 

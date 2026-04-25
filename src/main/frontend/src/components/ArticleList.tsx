@@ -1,9 +1,12 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import { useArticles, useMarkRead } from '../hooks/useArticles'
+import { useNavigate } from 'react-router-dom'
+import { useArticles, useMarkRead, useUnreadCounts } from '../hooks/useArticles'
+import { useFeeds } from '../hooks/useFeeds'
+import { useFolders } from '../hooks/useFolders'
 import { useUIStore } from '../stores/uiStore'
 import { EmptyState } from './EmptyState'
 import { MarkOlderReadDialog } from './MarkOlderReadDialog'
-import type { Article, ArticleFilters } from '../types'
+import type { Article, ArticleFilters, Feed } from '../types'
 
 interface ArticleListProps {
   filters: ArticleFilters
@@ -14,10 +17,24 @@ interface ArticleListProps {
 export function ArticleList({ filters, title, feedName }: ArticleListProps) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useArticles(filters)
   const markRead = useMarkRead()
+  const navigate = useNavigate()
+  const { data: feeds = [] } = useFeeds()
+  const { data: folders = [] } = useFolders()
+  const { data: counts = {} } = useUnreadCounts()
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
   const setSelectedArticle = useUIStore((s) => s.setSelectedArticle)
+  const setSelectedFeed = useUIStore((s) => s.setSelectedFeed)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
+
+  const orderedFeeds: Feed[] = useMemo(() => {
+    const list: Feed[] = []
+    folders.forEach((folder) => {
+      list.push(...feeds.filter((f) => f.folderId === folder.id))
+    })
+    list.push(...feeds.filter((f) => !f.folderId))
+    return list
+  }, [feeds, folders])
   const [showOlderDialog, setShowOlderDialog] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -73,9 +90,28 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
     setSelectedArticle(article.id)
   }
 
+  const findNextUnreadFeedId = (currentFeedId: number): number | null => {
+    const idx = orderedFeeds.findIndex((f) => f.id === currentFeedId)
+    if (idx < 0) return null
+    const candidates = [...orderedFeeds.slice(idx + 1), ...orderedFeeds.slice(0, idx)]
+    return candidates.find((f) => (counts[String(f.id)] || 0) > 0)?.id ?? null
+  }
+
   const handleMarkAllRead = () => {
     if (filters.feedId) {
-      markRead.mutate({ feedId: filters.feedId })
+      const nextId = findNextUnreadFeedId(filters.feedId)
+      markRead.mutate(
+        { feedId: filters.feedId },
+        {
+          onSuccess: () => {
+            if (nextId != null) {
+              setSelectedFeed(nextId)
+              setSelectedArticle(null)
+              navigate(`/feed/${nextId}`)
+            }
+          },
+        },
+      )
     } else {
       const ids = allArticles.filter((a) => !a.read).map((a) => a.id)
       if (ids.length > 0) markRead.mutate({ articleIds: ids })

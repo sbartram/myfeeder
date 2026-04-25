@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi } from 'vitest'
 import { ArticleList } from './ArticleList'
 
@@ -12,6 +13,15 @@ vi.mock('../hooks/useArticles', () => ({
     isFetchingNextPage: false,
   }),
   useMarkRead: () => ({ mutate: vi.fn() }),
+  useUnreadCounts: () => ({ data: {} }),
+}))
+
+vi.mock('../hooks/useFeeds', () => ({
+  useFeeds: () => ({ data: [] }),
+}))
+
+vi.mock('../hooks/useFolders', () => ({
+  useFolders: () => ({ data: [] }),
 }))
 
 vi.mock('../stores/uiStore', () => ({
@@ -19,6 +29,7 @@ vi.mock('../stores/uiStore', () => ({
     const state = {
       selectedArticleId: null,
       setSelectedArticle: vi.fn(),
+      setSelectedFeed: vi.fn(),
       searchQuery: '',
       setSearchQuery: vi.fn(),
     }
@@ -26,19 +37,22 @@ vi.mock('../stores/uiStore', () => ({
   },
 }))
 
+const renderWithRouter = (ui: React.ReactElement) =>
+  render(<MemoryRouter>{ui}</MemoryRouter>)
+
 describe('ArticleList split button', () => {
   it('shows dropdown toggle when feedId is set', () => {
-    render(<ArticleList filters={{ feedId: 1 }} title="Test Feed" feedName="Test Feed" />)
+    renderWithRouter(<ArticleList filters={{ feedId: 1 }} title="Test Feed" feedName="Test Feed" />)
     expect(screen.getByLabelText('More mark-read options')).toBeInTheDocument()
   })
 
   it('hides dropdown toggle when no feedId', () => {
-    render(<ArticleList filters={{}} title="All Articles" />)
+    renderWithRouter(<ArticleList filters={{}} title="All Articles" />)
     expect(screen.queryByLabelText('More mark-read options')).not.toBeInTheDocument()
   })
 
   it('opens dropdown menu and shows "Mark older than…" option', () => {
-    render(<ArticleList filters={{ feedId: 1 }} title="Test Feed" feedName="Test Feed" />)
+    renderWithRouter(<ArticleList filters={{ feedId: 1 }} title="Test Feed" feedName="Test Feed" />)
     fireEvent.click(screen.getByLabelText('More mark-read options'))
     expect(screen.getByText('Mark older than…')).toBeInTheDocument()
   })
