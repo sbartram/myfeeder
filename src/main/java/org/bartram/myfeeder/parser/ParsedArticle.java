@@ -14,5 +14,6 @@ public class ParsedArticle {
     private String author;
     private String content;
     private String summary;
+    private String imageUrl;
     private Instant publishedAt;
 }

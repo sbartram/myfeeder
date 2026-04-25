@@ -96,10 +96,30 @@ html, body, #root {
   border-radius: 4px;
 }
 
+.folder-row {
+  margin-top: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  background: var(--hover-bg);
+  border-left: 3px solid var(--accent);
+  border-radius: 3px;
+}
+
+.folder-row:first-child { margin-top: 0; }
+
 .feed-row { padding-left: 24px; }
 
-.folder-row:hover, .feed-row:hover, .folder-row.active, .feed-row.active {
+.feed-row:hover, .feed-row.active {
   background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.folder-row:hover, .folder-row.active {
+  filter: brightness(1.15);
   color: var(--text-primary);
 }
 
@@ -250,6 +270,14 @@ html, body, #root {
   font-size: 12px;
   color: var(--text-muted);
   margin-bottom: 20px;
+}
+
+.article-lead-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0 0 20px;
 }
 
 .article-body {

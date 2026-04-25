@@ -2,7 +2,11 @@ package org.bartram.myfeeder.parser;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import com.rometools.modules.mediarss.MediaEntryModule;
+import com.rometools.modules.mediarss.types.MediaContent;
+import com.rometools.modules.mediarss.types.Thumbnail;
 import com.rometools.rome.feed.synd.SyndContent;
+import com.rometools.rome.feed.synd.SyndEnclosure;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.feed.synd.SyndPerson;
@@ -16,9 +20,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class FeedParser {
+
+    private static final Pattern IMG_SRC_PATTERN =
+            Pattern.compile("<img[^>]+src\\s*=\\s*[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -86,6 +95,8 @@ public class FeedParser {
 
         String guid = entry.getUri() != null ? entry.getUri() : entry.getLink();
 
+        String imageUrl = extractImageUrl(entry, content, summary);
+
         return ParsedArticle.builder()
                 .guid(guid)
                 .title(entry.getTitle())
@@ -93,8 +104,52 @@ public class FeedParser {
                 .author(author)
                 .content(content)
                 .summary(summary)
+                .imageUrl(imageUrl)
                 .publishedAt(publishedAt)
                 .build();
+    }
+
+    private String extractImageUrl(SyndEntry entry, String content, String summary) {
+        MediaEntryModule media = (MediaEntryModule) entry.getModule(MediaEntryModule.URI);
+        if (media != null) {
+            for (MediaContent mc : media.getMediaContents()) {
+                String url = mediaContentImageUrl(mc);
+                if (url != null) return url;
+            }
+            if (media.getMetadata() != null && media.getMetadata().getThumbnail() != null) {
+                for (Thumbnail t : media.getMetadata().getThumbnail()) {
+                    if (t.getUrl() != null) return t.getUrl().toString();
+                }
+            }
+        }
+
+        for (SyndEnclosure enc : entry.getEnclosures()) {
+            String mime = enc.getType();
+            if (mime != null && mime.toLowerCase().startsWith("image/") && enc.getUrl() != null) {
+                return enc.getUrl();
+            }
+        }
+
+        String fromContent = firstImgInHtml(content);
+        if (fromContent != null) return fromContent;
+        return firstImgInHtml(summary);
+    }
+
+    private String mediaContentImageUrl(MediaContent mc) {
+        if (mc.getReference() == null) return null;
+        String medium = mc.getMedium();
+        String type = mc.getType();
+        boolean isImage = "image".equalsIgnoreCase(medium)
+                || (type != null && type.toLowerCase().startsWith("image/"))
+                || (medium == null && type == null);
+        if (!isImage) return null;
+        return mc.getReference().toString();
+    }
+
+    private String firstImgInHtml(String html) {
+        if (html == null || html.isEmpty()) return null;
+        Matcher m = IMG_SRC_PATTERN.matcher(html);
+        return m.find() ? m.group(1) : null;
     }
 
     private ParsedFeed parseJsonFeed(String rawContent) {
@@ -134,13 +189,23 @@ public class FeedParser {
             publishedAt = Instant.parse(dateStr);
         }
 
+        String content = textOrNull(item, "content_html");
+        String summary = textOrNull(item, "summary");
+        String imageUrl = Optional.ofNullable(textOrNull(item, "image"))
+                .or(() -> Optional.ofNullable(textOrNull(item, "banner_image")))
+                .orElseGet(() -> {
+                    String fromContent = firstImgInHtml(content);
+                    return fromContent != null ? fromContent : firstImgInHtml(summary);
+                });
+
         return ParsedArticle.builder()
                 .guid(textOrNull(item, "id"))
                 .title(textOrNull(item, "title"))
                 .url(textOrNull(item, "url"))
                 .author(author)
-                .content(textOrNull(item, "content_html"))
-                .summary(textOrNull(item, "summary"))
+                .content(content)
+                .summary(summary)
+                .imageUrl(imageUrl)
                 .publishedAt(publishedAt)
                 .build();
     }

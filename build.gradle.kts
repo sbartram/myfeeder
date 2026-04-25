@@ -39,6 +39,7 @@ dependencies {
 
 	implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
 	implementation("com.rometools:rome:2.1.0")
+	implementation("com.rometools:rome-modules:2.1.0")
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	implementation("org.flywaydb:flyway-database-postgresql")
 	compileOnly("org.projectlombok:lombok")

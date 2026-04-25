@@ -47,10 +47,16 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
     )
   }
 
-  const sanitizedContent = DOMPurify.sanitize(article.content || article.summary || '')
+  const bodyHtml = article.content || article.summary || ''
+  const sanitizedContent = DOMPurify.sanitize(bodyHtml)
+  const showLeadImage = !!article.imageUrl && !bodyHtml.includes(article.imageUrl)
 
   const handleStar = () => {
     updateState.mutate({ id: article.id, state: { starred: !article.starred } })
+  }
+
+  const handleToggleRead = () => {
+    updateState.mutate({ id: article.id, state: { read: !article.read } })
   }
 
   const handleOpenOriginal = () => {
@@ -90,6 +96,9 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
         <button className="toolbar-btn" onClick={handleStar}>
           {article.starred ? '★ Unstar' : '★ Star'}
         </button>
+        <button className="toolbar-btn" onClick={handleToggleRead}>
+          {article.read ? '○ Mark Unread' : '● Mark Read'}
+        </button>
         <button className="toolbar-btn" onClick={() => setInternalBoardOpen(true)}>📋 Board</button>
         <button className="toolbar-btn" onClick={() => readLater.mutate(article.id)}>🔖 Read Later</button>
         <button className="toolbar-btn" onClick={handleRaindrop}>💧 Raindrop</button>
@@ -108,6 +117,9 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
             <span> &middot; {new Date(article.publishedAt).toLocaleDateString()}</span>
           )}
         </div>
+        {showLeadImage && (
+          <img className="article-lead-image" src={article.imageUrl!} alt="" />
+        )}
         <div
           className="article-body"
           onClick={handleContentClick}

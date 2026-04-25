@@ -18,6 +18,7 @@ public class Article {
     private String author;
     private String content;
     private String summary;
+    private String imageUrl;
     private Instant publishedAt;
     private Instant fetchedAt;
     private boolean read;

@@ -25,6 +25,7 @@ export interface Article {
   author: string | null
   content: string | null
   summary: string | null
+  imageUrl: string | null
   publishedAt: string | null
   fetchedAt: string
   read: boolean

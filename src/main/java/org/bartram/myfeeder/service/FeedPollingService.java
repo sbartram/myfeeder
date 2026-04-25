@@ -98,6 +98,7 @@ public class FeedPollingService {
         article.setAuthor(parsed.getAuthor());
         article.setContent(parsed.getContent());
         article.setSummary(parsed.getSummary());
+        article.setImageUrl(parsed.getImageUrl());
         article.setPublishedAt(parsed.getPublishedAt() != null ? parsed.getPublishedAt() : Instant.now());
         article.setFetchedAt(Instant.now());
         return article;

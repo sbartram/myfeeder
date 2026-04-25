@@ -59,6 +59,109 @@ class FeedParserTest {
     }
 
     @Test
+    void shouldExtractImageFromMediaRss() {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+                  <channel>
+                    <title>Media Feed</title>
+                    <link>https://example.com</link>
+                    <description>desc</description>
+                    <item>
+                      <title>Post With Media</title>
+                      <link>https://example.com/post</link>
+                      <guid>https://example.com/post</guid>
+                      <description>Just text, no img</description>
+                      <media:content url="https://cdn.example.com/lead.jpg" medium="image" />
+                    </item>
+                  </channel>
+                </rss>
+                """;
+        ParsedFeed result = parser.parse(xml);
+        assertThat(result.getArticles().get(0).getImageUrl())
+                .isEqualTo("https://cdn.example.com/lead.jpg");
+    }
+
+    @Test
+    void shouldExtractImageFromEnclosure() {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <rss version="2.0">
+                  <channel>
+                    <title>Enclosure Feed</title>
+                    <link>https://example.com</link>
+                    <description>desc</description>
+                    <item>
+                      <title>Post</title>
+                      <link>https://example.com/post</link>
+                      <guid>https://example.com/post</guid>
+                      <description>text</description>
+                      <enclosure url="https://cdn.example.com/encl.png" length="1234" type="image/png" />
+                    </item>
+                  </channel>
+                </rss>
+                """;
+        ParsedFeed result = parser.parse(xml);
+        assertThat(result.getArticles().get(0).getImageUrl())
+                .isEqualTo("https://cdn.example.com/encl.png");
+    }
+
+    @Test
+    void shouldFallBackToFirstImgInContent() {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+                  <channel>
+                    <title>Inline Feed</title>
+                    <link>https://example.com</link>
+                    <description>desc</description>
+                    <item>
+                      <title>Post</title>
+                      <link>https://example.com/post</link>
+                      <guid>https://example.com/post</guid>
+                      <description>text only</description>
+                      <content:encoded><![CDATA[<p>hi</p><img src="https://cdn.example.com/inline.jpg" alt="x" /><p>more</p>]]></content:encoded>
+                    </item>
+                  </channel>
+                </rss>
+                """;
+        ParsedFeed result = parser.parse(xml);
+        assertThat(result.getArticles().get(0).getImageUrl())
+                .isEqualTo("https://cdn.example.com/inline.jpg");
+    }
+
+    @Test
+    void shouldExtractImageFromJsonFeed() {
+        String json = """
+                {
+                  "version": "https://jsonfeed.org/version/1.1",
+                  "title": "JSON",
+                  "home_page_url": "https://example.com",
+                  "items": [
+                    {
+                      "id": "x",
+                      "title": "t",
+                      "url": "https://example.com/x",
+                      "content_html": "<p>hi</p>",
+                      "image": "https://cdn.example.com/json.jpg",
+                      "date_published": "2026-03-01T12:00:00Z"
+                    }
+                  ]
+                }
+                """;
+        ParsedFeed result = parser.parse(json);
+        assertThat(result.getArticles().get(0).getImageUrl())
+                .isEqualTo("https://cdn.example.com/json.jpg");
+    }
+
+    @Test
+    void shouldReturnNullImageWhenAbsent() {
+        String xml = loadResource("/feeds/sample-rss.xml");
+        ParsedFeed result = parser.parse(xml);
+        assertThat(result.getArticles().get(0).getImageUrl()).isNull();
+    }
+
+    @Test
     void shouldDetectFeedType() {
         assertThat(parser.detectFeedType(loadResource("/feeds/sample-rss.xml"))).isEqualTo(FeedType.RSS);
         assertThat(parser.detectFeedType(loadResource("/feeds/sample-atom.xml"))).isEqualTo(FeedType.ATOM);
