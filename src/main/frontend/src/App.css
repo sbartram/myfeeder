@@ -113,10 +113,17 @@ html, body, #root {
 
 .feed-row { padding-left: 24px; }
 
-.feed-row:hover, .feed-row.active {
+.feed-row:hover {
   background: var(--hover-bg);
   color: var(--text-primary);
 }
+
+.feed-row.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.feed-row.active .count { color: #fff; }
 
 .folder-row:hover, .folder-row.active {
   filter: brightness(1.15);
