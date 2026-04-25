@@ -22,6 +22,7 @@
 
 ## Feed list
 
+- [ ] allow custom ordering of feed groups
 - [X] change the color or highlighting of feed groups to make them more obvious
 - [X] when the unread count reaches zero in a feed, then hide it in the feed list
 - [X] need a way to unsubscribe from a feed
