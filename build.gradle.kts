@@ -71,6 +71,21 @@ dependencyManagement {
 	}
 }
 
+val gitPushRelease by tasks.registering(Exec::class) {
+	commandLine("git", "push", "--follow-tags", "origin", "HEAD")
+}
+
+tasks.named("release") {
+	actions.clear()
+	dependsOn("createRelease")
+	finalizedBy(gitPushRelease)
+}
+
+tasks.named("pushRelease") {
+	actions.clear()
+	finalizedBy(gitPushRelease)
+}
+
 tasks.withType<Test> {
 	useJUnitPlatform()
 	environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///Users/scottb/.rd/docker.sock")
