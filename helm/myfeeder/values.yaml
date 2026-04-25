@@ -19,6 +19,16 @@ app:
     limits:
       memory: "2Gi"
   replicaCount: 1
+  probes:
+    startup:
+      periodSeconds: 5
+      failureThreshold: 60
+    readiness:
+      initialDelaySeconds: 0
+      periodSeconds: 10
+    liveness:
+      periodSeconds: 30
+      failureThreshold: 5
 
 externalPostgres:
   host: pg.bartram.org
