@@ -42,6 +42,7 @@ cd src/main/frontend && npm run dev
 - **HTTP Client**: Spring RestClient for outbound calls
 - **Monitoring**: Spring Boot Actuator
 - **Feed Parsing**: ROME 2.1.0 for RSS/Atom, Jackson 3.x for JSON Feed
+- **Feed extensions**: Media RSS / iTunes / GeoRSS namespaces require `com.rometools:rome-modules:2.1.0` (separate artifact from `rome`); accessed via `entry.getModule(MediaEntryModule.URI)` etc.
 
 ## Package Structure
 
@@ -98,8 +99,10 @@ org.bartram.myfeeder
 - **Registry**: `registry.bartram.org/bartram/myfeeder`
 - **Cluster**: k3s (`k3s-ansible` context), namespace `myfeeder`
 - **Helm chart**: `helm/myfeeder/` — deploys app + Redis; Postgres is external at `pg.bartram.org`
-- **Build image**: `./gradlew bootBuildImage --imageName=registry.bartram.org/bartram/myfeeder:$(./gradlew currentVersion -q | awk '{print $NF}') -x npmInstall -x npmBuild -x test` (frontend must be pre-built; version comes from axion-release git tags)
-- **Deploy**: `./deploy.sh` (requires `MYFEEDER_PG_PASSWORD` and `MYFEEDER_ANTHROPIC_API_KEY` env vars; automatically sets image tag to current version)
+- **Build image**: `./gradlew clean bootBuildImage --imageName=registry.bartram.org/bartram/myfeeder:<version> -x test` (use `clean` so the latest frontend bundle is included; version comes from axion-release git tags)
+- **Push image**: `docker push registry.bartram.org/bartram/myfeeder:<version>` (build does NOT push)
+- **Cut release tag**: `./gradlew release` (creates tag locally via axion-release, pushes via git CLI — see Gotchas)
+- **Deploy**: `./deploy.sh [version]` (requires `MYFEEDER_PG_PASSWORD` and `MYFEEDER_ANTHROPIC_API_KEY` env vars; no arg → axion computes the *next* snapshot version, which won't match a built image, so for chart-only redeploys against a release tag pass it explicitly: `./deploy.sh 0.1.2`)
 
 
 ## Key Conventions
@@ -129,6 +132,8 @@ org.bartram.myfeeder
 - **Frontend not in image**: `bootBuildImage -x npmBuild` reuses `build/resources/main/static/` from the last `processResources` run. After frontend-only changes, run `./gradlew clean bootBuildImage` or `./gradlew processResources` first to ensure the new bundle is packaged.
 - **SNAPSHOT tags + pullPolicy**: `imagePullPolicy: IfNotPresent` causes k8s to reuse stale images when the same SNAPSHOT tag is pushed. Use `Always` during development; `IfNotPresent` is only safe with immutable release tags.
 - **Gradle terminal escapes in scripts**: `./gradlew currentVersion -q` outputs terminal control sequences. In shell scripts, pipe through `grep 'Project version'` before parsing to avoid contaminating variables.
+- **`./gradlew release` push uses git CLI**: axion-release's bundled jgit can't read OpenSSH-format keys. `release` and `pushRelease` in `build.gradle.kts` clear their built-in push action and finalize via a `gitPushRelease` Exec task. Don't replace this with raw axion auth config.
+- **Helm probes have a startupProbe**: `startupProbe` (5s × 60 = up to 5 min) gates `livenessProbe` and `readinessProbe`. Configurable in `values.yaml` under `app.probes.{startup,readiness,liveness}`. Don't add `initialDelaySeconds` to liveness — startupProbe is the gate.
 - **Clipboard API requires HTTPS**: The app is served over HTTP (`192.168.44.204`), so `navigator.clipboard` is unavailable. Use `document.execCommand('copy')` fallback for clipboard operations.
 
 ## Test Patterns
