@@ -38,19 +38,19 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
     [data]
   )
 
-  // Preserve selected article so it stays visible after being marked read
-  const [preservedArticle, setPreservedArticle] = useState<Article | null>(null)
+  // Preserve selected article (and its position) so it stays visible after being marked read
+  const [preserved, setPreserved] = useState<{ article: Article; index: number } | null>(null)
   useEffect(() => {
     if (selectedArticleId) {
-      const found = allArticles.find((a) => a.id === selectedArticleId)
-      if (found) setPreservedArticle({ ...found })
+      const idx = allArticles.findIndex((a) => a.id === selectedArticleId)
+      if (idx >= 0) setPreserved({ article: { ...allArticles[idx] }, index: idx })
     } else {
-      setPreservedArticle(null)
+      setPreserved(null)
     }
   }, [selectedArticleId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = useMemo(() => {
-    let articles = allArticles
+    let articles: Article[] = allArticles
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
       articles = articles.filter(
@@ -59,12 +59,15 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
           (a.summary && a.summary.toLowerCase().includes(q))
       )
     }
-    // If the selected article was filtered out (e.g. marked read), keep it in the list
-    if (preservedArticle && !articles.some((a) => a.id === preservedArticle.id)) {
-      articles = [...articles, { ...preservedArticle, read: true }]
+    // If the selected article was filtered out (e.g. marked read), reinsert it at its original position
+    if (preserved && !articles.some((a) => a.id === preserved.article.id)) {
+      const next = articles.slice()
+      const insertAt = Math.min(preserved.index, next.length)
+      next.splice(insertAt, 0, { ...preserved.article, read: true })
+      articles = next
     }
     return articles
-  }, [allArticles, searchQuery, preservedArticle])
+  }, [allArticles, searchQuery, preserved])
 
   const handleArticleClick = (article: Article) => {
     setSelectedArticle(article.id)
