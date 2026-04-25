@@ -83,6 +83,31 @@ class FeedParserTest {
     }
 
     @Test
+    void shouldExtractImageFromGizmodoStyleEnclosureWithoutLength() {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+                  <channel>
+                    <title>Gizmodo</title>
+                    <link>https://gizmodo.com/</link>
+                    <description>The Future Is Here</description>
+                    <item>
+                      <title>Some Post</title>
+                      <link>https://gizmodo.com/post-1</link>
+                      <guid isPermaLink="false">https://gizmodo.com/?p=1</guid>
+                      <description><![CDATA[Some text.]]></description>
+                      <content:encoded><![CDATA[Some text.]]></content:encoded>
+                      <enclosure url="https://gizmodo.com/app/uploads/2026/04/post.jpg" type="image/jpeg" />
+                    </item>
+                  </channel>
+                </rss>
+                """;
+        ParsedFeed result = parser.parse(xml);
+        assertThat(result.getArticles().get(0).getImageUrl())
+                .isEqualTo("https://gizmodo.com/app/uploads/2026/04/post.jpg");
+    }
+
+    @Test
     void shouldExtractImageFromEnclosure() {
         String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>
