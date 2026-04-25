@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=$(./gradlew currentVersion -q 2>&1 | grep 'Project version' | awk '{print $NF}')
+VERSION="${1:-$(./gradlew currentVersion -q 2>&1 | grep 'Project version' | awk '{print $NF}')}"
 REGISTRY="registry.bartram.org/bartram/myfeeder"
 NAMESPACE="myfeeder"
 RELEASE="myfeeder"
