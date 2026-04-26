@@ -21,4 +21,5 @@ helm upgrade --install "$RELEASE" "$CHART" \
   --set app.image.tag="$VERSION" \
   --set secrets.postgresPassword="$MYFEEDER_PG_PASSWORD" \
   --set secrets.anthropicApiKey="$MYFEEDER_ANTHROPIC_API_KEY" \
-  --set secrets.raindropApiToken="$RAINDROP_TOKEN"
+  --set secrets.raindropApiToken="$RAINDROP_TOKEN" \
+  --history-max 3
