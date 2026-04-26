@@ -45,6 +45,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "myfeeder.fullname" . }}-secret
                   key: spring-ai-anthropic-api-key
+            - name: MYFEEDER_RAINDROP_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "myfeeder.fullname" . }}-secret
+                  key: myfeeder-raindrop-api-token
             - name: JDK_JAVA_OPTIONS
               value: "-XX:MaxDirectMemorySize=64M"
             {{- if .Values.secrets.googleApplicationCredentials }}

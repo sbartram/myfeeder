@@ -12,6 +12,7 @@ myfeeder:
     cleanup-cron: "0 0 3 * * *"
   raindrop:
     api-base-url: https://api.raindrop.io/rest/v1
+    api-token: ${MYFEEDER_RAINDROP_API_TOKEN:}
 
 resilience4j:
   circuitbreaker:
