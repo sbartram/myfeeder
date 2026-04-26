@@ -3,8 +3,9 @@ import { useFeeds, useDeleteFeed, usePollFeed } from '../hooks/useFeeds'
 import { EmptyState } from './EmptyState'
 import { useFolders } from '../hooks/useFolders'
 import { useUnreadCounts } from '../hooks/useArticles'
+import { useBoards } from '../hooks/useBoards'
 import { useUIStore } from '../stores/uiStore'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useImportOpml, exportOpml } from '../hooks/useOpml'
 import { usePreferences } from '../stores/preferencesStore'
 import type { Feed } from '../types'
@@ -18,8 +19,12 @@ interface FeedPanelProps {
 export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
   const { data: feeds = [] } = useFeeds()
   const { data: folders = [] } = useFolders()
+  const { data: boards = [] } = useBoards()
   const { data: counts = {} } = useUnreadCounts()
   const navigate = useNavigate()
+  const location = useLocation()
+  const activeBoardMatch = location.pathname.match(/^\/board\/(\d+)$/)
+  const activeBoardId = activeBoardMatch ? Number(activeBoardMatch[1]) : null
   const importMutation = useImportOpml()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const deleteFeed = useDeleteFeed()
@@ -104,10 +109,10 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
     navigate('/starred')
   }
 
-  const handleBoardsClick = () => {
+  const handleBoardClick = (boardId: number) => {
     setSelectedFeed(null)
     setSelectedFolder(null)
-    navigate('/boards')
+    navigate(`/board/${boardId}`)
   }
 
   const handleFeedClick = (feedId: number) => {
@@ -130,9 +135,6 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
         </div>
         <div className="smart-view" onClick={handleStarredClick}>
           <span>Starred</span>
-        </div>
-        <div className="smart-view" onClick={handleBoardsClick}>
-          <span>Boards</span>
         </div>
       </div>
 
@@ -191,6 +193,19 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
             )}
           </div>
         ))}
+          </>
+        )}
+
+        {boards.length > 0 && (
+          <>
+            <div className="section-label">BOARDS</div>
+            {boards.map((board) => (
+              <div key={board.id}
+                   className={`feed-row ${activeBoardId === board.id ? 'active' : ''}`}
+                   onClick={() => handleBoardClick(board.id)}>
+                <span>{board.name}</span>
+              </div>
+            ))}
           </>
         )}
       </div>
