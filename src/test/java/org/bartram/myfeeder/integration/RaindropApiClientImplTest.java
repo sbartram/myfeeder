@@ -12,9 +12,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withCreatedEntity;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class RaindropApiClientImplTest {
@@ -64,6 +66,30 @@ class RaindropApiClientImplTest {
                 .containsExactly(
                         org.assertj.core.groups.Tuple.tuple(100L, "Reading"),
                         org.assertj.core.groups.Tuple.tuple(200L, "Recipes"));
+        server.verify();
+    }
+
+    @Test
+    void createBookmarkPostsExpectedBody() {
+        var builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        var client = new RaindropApiClientImpl(properties, builder);
+
+        server.expect(requestTo("https://api.raindrop.io/rest/v1/raindrop"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("Authorization", "Bearer test-token"))
+                .andExpect(content().json(
+                        """
+                        {
+                          "link": "https://example.com/article",
+                          "title": "Hello",
+                          "collection": {"$id": 100}
+                        }
+                        """))
+                .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        client.createBookmark(100L, "https://example.com/article", "Hello");
+
         server.verify();
     }
 }

@@ -48,7 +48,15 @@ public class RaindropApiClientImpl implements RaindropApiClient {
     @Override
     public void createBookmark(Long collectionId, String url, String title) {
         requireConfigured();
-        throw new UnsupportedOperationException("not implemented yet");
+        var body = new CreateRaindropRequest(url, title, new CollectionRef(collectionId));
+        restClient
+                .post()
+                .uri("/raindrop")
+                .header("Authorization", "Bearer " + apiToken)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private record CollectionsResponse(List<CollectionItem> items) {}
@@ -56,4 +64,8 @@ public class RaindropApiClientImpl implements RaindropApiClient {
     private record CollectionItem(
             @com.fasterxml.jackson.annotation.JsonProperty("_id") Long id,
             String title) {}
+
+    private record CreateRaindropRequest(String link, String title, CollectionRef collection) {}
+
+    private record CollectionRef(@com.fasterxml.jackson.annotation.JsonProperty("$id") Long id) {}
 }
