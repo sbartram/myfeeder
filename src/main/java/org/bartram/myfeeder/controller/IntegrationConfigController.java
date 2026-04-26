@@ -2,7 +2,9 @@ package org.bartram.myfeeder.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.config.MyfeederProperties;
+import org.bartram.myfeeder.integration.RaindropCollection;
 import org.bartram.myfeeder.integration.RaindropConfig;
+import org.bartram.myfeeder.integration.RaindropService;
 import org.bartram.myfeeder.model.IntegrationConfig;
 import org.bartram.myfeeder.model.IntegrationType;
 import org.bartram.myfeeder.repository.IntegrationConfigRepository;
@@ -21,6 +23,7 @@ public class IntegrationConfigController {
     private final IntegrationConfigRepository configRepository;
     private final JsonMapper objectMapper;
     private final MyfeederProperties properties;
+    private final RaindropService raindropService;
 
     @GetMapping
     public List<IntegrationConfig> listIntegrations() {
@@ -32,6 +35,11 @@ public class IntegrationConfigController {
         String token = properties.getRaindrop().getApiToken();
         boolean configured = token != null && !token.isBlank();
         return Map.of("configured", configured);
+    }
+
+    @GetMapping("/raindrop/collections")
+    public List<RaindropCollection> raindropCollections() {
+        return raindropService.listCollections();
     }
 
     @PutMapping("/raindrop")

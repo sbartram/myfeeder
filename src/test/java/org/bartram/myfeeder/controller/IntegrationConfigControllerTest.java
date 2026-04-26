@@ -55,4 +55,28 @@ class IntegrationConfigControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.configured").value(true));
     }
+
+    @Test
+    void collectionsReturnsListFromService() throws Exception {
+        properties.getRaindrop().setApiToken("a-token");
+        when(raindropService.listCollections()).thenReturn(List.of(
+                new RaindropCollection(1L, "Apple"),
+                new RaindropCollection(2L, "Banana")));
+
+        mockMvc.perform(get("/api/integrations/raindrop/collections"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].title").value("Apple"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].title").value("Banana"));
+    }
+
+    @Test
+    void collectionsReturns503WhenTokenNotConfigured() throws Exception {
+        properties.getRaindrop().setApiToken("a-token"); // service-side check, not properties
+        when(raindropService.listCollections()).thenThrow(new RaindropNotConfiguredException());
+
+        mockMvc.perform(get("/api/integrations/raindrop/collections"))
+                .andExpect(status().isServiceUnavailable());
+    }
 }
