@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { articlesApi } from '../api/articles'
+import { useToastStore } from '../components/Toast'
 import type { ArticleFilters } from '../types'
 
 export function useArticles(filters: ArticleFilters = {}) {
@@ -56,5 +57,8 @@ export function useMarkRead() {
 export function useSaveToRaindrop() {
   return useMutation({
     mutationFn: (id: number) => articlesApi.saveToRaindrop(id),
+    onSuccess: () => {
+      useToastStore.getState().addToast('Saved to Raindrop', 'success')
+    },
   })
 }

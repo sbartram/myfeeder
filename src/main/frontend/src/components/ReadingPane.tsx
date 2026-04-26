@@ -100,8 +100,12 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
           {article.read ? '○ Mark Unread' : '● Mark Read'}
         </button>
         <button className="toolbar-btn" onClick={() => setInternalBoardOpen(true)}>📋 Board</button>
-        <button className="toolbar-btn" onClick={() => readLater.mutate(article.id)}>🔖 Read Later</button>
-        <button className="toolbar-btn" onClick={handleRaindrop}>💧 Raindrop</button>
+        <button className="toolbar-btn" onClick={() => readLater.mutate(article.id)} disabled={readLater.isPending}>
+          {readLater.isPending ? '🔖 Saving…' : '🔖 Read Later'}
+        </button>
+        <button className="toolbar-btn" onClick={handleRaindrop} disabled={saveToRaindrop.isPending}>
+          {saveToRaindrop.isPending ? '💧 Saving…' : '💧 Raindrop'}
+        </button>
         <button className="toolbar-btn" onClick={handleCopyLink}>🔗 Copy Link</button>
         <button className="toolbar-btn" onClick={handleOpenOriginal} style={{ marginLeft: 'auto' }}>
           ↗ Open Original
