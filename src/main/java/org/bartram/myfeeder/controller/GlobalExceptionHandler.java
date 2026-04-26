@@ -1,5 +1,6 @@
 package org.bartram.myfeeder.controller;
 
+import org.bartram.myfeeder.integration.RaindropNotConfiguredException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -19,6 +20,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleIllegalState(IllegalStateException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Configuration error");
+        return problem;
+    }
+
+    @ExceptionHandler(RaindropNotConfiguredException.class)
+    public ProblemDetail handleRaindropNotConfigured(RaindropNotConfiguredException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        problem.setTitle("Raindrop not configured");
         return problem;
     }
 }
