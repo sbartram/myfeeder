@@ -79,4 +79,37 @@ class IntegrationConfigControllerTest {
         mockMvc.perform(get("/api/integrations/raindrop/collections"))
                 .andExpect(status().isServiceUnavailable());
     }
+
+    @Test
+    void shouldListIntegrations() throws Exception {
+        var config = new IntegrationConfig();
+        config.setType(IntegrationType.RAINDROP);
+        config.setEnabled(true);
+        when(configRepository.findAll()).thenReturn(List.of(config));
+
+        mockMvc.perform(get("/api/integrations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].type").value("RAINDROP"));
+    }
+
+    @Test
+    void shouldUpsertRaindropConfigWithCollectionIdOnly() throws Exception {
+        when(configRepository.findByType(IntegrationType.RAINDROP)).thenReturn(Optional.empty());
+        when(configRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        mockMvc.perform(put("/api/integrations/raindrop")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"collectionId\":12345}"))
+                .andExpect(status().isOk());
+
+        verify(configRepository).save(any(IntegrationConfig.class));
+    }
+
+    @Test
+    void shouldDeleteRaindropConfig() throws Exception {
+        mockMvc.perform(delete("/api/integrations/raindrop"))
+                .andExpect(status().isNoContent());
+
+        verify(configRepository).deleteByType(IntegrationType.RAINDROP);
+    }
 }
