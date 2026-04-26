@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { usePreferences } from '../stores/preferencesStore'
-import { integrationsApi } from '../api/integrations'
+import { integrationsApi, type RaindropCollection } from '../api/integrations'
 import { themeList } from '../themes'
 
 interface SettingsDialogProps {
@@ -8,18 +8,121 @@ interface SettingsDialogProps {
   onClose: () => void
 }
 
+type RaindropState =
+  | { phase: 'loading' }
+  | { phase: 'not-configured' }
+  | { phase: 'ready'; collections: RaindropCollection[]; savedId: number | null; selectedId: number | null }
+  | { phase: 'error'; message: string }
+
+function readSavedCollectionId(configJson: string): number | null {
+  try {
+    const parsed = JSON.parse(configJson) as { collectionId?: number }
+    return typeof parsed.collectionId === 'number' ? parsed.collectionId : null
+  } catch {
+    return null
+  }
+}
+
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const prefs = usePreferences()
-  const [apiToken, setApiToken] = useState('')
-  const [collectionId, setCollectionId] = useState('')
+  const [raindrop, setRaindrop] = useState<RaindropState>({ phase: 'loading' })
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+
+    async function load() {
+      try {
+        const status = await integrationsApi.getRaindropStatus()
+        if (cancelled) return
+        if (!status.configured) {
+          setRaindrop({ phase: 'not-configured' })
+          return
+        }
+        const [collections, all] = await Promise.all([
+          integrationsApi.listRaindropCollections(),
+          integrationsApi.getAll(),
+        ])
+        if (cancelled) return
+        const existing = all.find((c) => c.type === 'RAINDROP')
+        const savedId = existing ? readSavedCollectionId(existing.config) : null
+        const inList = savedId != null && collections.some((c) => c.id === savedId)
+        setRaindrop({
+          phase: 'ready',
+          collections,
+          savedId,
+          selectedId: inList ? savedId : (collections[0]?.id ?? null),
+        })
+      } catch (e) {
+        if (!cancelled) {
+          setRaindrop({ phase: 'error', message: e instanceof Error ? e.message : String(e) })
+        }
+      }
+    }
+
+    setRaindrop({ phase: 'loading' })
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [open])
 
   if (!open) return null
 
   const handleSaveRaindrop = async () => {
-    await integrationsApi.upsertRaindrop({
-      apiToken,
-      collectionId: Number(collectionId),
-    })
+    if (raindrop.phase !== 'ready' || raindrop.selectedId == null) return
+    await integrationsApi.upsertRaindrop({ collectionId: raindrop.selectedId })
+  }
+
+  const renderRaindropSection = () => {
+    if (raindrop.phase === 'loading') {
+      return <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading…</div>
+    }
+    if (raindrop.phase === 'not-configured') {
+      return (
+        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+          Raindrop is not configured by the administrator. Set <code>myfeeder.raindrop.api-token</code> in deployment values to enable.
+        </div>
+      )
+    }
+    if (raindrop.phase === 'error') {
+      return (
+        <div style={{ fontSize: 13, color: 'var(--text-error, crimson)' }}>
+          Failed to load Raindrop settings: {raindrop.message}
+        </div>
+      )
+    }
+    const inList = raindrop.savedId != null && raindrop.collections.some((c) => c.id === raindrop.savedId)
+    return (
+      <>
+        <label style={{ display: 'block', fontSize: 13, color: 'var(--text-muted)' }}>
+          Raindrop collection
+          <select
+            aria-label="Raindrop collection"
+            className="dialog-input"
+            value={raindrop.selectedId ?? ''}
+            onChange={(e) =>
+              setRaindrop({ ...raindrop, selectedId: Number(e.target.value) })
+            }
+            style={{ marginTop: 4 }}
+          >
+            {!inList && raindrop.savedId != null && (
+              <option value="" disabled>
+                (saved collection no longer exists — pick again)
+              </option>
+            )}
+            {raindrop.collections.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className="btn-primary" onClick={handleSaveRaindrop} style={{ marginTop: 8 }}>
+          Save Raindrop Config
+        </button>
+      </>
+    )
   }
 
   return (
@@ -71,7 +174,6 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
               type="number"
               value={prefs.autoMarkReadDelay}
               onChange={(e) => prefs.setAutoMarkReadDelay(Number(e.target.value))}
-              style={{ marginTop: 4 }}
             />
           </label>
           <label style={{ display: 'block', fontSize: 13, color: 'var(--text-muted)' }}>
@@ -90,22 +192,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
 
         <div style={{ marginBottom: 20 }}>
           <h3 style={{ fontSize: 14, marginBottom: 8 }}>Raindrop.io</h3>
-          <input
-            className="dialog-input"
-            placeholder="API Token"
-            value={apiToken}
-            onChange={(e) => setApiToken(e.target.value)}
-            style={{ marginBottom: 8 }}
-          />
-          <input
-            className="dialog-input"
-            placeholder="Collection ID"
-            value={collectionId}
-            onChange={(e) => setCollectionId(e.target.value)}
-          />
-          <button className="btn-primary" onClick={handleSaveRaindrop} style={{ marginTop: 8 }}>
-            Save Raindrop Config
-          </button>
+          {renderRaindropSection()}
         </div>
 
         <div className="dialog-actions">
