@@ -6,12 +6,23 @@ describe('API client', () => {
     vi.restoreAllMocks()
   })
 
-  it('should throw on non-ok response', async () => {
+  it('should throw on non-ok response with empty body', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(null, { status: 500 })
     )
 
     await expect(apiGet('/test')).rejects.toThrow('GET /test failed: 500')
+  })
+
+  it('should surface ProblemDetail.detail from error responses', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({ title: 'Configuration error', detail: 'Raindrop.io is not configured', status: 409 }),
+        { status: 409, headers: { 'Content-Type': 'application/problem+json' } },
+      ),
+    )
+
+    await expect(apiPost('/articles/1/raindrop')).rejects.toThrow('Raindrop.io is not configured')
   })
 
   it('should return undefined for 204 responses', async () => {

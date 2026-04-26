@@ -5,9 +5,24 @@ async function parseBody<T>(res: Response): Promise<T> {
   return (text ? JSON.parse(text) : undefined) as T
 }
 
+async function raiseIfBad(res: Response, method: string, path: string): Promise<void> {
+  if (res.ok) return
+  const text = await res.text()
+  let detail: string | undefined
+  if (text) {
+    try {
+      const body = JSON.parse(text) as { detail?: string; title?: string; message?: string }
+      detail = body.detail || body.title || body.message
+    } catch {
+      detail = text
+    }
+  }
+  throw new Error(detail || `${method} ${path} failed: ${res.status}`)
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`)
-  if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`)
+  await raiseIfBad(res, 'GET', path)
   return parseBody<T>(res)
 }
 
@@ -17,7 +32,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,
   })
-  if (!res.ok) throw new Error(`POST ${path} failed: ${res.status}`)
+  await raiseIfBad(res, 'POST', path)
   return parseBody<T>(res)
 }
 
@@ -27,7 +42,7 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`PUT ${path} failed: ${res.status}`)
+  await raiseIfBad(res, 'PUT', path)
   return parseBody<T>(res)
 }
 
@@ -37,11 +52,11 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`PATCH ${path} failed: ${res.status}`)
+  await raiseIfBad(res, 'PATCH', path)
   return parseBody<T>(res)
 }
 
 export async function apiDelete(path: string): Promise<void> {
   const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE' })
-  if (!res.ok) throw new Error(`DELETE ${path} failed: ${res.status}`)
+  await raiseIfBad(res, 'DELETE', path)
 }

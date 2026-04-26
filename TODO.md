@@ -35,6 +35,7 @@
 
 ## Article Reader
 
+- [ ] show full timestamp if the article date is less than 24 hours old
 - [ ] youtube feeds are not showing the video description
 - [ ] links like this one - https://theeurotvplace.com/2025/12/euro-tv-premieres-in-january-2026-land-of-sin-sophie-cross-stayer-more/ - are not displaying correctly
 - [ ] this link displays all the text (formatting is so-so) but doesn't display the image - https://relix.com/news/detail/jerry-garcias-tiger-guitar-among-historic-instruments-sold-at-jim-irsay-collection-auction-opening/
