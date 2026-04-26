@@ -79,6 +79,7 @@ org.bartram.myfeeder
 - **Build**: `npm run build` outputs to `src/main/resources/static/`; Gradle `npmBuild` task wires this into `./gradlew build`
 - **Dev workflow**: `./gradlew bootTestRun` (backend) + `cd src/main/frontend && npm run dev` (Vite on :5173, proxies `/api` to :8080)
 - **Tests**: Vitest + React Testing Library; run with `cd src/main/frontend && npm test`
+- **Type-check**: use `npx tsc -b` from `src/main/frontend/` — plain `tsc --noEmit` returns success even with errors because the root `tsconfig.json` has `files: []` and uses project references
 - **Key conventions**:
   - API client in `src/api/` — thin fetch wrappers per domain (feeds, articles, folders, boards, integrations, opml)
   - TanStack Query hooks in `src/hooks/` — one file per domain (useArticles, useFeeds, useFolders, useBoards, useOpml)
@@ -112,12 +113,14 @@ org.bartram.myfeeder
 - Gradle Kotlin DSL for build configuration
 - BOM-managed versions for Spring AI and Spring Cloud (do not specify versions on individual dependencies)
 - Resilience4j: Use `@CircuitBreaker(name = "...")` (outer) + `@Retry(name = "...")` (inner) annotations on external service calls. Config in `application.yaml` under `resilience4j.circuitbreaker.instances` and `resilience4j.retry.instances`
+- **Resilience4j fallback re-throw pattern**: a `@CircuitBreaker` fallback wraps everything as a 5xx by default — to preserve specific HTTP status mappings (e.g. 400 for "no collection selected", 503 for "not configured"), the fallback method must `instanceof`-check and rethrow those exception types before wrapping anything else
+- **GlobalExceptionHandler mappings**: `IllegalArgumentException` → 400 (Bad Request), `IllegalStateException` → 409 (Configuration error), `RaindropNotConfiguredException` → 503 (Raindrop not configured). Throw the right type from services and the controller layer doesn't need try/catch
 - Spring Data JDBC does not support derived query methods like JPA — use `@Query` annotation for custom queries
 
 ## Spring Boot 4 / Jackson 3.x Notes
 
-- Jackson 3.x package is `tools.jackson.databind`, NOT `com.fasterxml.jackson.databind`. All `ObjectMapper`, `JsonNode` imports must use `tools.jackson.databind.*`.
-- Spring Boot auto-configures `tools.jackson.databind.ObjectMapper` as a bean (not the old `com.fasterxml` one).
+- Jackson 3.x **databind** moved to `tools.jackson.databind.*` (`ObjectMapper`, `JsonNode`, `JsonMapper`). Spring Boot auto-configures `tools.jackson.databind.ObjectMapper` as a bean.
+- Jackson 3.x **annotations** did NOT move — `@JsonProperty`, `@JsonIgnoreProperties`, `@JsonIgnore`, `@JsonCreator` etc. are still in `com.fasterxml.jackson.annotation.*` (jackson-annotations 2.x is a transitive dep of jackson-databind 3.x). There is no `tools.jackson.annotation` package.
 - Test annotations `@WebMvcTest`, `@DataJdbcTest`, `@SpringBootTest` are in `org.springframework.boot.*.test.autoconfigure` packages (e.g., `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`).
 - Test starter dependencies follow the pattern `spring-boot-starter-<module>-test` (e.g., `spring-boot-starter-webmvc-test`).
 
@@ -143,4 +146,5 @@ org.bartram.myfeeder
 - **Repository tests**: `@DataJdbcTest` with `@Import(TestcontainersConfiguration.class)` for real Postgres
 - **Parser tests**: Plain unit tests with sample feed files in `src/test/resources/feeds/`
 - **Integration test**: `@SpringBootTest` + `@Import(TestcontainersConfiguration.class)` verifying all beans wire correctly
+- **Migration tests**: Flyway runs at `@DataJdbcTest` startup, so tests can't insert a legacy-shape row and "re-run" the migration. Pattern: insert a legacy-shape row via `JdbcTemplate.update(...)`, then re-execute the migration SQL manually against it, then assert the post-migration shape. Example: `V4StripRaindropApiTokenMigrationTest`
 - Test `application.yaml` must include `myfeeder.*` properties and a dummy `spring.ai.anthropic.api-key`

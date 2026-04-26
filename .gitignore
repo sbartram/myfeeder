@@ -44,6 +44,7 @@ src/main/frontend/node_modules/
 .superpowers/
 
 .claude/settings.local.json
+.claude.local.md
 tmp/
 *.log
 .worktrees/
