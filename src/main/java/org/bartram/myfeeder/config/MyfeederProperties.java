@@ -27,5 +27,6 @@ public class MyfeederProperties {
     @Data
     public static class Raindrop {
         private String apiBaseUrl = "https://api.raindrop.io/rest/v1";
+        private String apiToken = "";
     }
 }
