@@ -47,4 +47,5 @@ spring:
 secrets:
   postgresPassword: ""
   anthropicApiKey: ""
+  raindropApiToken: ""
   googleApplicationCredentials: ""
