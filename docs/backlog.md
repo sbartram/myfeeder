@@ -2,6 +2,9 @@
 
 ## General
 
+- [ ] fix the name that shows up in browser tabs (currently "frontend")
+- [ ] pick a decent app icon
+- [ ] no way to remove an article from a board
 - [ ] add support for "magazine view" in the article list pane
 - [ ] allow custom names for feeds (some defaults are very long) or truncate them
 - [ ] share via email
