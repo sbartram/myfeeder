@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useMatch } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { useUIStore } from '../stores/uiStore'
 import { useArticle, useUpdateArticleState, useSaveToRaindrop } from '../hooks/useArticles'
 import { usePreferences } from '../stores/preferencesStore'
-import { useReadLater } from '../hooks/useBoards'
+import { useReadLater, useRemoveArticleFromBoard } from '../hooks/useBoards'
 import { BoardManager } from './BoardManager'
 
 interface ReadingPaneProps {
@@ -13,12 +14,19 @@ interface ReadingPaneProps {
 
 export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: ReadingPaneProps = {}) {
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
+  const setSelectedArticle = useUIStore((s) => s.setSelectedArticle)
   const { data: article } = useArticle(selectedArticleId)
+
+  const boardRouteMatch = useMatch('/board/:boardId')
+  const currentBoardId = boardRouteMatch?.params.boardId
+    ? Number(boardRouteMatch.params.boardId)
+    : null
 
   const updateState = useUpdateArticleState()
   const saveToRaindrop = useSaveToRaindrop()
   const autoMarkReadDelay = usePreferences((s) => s.autoMarkReadDelay)
   const readLater = useReadLater()
+  const removeFromBoard = useRemoveArticleFromBoard()
   const [internalBoardOpen, setInternalBoardOpen] = useState(false)
   const boardOpen = externalBoardOpen || internalBoardOpen
   const closeBoardDialog = () => {
@@ -90,6 +98,14 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
     saveToRaindrop.mutate(article.id)
   }
 
+  const handleRemoveFromBoard = () => {
+    if (currentBoardId == null) return
+    removeFromBoard.mutate(
+      { boardId: currentBoardId, articleId: article.id },
+      { onSuccess: () => setSelectedArticle(null) }
+    )
+  }
+
   return (
     <div className="reading-pane">
       <div className="reading-toolbar">
@@ -107,6 +123,15 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
           {saveToRaindrop.isPending ? '💧 Saving…' : '💧 Raindrop'}
         </button>
         <button className="toolbar-btn" onClick={handleCopyLink}>🔗 Copy Link</button>
+        {currentBoardId != null && (
+          <button
+            className="toolbar-btn"
+            onClick={handleRemoveFromBoard}
+            disabled={removeFromBoard.isPending}
+          >
+            {removeFromBoard.isPending ? '🗑 Removing…' : '🗑 Remove from board'}
+          </button>
+        )}
         <button className="toolbar-btn" onClick={handleOpenOriginal} style={{ marginLeft: 'auto' }}>
           ↗ Open Original
         </button>
