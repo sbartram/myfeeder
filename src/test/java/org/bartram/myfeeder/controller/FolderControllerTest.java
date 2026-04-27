@@ -51,4 +51,27 @@ class FolderControllerTest {
         mockMvc.perform(delete("/api/folders/1"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void shouldReorderFolders() throws Exception {
+        Folder a = new Folder(); a.setId(1L); a.setName("Tech"); a.setDisplayOrder(1);
+        Folder b = new Folder(); b.setId(2L); b.setName("News"); b.setDisplayOrder(0);
+        when(folderService.reorder(List.of(2L, 1L))).thenReturn(List.of(b, a));
+        mockMvc.perform(put("/api/folders/order")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"folderIds\":[2,1]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(2))
+                .andExpect(jsonPath("$[1].id").value(1));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenReorderListInvalid() throws Exception {
+        when(folderService.reorder(List.of(1L)))
+                .thenThrow(new IllegalArgumentException("folderIds must match the current set of folders"));
+        mockMvc.perform(put("/api/folders/order")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"folderIds\":[1]}"))
+                .andExpect(status().isBadRequest());
+    }
 }

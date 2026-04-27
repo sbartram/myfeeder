@@ -31,4 +31,9 @@ public class FolderController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFolder(@PathVariable Long id) { folderService.delete(id); }
+
+    @PutMapping("/order")
+    public List<Folder> reorderFolders(@RequestBody Map<String, List<Long>> request) {
+        return folderService.reorder(request.get("folderIds"));
+    }
 }

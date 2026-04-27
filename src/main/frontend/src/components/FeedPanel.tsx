@@ -1,14 +1,31 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useFeeds, useDeleteFeed, usePollFeed } from '../hooks/useFeeds'
 import { EmptyState } from './EmptyState'
-import { useFolders } from '../hooks/useFolders'
+import { useFolders, useReorderFolders } from '../hooks/useFolders'
 import { useUnreadCounts } from '../hooks/useArticles'
 import { useBoards } from '../hooks/useBoards'
 import { useUIStore } from '../stores/uiStore'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useImportOpml, exportOpml } from '../hooks/useOpml'
 import { usePreferences } from '../stores/preferencesStore'
-import type { Feed } from '../types'
+import type { Feed, Folder } from '../types'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface FeedPanelProps {
   onAddFeed?: () => void
@@ -16,10 +33,63 @@ interface FeedPanelProps {
   onHelp?: () => void
 }
 
+interface SortableFolderProps {
+  folder: Folder
+  expanded: boolean
+  active: boolean
+  unreadSum: number
+  onToggle: () => void
+  onSelect: () => void
+  children: React.ReactNode
+}
+
+function SortableFolder({ folder, expanded, active, unreadSum, onToggle, onSelect, children }: SortableFolderProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: folder.id })
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        className={`folder-row ${active ? 'active' : ''}`}
+        onClick={onSelect}
+        {...attributes}
+        {...listeners}
+      >
+        <span className="folder-toggle"
+              onClick={(e) => { e.stopPropagation(); onToggle() }}
+              onPointerDown={(e) => e.stopPropagation()}>
+          {expanded ? '▼' : '▶'}
+        </span>
+        <span>{folder.name}</span>
+        <span className="count">{unreadSum || ''}</span>
+      </div>
+      {expanded && children}
+    </div>
+  )
+}
+
 export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
   const { data: feeds = [] } = useFeeds()
   const { data: folders = [] } = useFolders()
   const { data: boards = [] } = useBoards()
+  const reorderFolders = useReorderFolders()
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = folders.findIndex((f) => f.id === Number(active.id))
+    const newIndex = folders.findIndex((f) => f.id === Number(over.id))
+    if (oldIndex < 0 || newIndex < 0) return
+    const next = arrayMove(folders, oldIndex, newIndex).map((f) => f.id)
+    reorderFolders.mutate(next)
+  }
   const { data: counts = {} } = useUnreadCounts()
   const navigate = useNavigate()
   const location = useLocation()
@@ -148,36 +218,40 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
           <>
             <div className="section-label">FOLDERS &amp; FEEDS</div>
 
-        {folders.map((folder) => (
-          <div key={folder.id}>
-            <div className={`folder-row ${selectedFolderId === folder.id ? 'active' : ''}`}
-                 onClick={() => handleFolderClick(folder.id)}>
-              <span className="folder-toggle"
-                    onClick={(e) => { e.stopPropagation(); toggleFolder(folder.id) }}>
-                {expandedFolders.has(folder.id) ? '\u25BC' : '\u25B6'}
-              </span>
-              <span>{folder.name}</span>
-              <span className="count">
-                {visibleFeeds(feedsByFolder(folder.id)).reduce((sum, f) => sum + feedUnread(f.id), 0) || ''}
-              </span>
-            </div>
-            {expandedFolders.has(folder.id) &&
-              visibleFeeds(feedsByFolder(folder.id)).map((feed) => (
-                <div key={feed.id}
-                     className={`feed-row ${selectedFeedId === feed.id ? 'active' : ''}`}
-                     onClick={() => handleFeedClick(feed.id)}
-                     onContextMenu={(e) => handleContextMenu(e, feed)}>
-                  <span>
-                    {feed.errorCount >= 3 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
-                    {feed.title}
-                  </span>
-                  {feedUnread(feed.id) > 0 && (
-                    <span className="count">{feedUnread(feed.id)}</span>
-                  )}
-                </div>
-              ))}
-          </div>
-        ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={folders.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+            {folders.map((folder) => (
+              <SortableFolder
+                key={folder.id}
+                folder={folder}
+                expanded={expandedFolders.has(folder.id)}
+                active={selectedFolderId === folder.id}
+                unreadSum={visibleFeeds(feedsByFolder(folder.id)).reduce((sum, f) => sum + feedUnread(f.id), 0)}
+                onToggle={() => toggleFolder(folder.id)}
+                onSelect={() => handleFolderClick(folder.id)}
+              >
+                {visibleFeeds(feedsByFolder(folder.id)).map((feed) => (
+                  <div key={feed.id}
+                       className={`feed-row ${selectedFeedId === feed.id ? 'active' : ''}`}
+                       onClick={() => handleFeedClick(feed.id)}
+                       onContextMenu={(e) => handleContextMenu(e, feed)}>
+                    <span>
+                      {feed.errorCount >= 3 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
+                      {feed.title}
+                    </span>
+                    {feedUnread(feed.id) > 0 && (
+                      <span className="count">{feedUnread(feed.id)}</span>
+                    )}
+                  </div>
+                ))}
+              </SortableFolder>
+            ))}
+          </SortableContext>
+        </DndContext>
 
         {visibleFeeds(uncategorized).map((feed) => (
           <div key={feed.id}

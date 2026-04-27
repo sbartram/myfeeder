@@ -6,4 +6,5 @@ export const foldersApi = {
   create: (name: string) => apiPost<Folder>('/folders', { name }),
   rename: (id: number, name: string) => apiPut<Folder>(`/folders/${id}`, { name }),
   delete: (id: number) => apiDelete(`/folders/${id}`),
+  reorder: (folderIds: number[]) => apiPut<Folder[]>('/folders/order', { folderIds }),
 }

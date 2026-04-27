@@ -9,8 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.List;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -37,6 +39,46 @@ class FolderServiceTest {
     void shouldDeleteFolder() {
         folderService.delete(5L);
         verify(folderRepository).deleteById(5L);
+    }
+
+    @Test
+    void shouldReorderFoldersDensely() {
+        Folder a = new Folder(); a.setId(1L); a.setDisplayOrder(0);
+        Folder b = new Folder(); b.setId(2L); b.setDisplayOrder(1);
+        Folder c = new Folder(); c.setId(3L); c.setDisplayOrder(2);
+        when(folderRepository.findAll()).thenReturn(List.of(a, b, c));
+        when(folderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(folderRepository.findAllByOrderByDisplayOrderAsc())
+                .thenReturn(List.of(c, a, b));
+
+        folderService.reorder(List.of(3L, 1L, 2L));
+
+        assertThat(c.getDisplayOrder()).isEqualTo(0);
+        assertThat(a.getDisplayOrder()).isEqualTo(1);
+        assertThat(b.getDisplayOrder()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRejectReorderWithMissingIds() {
+        Folder a = new Folder(); a.setId(1L);
+        Folder b = new Folder(); b.setId(2L);
+        when(folderRepository.findAll()).thenReturn(List.of(a, b));
+        assertThatThrownBy(() -> folderService.reorder(List.of(1L)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldRejectReorderWithDuplicateIds() {
+        assertThatThrownBy(() -> folderService.reorder(List.of(1L, 1L)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldRejectReorderWithUnknownId() {
+        Folder a = new Folder(); a.setId(1L);
+        when(folderRepository.findAll()).thenReturn(List.of(a));
+        assertThatThrownBy(() -> folderService.reorder(List.of(99L)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

@@ -2,9 +2,9 @@
 
 ## General
 
-- [ ] fix the name that shows up in browser tabs (currently "frontend")
-- [ ] pick a decent app icon
-- [ ] no way to remove an article from a board
+- [X] fix the name that shows up in browser tabs (currently "frontend")
+- [X] pick a decent app icon
+- [X] no way to remove an article from a board
 - [ ] add support for "magazine view" in the article list pane
 - [ ] allow custom names for feeds (some defaults are very long) or truncate them
 - [ ] share via email
@@ -25,7 +25,7 @@
 
 ## Feed list
 
-- [ ] allow custom ordering of feed groups
+- [X] allow custom ordering of feed groups
 - [X] change the color or highlighting of feed groups to make them more obvious
 - [X] when the unread count reaches zero in a feed, then hide it in the feed list
 - [X] need a way to unsubscribe from a feed
