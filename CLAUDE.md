@@ -138,6 +138,7 @@ org.bartram.myfeeder
 - **`./gradlew release` push uses git CLI**: axion-release's bundled jgit can't read OpenSSH-format keys. `release` and `pushRelease` in `build.gradle.kts` clear their built-in push action and finalize via a `gitPushRelease` Exec task. Don't replace this with raw axion auth config.
 - **Helm probes have a startupProbe**: `startupProbe` (5s × 60 = up to 5 min) gates `livenessProbe` and `readinessProbe`. Configurable in `values.yaml` under `app.probes.{startup,readiness,liveness}`. Don't add `initialDelaySeconds` to liveness — startupProbe is the gate.
 - **Clipboard API requires HTTPS**: The app is served over HTTP (`192.168.44.204`), so `navigator.clipboard` is unavailable. Use `document.execCommand('copy')` fallback for clipboard operations.
+- **`@WebMvcTest` omits `BuildPropertiesAutoConfiguration`**: the `BuildProperties` bean is absent in controller-slice tests. Either inject with `@Autowired(required = false)` and handle `null`, or `@Import` a test config that exposes a `BuildProperties` bean from a `Properties` literal. Same caveat applies to other `info.*` / actuator auto-configured beans.
 
 ## Test Patterns
 
