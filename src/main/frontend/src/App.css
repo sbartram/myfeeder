@@ -154,6 +154,15 @@ html, body, #root {
 
 .footer-btn:hover { color: var(--text-primary); }
 
+.app-version {
+  padding: 4px 12px 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.6;
+  text-align: left;
+  user-select: text;
+}
+
 /* Article List */
 .article-list {
   display: flex;

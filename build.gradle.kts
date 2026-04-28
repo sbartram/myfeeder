@@ -119,3 +119,7 @@ val npmBuild by tasks.registering(Exec::class) {
 tasks.named("processResources") {
 	dependsOn(npmBuild)
 }
+
+springBoot {
+	buildInfo()
+}

@@ -4,6 +4,7 @@ import { EmptyState } from './EmptyState'
 import { useFolders, useReorderFolders } from '../hooks/useFolders'
 import { useUnreadCounts } from '../hooks/useArticles'
 import { useBoards } from '../hooks/useBoards'
+import { useVersion } from '../hooks/useVersion'
 import { useUIStore } from '../stores/uiStore'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useImportOpml, exportOpml } from '../hooks/useOpml'
@@ -75,6 +76,7 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
   const { data: feeds = [] } = useFeeds()
   const { data: folders = [] } = useFolders()
   const { data: boards = [] } = useBoards()
+  const { data: version } = useVersion()
   const reorderFolders = useReorderFolders()
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -326,6 +328,11 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
           onChange={handleFileChange}
         />
       </div>
+      {version && (
+        <div className="app-version" title={`Built ${version.buildTime}`}>
+          v{version.version}
+        </div>
+      )}
     </div>
   )
 }
