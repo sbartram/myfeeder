@@ -149,3 +149,4 @@ org.bartram.myfeeder
 - **Integration test**: `@SpringBootTest` + `@Import(TestcontainersConfiguration.class)` verifying all beans wire correctly
 - **Migration tests**: Flyway runs at `@DataJdbcTest` startup, so tests can't insert a legacy-shape row and "re-run" the migration. Pattern: insert a legacy-shape row via `JdbcTemplate.update(...)`, then re-execute the migration SQL manually against it, then assert the post-migration shape. Example: `V4StripRaindropApiTokenMigrationTest`
 - Test `application.yaml` must include `myfeeder.*` properties and a dummy `spring.ai.anthropic.api-key`
+- **Frontend `vi.mock` of `preferencesStore` is full-replacement** (e.g. `SettingsDialog.test.tsx`) — adding a new export to `preferencesStore` requires updating every mock that consumes it, otherwise tests fail with `No "X" export is defined on the mock`. Prefer `vi.mock(..., async (importOriginal) => ({ ...await importOriginal(), usePreferences: ... }))` for new tests.
