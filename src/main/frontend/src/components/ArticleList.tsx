@@ -4,6 +4,7 @@ import { useArticles, useMarkRead, useUnreadCounts } from '../hooks/useArticles'
 import { useFeeds } from '../hooks/useFeeds'
 import { useFolders } from '../hooks/useFolders'
 import { useUIStore } from '../stores/uiStore'
+import { usePreferences, ARTICLE_LIST_FONT_PX } from '../stores/preferencesStore'
 import { EmptyState } from './EmptyState'
 import { MarkOlderReadDialog } from './MarkOlderReadDialog'
 import type { Article, ArticleFilters, Feed } from '../types'
@@ -26,6 +27,8 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
   const setSelectedFeed = useUIStore((s) => s.setSelectedFeed)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
+  const articleListFontSize = usePreferences((s) => s.articleListFontSize)
+  const articleItemsStyle = { fontSize: `${ARTICLE_LIST_FONT_PX[articleListFontSize]}px` }
 
   const orderedFeeds: Feed[] = useMemo(() => {
     const list: Feed[] = []
@@ -193,7 +196,7 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
         onChange={(e) => setSearchQuery(e.target.value)}
       />
 
-      <div className="article-items">
+      <div className="article-items" style={articleItemsStyle}>
         {filtered.map((article) => (
           <div
             key={article.id}

@@ -20,6 +20,7 @@ const shortcuts = [
   { key: 'g then s', action: 'Go to Starred' },
   { key: 'g then b', action: 'Go to Boards' },
   { key: 'Tab', action: 'Cycle panel focus' },
+  { key: '+ / -', action: 'Increase / decrease focused panel font size' },
   { key: '?', action: 'Show this overlay' },
 ]
 

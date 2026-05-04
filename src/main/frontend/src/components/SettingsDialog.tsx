@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { usePreferences } from '../stores/preferencesStore'
+import { usePreferences, FONT_SIZE_STEPS, type FontSize } from '../stores/preferencesStore'
 import { integrationsApi, type RaindropCollection } from '../api/integrations'
 import { themeList } from '../themes'
 
@@ -188,6 +188,35 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
               <option value="oldest-first">Oldest first</option>
             </select>
           </label>
+          <label style={{ display: 'block', fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>
+            Article list font size
+            <select
+              className="dialog-input"
+              value={prefs.articleListFontSize}
+              onChange={(e) => prefs.setArticleListFontSize(e.target.value as FontSize)}
+              style={{ marginTop: 4 }}
+            >
+              {FONT_SIZE_STEPS.map((s) => (
+                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+              ))}
+            </select>
+          </label>
+          <label style={{ display: 'block', fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>
+            Reading pane font size
+            <select
+              className="dialog-input"
+              value={prefs.readingFontSize}
+              onChange={(e) => prefs.setReadingFontSize(e.target.value as FontSize)}
+              style={{ marginTop: 4 }}
+            >
+              {FONT_SIZE_STEPS.map((s) => (
+                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+              ))}
+            </select>
+          </label>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+            Tip: press <kbd>+</kbd> / <kbd>-</kbd> to adjust the focused panel's font size.
+          </div>
         </div>
 
         <div style={{ marginBottom: 20 }}>

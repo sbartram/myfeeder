@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../stores/uiStore'
+import { usePreferences, FONT_SIZE_STEPS } from '../stores/preferencesStore'
 import { useUpdateArticleState, useMarkRead, useSaveToRaindrop } from './useArticles'
 import { usePollFeed, useFeeds } from './useFeeds'
 import type { Article, Feed } from '../types'
@@ -21,6 +22,12 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
   const setSelectedFeed = useUIStore((s) => s.setSelectedFeed)
   const cycleFocus = useUIStore((s) => s.cycleFocus)
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
+  const keyboardFocus = useUIStore((s) => s.keyboardFocus)
+
+  const articleListFontSize = usePreferences((s) => s.articleListFontSize)
+  const readingFontSize = usePreferences((s) => s.readingFontSize)
+  const setArticleListFontSize = usePreferences((s) => s.setArticleListFontSize)
+  const setReadingFontSize = usePreferences((s) => s.setReadingFontSize)
 
   const updateState = useUpdateArticleState()
   const markRead = useMarkRead()
@@ -52,6 +59,21 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           case 's': navigate('/starred'); return
           case 'b': navigate('/boards'); return
         }
+        return
+      }
+
+      // Adjust font size of focused panel: '+' (or '=') and '-'
+      if (e.key === '+' || e.key === '=' || e.key === '-') {
+        const delta = e.key === '-' ? -1 : 1
+        const target = keyboardFocus === 'reading' ? 'reading' : 'articles'
+        const current = target === 'reading' ? readingFontSize : articleListFontSize
+        const idx = FONT_SIZE_STEPS.indexOf(current)
+        const next = FONT_SIZE_STEPS[Math.max(0, Math.min(FONT_SIZE_STEPS.length - 1, idx + delta))]
+        if (next !== current) {
+          if (target === 'reading') setReadingFontSize(next)
+          else setArticleListFontSize(next)
+        }
+        e.preventDefault()
         return
       }
 
@@ -143,7 +165,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           break
       }
     },
-    [articles, currentIndex, currentArticle, selectedFeedId, feedIds, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setSearchQuery, updateState, markRead, pollFeed, saveToRaindrop, callbacks]
+    [articles, currentIndex, currentArticle, selectedFeedId, feedIds, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setSearchQuery, updateState, markRead, pollFeed, saveToRaindrop, callbacks, keyboardFocus, articleListFontSize, readingFontSize, setArticleListFontSize, setReadingFontSize]
   )
 
   useEffect(() => {

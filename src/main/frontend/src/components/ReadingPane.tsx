@@ -3,7 +3,7 @@ import { useMatch } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { useUIStore } from '../stores/uiStore'
 import { useArticle, useUpdateArticleState, useSaveToRaindrop } from '../hooks/useArticles'
-import { usePreferences } from '../stores/preferencesStore'
+import { usePreferences, READING_FONT_PX } from '../stores/preferencesStore'
 import { useReadLater, useRemoveArticleFromBoard } from '../hooks/useBoards'
 import { BoardManager } from './BoardManager'
 
@@ -25,6 +25,7 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
   const updateState = useUpdateArticleState()
   const saveToRaindrop = useSaveToRaindrop()
   const autoMarkReadDelay = usePreferences((s) => s.autoMarkReadDelay)
+  const readingFontSize = usePreferences((s) => s.readingFontSize)
   const readLater = useReadLater()
   const removeFromBoard = useRemoveArticleFromBoard()
   const [internalBoardOpen, setInternalBoardOpen] = useState(false)
@@ -137,7 +138,7 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
         </button>
       </div>
 
-      <div className="reading-content">
+      <div className="reading-content" style={{ fontSize: `${READING_FONT_PX[readingFontSize]}px` }}>
         <h1 className="article-title">{article.title}</h1>
         <div className="article-meta">
           {article.author && <span>{article.author} &middot; </span>}

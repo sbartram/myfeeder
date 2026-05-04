@@ -26,7 +26,12 @@ vi.mock('../stores/preferencesStore', () => ({
     setAutoMarkReadDelay: vi.fn(),
     articleSortOrder: 'newest-first',
     setArticleSortOrder: vi.fn(),
+    articleListFontSize: 'medium',
+    setArticleListFontSize: vi.fn(),
+    readingFontSize: 'medium',
+    setReadingFontSize: vi.fn(),
   }),
+  FONT_SIZE_STEPS: ['small', 'medium', 'large', 'xlarge'],
 }))
 
 vi.mock('../themes', () => ({ themeList: [{ id: 'dark', name: 'Dark', type: 'dark' }] }))
