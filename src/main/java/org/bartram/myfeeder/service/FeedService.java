@@ -33,6 +33,10 @@ public class FeedService {
     }
 
     public Feed subscribe(String feedUrl) {
+        return subscribe(feedUrl, null);
+    }
+
+    public Feed subscribe(String feedUrl, Long folderId) {
         String rawContent = restClientBuilder.build()
                 .get()
                 .uri(feedUrl)
@@ -49,6 +53,7 @@ public class FeedService {
         feed.setFeedType(parsed.getFeedType());
         feed.setPollIntervalMinutes(properties.getPolling().getDefaultIntervalMinutes());
         feed.setCreatedAt(Instant.now());
+        feed.setFolderId(folderId);
 
         Feed saved = feedRepository.save(feed);
         feedPollingScheduler.registerFeed(saved);

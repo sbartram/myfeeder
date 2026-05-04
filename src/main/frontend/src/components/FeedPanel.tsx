@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { useFeeds, useDeleteFeed, usePollFeed } from '../hooks/useFeeds'
+import { useFeeds, useDeleteFeed, usePollFeed, useMoveFeedToFolder } from '../hooks/useFeeds'
 import { EmptyState } from './EmptyState'
 import { useFolders, useReorderFolders } from '../hooks/useFolders'
 import { useUnreadCounts } from '../hooks/useArticles'
@@ -101,7 +101,9 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const deleteFeed = useDeleteFeed()
   const pollFeed = usePollFeed()
+  const moveFeed = useMoveFeedToFolder()
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; feed: Feed } | null>(null)
+  const [moveSubmenuOpen, setMoveSubmenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<Feed | null>(null)
 
   const handleContextMenu = useCallback((e: React.MouseEvent, feed: Feed) => {
@@ -111,10 +113,21 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
 
   useEffect(() => {
     if (!contextMenu) return
-    const close = () => setContextMenu(null)
+    const close = () => {
+      setContextMenu(null)
+      setMoveSubmenuOpen(false)
+    }
     document.addEventListener('click', close)
     return () => document.removeEventListener('click', close)
   }, [contextMenu])
+
+  const handleMoveToFolder = (folderId: number | null) => {
+    if (contextMenu) {
+      moveFeed.mutate({ id: contextMenu.feed.id, folderId })
+      setContextMenu(null)
+      setMoveSubmenuOpen(false)
+    }
+  }
 
   const handleRefreshFeed = () => {
     if (contextMenu) {
@@ -255,20 +268,25 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
           </SortableContext>
         </DndContext>
 
-        {visibleFeeds(uncategorized).map((feed) => (
-          <div key={feed.id}
-               className={`feed-row ${selectedFeedId === feed.id ? 'active' : ''}`}
-               onClick={() => handleFeedClick(feed.id)}
-               onContextMenu={(e) => handleContextMenu(e, feed)}>
-            <span>
-              {feed.errorCount >= 3 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
-              {feed.title}
-            </span>
-            {feedUnread(feed.id) > 0 && (
-              <span className="count">{feedUnread(feed.id)}</span>
-            )}
-          </div>
-        ))}
+        {visibleFeeds(uncategorized).length > 0 && (
+          <>
+            {folders.length > 0 && <div className="section-label">UNCATEGORIZED</div>}
+            {visibleFeeds(uncategorized).map((feed) => (
+              <div key={feed.id}
+                   className={`feed-row feed-row-uncategorized ${selectedFeedId === feed.id ? 'active' : ''}`}
+                   onClick={() => handleFeedClick(feed.id)}
+                   onContextMenu={(e) => handleContextMenu(e, feed)}>
+                <span>
+                  {feed.errorCount >= 3 && <span className="feed-error-icon" title={feed.lastError || 'Feed error'}>!</span>}
+                  {feed.title}
+                </span>
+                {feedUnread(feed.id) > 0 && (
+                  <span className="count">{feedUnread(feed.id)}</span>
+                )}
+              </div>
+            ))}
+          </>
+        )}
           </>
         )}
 
@@ -287,10 +305,43 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
       </div>
 
       {contextMenu && (
-        <div className="feed-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }}>
+        <div
+          className="feed-context-menu"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <button className="feed-context-menu-item" onClick={handleRefreshFeed}>
             Refresh
           </button>
+          <div className="feed-context-menu-submenu">
+            <button
+              className="feed-context-menu-item"
+              onClick={() => setMoveSubmenuOpen((o) => !o)}
+            >
+              Move to folder ▸
+            </button>
+            {moveSubmenuOpen && (
+              <div className="feed-context-menu-submenu-panel">
+                <button
+                  className="feed-context-menu-item"
+                  onClick={() => handleMoveToFolder(null)}
+                  disabled={!contextMenu.feed.folderId}
+                >
+                  No folder
+                </button>
+                {folders.map((f) => (
+                  <button
+                    key={f.id}
+                    className="feed-context-menu-item"
+                    onClick={() => handleMoveToFolder(f.id)}
+                    disabled={contextMenu.feed.folderId === f.id}
+                  >
+                    {f.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button className="feed-context-menu-item feed-context-menu-danger" onClick={handleUnsubscribeFeed}>
             Unsubscribe
           </button>

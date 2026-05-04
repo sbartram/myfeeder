@@ -507,6 +507,20 @@ html, body, #root {
 .feed-context-menu-danger { color: #e74c3c; }
 .feed-context-menu-danger:hover { background: rgba(231, 76, 60, 0.15); }
 
+.feed-context-menu-item:disabled { opacity: 0.5; cursor: default; }
+.feed-context-menu-item:disabled:hover { background: none; }
+
+.feed-context-menu-submenu { position: relative; }
+.feed-context-menu-submenu-panel {
+  margin-left: 12px;
+  border-left: 2px solid var(--border);
+  padding: 2px 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.feed-row-uncategorized { padding-left: 12px; }
+
 /* Split button */
 .split-btn-group { position: relative; display: flex; align-items: center; }
 .split-btn-toggle { padding: 4px 6px; font-size: 11px; border-left: 1px solid var(--border); }

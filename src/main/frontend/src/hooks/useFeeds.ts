@@ -8,7 +8,17 @@ export function useFeeds() {
 export function useSubscribeFeed() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (url: string) => feedsApi.subscribe(url),
+    mutationFn: ({ url, folderId = null }: { url: string; folderId?: number | null }) =>
+      feedsApi.subscribe(url, folderId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['feeds'] }),
+  })
+}
+
+export function useMoveFeedToFolder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, folderId }: { id: number; folderId: number | null }) =>
+      feedsApi.moveToFolder(id, folderId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['feeds'] }),
   })
 }

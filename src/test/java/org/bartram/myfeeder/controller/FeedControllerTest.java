@@ -51,7 +51,7 @@ class FeedControllerTest {
         feed.setId(1L);
         feed.setTitle("New Feed");
         feed.setFeedType(FeedType.RSS);
-        when(feedService.subscribe("https://example.com/feed.xml")).thenReturn(feed);
+        when(feedService.subscribe("https://example.com/feed.xml", null)).thenReturn(feed);
 
         mockMvc.perform(post("/api/feeds")
                         .contentType(MediaType.APPLICATION_JSON)

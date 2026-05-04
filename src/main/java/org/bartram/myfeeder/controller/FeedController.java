@@ -28,7 +28,7 @@ public class FeedController {
 
     @PostMapping
     public ResponseEntity<Feed> subscribe(@RequestBody SubscribeRequest request) {
-        Feed feed = feedService.subscribe(request.getUrl());
+        Feed feed = feedService.subscribe(request.getUrl(), request.getFolderId());
         return ResponseEntity.status(HttpStatus.CREATED).body(feed);
     }
 
