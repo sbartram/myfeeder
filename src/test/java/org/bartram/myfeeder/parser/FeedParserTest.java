@@ -193,6 +193,14 @@ class FeedParserTest {
         assertThat(parser.detectFeedType(loadResource("/feeds/sample-json-feed.json"))).isEqualTo(FeedType.JSON_FEED);
     }
 
+    @Test
+    void shouldRejectRateLimitJsonMasqueradingAs200() {
+        String body = "{\"data\":\"too many requests\"}";
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> parser.parse(body))
+                .isInstanceOf(FeedParseException.class)
+                .hasMessageContaining("recognizable feed");
+    }
+
     private String loadResource(String path) {
         try (var is = getClass().getResourceAsStream(path)) {
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);

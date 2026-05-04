@@ -33,10 +33,17 @@ public class FeedParser {
 
     public ParsedFeed parse(String rawContent) {
         FeedType type = detectFeedType(rawContent);
-        return switch (type) {
+        ParsedFeed parsed = switch (type) {
             case RSS, ATOM -> parseWithRome(rawContent, type);
             case JSON_FEED -> parseJsonFeed(rawContent);
         };
+        if ((parsed.getTitle() == null || parsed.getTitle().isBlank())
+                && (parsed.getArticles() == null || parsed.getArticles().isEmpty())) {
+            throw new FeedParseException(
+                    "Response did not contain a recognizable feed (no title and no items). "
+                    + "The server may have returned a rate-limit or error page.");
+        }
+        return parsed;
     }
 
     public FeedType detectFeedType(String rawContent) {

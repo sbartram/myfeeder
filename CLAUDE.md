@@ -123,6 +123,8 @@ org.bartram.myfeeder
 - Jackson 3.x **annotations** did NOT move — `@JsonProperty`, `@JsonIgnoreProperties`, `@JsonIgnore`, `@JsonCreator` etc. are still in `com.fasterxml.jackson.annotation.*` (jackson-annotations 2.x is a transitive dep of jackson-databind 3.x). There is no `tools.jackson.annotation` package.
 - Test annotations `@WebMvcTest`, `@DataJdbcTest`, `@SpringBootTest` are in `org.springframework.boot.*.test.autoconfigure` packages (e.g., `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`).
 - Test starter dependencies follow the pattern `spring-boot-starter-<module>-test` (e.g., `spring-boot-starter-webmvc-test`).
+- `RestClientCustomizer` is in `org.springframework.boot.restclient` (Boot 4 moved it out of `org.springframework.boot.web.client`). Spring Boot auto-applies any `RestClientCustomizer` bean to the auto-configured `RestClient.Builder` injected into services.
+- `HttpStatus.UNPROCESSABLE_ENTITY` is deprecated in Spring 7. Use `HttpStatus.valueOf(422)` (or `UNPROCESSABLE_CONTENT` once it's exposed).
 
 ## Gotchas
 
@@ -139,6 +141,8 @@ org.bartram.myfeeder
 - **Helm probes have a startupProbe**: `startupProbe` (5s × 60 = up to 5 min) gates `livenessProbe` and `readinessProbe`. Configurable in `values.yaml` under `app.probes.{startup,readiness,liveness}`. Don't add `initialDelaySeconds` to liveness — startupProbe is the gate.
 - **Clipboard API requires HTTPS**: The app is served over HTTP (`192.168.44.204`), so `navigator.clipboard` is unavailable. Use `document.execCommand('copy')` fallback for clipboard operations.
 - **`@WebMvcTest` omits `BuildPropertiesAutoConfiguration`**: the `BuildProperties` bean is absent in controller-slice tests. Either inject with `@Autowired(required = false)` and handle `null`, or `@Import` a test config that exposes a `BuildProperties` bean from a `Properties` literal. Same caveat applies to other `info.*` / actuator auto-configured beans.
+- **Outbound `RestClient` User-Agent**: the JDK HttpClient default is `Java-http-client/<version>`, which Vercel and other CDNs rate-limit by returning HTTP 200 with body `{"data":"too many requests"}`. `config/RestClientConfig.java` registers a `RestClientCustomizer` that sets `myfeeder/<version>` on every outbound `RestClient.Builder` — don't bypass it by constructing a raw `RestClient.builder()` without going through the auto-configured bean.
+- **`FeedParser.parse` rejects empty results**: if a response yields no title and no articles, it throws `FeedParseException` (mapped to 422 by `GlobalExceptionHandler`). This catches "200 OK with garbage" responses that would otherwise save a NULL-title feed and violate `feed.title NOT NULL`.
 
 ## Test Patterns
 

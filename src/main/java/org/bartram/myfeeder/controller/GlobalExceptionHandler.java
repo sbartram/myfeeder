@@ -1,6 +1,7 @@
 package org.bartram.myfeeder.controller;
 
 import org.bartram.myfeeder.integration.RaindropNotConfiguredException;
+import org.bartram.myfeeder.parser.FeedParseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -8,6 +9,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(FeedParseException.class)
+    public ProblemDetail handleFeedParseException(FeedParseException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(422), ex.getMessage());
+        problem.setTitle("Could not parse feed");
+        return problem;
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {

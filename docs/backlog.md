@@ -54,6 +54,10 @@
 - [ ] auto export feed list to OPML
 - [ ] export history of saved articles
 
+## Bugs
+
+- [ ] `RestClient.body(String.class)` decodes `text/xml` responses as ISO-8859-1 when the server omits a charset, which mojibakes emoji-laden titles. Switch the parser to byte input so ROME respects the XML prolog's `encoding=`.
+
 ## Testing
 
 - raindrop
