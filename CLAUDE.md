@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**myfeeder** is a Spring Boot 4.0.3 feed aggregator/reader application using Java 21. It subscribes to RSS, Atom, and JSON Feed sources, polls them on a schedule, stores articles in PostgreSQL, and can forward saved articles to Raindrop.io.
+**myfeeder** is a Spring Boot 4.0.3 feed aggregator/reader application using Java 25. It subscribes to RSS, Atom, and JSON Feed sources, polls them on a schedule, stores articles in PostgreSQL, and can forward saved articles to Raindrop.io.
 
 ## Build & Run Commands
 
@@ -34,7 +34,7 @@ cd src/main/frontend && npm run dev
 ## Architecture
 
 - **Framework**: Spring Boot 4.0.3 with Spring MVC (servlet stack)
-- **Language**: Java 21, Lombok for boilerplate reduction
+- **Language**: Java 25, Lombok for boilerplate reduction
 - **Database**: PostgreSQL via Spring Data JDBC (not JPA), Flyway migrations
 - **Caching**: Redis via Spring Cache abstraction
 - **AI**: Spring AI with Anthropic Claude (chat only)
