@@ -51,3 +51,6 @@ tmp/
 
 ### Helm ###
 helm/myfeeder/values-secrets.yaml
+
+### Local scratch (may contain registry credentials) ###
+pub.sh

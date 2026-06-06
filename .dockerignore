@@ -1,0 +1,8 @@
+# Runtime-only image: the build context needs nothing but the host-built boot jar.
+# Whitelist approach — ignore everything, then re-include only build/libs/*.jar.
+*
+!build
+build/*
+!build/libs
+build/libs/*
+!build/libs/*.jar
