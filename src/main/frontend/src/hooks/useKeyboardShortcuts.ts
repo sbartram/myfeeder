@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../stores/uiStore'
 import { usePreferences, FONT_SIZE_STEPS } from '../stores/preferencesStore'
-import { useUpdateArticleState, useMarkRead, useSaveToRaindrop } from './useArticles'
+import { useArticle, useUpdateArticleState, useMarkRead, useSaveToRaindrop } from './useArticles'
 import { usePollFeed, useFeeds } from './useFeeds'
 import type { Article, Feed } from '../types'
 
@@ -21,6 +21,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
   const setSelectedArticle = useUIStore((s) => s.setSelectedArticle)
   const setSelectedFeed = useUIStore((s) => s.setSelectedFeed)
   const cycleFocus = useUIStore((s) => s.cycleFocus)
+  const setKeyboardFocus = useUIStore((s) => s.setKeyboardFocus)
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
   const keyboardFocus = useUIStore((s) => s.keyboardFocus)
 
@@ -36,7 +37,12 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
   const { data: feeds = [] } = useFeeds()
 
   const currentIndex = articles.findIndex((a) => a.id === selectedArticleId)
-  const currentArticle = currentIndex >= 0 ? articles[currentIndex] : null
+  // The action target (o/m/s/v/b) must work even when the selected article is
+  // not in `articles` — e.g. Starred/Folder views, where the list driving this
+  // hook is keyed differently from the visible list. Fetch it by id like
+  // ReadingPane does, preferring the list entry when present.
+  const { data: fetchedArticle } = useArticle(selectedArticleId)
+  const currentArticle = (currentIndex >= 0 ? articles[currentIndex] : null) ?? fetchedArticle ?? null
 
   // Build ordered feed list for n/p navigation
   const feedIds = feeds.map((f: Feed) => f.id)
@@ -91,7 +97,14 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           }
           break
         case 'Enter':
-          // Confirm selection (article is already shown in reading pane)
+          // Open the article in the reading pane: select the first one if
+          // nothing is selected yet, then move keyboard focus to the pane.
+          if (!selectedArticleId && articles.length > 0) {
+            setSelectedArticle(articles[0].id)
+          }
+          if (selectedArticleId || articles.length > 0) {
+            setKeyboardFocus('reading')
+          }
           break
         case 'n': {
           // Next feed
@@ -165,7 +178,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           break
       }
     },
-    [articles, currentIndex, currentArticle, selectedFeedId, feedIds, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setSearchQuery, updateState, markRead, pollFeed, saveToRaindrop, callbacks, keyboardFocus, articleListFontSize, readingFontSize, setArticleListFontSize, setReadingFontSize]
+    [articles, currentIndex, currentArticle, selectedArticleId, selectedFeedId, feedIds, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setKeyboardFocus, setSearchQuery, updateState, markRead, pollFeed, saveToRaindrop, callbacks, keyboardFocus, articleListFontSize, readingFontSize, setArticleListFontSize, setReadingFontSize]
   )
 
   useEffect(() => {

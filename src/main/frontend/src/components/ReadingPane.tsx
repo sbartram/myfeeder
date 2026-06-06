@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMatch } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { useUIStore } from '../stores/uiStore'
@@ -15,7 +15,15 @@ interface ReadingPaneProps {
 export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: ReadingPaneProps = {}) {
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
   const setSelectedArticle = useUIStore((s) => s.setSelectedArticle)
+  const keyboardFocus = useUIStore((s) => s.keyboardFocus)
   const { data: article } = useArticle(selectedArticleId)
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  // When focus moves to the reading pane (e.g. via Enter), focus the scroll
+  // container so the keyboard can scroll the article.
+  useEffect(() => {
+    if (keyboardFocus === 'reading') contentRef.current?.focus()
+  }, [keyboardFocus, selectedArticleId])
 
   const boardRouteMatch = useMatch('/board/:boardId')
   const currentBoardId = boardRouteMatch?.params.boardId
@@ -138,7 +146,12 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
         </button>
       </div>
 
-      <div className="reading-content" style={{ fontSize: `${READING_FONT_PX[readingFontSize]}px` }}>
+      <div
+        ref={contentRef}
+        className="reading-content"
+        tabIndex={-1}
+        style={{ fontSize: `${READING_FONT_PX[readingFontSize]}px`, outline: 'none' }}
+      >
         <h1 className="article-title">{article.title}</h1>
         <div className="article-meta">
           {article.author && <span>{article.author} &middot; </span>}

@@ -57,6 +57,7 @@
 ## Bugs
 
 - [ ] `RestClient.body(String.class)` decodes `text/xml` responses as ISO-8859-1 when the server omits a charset, which mojibakes emoji-laden titles. Switch the parser to byte input so ROME respects the XML prolog's `encoding=`.
+- [ ] `j`/`k` article navigation walks the wrong list on Starred and Folder views. `MainLayout` feeds `useKeyboardShortcuts` an `articles` array from a separate `useArticles` query keyed on `selectedFeedId`, which diverges from the visible list (keyed on the route): Starred has `selectedFeedId === null` (queries all articles, not starred), and Folder views never set `selectedFeedId`. The action shortcuts (`o`/`m`/`s`/`v`/`b`/Enter) were fixed by resolving the target via `useArticle(selectedArticleId)`, but `j`/`k` still need the displayed list. Fix at the source: lift the article-list query to a single source of truth shared by the list components and the shortcut hook (touches board views too).
 
 ## Testing
 
