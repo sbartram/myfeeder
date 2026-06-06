@@ -123,3 +123,20 @@ tasks.named("processResources") {
 springBoot {
 	buildInfo()
 }
+
+// Publish the image directly to the registry via the buildpack lifecycle
+// exporter (bypassing `docker push`, which on Docker 29 produces a malformed
+// image — duplicate layer blob with conflicting diffIDs). Gated on an env flag
+// so ordinary `bootBuildImage` builds are unaffected.
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootBuildImage>("bootBuildImage") {
+	if (System.getenv("MYFEEDER_PUBLISH") == "true") {
+		publish.set(true)
+		docker {
+			publishRegistry {
+				url.set("https://registry.bartram.org")
+				username.set(System.getenv("MYFEEDER_REG_USER"))
+				password.set(System.getenv("MYFEEDER_REG_PASS"))
+			}
+		}
+	}
+}
