@@ -5,7 +5,7 @@ interface ShortcutOverlayProps {
 
 const shortcuts = [
   { key: 'j / k', action: 'Next / previous article' },
-  { key: 'n / p', action: 'Next / previous feed' },
+  { key: 'n / p', action: 'Next / previous unread feed' },
   { key: 'Enter', action: 'Open article' },
   { key: 'o', action: 'Open original URL' },
   { key: 'm', action: 'Toggle read / unread' },

@@ -16,6 +16,11 @@ vi.mock('../api/feeds', () => ({
     poll: vi.fn(),
   },
 }))
+vi.mock('../api/folders', () => ({
+  foldersApi: {
+    getAll: vi.fn(),
+  },
+}))
 
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -25,7 +30,27 @@ import { useKeyboardShortcuts } from './useKeyboardShortcuts'
 import { useUIStore } from '../stores/uiStore'
 import { articlesApi } from '../api/articles'
 import { feedsApi } from '../api/feeds'
-import type { Article } from '../types'
+import { foldersApi } from '../api/folders'
+import type { Article, Feed } from '../types'
+
+const feed = (id: number, overrides: Partial<Feed> = {}): Feed => ({
+  id,
+  url: `https://example.com/feed/${id}`,
+  title: `Feed ${id}`,
+  description: null,
+  siteUrl: null,
+  feedType: 'RSS',
+  pollIntervalMinutes: 60,
+  lastPolledAt: null,
+  lastSuccessfulPollAt: null,
+  errorCount: 0,
+  lastError: null,
+  etag: null,
+  lastModifiedHeader: null,
+  createdAt: '2026-01-01T00:00:00Z',
+  folderId: null,
+  ...overrides,
+})
 
 const article = (id: number, overrides: Partial<Article> = {}): Article => ({
   id,
@@ -59,10 +84,21 @@ function press(key: string) {
   })
 }
 
+// Seed the feed list + unread counts so the hook's unread-aware navigation has
+// data to work with synchronously (no folders, plain order).
+function seedFeeds(qc: QueryClient, feeds: Feed[], counts: Record<string, number>) {
+  qc.setQueryData(['feeds'], feeds)
+  qc.setQueryData(['folders'], [])
+  qc.setQueryData(['unreadCounts'], counts)
+  vi.mocked(feedsApi.getAll).mockResolvedValue(feeds)
+  vi.mocked(articlesApi.counts).mockResolvedValue(counts)
+}
+
 describe('useKeyboardShortcuts', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(feedsApi.getAll).mockResolvedValue([])
+    vi.mocked(foldersApi.getAll).mockResolvedValue([])
     // Reset the selection/focus slice of the UI store between tests.
     useUIStore.setState({ selectedArticleId: null, selectedFeedId: null, keyboardFocus: 'articles' })
   })
@@ -108,5 +144,78 @@ describe('useKeyboardShortcuts', () => {
     press('Enter')
     expect(useUIStore.getState().selectedArticleId).toBe(3)
     expect(useUIStore.getState().keyboardFocus).toBe('reading')
+  })
+
+  it("Shift+A marks the current feed read and advances to the next unread feed", async () => {
+    // Parity with the mouse "Mark all read" button: after clearing the current
+    // feed it should jump to the next feed that still has unread articles.
+    const { qc, wrapper } = createWrapper()
+    const feeds = [feed(1), feed(2), feed(3)]
+    qc.setQueryData(['feeds'], feeds)
+    qc.setQueryData(['folders'], [])
+    qc.setQueryData(['unreadCounts'], { '1': 5, '2': 0, '3': 4 })
+    vi.mocked(feedsApi.getAll).mockResolvedValue(feeds)
+    vi.mocked(articlesApi.counts).mockResolvedValue({ '1': 5, '2': 0, '3': 4 })
+    vi.mocked(articlesApi.markRead).mockResolvedValue(undefined as never)
+    useUIStore.setState({ selectedFeedId: 1, selectedArticleId: 99 })
+
+    renderHook(() => useKeyboardShortcuts([]), { wrapper })
+
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'A', shiftKey: true, bubbles: true }))
+    })
+
+    await waitFor(() => expect(articlesApi.markRead).toHaveBeenCalledWith(undefined, 1, undefined))
+    // Feed 2 has no unread, so it should skip to feed 3.
+    await waitFor(() => expect(useUIStore.getState().selectedFeedId).toBe(3))
+    expect(useUIStore.getState().selectedArticleId).toBeNull()
+  })
+
+  it("'n' skips fully-read feeds and lands on the next feed with unread articles", () => {
+    const { qc, wrapper } = createWrapper()
+    seedFeeds(qc, [feed(1), feed(2), feed(3), feed(4)], { '1': 3, '2': 0, '3': 0, '4': 7 })
+    useUIStore.setState({ selectedFeedId: 1 })
+
+    renderHook(() => useKeyboardShortcuts([]), { wrapper })
+
+    press('n')
+    // Feeds 2 and 3 have no unread, so it skips to feed 4.
+    expect(useUIStore.getState().selectedFeedId).toBe(4)
+  })
+
+  it("'n' wraps around to the first unread feed when past the last one", () => {
+    const { qc, wrapper } = createWrapper()
+    seedFeeds(qc, [feed(1), feed(2), feed(3)], { '1': 2, '2': 0, '3': 1 })
+    useUIStore.setState({ selectedFeedId: 3 })
+
+    renderHook(() => useKeyboardShortcuts([]), { wrapper })
+
+    press('n')
+    // Past the last feed: wrap to the first unread one (feed 1).
+    expect(useUIStore.getState().selectedFeedId).toBe(1)
+  })
+
+  it("'p' lands on the previous feed with unread articles", () => {
+    const { qc, wrapper } = createWrapper()
+    seedFeeds(qc, [feed(1), feed(2), feed(3), feed(4)], { '1': 0, '2': 5, '3': 0, '4': 0 })
+    useUIStore.setState({ selectedFeedId: 4 })
+
+    renderHook(() => useKeyboardShortcuts([]), { wrapper })
+
+    press('p')
+    // Feed 3 has no unread, so it skips back to feed 2.
+    expect(useUIStore.getState().selectedFeedId).toBe(2)
+  })
+
+  it("'n' stays put when no other feed has unread articles", () => {
+    const { qc, wrapper } = createWrapper()
+    seedFeeds(qc, [feed(1), feed(2), feed(3)], { '1': 4, '2': 0, '3': 0 })
+    useUIStore.setState({ selectedFeedId: 1 })
+
+    renderHook(() => useKeyboardShortcuts([]), { wrapper })
+
+    press('n')
+    // Current feed is the only one with unread → no-op.
+    expect(useUIStore.getState().selectedFeedId).toBe(1)
   })
 })

@@ -2,9 +2,11 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../stores/uiStore'
 import { usePreferences, FONT_SIZE_STEPS } from '../stores/preferencesStore'
-import { useArticle, useUpdateArticleState, useMarkRead, useSaveToRaindrop } from './useArticles'
-import { usePollFeed, useFeeds } from './useFeeds'
-import type { Article, Feed } from '../types'
+import { useArticle, useUpdateArticleState, useSaveToRaindrop } from './useArticles'
+import { usePollFeed } from './useFeeds'
+import { useMarkAllReadInFeed } from './useMarkAllReadInFeed'
+import { useUnreadFeedNavigation } from './useUnreadFeedNavigation'
+import type { Article } from '../types'
 
 interface KeyboardShortcutCallbacks {
   onOpenBoard?: () => void
@@ -31,10 +33,10 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
   const setReadingFontSize = usePreferences((s) => s.setReadingFontSize)
 
   const updateState = useUpdateArticleState()
-  const markRead = useMarkRead()
   const pollFeed = usePollFeed()
   const saveToRaindrop = useSaveToRaindrop()
-  const { data: feeds = [] } = useFeeds()
+  const markAllReadInFeed = useMarkAllReadInFeed()
+  const { findUnreadFeedId } = useUnreadFeedNavigation()
 
   const currentIndex = articles.findIndex((a) => a.id === selectedArticleId)
   // The action target (o/m/s/v/b) must work even when the selected article is
@@ -43,9 +45,6 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
   // ReadingPane does, preferring the list entry when present.
   const { data: fetchedArticle } = useArticle(selectedArticleId)
   const currentArticle = (currentIndex >= 0 ? articles[currentIndex] : null) ?? fetchedArticle ?? null
-
-  // Build ordered feed list for n/p navigation
-  const feedIds = feeds.map((f: Feed) => f.id)
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -107,21 +106,21 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           }
           break
         case 'n': {
-          // Next feed
-          if (feedIds.length === 0) break
-          const currentFeedIdx = selectedFeedId ? feedIds.indexOf(selectedFeedId) : -1
-          const nextFeedIdx = currentFeedIdx < feedIds.length - 1 ? currentFeedIdx + 1 : 0
-          setSelectedFeed(feedIds[nextFeedIdx])
-          navigate(`/feed/${feedIds[nextFeedIdx]}`)
+          // Next feed with unread articles (wraps; no-op if none qualify)
+          const nextId = findUnreadFeedId(selectedFeedId, 1)
+          if (nextId != null) {
+            setSelectedFeed(nextId)
+            navigate(`/feed/${nextId}`)
+          }
           break
         }
         case 'p': {
-          // Previous feed
-          if (feedIds.length === 0) break
-          const curFeedIdx = selectedFeedId ? feedIds.indexOf(selectedFeedId) : 0
-          const prevFeedIdx = curFeedIdx > 0 ? curFeedIdx - 1 : feedIds.length - 1
-          setSelectedFeed(feedIds[prevFeedIdx])
-          navigate(`/feed/${feedIds[prevFeedIdx]}`)
+          // Previous feed with unread articles (wraps; no-op if none qualify)
+          const prevId = findUnreadFeedId(selectedFeedId, -1)
+          if (prevId != null) {
+            setSelectedFeed(prevId)
+            navigate(`/feed/${prevId}`)
+          }
           break
         }
         case 'm':
@@ -152,7 +151,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           break
         case 'A':
           if (e.shiftKey && selectedFeedId) {
-            markRead.mutate({ feedId: selectedFeedId })
+            markAllReadInFeed(selectedFeedId)
           }
           break
         case '/':
@@ -178,7 +177,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           break
       }
     },
-    [articles, currentIndex, currentArticle, selectedArticleId, selectedFeedId, feedIds, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setKeyboardFocus, setSearchQuery, updateState, markRead, pollFeed, saveToRaindrop, callbacks, keyboardFocus, articleListFontSize, readingFontSize, setArticleListFontSize, setReadingFontSize]
+    [articles, currentIndex, currentArticle, selectedArticleId, selectedFeedId, findUnreadFeedId, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setKeyboardFocus, setSearchQuery, updateState, markAllReadInFeed, pollFeed, saveToRaindrop, callbacks, keyboardFocus, articleListFontSize, readingFontSize, setArticleListFontSize, setReadingFontSize]
   )
 
   useEffect(() => {
