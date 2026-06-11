@@ -2,15 +2,12 @@
 
 ## General
 
-- [X] fix the name that shows up in browser tabs (currently "frontend")
-- [X] pick a decent app icon
-- [X] no way to remove an article from a board
 - [ ] add support for "magazine view" in the article list pane
 - [ ] allow custom names for feeds (some defaults are very long) or truncate them
 - [ ] share via email
-- [ ] "read later" tag?
 - [ ] add notes to an article
 - [ ] dropbox and google drive
+- [X] "read later" tag?
 - [X] create helm chart to deploy redis, postgres, and apps
 - [X] option to mark articles older than _X_ days as read
 - [X] add a setting to hide read articles in the article list pane with the default enabled
@@ -22,9 +19,13 @@
 - [X] copy link to clipboard
 - [X] sort setting for feeds (latest, oldest)
 - [X] hide empty feeds in feed nav
+- [X] fix the name that shows up in browser tabs (currently "frontend")
+- [X] pick a decent app icon
+- [X] no way to remove an article from a board
 
 ## Feed list
 
+- [ ] need a toggle at the feed level to quickly switch between showing unread only or all articles without having to go to Settings
 - [X] allow custom ordering of feed groups
 - [X] change the color or highlighting of feed groups to make them more obvious
 - [X] when the unread count reaches zero in a feed, then hide it in the feed list
