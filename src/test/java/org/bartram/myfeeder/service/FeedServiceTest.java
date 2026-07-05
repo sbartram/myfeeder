@@ -10,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +23,7 @@ class FeedServiceTest {
 
     @Mock private FeedRepository feedRepository;
     @Mock private FeedParser feedParser;
-    @Mock private RestClient.Builder restClientBuilder;
+    @Mock private FeedFetcher feedFetcher;
     @Mock private MyfeederProperties properties;
     @Mock private FeedPollingScheduler feedPollingScheduler;
 

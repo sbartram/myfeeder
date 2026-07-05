@@ -8,7 +8,6 @@ import org.bartram.myfeeder.parser.ParsedFeed;
 import org.bartram.myfeeder.repository.FeedRepository;
 import org.bartram.myfeeder.scheduler.FeedPollingScheduler;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.time.Instant;
 import java.util.List;
@@ -20,7 +19,7 @@ public class FeedService {
 
     private final FeedRepository feedRepository;
     private final FeedParser feedParser;
-    private final RestClient.Builder restClientBuilder;
+    private final FeedFetcher feedFetcher;
     private final MyfeederProperties properties;
     private final FeedPollingScheduler feedPollingScheduler;
 
@@ -33,12 +32,7 @@ public class FeedService {
     }
 
     public Feed subscribe(String feedUrl, Long folderId) {
-        String rawContent = restClientBuilder.build()
-                .get()
-                .uri(feedUrl)
-                .retrieve()
-                .body(String.class);
-
+        String rawContent = feedFetcher.fetch(feedUrl).body();
         ParsedFeed parsed = feedParser.parse(rawContent);
 
         var feed = new Feed();

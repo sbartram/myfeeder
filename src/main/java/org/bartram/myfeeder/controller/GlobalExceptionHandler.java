@@ -3,6 +3,7 @@ package org.bartram.myfeeder.controller;
 import org.bartram.myfeeder.integration.RaindropNotConfiguredException;
 import org.bartram.myfeeder.parser.FeedParseException;
 import org.bartram.myfeeder.parser.OpmlParseException;
+import org.bartram.myfeeder.service.FeedFetchException;
 import org.bartram.myfeeder.service.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -16,6 +17,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleFeedParseException(FeedParseException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(422), ex.getMessage());
         problem.setTitle("Could not parse feed");
+        return problem;
+    }
+
+    @ExceptionHandler(FeedFetchException.class)
+    public ProblemDetail handleFeedFetchException(FeedFetchException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(422), ex.getMessage());
+        problem.setTitle("Could not fetch feed");
         return problem;
     }
 

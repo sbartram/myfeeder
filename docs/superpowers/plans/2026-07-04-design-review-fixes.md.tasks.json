@@ -10,20 +10,20 @@
     {
       "id": 2,
       "subject": "Task 2: NotFoundException → HTTP 404",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Missing path-variable entities produce 404 instead of 400/409 via NotFoundException mapped once in GlobalExceptionHandler.\n\n**Files:** Create service/NotFoundException.java; GlobalExceptionHandler handler → 404; swap exception at: ArticleService.updateState, FeedService.update, FeedPollingService.pollFeed, FolderService.rename, FolderService.moveFeedToFolder (feed lookup ONLY), BoardService.update, ArticleController.saveToRaindrop. Cursor check in findFiltered stays IllegalArgumentException. Simplify BoardController.updateBoard double-lookup.\n\n**Acceptance Criteria:** PATCH missing article → 404; payload-referenced checks stay 400; updateBoard has no findById pre-check; suite passes.\n\n**Verify:** ./gradlew test\n\nFull steps + test code: plan doc Task 2.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/service/NotFoundException.java\", \"src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java\", \"src/main/java/org/bartram/myfeeder/service/ArticleService.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\", \"src/main/java/org/bartram/myfeeder/service/FeedPollingService.java\", \"src/main/java/org/bartram/myfeeder/service/FolderService.java\", \"src/main/java/org/bartram/myfeeder/service/BoardService.java\", \"src/main/java/org/bartram/myfeeder/controller/ArticleController.java\", \"src/main/java/org/bartram/myfeeder/controller/BoardController.java\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"PATCH missing article returns 404\", \"payload-referenced checks stay 400\", \"suite passes\"], \"modelTier\": \"standard\"}\n```"
     },
     {
       "id": 3,
       "subject": "Task 3: Centralize OPML error handling",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [2],
       "description": "**Goal:** OpmlParseException handled in GlobalExceptionHandler (400 ProblemDetail, title \"Could not parse OPML\"); delete the swallow-everything try/catch in OpmlController.importOpml.\n\n**Files:** GlobalExceptionHandler.java, OpmlController.java (importOpml returns OpmlImportResult, throws IOException, no try/catch), OpmlControllerTest.java.\n\n**Acceptance Criteria:** parse failure → 400 with $.detail message; no try/catch in importOpml; unexpected RuntimeException → 500; suite passes.\n\n**Verify:** ./gradlew test --tests \"org.bartram.myfeeder.controller.OpmlControllerTest\"\n\nFull steps + test code: plan doc Task 3.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java\", \"src/main/java/org/bartram/myfeeder/controller/OpmlController.java\"], \"verifyCommand\": \"./gradlew test --tests \\\"org.bartram.myfeeder.controller.OpmlControllerTest\\\"\", \"acceptanceCriteria\": [\"parse failure returns 400 with detail message\", \"no try/catch in importOpml\", \"suite passes\"], \"modelTier\": \"mechanical\"}\n```"
     },
     {
       "id": 4,
       "subject": "Task 4: Convert parser value types to records",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** ParsedFeed and ParsedArticle become immutable @Builder records; accessor renames (getX() → x()) in FeedParser, FeedService, FeedPollingService, tests. Zero logic changes.\n\n**Verify:** ./gradlew test\n\nExact record definitions: plan doc Task 4.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/parser/ParsedFeed.java\", \"src/main/java/org/bartram/myfeeder/parser/ParsedArticle.java\", \"src/main/java/org/bartram/myfeeder/parser/FeedParser.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\", \"src/main/java/org/bartram/myfeeder/service/FeedPollingService.java\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"ParsedFeed and ParsedArticle are records\", \"all accessors updated\", \"suite passes\"], \"modelTier\": \"mechanical\"}\n```"
     },
     {
