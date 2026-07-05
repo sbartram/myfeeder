@@ -58,8 +58,9 @@ public class FeedPollingScheduler {
      * Polls, then re-reads the feed's error state; when the effective interval changed
      * (backoff engaged or cleared) the fixed-rate task replaces itself with one at the new
      * interval whose first run is one full interval away. A concurrent external
-     * registerFeed/cancelFeed can in theory race this replacement; worst case is one
-     * extra poll cycle, acceptable for a single-user deployment.
+     * registerFeed/cancelFeed can in theory race this replacement; worst case is
+     * redundant polling until the feed is next edited or deleted; acceptable for a
+     * single-user deployment.
      */
     private void pollAndAdjust(Long feedId) {
         try {
@@ -68,19 +69,23 @@ public class FeedPollingScheduler {
             cancelFeed(feedId);
             return;
         }
-        feedRepository.findById(feedId).ifPresent(feed -> {
-            Duration desired = computeEffectiveInterval(feed);
-            if (!desired.equals(currentIntervals.get(feedId))) {
-                cancelFeed(feedId);
-                currentIntervals.put(feedId, desired);
-                scheduledTasks.put(feedId, taskScheduler.scheduleAtFixedRate(
-                        () -> pollAndAdjust(feedId),
-                        taskScheduler.getClock().instant().plus(desired),
-                        desired));
-                log.info("Adjusted polling interval for feed '{}' to {} minutes",
-                        feed.getTitle(), desired.toMinutes());
-            }
-        });
+        try {
+            feedRepository.findById(feedId).ifPresent(feed -> {
+                Duration desired = computeEffectiveInterval(feed);
+                if (!desired.equals(currentIntervals.get(feedId))) {
+                    cancelFeed(feedId);
+                    currentIntervals.put(feedId, desired);
+                    scheduledTasks.put(feedId, taskScheduler.scheduleAtFixedRate(
+                            () -> pollAndAdjust(feedId),
+                            taskScheduler.getClock().instant().plus(desired),
+                            desired));
+                    log.info("Adjusted polling interval for feed '{}' to {} minutes",
+                            feed.getTitle(), desired.toMinutes());
+                }
+            });
+        } catch (Exception e) {
+            log.warn("Interval re-evaluation failed for feed {}; keeping current schedule", feedId, e);
+        }
     }
 
     private Duration computeEffectiveInterval(Feed feed) {

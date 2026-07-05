@@ -133,6 +133,29 @@ class FeedPollingSchedulerTest {
     }
 
     @Test
+    void backoffClearsAfterErrorsReset() {
+        Feed failing = feedWith(1L, 15, 5); // errorCount == backoffThreshold -> multiplier 2
+        when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Duration.class)))
+                .thenReturn(mock(ScheduledFuture.class));
+        when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any(Duration.class)))
+                .thenReturn(mock(ScheduledFuture.class));
+        when(taskScheduler.getClock()).thenReturn(Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+        scheduler.registerFeed(failing);
+
+        ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(taskScheduler).scheduleAtFixedRate(taskCaptor.capture(), eq(Duration.ofMinutes(30)));
+
+        Feed recovered = feedWith(1L, 15, 0);
+        when(feedRepository.findById(1L)).thenReturn(Optional.of(recovered));
+
+        taskCaptor.getValue().run();
+
+        verify(feedPollingService).pollFeed(1L);
+        verify(taskScheduler).scheduleAtFixedRate(any(Runnable.class),
+                eq(Instant.EPOCH.plus(Duration.ofMinutes(15))), eq(Duration.ofMinutes(15)));
+    }
+
+    @Test
     void cancelsWhenFeedDeletedDuringPoll() {
         Feed feed = feedWith(1L, 15, 0);
         ScheduledFuture<?> future = mock(ScheduledFuture.class);
