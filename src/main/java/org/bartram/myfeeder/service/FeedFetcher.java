@@ -29,7 +29,7 @@ public class FeedFetcher {
 
     /**
      * Conditional fetch: sends If-None-Match / If-Modified-Since when etag / lastModified are
-     * non-null. Returns FetchResult.notModified() on 304; throws FeedFetchException on 4xx/5xx.
+     * non-null. Returns FetchResult.notModified304() on 304; throws FeedFetchException on 4xx/5xx.
      */
     public FetchResult fetch(String url, String etag, String lastModified) {
         return restClient.get()
