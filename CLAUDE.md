@@ -61,14 +61,14 @@ org.bartram.myfeeder
 
 ## Key Behaviors
 
-- **FeedService** registers feeds with `FeedPollingScheduler` on create/update — don't forget this coupling
+- **Feed scheduling is event-driven**: `FeedService`/`OpmlImportService` publish `FeedSavedEvent`/`FeedDeletedEvent`; `FeedPollingScheduler` listens with `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)`. New feed-mutating code paths just publish the event — never call the scheduler directly.
 - **FeedPollingService** deduplicates articles by GUID on upsert
 - **FeedPollingScheduler** uses `ApplicationReadyEvent` to register all feeds at startup; supports exponential backoff on errors
 - **Article sort order**: Articles are sorted by `COALESCE(published_at, fetched_at)` not by `id`. Batch-fetched articles get sequential IDs but varied publication dates, so `ORDER BY id` does not produce chronological order. Cursor pagination uses composite `(published_at, id)` comparison — the cursor is still a single article ID, but the service looks up the cursor article's date for the SQL comparison.
 - **ReadingPane fetches by ID**: The reading pane uses `useArticle(id)` to fetch the selected article directly (`GET /api/articles/{id}`), not by searching through the paginated list query. This avoids filter/sort mismatches between the article list and reading pane.
 - **RetentionService** is a `@Scheduled` cron job — config under `myfeeder.retention.*`
 - **OpmlService** has XXE protection enabled — maintain this when modifying XML parsing
-- **OpmlImportService** registers new feeds with scheduler post-commit (not inline)
+- **OpmlImportService** publishes `FeedSavedEvent` per new feed; the scheduler's `@TransactionalEventListener(AFTER_COMMIT)` registers them post-commit (no manual `TransactionSynchronization`)
 - **API endpoints**: `/api/feeds`, `/api/articles`, `/api/integrations`, `/api/opml`, `/api/boards`, `/api/folders`
 
 ## Frontend
@@ -151,7 +151,7 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 - **Zustand persist + new preferences**: Adding a new field to `preferencesStore` with a default value only applies to fresh installs. Existing users with a `myfeeder-prefs` localStorage key get `undefined` for the new field (Zustand merges stored state over defaults). Use a `merge` function or version migration if the default must apply to everyone.
 - **Spring Data JDBC ≠ JPA**: No lazy loading, no derived query methods, no `@Entity` — use `@Table`/`@Id` from `org.springframework.data.annotation` and `@Query` for custom queries
 - **Jackson 3.x imports**: Must use `tools.jackson.databind.*`, not `com.fasterxml.jackson.databind.*`
-- **FeedPollingScheduler coupling**: Creating/updating a feed must register it with the scheduler — `FeedService` handles this, so don't bypass it with direct repository calls
+- **FeedPollingScheduler is event-driven**: feed mutations publish `FeedSavedEvent`/`FeedDeletedEvent`; the scheduler (re-)registers or cancels via `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)`. New feed-mutating paths publish the event — never call `registerFeed`/`cancelFeed` directly.
 - **MaxDirectMemorySize (historical, Paketo-only)**: the old Paketo buildpack hardcoded `-XX:MaxDirectMemorySize=10M`, which starved Netty (Lettuce/Redis); the Helm chart overrides it via the `JDK_JAVA_OPTIONS` env var. The Dockerfile (`eclipse-temurin:25-jre`) has no such cap — direct memory defaults are container-aware — so the override is no longer required, but the chart still sets `JDK_JAVA_OPTIONS` and the JVM honors it. Tune JVM flags via `JDK_JAVA_OPTIONS` (auto-read by the `java -jar` entrypoint), not `_JAVA_OPTIONS`.
 - **Frontend not in image**: the image is `docker build`-ed from `build/libs/*.jar`, so the frontend must already be embedded in that jar. Always build with `./gradlew clean bootJar` before `docker build` — `clean` forces `npmBuild`→`processResources` to repackage the current SPA bundle. A stale jar in `build/libs/` will ship an old frontend.
 - **SNAPSHOT tags + pullPolicy**: `imagePullPolicy: IfNotPresent` causes k8s to reuse stale images when the same SNAPSHOT tag is pushed. Use `Always` during development; `IfNotPresent` is only safe with immutable release tags.

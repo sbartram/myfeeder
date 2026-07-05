@@ -2,11 +2,13 @@ package org.bartram.myfeeder.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.config.MyfeederProperties;
+import org.bartram.myfeeder.event.FeedDeletedEvent;
+import org.bartram.myfeeder.event.FeedSavedEvent;
 import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.parser.FeedParser;
 import org.bartram.myfeeder.parser.ParsedFeed;
 import org.bartram.myfeeder.repository.FeedRepository;
-import org.bartram.myfeeder.scheduler.FeedPollingScheduler;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -21,7 +23,7 @@ public class FeedService {
     private final FeedParser feedParser;
     private final FeedFetcher feedFetcher;
     private final MyfeederProperties properties;
-    private final FeedPollingScheduler feedPollingScheduler;
+    private final ApplicationEventPublisher eventPublisher;
 
     public List<Feed> findAll() {
         return feedRepository.findAll();
@@ -46,7 +48,7 @@ public class FeedService {
         feed.setFolderId(folderId);
 
         Feed saved = feedRepository.save(feed);
-        feedPollingScheduler.registerFeed(saved);
+        eventPublisher.publishEvent(new FeedSavedEvent(saved));
         return saved;
     }
 
@@ -62,12 +64,12 @@ public class FeedService {
         }
 
         Feed saved = feedRepository.save(feed);
-        feedPollingScheduler.registerFeed(saved);
+        eventPublisher.publishEvent(new FeedSavedEvent(saved));
         return saved;
     }
 
     public void delete(Long id) {
-        feedPollingScheduler.cancelFeed(id);
         feedRepository.deleteById(id);
+        eventPublisher.publishEvent(new FeedDeletedEvent(id));
     }
 }

@@ -3,6 +3,8 @@ package org.bartram.myfeeder.scheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bartram.myfeeder.config.MyfeederProperties;
+import org.bartram.myfeeder.event.FeedDeletedEvent;
+import org.bartram.myfeeder.event.FeedSavedEvent;
 import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.repository.FeedRepository;
 import org.bartram.myfeeder.service.FeedPollingService;
@@ -11,6 +13,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.Duration;
 import java.util.Map;
@@ -34,6 +38,16 @@ public class FeedPollingScheduler {
     public void onStartup() {
         feedRepository.findAll().forEach(this::registerFeed);
         log.info("Registered polling tasks for {} feeds", scheduledTasks.size());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onFeedSaved(FeedSavedEvent event) {
+        registerFeed(event.feed());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onFeedDeleted(FeedDeletedEvent event) {
+        cancelFeed(event.feedId());
     }
 
     public void registerFeed(Feed feed) {

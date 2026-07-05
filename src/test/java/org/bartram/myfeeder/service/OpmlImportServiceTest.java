@@ -1,21 +1,19 @@
 package org.bartram.myfeeder.service;
 
 import org.bartram.myfeeder.config.MyfeederProperties;
+import org.bartram.myfeeder.event.FeedSavedEvent;
 import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.model.Folder;
 import org.bartram.myfeeder.parser.OpmlFeed;
 import org.bartram.myfeeder.repository.FeedRepository;
 import org.bartram.myfeeder.repository.FolderRepository;
-import org.bartram.myfeeder.scheduler.FeedPollingScheduler;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.transaction.support.TransactionSynchronizationUtils;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.InputStream;
 import java.util.List;
@@ -31,29 +29,17 @@ class OpmlImportServiceTest {
     @Mock private FeedRepository feedRepository;
     @Mock private FolderRepository folderRepository;
     @Mock private FolderService folderService;
-    @Mock private FeedPollingScheduler feedPollingScheduler;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     private OpmlImportService importService;
 
     @BeforeEach
     void setUp() {
-        // Activate transaction synchronization so registerSynchronization() works in unit tests
-        TransactionSynchronizationManager.initSynchronization();
         var properties = new MyfeederProperties();
         properties.getPolling().setDefaultIntervalMinutes(15);
         importService = new OpmlImportService(
                 opmlService, feedRepository, folderRepository,
-                folderService, feedPollingScheduler, properties);
-    }
-
-    @AfterEach
-    void tearDown() {
-        TransactionSynchronizationManager.clearSynchronization();
-    }
-
-    /** Helper to simulate transaction commit — triggers afterCommit callbacks. */
-    private void simulateCommit() {
-        TransactionSynchronizationUtils.triggerAfterCommit();
+                folderService, eventPublisher, properties);
     }
 
     @Test
@@ -82,10 +68,8 @@ class OpmlImportServiceTest {
         assertThat(saved.getSiteUrl()).isEqualTo("https://example.com");
         assertThat(saved.getPollIntervalMinutes()).isEqualTo(15);
 
-        // Scheduler registration happens after commit
-        verify(feedPollingScheduler, never()).registerFeed(any());
-        simulateCommit();
-        verify(feedPollingScheduler).registerFeed(saved);
+        // One FeedSavedEvent published per created feed
+        verify(eventPublisher).publishEvent(new FeedSavedEvent(saved));
     }
 
     @Test
@@ -102,15 +86,14 @@ class OpmlImportServiceTest {
         when(feedRepository.save(any(Feed.class))).thenAnswer(i -> i.getArgument(0));
 
         OpmlImportResult result = importService.importOpml(InputStream.nullInputStream());
-        simulateCommit();
 
         assertThat(result.created()).isEqualTo(0);
         assertThat(result.updated()).isEqualTo(1);
 
         verify(feedRepository).save(existing);
         assertThat(existing.getTitle()).isEqualTo("New Title");
-        // Should NOT register with scheduler for existing feeds
-        verify(feedPollingScheduler, never()).registerFeed(any());
+        // Should NOT publish a save event for existing (updated) feeds
+        verify(eventPublisher, never()).publishEvent(any(FeedSavedEvent.class));
     }
 
     @Test

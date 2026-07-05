@@ -36,7 +36,7 @@
     {
       "id": 6,
       "subject": "Task 6: Make exponential backoff actually engage",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [5],
       "description": "**Goal:** After each poll the scheduler re-reads error state and replaces the polling task when the effective interval changed; NotFoundException mid-poll cancels the feed. registerFeed keeps immediate-first-poll semantics.\n\n**Files:** FeedPollingScheduler.java (full rewrite in plan doc), FeedPollingSchedulerTest.java (three tests, complete code in plan doc).\n\n**Acceptance Criteria:** backoff interval applied after threshold crossed (captured-Runnable test, no waiting); no reschedule when unchanged; deleted feed cancelled; suite passes.\n\n**Verify:** ./gradlew test --tests \"org.bartram.myfeeder.scheduler.FeedPollingSchedulerTest\" then ./gradlew test\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/scheduler/FeedPollingScheduler.java\", \"src/test/java/org/bartram/myfeeder/scheduler/FeedPollingSchedulerTest.java\"], \"verifyCommand\": \"./gradlew test --tests \\\"org.bartram.myfeeder.scheduler.FeedPollingSchedulerTest\\\"\", \"acceptanceCriteria\": [\"backoff interval applied after threshold crossed without restart\", \"no reschedule when unchanged\", \"deleted feed cancelled\", \"suite passes\"], \"modelTier\": \"standard\"}\n```"
     },

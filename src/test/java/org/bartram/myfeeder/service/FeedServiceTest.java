@@ -1,15 +1,17 @@
 package org.bartram.myfeeder.service;
 
 import org.bartram.myfeeder.config.MyfeederProperties;
+import org.bartram.myfeeder.event.FeedDeletedEvent;
+import org.bartram.myfeeder.event.FeedSavedEvent;
 import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.parser.FeedParser;
 import org.bartram.myfeeder.repository.FeedRepository;
-import org.bartram.myfeeder.scheduler.FeedPollingScheduler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +27,7 @@ class FeedServiceTest {
     @Mock private FeedParser feedParser;
     @Mock private FeedFetcher feedFetcher;
     @Mock private MyfeederProperties properties;
-    @Mock private FeedPollingScheduler feedPollingScheduler;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private FeedService feedService;
@@ -53,7 +55,7 @@ class FeedServiceTest {
     @Test
     void shouldDeleteFeed() {
         feedService.delete(1L);
-        verify(feedPollingScheduler).cancelFeed(1L);
+        verify(eventPublisher).publishEvent(new FeedDeletedEvent(1L));
         verify(feedRepository).deleteById(1L);
     }
 
@@ -71,13 +73,13 @@ class FeedServiceTest {
         var result = feedService.update(1L, updates);
 
         assertThat(result.getTitle()).isEqualTo("New Title");
-        verify(feedPollingScheduler).registerFeed(result);
+        verify(eventPublisher).publishEvent(new FeedSavedEvent(result));
     }
 
     @Test
     void shouldCancelPollingOnDelete() {
         feedService.delete(42L);
-        verify(feedPollingScheduler).cancelFeed(42L);
+        verify(eventPublisher).publishEvent(new FeedDeletedEvent(42L));
     }
 
     @Test
@@ -93,6 +95,6 @@ class FeedServiceTest {
         updates.setPollIntervalMinutes(60);
         var result = feedService.update(5L, updates);
 
-        verify(feedPollingScheduler).registerFeed(result);
+        verify(eventPublisher).publishEvent(new FeedSavedEvent(result));
     }
 }
