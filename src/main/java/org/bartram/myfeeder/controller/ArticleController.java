@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.integration.RaindropService;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.service.ArticleService;
+import org.bartram.myfeeder.service.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -64,7 +65,7 @@ public class ArticleController {
     @PostMapping("/{id}/raindrop")
     public ResponseEntity<Void> saveToRaindrop(@PathVariable Long id) {
         Article article = articleService.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Article not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Article not found: " + id));
         raindropService.saveToRaindrop(article);
         return ResponseEntity.ok().build();
     }

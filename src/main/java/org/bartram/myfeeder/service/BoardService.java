@@ -34,7 +34,7 @@ public class BoardService {
 
     public Board update(Long id, String name, String description) {
         Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Board not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Board not found: " + id));
         board.setName(name);
         if (description != null) board.setDescription(description);
         return boardRepository.save(board);

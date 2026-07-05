@@ -58,7 +58,7 @@ public class FeedService {
 
     public Feed update(Long id, Feed updates) {
         Feed feed = feedRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Feed not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Feed not found: " + id));
 
         if (updates.getTitle() != null) {
             feed.setTitle(updates.getTitle());

@@ -24,7 +24,7 @@ public class ArticleService {
 
     public Article updateState(Long id, Boolean read, Boolean starred) {
         Article article = articleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Article not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Article not found: " + id));
 
         if (read != null) {
             article.setRead(read);

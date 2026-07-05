@@ -26,7 +26,7 @@ public class FeedPollingService {
 
     public void pollFeed(Long feedId) {
         Feed feed = feedRepository.findById(feedId)
-                .orElseThrow(() -> new IllegalArgumentException("Feed not found: " + feedId));
+                .orElseThrow(() -> new NotFoundException("Feed not found: " + feedId));
 
         try {
             String rawContent = fetchFeedContent(feed);

@@ -30,10 +30,8 @@ public class BoardController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Board> updateBoard(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        return boardService.findById(id)
-                .map(b -> ResponseEntity.ok(boardService.update(id, request.get("name"), request.get("description"))))
-                .orElse(ResponseEntity.notFound().build());
+    public Board updateBoard(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        return boardService.update(id, request.get("name"), request.get("description"));
     }
 
     @DeleteMapping("/{id}")
