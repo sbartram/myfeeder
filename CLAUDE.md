@@ -52,9 +52,10 @@ org.bartram.myfeeder
 ├── model/            Feed, FeedType, Article, Folder, Board, BoardArticle, IntegrationConfig, IntegrationType, UnreadCount
 ├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig repositories
 ├── parser/           FeedParser (ROME + Jackson), ParsedFeed, ParsedArticle, FeedParseException, OpmlFeed, OpmlParseException
-├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, OpmlImportResult
-├── integration/      RaindropService (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig
-├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml controllers + PaginatedResponse + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest)
+├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, OpmlImportResult, FeedFetcher, FetchResult, NotFoundException, FeedFetchException
+├── integration/      RaindropService, RaindropApiClientImpl (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig
+├── event/            FeedSavedEvent, FeedDeletedEvent (after-commit feed scheduling events)
+├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml controllers + PaginatedResponse + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest, FeedUpdateRequest + board/folder request records)
 ├── scheduler/        FeedPollingScheduler (dynamic per-feed scheduling with backoff)
 └── MyfeederApplication.java (@EnableScheduling, @ConfigurationPropertiesScan)
 ```

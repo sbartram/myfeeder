@@ -63,7 +63,7 @@
     {
       "id": 10,
       "subject": "Task 10: Pagination factory + rename articles → items (backend + frontend)",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** limit+1/hasMore/subList/nextCursor lives once in PaginatedResponse.of(); field renamed articles → items across API, controller tests ($.articles → $.items), and frontend (types/index.ts ~50, App.tsx ~92, ArticleList.tsx ~43, BoardArticleList.tsx ~18, test fixtures) in one commit. New PaginatedResponseTest.\n\n**Verify:** ./gradlew test AND cd src/main/frontend && npx tsc -b && npm test (must use tsc -b)\n\nComplete code: plan doc Task 10.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/controller/PaginatedResponse.java\", \"src/main/java/org/bartram/myfeeder/controller/ArticleController.java\", \"src/main/java/org/bartram/myfeeder/controller/BoardController.java\", \"src/main/frontend/src/types/index.ts\", \"src/main/frontend/src/App.tsx\", \"src/main/frontend/src/components/ArticleList.tsx\", \"src/main/frontend/src/components/BoardArticleList.tsx\"], \"verifyCommand\": \"./gradlew test && cd src/main/frontend && npx tsc -b && npm test\", \"acceptanceCriteria\": [\"factory used by both controllers\", \"items rename applied backend+frontend\", \"both test stacks pass\"], \"modelTier\": \"standard\"}\n```"
     }
   ],
