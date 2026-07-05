@@ -97,6 +97,25 @@ org.bartram.myfeeder
 
 ## Deployment
 
+### Cut a release (full pipeline)
+
+"Cut a release / create and deploy a new release" means this sequence, in this order (run 3× for 0.1.16–0.1.18; details on each step in the bullets below):
+
+```bash
+./gradlew release                       # 1. cut + push the release tag (axion) — BEFORE building, so the jar gets the release version
+./gradlew clean bootJar                 # 2. build the jar (clean forces fresh frontend embed)
+VERSION=$(./gradlew currentVersion -q | grep 'Project version' | awk '{print $NF}')
+docker build --provenance=false -t registry.bartram.org/bartram/myfeeder:$VERSION .
+docker push registry.bartram.org/bartram/myfeeder:$VERSION
+./deploy.sh $VERSION                    # needs MYFEEDER_PG_PASSWORD + MYFEEDER_ANTHROPIC_API_KEY (MYFEEDER_RAINDROP_API_TOKEN optional)
+kubectl -n myfeeder rollout status deploy/myfeeder
+kubectl -n myfeeder logs deploy/myfeeder --tail=20   # verify clean startup
+```
+
+Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT`); always pass `$VERSION` to `deploy.sh` explicitly (no arg → axion computes the *next* snapshot, which won't match any pushed image).
+
+### Reference
+
 - **Registry**: `registry.bartram.org/bartram/myfeeder`
 - **Cluster**: k3s (`k3s-ansible` context), namespace `myfeeder`
 - **Helm chart**: `helm/myfeeder/` — deploys app + Redis; Postgres is external at `pg.bartram.org`
