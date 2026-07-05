@@ -43,10 +43,10 @@ public class FeedService {
 
         var feed = new Feed();
         feed.setUrl(feedUrl);
-        feed.setTitle(parsed.getTitle());
-        feed.setDescription(parsed.getDescription());
-        feed.setSiteUrl(parsed.getSiteUrl());
-        feed.setFeedType(parsed.getFeedType());
+        feed.setTitle(parsed.title());
+        feed.setDescription(parsed.description());
+        feed.setSiteUrl(parsed.siteUrl());
+        feed.setFeedType(parsed.feedType());
         feed.setPollIntervalMinutes(properties.getPolling().getDefaultIntervalMinutes());
         feed.setCreatedAt(Instant.now());
         feed.setFolderId(folderId);

@@ -40,8 +40,8 @@ public class FeedPollingService {
             ParsedFeed parsed = feedParser.parse(rawContent);
             int newCount = 0;
 
-            for (ParsedArticle parsedArticle : parsed.getArticles()) {
-                if (!articleRepository.existsByFeedIdAndGuid(feed.getId(), parsedArticle.getGuid())) {
+            for (ParsedArticle parsedArticle : parsed.articles()) {
+                if (!articleRepository.existsByFeedIdAndGuid(feed.getId(), parsedArticle.guid())) {
                     Article article = toArticle(parsedArticle, feed.getId());
                     articleRepository.save(article);
                     newCount++;
@@ -92,14 +92,14 @@ public class FeedPollingService {
     private Article toArticle(ParsedArticle parsed, Long feedId) {
         var article = new Article();
         article.setFeedId(feedId);
-        article.setGuid(parsed.getGuid());
-        article.setTitle(parsed.getTitle());
-        article.setUrl(parsed.getUrl());
-        article.setAuthor(parsed.getAuthor());
-        article.setContent(parsed.getContent());
-        article.setSummary(parsed.getSummary());
-        article.setImageUrl(parsed.getImageUrl());
-        article.setPublishedAt(parsed.getPublishedAt() != null ? parsed.getPublishedAt() : Instant.now());
+        article.setGuid(parsed.guid());
+        article.setTitle(parsed.title());
+        article.setUrl(parsed.url());
+        article.setAuthor(parsed.author());
+        article.setContent(parsed.content());
+        article.setSummary(parsed.summary());
+        article.setImageUrl(parsed.imageUrl());
+        article.setPublishedAt(parsed.publishedAt() != null ? parsed.publishedAt() : Instant.now());
         article.setFetchedAt(Instant.now());
         return article;
     }
