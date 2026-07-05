@@ -8,17 +8,8 @@ import org.springframework.data.repository.ListCrudRepository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 public interface ArticleRepository extends ListCrudRepository<Article, Long> {
-
-    List<Article> findByFeedId(Long feedId);
-
-    Optional<Article> findByFeedIdAndGuid(Long feedId, String guid);
-
-    List<Article> findByStarredTrue();
-
-    List<Article> findByReadFalse();
 
     @Modifying
     @Query("UPDATE article SET read = true WHERE id IN (:ids)")

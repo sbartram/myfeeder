@@ -24,9 +24,13 @@ resilience4j:
         sliding-window-type: COUNT_BASED
         sliding-window-size: 10
         minimum-number-of-calls: 5
+        ignore-exceptions:
+          - org.bartram.myfeeder.integration.RaindropNotConfiguredException
   retry:
     instances:
       raindrop:
         max-attempts: 3
         wait-duration: 1s
         exponential-backoff-multiplier: 2
+        ignore-exceptions:
+          - org.bartram.myfeeder.integration.RaindropNotConfiguredException

@@ -9,6 +9,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.util.List;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -49,5 +50,14 @@ class BoardControllerTest {
                 .content("{\"name\": \"Read Later\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Read Later"));
+    }
+
+    @Test
+    void shouldAddArticleToBoard() throws Exception {
+        mockMvc.perform(post("/api/boards/1/articles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"articleId\":7}"))
+                .andExpect(status().isCreated());
+        verify(boardService).addArticle(1L, 7L);
     }
 }

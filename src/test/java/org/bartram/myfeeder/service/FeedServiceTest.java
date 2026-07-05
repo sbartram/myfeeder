@@ -1,21 +1,24 @@
 package org.bartram.myfeeder.service;
 
 import org.bartram.myfeeder.config.MyfeederProperties;
+import org.bartram.myfeeder.controller.FeedUpdateRequest;
+import org.bartram.myfeeder.event.FeedDeletedEvent;
+import org.bartram.myfeeder.event.FeedSavedEvent;
 import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.parser.FeedParser;
 import org.bartram.myfeeder.repository.FeedRepository;
-import org.bartram.myfeeder.scheduler.FeedPollingScheduler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.client.RestClient;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -24,9 +27,9 @@ class FeedServiceTest {
 
     @Mock private FeedRepository feedRepository;
     @Mock private FeedParser feedParser;
-    @Mock private RestClient.Builder restClientBuilder;
+    @Mock private FeedFetcher feedFetcher;
     @Mock private MyfeederProperties properties;
-    @Mock private FeedPollingScheduler feedPollingScheduler;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private FeedService feedService;
@@ -54,7 +57,7 @@ class FeedServiceTest {
     @Test
     void shouldDeleteFeed() {
         feedService.delete(1L);
-        verify(feedPollingScheduler).cancelFeed(1L);
+        verify(eventPublisher).publishEvent(new FeedDeletedEvent(1L));
         verify(feedRepository).deleteById(1L);
     }
 
@@ -67,18 +70,17 @@ class FeedServiceTest {
         when(feedRepository.findById(1L)).thenReturn(Optional.of(feed));
         when(feedRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        var updates = new Feed();
-        updates.setTitle("New Title");
+        var updates = new FeedUpdateRequest("New Title", null);
         var result = feedService.update(1L, updates);
 
         assertThat(result.getTitle()).isEqualTo("New Title");
-        verify(feedPollingScheduler).registerFeed(result);
+        verify(eventPublisher).publishEvent(new FeedSavedEvent(result));
     }
 
     @Test
     void shouldCancelPollingOnDelete() {
         feedService.delete(42L);
-        verify(feedPollingScheduler).cancelFeed(42L);
+        verify(eventPublisher).publishEvent(new FeedDeletedEvent(42L));
     }
 
     @Test
@@ -90,10 +92,22 @@ class FeedServiceTest {
         when(feedRepository.findById(5L)).thenReturn(Optional.of(feed));
         when(feedRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        var updates = new Feed();
-        updates.setPollIntervalMinutes(60);
+        var updates = new FeedUpdateRequest(null, 60);
         var result = feedService.update(5L, updates);
 
-        verify(feedPollingScheduler).registerFeed(result);
+        verify(eventPublisher).publishEvent(new FeedSavedEvent(result));
+    }
+
+    @Test
+    void shouldRejectNonPositivePollInterval() {
+        var feed = new Feed();
+        feed.setId(1L);
+        when(feedRepository.findById(1L)).thenReturn(Optional.of(feed));
+
+        var updates = new FeedUpdateRequest(null, 0);
+
+        assertThatThrownBy(() -> feedService.update(1L, updates))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("pollIntervalMinutes");
     }
 }

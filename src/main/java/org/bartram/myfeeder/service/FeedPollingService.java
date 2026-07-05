@@ -10,7 +10,6 @@ import org.bartram.myfeeder.parser.ParsedFeed;
 import org.bartram.myfeeder.repository.ArticleRepository;
 import org.bartram.myfeeder.repository.FeedRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.time.Instant;
 
@@ -22,33 +21,37 @@ public class FeedPollingService {
     private final FeedRepository feedRepository;
     private final ArticleRepository articleRepository;
     private final FeedParser feedParser;
-    private final RestClient.Builder restClientBuilder;
+    private final FeedFetcher feedFetcher;
 
     public void pollFeed(Long feedId) {
         Feed feed = feedRepository.findById(feedId)
-                .orElseThrow(() -> new IllegalArgumentException("Feed not found: " + feedId));
+                .orElseThrow(() -> new NotFoundException("Feed not found: " + feedId));
 
         try {
-            String rawContent = fetchFeedContent(feed);
-            if (rawContent == null) {
-                // 304 Not Modified
-                feed.setLastPolledAt(Instant.now());
+            FetchResult result = feedFetcher.fetch(feed.getUrl(), feed.getEtag(), feed.getLastModifiedHeader());
+            feed.setLastPolledAt(Instant.now());
+            if (result.notModified()) {
                 feedRepository.save(feed);
                 return;
             }
+            if (result.etag() != null) {
+                feed.setEtag(result.etag());
+            }
+            if (result.lastModified() != null) {
+                feed.setLastModifiedHeader(result.lastModified());
+            }
 
-            ParsedFeed parsed = feedParser.parse(rawContent);
+            ParsedFeed parsed = feedParser.parse(result.body());
             int newCount = 0;
 
-            for (ParsedArticle parsedArticle : parsed.getArticles()) {
-                if (!articleRepository.existsByFeedIdAndGuid(feed.getId(), parsedArticle.getGuid())) {
+            for (ParsedArticle parsedArticle : parsed.articles()) {
+                if (!articleRepository.existsByFeedIdAndGuid(feed.getId(), parsedArticle.guid())) {
                     Article article = toArticle(parsedArticle, feed.getId());
                     articleRepository.save(article);
                     newCount++;
                 }
             }
 
-            feed.setLastPolledAt(Instant.now());
             feed.setLastSuccessfulPollAt(Instant.now());
             feed.setErrorCount(0);
             feed.setLastError(null);
@@ -58,48 +61,23 @@ public class FeedPollingService {
         } catch (Exception e) {
             feed.setLastPolledAt(Instant.now());
             feed.setErrorCount(feed.getErrorCount() + 1);
-            feed.setLastError(e.getMessage());
+            feed.setLastError(e.toString());
             feedRepository.save(feed);
-            log.warn("Failed to poll feed '{}': {}", feed.getTitle(), e.getMessage());
+            log.warn("Failed to poll feed '{}': {}", feed.getTitle(), e.toString());
         }
-    }
-
-    private String fetchFeedContent(Feed feed) {
-        RestClient client = restClientBuilder.build();
-        return client.get()
-                .uri(feed.getUrl())
-                .headers(headers -> {
-                    if (feed.getEtag() != null) {
-                        headers.setIfNoneMatch(feed.getEtag());
-                    }
-                    if (feed.getLastModifiedHeader() != null) {
-                        headers.set("If-Modified-Since", feed.getLastModifiedHeader());
-                    }
-                })
-                .exchange((request, response) -> {
-                    if (response.getStatusCode().value() == 304) {
-                        return null;
-                    }
-                    String etag = response.getHeaders().getETag();
-                    String lastModified = response.getHeaders().getFirst("Last-Modified");
-                    if (etag != null) feed.setEtag(etag);
-                    if (lastModified != null) feed.setLastModifiedHeader(lastModified);
-
-                    return new String(response.getBody().readAllBytes());
-                });
     }
 
     private Article toArticle(ParsedArticle parsed, Long feedId) {
         var article = new Article();
         article.setFeedId(feedId);
-        article.setGuid(parsed.getGuid());
-        article.setTitle(parsed.getTitle());
-        article.setUrl(parsed.getUrl());
-        article.setAuthor(parsed.getAuthor());
-        article.setContent(parsed.getContent());
-        article.setSummary(parsed.getSummary());
-        article.setImageUrl(parsed.getImageUrl());
-        article.setPublishedAt(parsed.getPublishedAt() != null ? parsed.getPublishedAt() : Instant.now());
+        article.setGuid(parsed.guid());
+        article.setTitle(parsed.title());
+        article.setUrl(parsed.url());
+        article.setAuthor(parsed.author());
+        article.setContent(parsed.content());
+        article.setSummary(parsed.summary());
+        article.setImageUrl(parsed.imageUrl());
+        article.setPublishedAt(parsed.publishedAt() != null ? parsed.publishedAt() : Instant.now());
         article.setFetchedAt(Instant.now());
         return article;
     }

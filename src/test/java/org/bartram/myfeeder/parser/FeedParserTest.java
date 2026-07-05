@@ -17,15 +17,15 @@ class FeedParserTest {
         String xml = loadResource("/feeds/sample-rss.xml");
         ParsedFeed result = parser.parse(xml);
 
-        assertThat(result.getFeedType()).isEqualTo(FeedType.RSS);
-        assertThat(result.getTitle()).isEqualTo("Example RSS Feed");
-        assertThat(result.getSiteUrl()).isEqualTo("https://example.com");
-        assertThat(result.getArticles()).hasSize(2);
+        assertThat(result.feedType()).isEqualTo(FeedType.RSS);
+        assertThat(result.title()).isEqualTo("Example RSS Feed");
+        assertThat(result.siteUrl()).isEqualTo("https://example.com");
+        assertThat(result.articles()).hasSize(2);
 
-        var first = result.getArticles().get(0);
-        assertThat(first.getGuid()).isEqualTo("https://example.com/first");
-        assertThat(first.getTitle()).isEqualTo("First Post");
-        assertThat(first.getPublishedAt()).isNotNull();
+        var first = result.articles().get(0);
+        assertThat(first.guid()).isEqualTo("https://example.com/first");
+        assertThat(first.title()).isEqualTo("First Post");
+        assertThat(first.publishedAt()).isNotNull();
     }
 
     @Test
@@ -33,14 +33,14 @@ class FeedParserTest {
         String xml = loadResource("/feeds/sample-atom.xml");
         ParsedFeed result = parser.parse(xml);
 
-        assertThat(result.getFeedType()).isEqualTo(FeedType.ATOM);
-        assertThat(result.getTitle()).isEqualTo("Example Atom Feed");
-        assertThat(result.getArticles()).hasSize(1);
+        assertThat(result.feedType()).isEqualTo(FeedType.ATOM);
+        assertThat(result.title()).isEqualTo("Example Atom Feed");
+        assertThat(result.articles()).hasSize(1);
 
-        var entry = result.getArticles().get(0);
-        assertThat(entry.getGuid()).isEqualTo("urn:uuid:atom-entry-1");
-        assertThat(entry.getContent()).isEqualTo("<p>Full content</p>");
-        assertThat(entry.getAuthor()).isEqualTo("Atom Author");
+        var entry = result.articles().get(0);
+        assertThat(entry.guid()).isEqualTo("urn:uuid:atom-entry-1");
+        assertThat(entry.content()).isEqualTo("<p>Full content</p>");
+        assertThat(entry.author()).isEqualTo("Atom Author");
     }
 
     @Test
@@ -48,14 +48,14 @@ class FeedParserTest {
         String json = loadResource("/feeds/sample-json-feed.json");
         ParsedFeed result = parser.parse(json);
 
-        assertThat(result.getFeedType()).isEqualTo(FeedType.JSON_FEED);
-        assertThat(result.getTitle()).isEqualTo("Example JSON Feed");
-        assertThat(result.getArticles()).hasSize(1);
+        assertThat(result.feedType()).isEqualTo(FeedType.JSON_FEED);
+        assertThat(result.title()).isEqualTo("Example JSON Feed");
+        assertThat(result.articles()).hasSize(1);
 
-        var item = result.getArticles().get(0);
-        assertThat(item.getGuid()).isEqualTo("json-item-1");
-        assertThat(item.getContent()).isEqualTo("<p>JSON feed content</p>");
-        assertThat(item.getAuthor()).isEqualTo("JSON Author");
+        var item = result.articles().get(0);
+        assertThat(item.guid()).isEqualTo("json-item-1");
+        assertThat(item.content()).isEqualTo("<p>JSON feed content</p>");
+        assertThat(item.author()).isEqualTo("JSON Author");
     }
 
     @Test
@@ -78,7 +78,7 @@ class FeedParserTest {
                 </rss>
                 """;
         ParsedFeed result = parser.parse(xml);
-        assertThat(result.getArticles().get(0).getImageUrl())
+        assertThat(result.articles().get(0).imageUrl())
                 .isEqualTo("https://cdn.example.com/lead.jpg");
     }
 
@@ -103,7 +103,7 @@ class FeedParserTest {
                 </rss>
                 """;
         ParsedFeed result = parser.parse(xml);
-        assertThat(result.getArticles().get(0).getImageUrl())
+        assertThat(result.articles().get(0).imageUrl())
                 .isEqualTo("https://gizmodo.com/app/uploads/2026/04/post.jpg");
     }
 
@@ -127,7 +127,7 @@ class FeedParserTest {
                 </rss>
                 """;
         ParsedFeed result = parser.parse(xml);
-        assertThat(result.getArticles().get(0).getImageUrl())
+        assertThat(result.articles().get(0).imageUrl())
                 .isEqualTo("https://cdn.example.com/encl.png");
     }
 
@@ -151,7 +151,7 @@ class FeedParserTest {
                 </rss>
                 """;
         ParsedFeed result = parser.parse(xml);
-        assertThat(result.getArticles().get(0).getImageUrl())
+        assertThat(result.articles().get(0).imageUrl())
                 .isEqualTo("https://cdn.example.com/inline.jpg");
     }
 
@@ -175,7 +175,7 @@ class FeedParserTest {
                 }
                 """;
         ParsedFeed result = parser.parse(json);
-        assertThat(result.getArticles().get(0).getImageUrl())
+        assertThat(result.articles().get(0).imageUrl())
                 .isEqualTo("https://cdn.example.com/json.jpg");
     }
 
@@ -183,7 +183,7 @@ class FeedParserTest {
     void shouldReturnNullImageWhenAbsent() {
         String xml = loadResource("/feeds/sample-rss.xml");
         ParsedFeed result = parser.parse(xml);
-        assertThat(result.getArticles().get(0).getImageUrl()).isNull();
+        assertThat(result.articles().get(0).imageUrl()).isNull();
     }
 
     @Test

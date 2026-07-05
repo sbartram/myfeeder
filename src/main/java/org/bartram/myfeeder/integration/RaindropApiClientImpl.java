@@ -1,5 +1,7 @@
 package org.bartram.myfeeder.integration;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.bartram.myfeeder.config.MyfeederProperties;
 import org.springframework.stereotype.Component;
@@ -27,6 +29,8 @@ public class RaindropApiClientImpl implements RaindropApiClient {
         }
     }
 
+    @CircuitBreaker(name = "raindrop", fallbackMethod = "listCollectionsFallback")
+    @Retry(name = "raindrop")
     @Override
     public List<RaindropCollection> listCollections() {
         requireConfigured();
@@ -45,6 +49,8 @@ public class RaindropApiClientImpl implements RaindropApiClient {
                 .toList();
     }
 
+    @CircuitBreaker(name = "raindrop", fallbackMethod = "createBookmarkFallback")
+    @Retry(name = "raindrop")
     @Override
     public void createBookmark(Long collectionId, String url, String title) {
         requireConfigured();
@@ -57,6 +63,24 @@ public class RaindropApiClientImpl implements RaindropApiClient {
                 .body(body)
                 .retrieve()
                 .toBodilessEntity();
+    }
+
+    @SuppressWarnings("unused")
+    private List<RaindropCollection> listCollectionsFallback(Throwable throwable) {
+        // rethrow as-is: resilience4j ignore-exceptions (application.yaml) matches on this exact type
+        if (throwable instanceof RaindropNotConfiguredException rnc) {
+            throw rnc;
+        }
+        throw new IllegalStateException("Raindrop.io is currently unavailable", throwable);
+    }
+
+    @SuppressWarnings("unused")
+    private void createBookmarkFallback(Long collectionId, String url, String title, Throwable throwable) {
+        // rethrow as-is: resilience4j ignore-exceptions (application.yaml) matches on this exact type
+        if (throwable instanceof RaindropNotConfiguredException rnc) {
+            throw rnc;
+        }
+        throw new IllegalStateException("Raindrop.io is currently unavailable", throwable);
     }
 
     private record CollectionsResponse(List<CollectionItem> items) {}

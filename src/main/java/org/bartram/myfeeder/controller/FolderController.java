@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/folders")
@@ -19,13 +18,13 @@ public class FolderController {
     public List<Folder> listFolders() { return folderService.findAll(); }
 
     @PostMapping
-    public ResponseEntity<Folder> createFolder(@RequestBody Map<String, String> request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(folderService.create(request.get("name")));
+    public ResponseEntity<Folder> createFolder(@RequestBody CreateFolderRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(folderService.create(request.name()));
     }
 
     @PutMapping("/{id}")
-    public Folder renameFolder(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        return folderService.rename(id, request.get("name"));
+    public Folder renameFolder(@PathVariable Long id, @RequestBody RenameFolderRequest request) {
+        return folderService.rename(id, request.name());
     }
 
     @DeleteMapping("/{id}")
@@ -33,7 +32,7 @@ public class FolderController {
     public void deleteFolder(@PathVariable Long id) { folderService.delete(id); }
 
     @PutMapping("/order")
-    public List<Folder> reorderFolders(@RequestBody Map<String, List<Long>> request) {
-        return folderService.reorder(request.get("folderIds"));
+    public List<Folder> reorderFolders(@RequestBody ReorderFoldersRequest request) {
+        return folderService.reorder(request.folderIds());
     }
 }

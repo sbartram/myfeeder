@@ -47,7 +47,7 @@ export interface Board {
 }
 
 export interface PaginatedArticles {
-  articles: Article[]
+  items: Article[]
   nextCursor: number | null
 }
 

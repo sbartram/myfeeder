@@ -1,0 +1,71 @@
+{
+  "planPath": "docs/superpowers/plans/2026-07-04-design-review-fixes.md",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "Task 1: Remove dead code",
+      "status": "completed",
+      "description": "**Goal:** Delete service and repository methods with no production callers, shrinking the interfaces before refactoring around them. Also creates the feature branch design-review-fixes.\n\n**Files:** ArticleService.java (remove findByFeedId/findAll/findUnread/findStarred; check 2-arg markRead overload), FeedService.java (remove single-arg subscribe), ArticleRepository.java (remove findByFeedId/findByFeedIdAndGuid/findByStarredTrue/findByReadFalse — keep existsByFeedIdAndGuid); delete dead tests only.\n\n**Acceptance Criteria:** branch design-review-fixes checked out; methods removed with no remaining references; suite passes.\n\n**Verify:** ./gradlew test\n\nFull steps: plan doc Task 1.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/service/ArticleService.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\", \"src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"branch design-review-fixes checked out\", \"dead methods removed with no remaining references\", \"./gradlew test passes\"], \"modelTier\": \"mechanical\"}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: NotFoundException → HTTP 404",
+      "status": "completed",
+      "description": "**Goal:** Missing path-variable entities produce 404 instead of 400/409 via NotFoundException mapped once in GlobalExceptionHandler.\n\n**Files:** Create service/NotFoundException.java; GlobalExceptionHandler handler → 404; swap exception at: ArticleService.updateState, FeedService.update, FeedPollingService.pollFeed, FolderService.rename, FolderService.moveFeedToFolder (feed lookup ONLY), BoardService.update, ArticleController.saveToRaindrop. Cursor check in findFiltered stays IllegalArgumentException. Simplify BoardController.updateBoard double-lookup.\n\n**Acceptance Criteria:** PATCH missing article → 404; payload-referenced checks stay 400; updateBoard has no findById pre-check; suite passes.\n\n**Verify:** ./gradlew test\n\nFull steps + test code: plan doc Task 2.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/service/NotFoundException.java\", \"src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java\", \"src/main/java/org/bartram/myfeeder/service/ArticleService.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\", \"src/main/java/org/bartram/myfeeder/service/FeedPollingService.java\", \"src/main/java/org/bartram/myfeeder/service/FolderService.java\", \"src/main/java/org/bartram/myfeeder/service/BoardService.java\", \"src/main/java/org/bartram/myfeeder/controller/ArticleController.java\", \"src/main/java/org/bartram/myfeeder/controller/BoardController.java\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"PATCH missing article returns 404\", \"payload-referenced checks stay 400\", \"suite passes\"], \"modelTier\": \"standard\"}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Centralize OPML error handling",
+      "status": "completed",
+      "blockedBy": [2],
+      "description": "**Goal:** OpmlParseException handled in GlobalExceptionHandler (400 ProblemDetail, title \"Could not parse OPML\"); delete the swallow-everything try/catch in OpmlController.importOpml.\n\n**Files:** GlobalExceptionHandler.java, OpmlController.java (importOpml returns OpmlImportResult, throws IOException, no try/catch), OpmlControllerTest.java.\n\n**Acceptance Criteria:** parse failure → 400 with $.detail message; no try/catch in importOpml; unexpected RuntimeException → 500; suite passes.\n\n**Verify:** ./gradlew test --tests \"org.bartram.myfeeder.controller.OpmlControllerTest\"\n\nFull steps + test code: plan doc Task 3.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java\", \"src/main/java/org/bartram/myfeeder/controller/OpmlController.java\"], \"verifyCommand\": \"./gradlew test --tests \\\"org.bartram.myfeeder.controller.OpmlControllerTest\\\"\", \"acceptanceCriteria\": [\"parse failure returns 400 with detail message\", \"no try/catch in importOpml\", \"suite passes\"], \"modelTier\": \"mechanical\"}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Convert parser value types to records",
+      "status": "completed",
+      "description": "**Goal:** ParsedFeed and ParsedArticle become immutable @Builder records; accessor renames (getX() → x()) in FeedParser, FeedService, FeedPollingService, tests. Zero logic changes.\n\n**Verify:** ./gradlew test\n\nExact record definitions: plan doc Task 4.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/parser/ParsedFeed.java\", \"src/main/java/org/bartram/myfeeder/parser/ParsedArticle.java\", \"src/main/java/org/bartram/myfeeder/parser/FeedParser.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\", \"src/main/java/org/bartram/myfeeder/service/FeedPollingService.java\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"ParsedFeed and ParsedArticle are records\", \"all accessors updated\", \"suite passes\"], \"modelTier\": \"mechanical\"}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Extract FeedFetcher (single fetch path, charset fix)",
+      "status": "completed",
+      "blockedBy": [2, 4],
+      "description": "**Goal:** One deep module owns HTTP feed retrieval (conditional requests, charset-correct decoding, error statuses) used by subscribe and polling; fixes platform-default-charset bug, removes Feed-mutation side channel, lastError uses e.toString().\n\n**Files:** Create service/FetchResult.java, service/FeedFetcher.java, service/FeedFetchException.java, FeedFetcherTest.java; modify GlobalExceptionHandler (422), FeedService, FeedPollingService; update FeedServiceTest/FeedPollingServiceTest to mock FeedFetcher.\n\n**Acceptance Criteria:** no RestClient.Builder in either service; ISO-8859-1 decode test passes; 304 → notModified, error → FeedFetchException → 422; lastError = e.toString(); suite passes.\n\n**Verify:** ./gradlew test --tests \"org.bartram.myfeeder.service.FeedFetcherTest\" then ./gradlew test\n\nComplete code: plan doc Task 5.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/service/FeedFetcher.java\", \"src/main/java/org/bartram/myfeeder/service/FetchResult.java\", \"src/main/java/org/bartram/myfeeder/service/FeedFetchException.java\", \"src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\", \"src/main/java/org/bartram/myfeeder/service/FeedPollingService.java\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"single fetch path via FeedFetcher\", \"charset-correct decoding proven by test\", \"304 and error-status handling\", \"suite passes\"], \"modelTier\": \"standard\"}\n```"
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Make exponential backoff actually engage",
+      "status": "completed",
+      "blockedBy": [5],
+      "description": "**Goal:** After each poll the scheduler re-reads error state and replaces the polling task when the effective interval changed; NotFoundException mid-poll cancels the feed. registerFeed keeps immediate-first-poll semantics.\n\n**Files:** FeedPollingScheduler.java (full rewrite in plan doc), FeedPollingSchedulerTest.java (three tests, complete code in plan doc).\n\n**Acceptance Criteria:** backoff interval applied after threshold crossed (captured-Runnable test, no waiting); no reschedule when unchanged; deleted feed cancelled; suite passes.\n\n**Verify:** ./gradlew test --tests \"org.bartram.myfeeder.scheduler.FeedPollingSchedulerTest\" then ./gradlew test\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/scheduler/FeedPollingScheduler.java\", \"src/test/java/org/bartram/myfeeder/scheduler/FeedPollingSchedulerTest.java\"], \"verifyCommand\": \"./gradlew test --tests \\\"org.bartram.myfeeder.scheduler.FeedPollingSchedulerTest\\\"\", \"acceptanceCriteria\": [\"backoff interval applied after threshold crossed without restart\", \"no reschedule when unchanged\", \"deleted feed cancelled\", \"suite passes\"], \"modelTier\": \"standard\"}\n```"
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: Replace scheduler coupling with after-commit events",
+      "status": "completed",
+      "blockedBy": [1, 6],
+      "description": "**Goal:** FeedService/OpmlImportService publish FeedSavedEvent/FeedDeletedEvent; scheduler subscribes with @TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true); TransactionSynchronization block dies; toMap gets duplicate-key merge; CLAUDE.md coupling bullets rewritten.\n\n**Files:** Create event/FeedSavedEvent.java + event/FeedDeletedEvent.java; modify FeedService, OpmlImportService, FeedPollingScheduler, CLAUDE.md; update FeedServiceTest + OpmlImportServiceTest.\n\n**Acceptance Criteria:** no scheduler dependency in services; AFTER_COMMIT + fallbackExecution listeners; no TransactionSynchronization; CLAUDE.md updated; suite passes.\n\n**Verify:** ./gradlew test\n\nComplete code + CLAUDE.md replacement text: plan doc Task 7.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/event/FeedSavedEvent.java\", \"src/main/java/org/bartram/myfeeder/event/FeedDeletedEvent.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\", \"src/main/java/org/bartram/myfeeder/service/OpmlImportService.java\", \"src/main/java/org/bartram/myfeeder/scheduler/FeedPollingScheduler.java\", \"CLAUDE.md\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"event-driven registration\", \"no TransactionSynchronization code\", \"CLAUDE.md updated\", \"suite passes\"], \"modelTier\": \"standard\"}\n```"
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: Typed request DTOs",
+      "status": "completed",
+      "blockedBy": [2, 7],
+      "description": "**Goal:** Replace Map request bodies and entity-typed PUT /api/feeds/{id} with small records; JSON wire format unchanged; pollIntervalMinutes < 1 now → 400.\n\n**Files:** Create 9 records in controller package (CreateBoardRequest, UpdateBoardRequest, BoardByNameRequest, AddArticleToBoardRequest, CreateFolderRequest, RenameFolderRequest, ReorderFoldersRequest, MoveFeedToFolderRequest, FeedUpdateRequest); modify BoardController, FolderController, FeedController, FeedService.update; update controller/service tests.\n\n**Acceptance Criteria:** no @RequestBody Map anywhere; wire format unchanged; pollIntervalMinutes 0 → 400; suite passes.\n\n**Verify:** ./gradlew test\n\nComplete method bodies: plan doc Task 8.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/controller/FeedUpdateRequest.java\", \"src/main/java/org/bartram/myfeeder/controller/BoardController.java\", \"src/main/java/org/bartram/myfeeder/controller/FolderController.java\", \"src/main/java/org/bartram/myfeeder/controller/FeedController.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"no Map request bodies\", \"wire format unchanged\", \"pollIntervalMinutes<1 rejected with 400\", \"suite passes\"], \"modelTier\": \"mechanical\"}\n```"
+    },
+    {
+      "id": 9,
+      "subject": "Task 9: Move resilience to the Raindrop API client",
+      "status": "completed",
+      "description": "**Goal:** @CircuitBreaker/@Retry move from RaindropService to RaindropApiClientImpl; business validation runs outside the breaker; fallback chain shrinks to one instanceof; ignore-exceptions for RaindropNotConfiguredException in application.yaml (check test yaml too); CLAUDE.md convention bullets updated. READ both existing Raindrop test classes first.\n\n**Verify:** ./gradlew test --tests \"org.bartram.myfeeder.integration.*\" then ./gradlew test\n\nComplete code + YAML: plan doc Task 9.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java\", \"src/main/java/org/bartram/myfeeder/integration/RaindropService.java\", \"src/main/resources/application.yaml\", \"CLAUDE.md\"], \"verifyCommand\": \"./gradlew test --tests \\\"org.bartram.myfeeder.integration.*\\\"\", \"acceptanceCriteria\": [\"resilience on client bean only\", \"single-rethrow fallbacks\", \"ignore-exceptions configured\", \"suite passes\"], \"modelTier\": \"standard\"}\n```"
+    },
+    {
+      "id": 10,
+      "subject": "Task 10: Pagination factory + rename articles → items (backend + frontend)",
+      "status": "completed",
+      "description": "**Goal:** limit+1/hasMore/subList/nextCursor lives once in PaginatedResponse.of(); field renamed articles → items across API, controller tests ($.articles → $.items), and frontend (types/index.ts ~50, App.tsx ~92, ArticleList.tsx ~43, BoardArticleList.tsx ~18, test fixtures) in one commit. New PaginatedResponseTest.\n\n**Verify:** ./gradlew test AND cd src/main/frontend && npx tsc -b && npm test (must use tsc -b)\n\nComplete code: plan doc Task 10.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/controller/PaginatedResponse.java\", \"src/main/java/org/bartram/myfeeder/controller/ArticleController.java\", \"src/main/java/org/bartram/myfeeder/controller/BoardController.java\", \"src/main/frontend/src/types/index.ts\", \"src/main/frontend/src/App.tsx\", \"src/main/frontend/src/components/ArticleList.tsx\", \"src/main/frontend/src/components/BoardArticleList.tsx\"], \"verifyCommand\": \"./gradlew test && cd src/main/frontend && npx tsc -b && npm test\", \"acceptanceCriteria\": [\"factory used by both controllers\", \"items rename applied backend+frontend\", \"both test stacks pass\"], \"modelTier\": \"standard\"}\n```"
+    }
+  ],
+  "lastUpdated": "2026-07-04"
+}

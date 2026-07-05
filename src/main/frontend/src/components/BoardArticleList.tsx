@@ -15,7 +15,7 @@ export function BoardArticleList({ boardId }: BoardArticleListProps) {
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
 
   const allArticles = useMemo(
-    () => data?.pages.flatMap((p) => p.articles) ?? [],
+    () => data?.pages.flatMap((p) => p.items) ?? [],
     [data]
   )
 

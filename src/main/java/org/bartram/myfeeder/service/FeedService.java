@@ -2,13 +2,15 @@ package org.bartram.myfeeder.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.config.MyfeederProperties;
+import org.bartram.myfeeder.controller.FeedUpdateRequest;
+import org.bartram.myfeeder.event.FeedDeletedEvent;
+import org.bartram.myfeeder.event.FeedSavedEvent;
 import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.parser.FeedParser;
 import org.bartram.myfeeder.parser.ParsedFeed;
 import org.bartram.myfeeder.repository.FeedRepository;
-import org.bartram.myfeeder.scheduler.FeedPollingScheduler;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.time.Instant;
 import java.util.List;
@@ -20,9 +22,9 @@ public class FeedService {
 
     private final FeedRepository feedRepository;
     private final FeedParser feedParser;
-    private final RestClient.Builder restClientBuilder;
+    private final FeedFetcher feedFetcher;
     private final MyfeederProperties properties;
-    private final FeedPollingScheduler feedPollingScheduler;
+    private final ApplicationEventPublisher eventPublisher;
 
     public List<Feed> findAll() {
         return feedRepository.findAll();
@@ -32,52 +34,46 @@ public class FeedService {
         return feedRepository.findById(id);
     }
 
-    public Feed subscribe(String feedUrl) {
-        return subscribe(feedUrl, null);
-    }
-
     public Feed subscribe(String feedUrl, Long folderId) {
-        String rawContent = restClientBuilder.build()
-                .get()
-                .uri(feedUrl)
-                .retrieve()
-                .body(String.class);
-
+        String rawContent = feedFetcher.fetch(feedUrl).body();
         ParsedFeed parsed = feedParser.parse(rawContent);
 
         var feed = new Feed();
         feed.setUrl(feedUrl);
-        feed.setTitle(parsed.getTitle());
-        feed.setDescription(parsed.getDescription());
-        feed.setSiteUrl(parsed.getSiteUrl());
-        feed.setFeedType(parsed.getFeedType());
+        feed.setTitle(parsed.title());
+        feed.setDescription(parsed.description());
+        feed.setSiteUrl(parsed.siteUrl());
+        feed.setFeedType(parsed.feedType());
         feed.setPollIntervalMinutes(properties.getPolling().getDefaultIntervalMinutes());
         feed.setCreatedAt(Instant.now());
         feed.setFolderId(folderId);
 
         Feed saved = feedRepository.save(feed);
-        feedPollingScheduler.registerFeed(saved);
+        eventPublisher.publishEvent(new FeedSavedEvent(saved));
         return saved;
     }
 
-    public Feed update(Long id, Feed updates) {
+    public Feed update(Long id, FeedUpdateRequest updates) {
         Feed feed = feedRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Feed not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Feed not found: " + id));
 
-        if (updates.getTitle() != null) {
-            feed.setTitle(updates.getTitle());
+        if (updates.title() != null) {
+            feed.setTitle(updates.title());
         }
-        if (updates.getPollIntervalMinutes() > 0) {
-            feed.setPollIntervalMinutes(updates.getPollIntervalMinutes());
+        if (updates.pollIntervalMinutes() != null) {
+            if (updates.pollIntervalMinutes() < 1) {
+                throw new IllegalArgumentException("pollIntervalMinutes must be >= 1");
+            }
+            feed.setPollIntervalMinutes(updates.pollIntervalMinutes());
         }
 
         Feed saved = feedRepository.save(feed);
-        feedPollingScheduler.registerFeed(saved);
+        eventPublisher.publishEvent(new FeedSavedEvent(saved));
         return saved;
     }
 
     public void delete(Long id) {
-        feedPollingScheduler.cancelFeed(id);
         feedRepository.deleteById(id);
+        eventPublisher.publishEvent(new FeedDeletedEvent(id));
     }
 }

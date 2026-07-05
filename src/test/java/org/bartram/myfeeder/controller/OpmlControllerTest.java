@@ -15,9 +15,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
+import jakarta.servlet.ServletException;
 import java.io.InputStream;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -55,7 +57,19 @@ class OpmlControllerTest {
                 .thenThrow(new OpmlParseException("Invalid OPML"));
 
         mockMvc.perform(multipart("/api/opml/import").file(file))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Invalid OPML"));
+    }
+
+    @Test
+    void shouldPropagateUnexpectedErrorsAsServerErrors() {
+        var file = new MockMultipartFile("file", "feeds.opml",
+                "application/xml", "<opml/>".getBytes());
+        when(opmlImportService.importOpml(any(InputStream.class)))
+                .thenThrow(new RuntimeException("boom"));
+
+        assertThrows(ServletException.class, () ->
+                mockMvc.perform(multipart("/api/opml/import").file(file)));
     }
 
     @Test

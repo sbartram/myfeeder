@@ -37,8 +37,8 @@ public class FeedParser {
             case RSS, ATOM -> parseWithRome(rawContent, type);
             case JSON_FEED -> parseJsonFeed(rawContent);
         };
-        if ((parsed.getTitle() == null || parsed.getTitle().isBlank())
-                && (parsed.getArticles() == null || parsed.getArticles().isEmpty())) {
+        if ((parsed.title() == null || parsed.title().isBlank())
+                && (parsed.articles() == null || parsed.articles().isEmpty())) {
             throw new FeedParseException(
                     "Response did not contain a recognizable feed (no title and no items). "
                     + "The server may have returned a rate-limit or error page.");

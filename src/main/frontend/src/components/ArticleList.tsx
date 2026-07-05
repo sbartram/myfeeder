@@ -40,7 +40,7 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
   }, [showDropdown])
 
   const allArticles = useMemo(
-    () => data?.pages.flatMap((p) => p.articles) ?? [],
+    () => data?.pages.flatMap((p) => p.items) ?? [],
     [data]
   )
 

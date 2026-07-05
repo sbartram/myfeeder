@@ -52,23 +52,24 @@ org.bartram.myfeeder
 ├── model/            Feed, FeedType, Article, Folder, Board, BoardArticle, IntegrationConfig, IntegrationType, UnreadCount
 ├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig repositories
 ├── parser/           FeedParser (ROME + Jackson), ParsedFeed, ParsedArticle, FeedParseException, OpmlFeed, OpmlParseException
-├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, OpmlImportResult
-├── integration/      RaindropService (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig
-├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml controllers + PaginatedResponse + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest)
+├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, OpmlImportResult, FeedFetcher, FetchResult, NotFoundException, FeedFetchException
+├── integration/      RaindropService, RaindropApiClientImpl (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig
+├── event/            FeedSavedEvent, FeedDeletedEvent (after-commit feed scheduling events)
+├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml controllers + PaginatedResponse + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest, FeedUpdateRequest + board/folder request records)
 ├── scheduler/        FeedPollingScheduler (dynamic per-feed scheduling with backoff)
 └── MyfeederApplication.java (@EnableScheduling, @ConfigurationPropertiesScan)
 ```
 
 ## Key Behaviors
 
-- **FeedService** registers feeds with `FeedPollingScheduler` on create/update — don't forget this coupling
+- **Feed scheduling is event-driven**: `FeedService`/`OpmlImportService` publish `FeedSavedEvent`/`FeedDeletedEvent`; `FeedPollingScheduler` listens with `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)`. New feed-mutating code paths just publish the event — never call the scheduler directly.
 - **FeedPollingService** deduplicates articles by GUID on upsert
 - **FeedPollingScheduler** uses `ApplicationReadyEvent` to register all feeds at startup; supports exponential backoff on errors
 - **Article sort order**: Articles are sorted by `COALESCE(published_at, fetched_at)` not by `id`. Batch-fetched articles get sequential IDs but varied publication dates, so `ORDER BY id` does not produce chronological order. Cursor pagination uses composite `(published_at, id)` comparison — the cursor is still a single article ID, but the service looks up the cursor article's date for the SQL comparison.
 - **ReadingPane fetches by ID**: The reading pane uses `useArticle(id)` to fetch the selected article directly (`GET /api/articles/{id}`), not by searching through the paginated list query. This avoids filter/sort mismatches between the article list and reading pane.
 - **RetentionService** is a `@Scheduled` cron job — config under `myfeeder.retention.*`
 - **OpmlService** has XXE protection enabled — maintain this when modifying XML parsing
-- **OpmlImportService** registers new feeds with scheduler post-commit (not inline)
+- **OpmlImportService** publishes `FeedSavedEvent` per new feed; the scheduler's `@TransactionalEventListener(AFTER_COMMIT)` registers them post-commit (no manual `TransactionSynchronization`)
 - **API endpoints**: `/api/feeds`, `/api/articles`, `/api/integrations`, `/api/opml`, `/api/boards`, `/api/folders`
 
 ## Frontend
@@ -131,8 +132,8 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 - Uses Spring Data JDBC (not JPA) -- entities use `@Table`/`@Id` annotations from `org.springframework.data.annotation`, not `jakarta.persistence`
 - Gradle Kotlin DSL for build configuration
 - BOM-managed versions for Spring AI and Spring Cloud (do not specify versions on individual dependencies)
-- Resilience4j: Use `@CircuitBreaker(name = "...")` (outer) + `@Retry(name = "...")` (inner) annotations on external service calls. Config in `application.yaml` under `resilience4j.circuitbreaker.instances` and `resilience4j.retry.instances`
-- **Resilience4j fallback re-throw pattern**: a `@CircuitBreaker` fallback wraps everything as a 5xx by default — to preserve specific HTTP status mappings (e.g. 400 for "no collection selected", 503 for "not configured"), the fallback method must `instanceof`-check and rethrow those exception types before wrapping anything else
+- Resilience4j: Use `@CircuitBreaker(name = "...")` (outer) + `@Retry(name = "...")` (inner) annotations on external service calls. Put them on the **API-client bean** (e.g. `RaindropApiClientImpl`), not on the service — so business validation (not-configured/disabled/no-collection checks in `RaindropService`) runs outside the breaker and only the real HTTP call is wrapped. (Self-invocation bypasses the AOP proxy, so the annotated methods must live on a separate bean that the service calls.) Config in `application.yaml` under `resilience4j.circuitbreaker.instances` and `resilience4j.retry.instances`
+- **Resilience4j fallback re-throw pattern**: a `@CircuitBreaker` fallback wraps everything as a 5xx (`IllegalStateException`→409) by default — the client's fallback `instanceof`-checks and rethrows `RaindropNotConfiguredException` (503) before wrapping everything else. Business-rule exceptions (400 "no collection", 409 "disabled") never reach the fallback because that validation happens in `RaindropService` before the client call. Also list `RaindropNotConfiguredException` under `ignore-exceptions` in both the circuit-breaker and retry instances so a missing token never opens the breaker or burns retries
 - **GlobalExceptionHandler mappings**: `IllegalArgumentException` → 400 (Bad Request), `IllegalStateException` → 409 (Configuration error), `RaindropNotConfiguredException` → 503 (Raindrop not configured). Throw the right type from services and the controller layer doesn't need try/catch
 - Spring Data JDBC does not support derived query methods like JPA — use `@Query` annotation for custom queries
 
@@ -151,7 +152,7 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 - **Zustand persist + new preferences**: Adding a new field to `preferencesStore` with a default value only applies to fresh installs. Existing users with a `myfeeder-prefs` localStorage key get `undefined` for the new field (Zustand merges stored state over defaults). Use a `merge` function or version migration if the default must apply to everyone.
 - **Spring Data JDBC ≠ JPA**: No lazy loading, no derived query methods, no `@Entity` — use `@Table`/`@Id` from `org.springframework.data.annotation` and `@Query` for custom queries
 - **Jackson 3.x imports**: Must use `tools.jackson.databind.*`, not `com.fasterxml.jackson.databind.*`
-- **FeedPollingScheduler coupling**: Creating/updating a feed must register it with the scheduler — `FeedService` handles this, so don't bypass it with direct repository calls
+- **FeedPollingScheduler is event-driven**: feed mutations publish `FeedSavedEvent`/`FeedDeletedEvent`; the scheduler (re-)registers or cancels via `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)`. New feed-mutating paths publish the event — never call `registerFeed`/`cancelFeed` directly.
 - **MaxDirectMemorySize (historical, Paketo-only)**: the old Paketo buildpack hardcoded `-XX:MaxDirectMemorySize=10M`, which starved Netty (Lettuce/Redis); the Helm chart overrides it via the `JDK_JAVA_OPTIONS` env var. The Dockerfile (`eclipse-temurin:25-jre`) has no such cap — direct memory defaults are container-aware — so the override is no longer required, but the chart still sets `JDK_JAVA_OPTIONS` and the JVM honors it. Tune JVM flags via `JDK_JAVA_OPTIONS` (auto-read by the `java -jar` entrypoint), not `_JAVA_OPTIONS`.
 - **Frontend not in image**: the image is `docker build`-ed from `build/libs/*.jar`, so the frontend must already be embedded in that jar. Always build with `./gradlew clean bootJar` before `docker build` — `clean` forces `npmBuild`→`processResources` to repackage the current SPA bundle. A stale jar in `build/libs/` will ship an old frontend.
 - **SNAPSHOT tags + pullPolicy**: `imagePullPolicy: IfNotPresent` causes k8s to reuse stale images when the same SNAPSHOT tag is pushed. Use `Always` during development; `IfNotPresent` is only safe with immutable release tags.

@@ -3,6 +3,7 @@ package org.bartram.myfeeder.controller;
 import org.bartram.myfeeder.integration.RaindropService;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.service.ArticleService;
+import org.bartram.myfeeder.service.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -36,7 +37,7 @@ class ArticleControllerTest {
 
         mockMvc.perform(get("/api/articles"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.articles[0].title").value("Test Article"));
+                .andExpect(jsonPath("$.items[0].title").value("Test Article"));
     }
 
     @Test
@@ -74,6 +75,17 @@ class ArticleControllerTest {
                         .content("{\"read\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.read").value(true));
+    }
+
+    @Test
+    void updateStateReturns404WhenArticleMissing() throws Exception {
+        when(articleService.updateState(eq(99L), any(), any()))
+                .thenThrow(new NotFoundException("Article not found: 99"));
+
+        mockMvc.perform(patch("/api/articles/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"read\":true}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

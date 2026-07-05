@@ -61,13 +61,13 @@ class ArticleServiceTest {
 
     @Test
     void shouldBulkMarkReadByIds() {
-        articleService.markRead(List.of(1L, 2L), null);
+        articleService.markRead(List.of(1L, 2L), null, null);
         verify(articleRepository).markReadByIds(List.of(1L, 2L));
     }
 
     @Test
     void shouldBulkMarkReadByFeedId() {
-        articleService.markRead(null, 5L);
+        articleService.markRead(null, 5L, null);
         verify(articleRepository).markAllReadByFeedId(5L);
     }
 

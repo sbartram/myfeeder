@@ -35,7 +35,7 @@ public class FolderService {
 
     public Folder rename(Long id, String name) {
         Folder folder = folderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Folder not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Folder not found: " + id));
         folder.setName(name);
         return folderRepository.save(folder);
     }
@@ -70,7 +70,7 @@ public class FolderService {
 
     public Feed moveFeedToFolder(Long feedId, Long folderId) {
         Feed feed = feedRepository.findById(feedId)
-                .orElseThrow(() -> new IllegalArgumentException("Feed not found: " + feedId));
+                .orElseThrow(() -> new NotFoundException("Feed not found: " + feedId));
         if (folderId != null) {
             folderRepository.findById(folderId)
                     .orElseThrow(() -> new IllegalArgumentException("Folder not found: " + folderId));

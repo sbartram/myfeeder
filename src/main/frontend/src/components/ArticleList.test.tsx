@@ -6,7 +6,7 @@ import { ArticleList } from './ArticleList'
 vi.mock('../hooks/useArticles', () => ({
   useArticles: () => ({
     data: {
-      pages: [{ articles: [{ id: 1, title: 'Test', read: false, publishedAt: '2026-01-01T00:00:00Z' }] }],
+      pages: [{ items: [{ id: 1, title: 'Test', read: false, publishedAt: '2026-01-01T00:00:00Z' }] }],
     },
     fetchNextPage: vi.fn(),
     hasNextPage: false,
