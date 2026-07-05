@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -80,5 +81,16 @@ class FeedControllerTest {
         mockMvc.perform(post("/api/feeds/1/poll"))
                 .andExpect(status().isAccepted());
         verify(feedPollingService).pollFeed(1L);
+    }
+
+    @Test
+    void updateFeedRejectsNonPositivePollInterval() throws Exception {
+        when(feedService.update(eq(1L), any(FeedUpdateRequest.class)))
+                .thenThrow(new IllegalArgumentException("pollIntervalMinutes must be >= 1"));
+
+        mockMvc.perform(put("/api/feeds/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pollIntervalMinutes\":0}"))
+                .andExpect(status().isBadRequest());
     }
 }

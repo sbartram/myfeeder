@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/feeds")
@@ -40,7 +39,7 @@ public class FeedController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Feed> updateFeed(@PathVariable Long id, @RequestBody Feed updates) {
+    public ResponseEntity<Feed> updateFeed(@PathVariable Long id, @RequestBody FeedUpdateRequest updates) {
         return ResponseEntity.ok(feedService.update(id, updates));
     }
 
@@ -57,7 +56,7 @@ public class FeedController {
     }
 
     @PutMapping("/{id}/folder")
-    public Feed moveFeedToFolder(@PathVariable Long id, @RequestBody Map<String, Long> request) {
-        return folderService.moveFeedToFolder(id, request.get("folderId"));
+    public Feed moveFeedToFolder(@PathVariable Long id, @RequestBody MoveFeedToFolderRequest request) {
+        return folderService.moveFeedToFolder(id, request.folderId());
     }
 }

@@ -43,7 +43,7 @@
     {
       "id": 7,
       "subject": "Task 7: Replace scheduler coupling with after-commit events",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [1, 6],
       "description": "**Goal:** FeedService/OpmlImportService publish FeedSavedEvent/FeedDeletedEvent; scheduler subscribes with @TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true); TransactionSynchronization block dies; toMap gets duplicate-key merge; CLAUDE.md coupling bullets rewritten.\n\n**Files:** Create event/FeedSavedEvent.java + event/FeedDeletedEvent.java; modify FeedService, OpmlImportService, FeedPollingScheduler, CLAUDE.md; update FeedServiceTest + OpmlImportServiceTest.\n\n**Acceptance Criteria:** no scheduler dependency in services; AFTER_COMMIT + fallbackExecution listeners; no TransactionSynchronization; CLAUDE.md updated; suite passes.\n\n**Verify:** ./gradlew test\n\nComplete code + CLAUDE.md replacement text: plan doc Task 7.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/event/FeedSavedEvent.java\", \"src/main/java/org/bartram/myfeeder/event/FeedDeletedEvent.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\", \"src/main/java/org/bartram/myfeeder/service/OpmlImportService.java\", \"src/main/java/org/bartram/myfeeder/scheduler/FeedPollingScheduler.java\", \"CLAUDE.md\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"event-driven registration\", \"no TransactionSynchronization code\", \"CLAUDE.md updated\", \"suite passes\"], \"modelTier\": \"standard\"}\n```"
     },

@@ -2,6 +2,7 @@ package org.bartram.myfeeder.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.config.MyfeederProperties;
+import org.bartram.myfeeder.controller.FeedUpdateRequest;
 import org.bartram.myfeeder.event.FeedDeletedEvent;
 import org.bartram.myfeeder.event.FeedSavedEvent;
 import org.bartram.myfeeder.model.Feed;
@@ -52,15 +53,18 @@ public class FeedService {
         return saved;
     }
 
-    public Feed update(Long id, Feed updates) {
+    public Feed update(Long id, FeedUpdateRequest updates) {
         Feed feed = feedRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Feed not found: " + id));
 
-        if (updates.getTitle() != null) {
-            feed.setTitle(updates.getTitle());
+        if (updates.title() != null) {
+            feed.setTitle(updates.title());
         }
-        if (updates.getPollIntervalMinutes() > 0) {
-            feed.setPollIntervalMinutes(updates.getPollIntervalMinutes());
+        if (updates.pollIntervalMinutes() != null) {
+            if (updates.pollIntervalMinutes() < 1) {
+                throw new IllegalArgumentException("pollIntervalMinutes must be >= 1");
+            }
+            feed.setPollIntervalMinutes(updates.pollIntervalMinutes());
         }
 
         Feed saved = feedRepository.save(feed);

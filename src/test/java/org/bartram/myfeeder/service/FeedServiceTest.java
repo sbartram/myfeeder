@@ -1,6 +1,7 @@
 package org.bartram.myfeeder.service;
 
 import org.bartram.myfeeder.config.MyfeederProperties;
+import org.bartram.myfeeder.controller.FeedUpdateRequest;
 import org.bartram.myfeeder.event.FeedDeletedEvent;
 import org.bartram.myfeeder.event.FeedSavedEvent;
 import org.bartram.myfeeder.model.Feed;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -68,8 +70,7 @@ class FeedServiceTest {
         when(feedRepository.findById(1L)).thenReturn(Optional.of(feed));
         when(feedRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        var updates = new Feed();
-        updates.setTitle("New Title");
+        var updates = new FeedUpdateRequest("New Title", null);
         var result = feedService.update(1L, updates);
 
         assertThat(result.getTitle()).isEqualTo("New Title");
@@ -91,10 +92,22 @@ class FeedServiceTest {
         when(feedRepository.findById(5L)).thenReturn(Optional.of(feed));
         when(feedRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        var updates = new Feed();
-        updates.setPollIntervalMinutes(60);
+        var updates = new FeedUpdateRequest(null, 60);
         var result = feedService.update(5L, updates);
 
         verify(eventPublisher).publishEvent(new FeedSavedEvent(result));
+    }
+
+    @Test
+    void shouldRejectNonPositivePollInterval() {
+        var feed = new Feed();
+        feed.setId(1L);
+        when(feedRepository.findById(1L)).thenReturn(Optional.of(feed));
+
+        var updates = new FeedUpdateRequest(null, 0);
+
+        assertThatThrownBy(() -> feedService.update(1L, updates))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("pollIntervalMinutes");
     }
 }
