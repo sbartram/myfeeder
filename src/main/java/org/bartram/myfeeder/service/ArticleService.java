@@ -22,22 +22,6 @@ public class ArticleService {
         return articleRepository.findById(id);
     }
 
-    public List<Article> findByFeedId(Long feedId) {
-        return articleRepository.findByFeedId(feedId);
-    }
-
-    public List<Article> findAll() {
-        return articleRepository.findAll();
-    }
-
-    public List<Article> findUnread() {
-        return articleRepository.findByReadFalse();
-    }
-
-    public List<Article> findStarred() {
-        return articleRepository.findByStarredTrue();
-    }
-
     public Article updateState(Long id, Boolean read, Boolean starred) {
         Article article = articleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Article not found: " + id));
@@ -50,10 +34,6 @@ public class ArticleService {
         }
 
         return articleRepository.save(article);
-    }
-
-    public void markRead(List<Long> articleIds, Long feedId) {
-        markRead(articleIds, feedId, null);
     }
 
     public void markRead(List<Long> articleIds, Long feedId, Integer olderThanDays) {
