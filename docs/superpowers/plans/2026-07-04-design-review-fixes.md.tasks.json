@@ -29,7 +29,7 @@
     {
       "id": 5,
       "subject": "Task 5: Extract FeedFetcher (single fetch path, charset fix)",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [2, 4],
       "description": "**Goal:** One deep module owns HTTP feed retrieval (conditional requests, charset-correct decoding, error statuses) used by subscribe and polling; fixes platform-default-charset bug, removes Feed-mutation side channel, lastError uses e.toString().\n\n**Files:** Create service/FetchResult.java, service/FeedFetcher.java, service/FeedFetchException.java, FeedFetcherTest.java; modify GlobalExceptionHandler (422), FeedService, FeedPollingService; update FeedServiceTest/FeedPollingServiceTest to mock FeedFetcher.\n\n**Acceptance Criteria:** no RestClient.Builder in either service; ISO-8859-1 decode test passes; 304 → notModified, error → FeedFetchException → 422; lastError = e.toString(); suite passes.\n\n**Verify:** ./gradlew test --tests \"org.bartram.myfeeder.service.FeedFetcherTest\" then ./gradlew test\n\nComplete code: plan doc Task 5.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/service/FeedFetcher.java\", \"src/main/java/org/bartram/myfeeder/service/FetchResult.java\", \"src/main/java/org/bartram/myfeeder/service/FeedFetchException.java\", \"src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\", \"src/main/java/org/bartram/myfeeder/service/FeedPollingService.java\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"single fetch path via FeedFetcher\", \"charset-correct decoding proven by test\", \"304 and error-status handling\", \"suite passes\"], \"modelTier\": \"standard\"}\n```"
     },
