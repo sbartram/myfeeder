@@ -67,6 +67,7 @@ public class RaindropApiClientImpl implements RaindropApiClient {
 
     @SuppressWarnings("unused")
     private List<RaindropCollection> listCollectionsFallback(Throwable throwable) {
+        // rethrow as-is: resilience4j ignore-exceptions (application.yaml) matches on this exact type
         if (throwable instanceof RaindropNotConfiguredException rnc) {
             throw rnc;
         }
@@ -75,6 +76,7 @@ public class RaindropApiClientImpl implements RaindropApiClient {
 
     @SuppressWarnings("unused")
     private void createBookmarkFallback(Long collectionId, String url, String title, Throwable throwable) {
+        // rethrow as-is: resilience4j ignore-exceptions (application.yaml) matches on this exact type
         if (throwable instanceof RaindropNotConfiguredException rnc) {
             throw rnc;
         }
