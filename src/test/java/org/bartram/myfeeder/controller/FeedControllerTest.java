@@ -84,6 +84,21 @@ class FeedControllerTest {
     }
 
     @Test
+    void shouldMoveFeedToFolder() throws Exception {
+        var feed = new Feed();
+        feed.setId(1L);
+        feed.setTitle("Test Feed");
+        feed.setFolderId(5L);
+        when(folderService.moveFeedToFolder(1L, 5L)).thenReturn(feed);
+
+        mockMvc.perform(put("/api/feeds/1/folder")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"folderId\":5}"))
+                .andExpect(status().isOk());
+        verify(folderService).moveFeedToFolder(1L, 5L);
+    }
+
+    @Test
     void updateFeedRejectsNonPositivePollInterval() throws Exception {
         when(feedService.update(eq(1L), any(FeedUpdateRequest.class)))
                 .thenThrow(new IllegalArgumentException("pollIntervalMinutes must be >= 1"));
