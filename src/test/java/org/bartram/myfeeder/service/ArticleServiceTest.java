@@ -60,6 +60,18 @@ class ArticleServiceTest {
     }
 
     @Test
+    void shouldBulkMarkReadByIds() {
+        articleService.markRead(List.of(1L, 2L), null, null);
+        verify(articleRepository).markReadByIds(List.of(1L, 2L));
+    }
+
+    @Test
+    void shouldBulkMarkReadByFeedId() {
+        articleService.markRead(null, 5L, null);
+        verify(articleRepository).markAllReadByFeedId(5L);
+    }
+
+    @Test
     void shouldFindFilteredWithoutCursor() {
         var article = new Article();
         article.setId(1L);
