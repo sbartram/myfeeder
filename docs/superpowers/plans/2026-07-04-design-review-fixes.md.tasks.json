@@ -50,7 +50,7 @@
     {
       "id": 8,
       "subject": "Task 8: Typed request DTOs",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [2, 7],
       "description": "**Goal:** Replace Map request bodies and entity-typed PUT /api/feeds/{id} with small records; JSON wire format unchanged; pollIntervalMinutes < 1 now → 400.\n\n**Files:** Create 9 records in controller package (CreateBoardRequest, UpdateBoardRequest, BoardByNameRequest, AddArticleToBoardRequest, CreateFolderRequest, RenameFolderRequest, ReorderFoldersRequest, MoveFeedToFolderRequest, FeedUpdateRequest); modify BoardController, FolderController, FeedController, FeedService.update; update controller/service tests.\n\n**Acceptance Criteria:** no @RequestBody Map anywhere; wire format unchanged; pollIntervalMinutes 0 → 400; suite passes.\n\n**Verify:** ./gradlew test\n\nComplete method bodies: plan doc Task 8.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/controller/FeedUpdateRequest.java\", \"src/main/java/org/bartram/myfeeder/controller/BoardController.java\", \"src/main/java/org/bartram/myfeeder/controller/FolderController.java\", \"src/main/java/org/bartram/myfeeder/controller/FeedController.java\", \"src/main/java/org/bartram/myfeeder/service/FeedService.java\"], \"verifyCommand\": \"./gradlew test\", \"acceptanceCriteria\": [\"no Map request bodies\", \"wire format unchanged\", \"pollIntervalMinutes<1 rejected with 400\", \"suite passes\"], \"modelTier\": \"mechanical\"}\n```"
     },
