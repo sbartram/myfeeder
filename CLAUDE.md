@@ -48,14 +48,14 @@ cd src/main/frontend && npm run dev
 
 ```
 org.bartram.myfeeder
-├── config/           MyfeederProperties, SpaForwardController
+├── config/           MyfeederProperties, RestClientConfig (User-Agent customizer), SpaForwardController
 ├── model/            Feed, FeedType, Article, Folder, Board, BoardArticle, IntegrationConfig, IntegrationType, UnreadCount
 ├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig repositories
 ├── parser/           FeedParser (ROME + Jackson), ParsedFeed, ParsedArticle, FeedParseException, OpmlFeed, OpmlParseException
 ├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, OpmlImportResult, FeedFetcher, FetchResult, NotFoundException, FeedFetchException
 ├── integration/      RaindropService, RaindropApiClientImpl (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig
 ├── event/            FeedSavedEvent, FeedDeletedEvent (after-commit feed scheduling events)
-├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml controllers + PaginatedResponse + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest, FeedUpdateRequest + board/folder request records)
+├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml/Version controllers + PaginatedResponse + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest, FeedUpdateRequest + board/folder request records)
 ├── scheduler/        FeedPollingScheduler (dynamic per-feed scheduling with backoff)
 └── MyfeederApplication.java (@EnableScheduling, @ConfigurationPropertiesScan)
 ```
@@ -64,8 +64,9 @@ org.bartram.myfeeder
 
 - **Feed scheduling is event-driven**: `FeedService`/`OpmlImportService` publish `FeedSavedEvent`/`FeedDeletedEvent`; `FeedPollingScheduler` listens with `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)`. New feed-mutating code paths just publish the event — never call the scheduler directly.
 - **FeedPollingService** deduplicates articles by GUID on upsert
-- **FeedPollingScheduler** uses `ApplicationReadyEvent` to register all feeds at startup; supports exponential backoff on errors
-- **Article sort order**: Articles are sorted by `COALESCE(published_at, fetched_at)` not by `id`. Batch-fetched articles get sequential IDs but varied publication dates, so `ORDER BY id` does not produce chronological order. Cursor pagination uses composite `(published_at, id)` comparison — the cursor is still a single article ID, but the service looks up the cursor article's date for the SQL comparison.
+- **FeedFetcher is the single feed-fetch path**: both subscribe and polling go through it (conditional ETag/If-Modified-Since requests, charset-correct decoding from the response Content-Type, HTTP errors → `FeedFetchException` → 422). Don't fetch feed content with a raw `RestClient`.
+- **FeedPollingScheduler** uses `ApplicationReadyEvent` to register all feeds at startup; after every poll it re-reads the feed's error state and replaces the task when the effective interval changed, so exponential backoff engages (and clears) while the app runs
+- **Article sort order**: Articles are sorted by `COALESCE(published_at, fetched_at)` not by `id`. Batch-fetched articles get sequential IDs but varied publication dates, so `ORDER BY id` does not produce chronological order. Cursor pagination uses composite `(published_at, id)` comparison — the cursor is still a single article ID, but the service looks up the cursor article's date for the SQL comparison. Paginated endpoints return `PaginatedResponse` (`{items, nextCursor}` — field is `items`, not `articles`); the limit+1 trimming lives in `PaginatedResponse.of(...)`, so controllers fetch `limit + 1` and delegate.
 - **ReadingPane fetches by ID**: The reading pane uses `useArticle(id)` to fetch the selected article directly (`GET /api/articles/{id}`), not by searching through the paginated list query. This avoids filter/sort mismatches between the article list and reading pane.
 - **RetentionService** is a `@Scheduled` cron job — config under `myfeeder.retention.*`
 - **OpmlService** has XXE protection enabled — maintain this when modifying XML parsing
@@ -94,7 +95,7 @@ org.bartram.myfeeder
 - `compose.yaml` defines Postgres and Redis for local dev (`bootRun`)
 - `TestcontainersConfiguration` provides Postgres and Redis containers for tests and `bootTestRun`
 - Docker must be running for both tests and local development
-- Flyway migrations: `V1__initial_schema.sql` (feeds, articles, integration_configs), `V2__folders_boards_and_feed_folder.sql` (folders, boards, board_articles, feed.folder_id)
+- Flyway migrations: `V1__initial_schema.sql` (feeds, articles, integration_configs), `V2__folders_boards_and_feed_folder.sql` (folders, boards, board_articles, feed.folder_id), `V3__article_image_url.sql`, `V4__strip_raindrop_api_token.sql`
 
 ## Deployment
 
@@ -134,7 +135,7 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 - BOM-managed versions for Spring AI and Spring Cloud (do not specify versions on individual dependencies)
 - Resilience4j: Use `@CircuitBreaker(name = "...")` (outer) + `@Retry(name = "...")` (inner) annotations on external service calls. Put them on the **API-client bean** (e.g. `RaindropApiClientImpl`), not on the service — so business validation (not-configured/disabled/no-collection checks in `RaindropService`) runs outside the breaker and only the real HTTP call is wrapped. (Self-invocation bypasses the AOP proxy, so the annotated methods must live on a separate bean that the service calls.) Config in `application.yaml` under `resilience4j.circuitbreaker.instances` and `resilience4j.retry.instances`
 - **Resilience4j fallback re-throw pattern**: a `@CircuitBreaker` fallback wraps everything as a 5xx (`IllegalStateException`→409) by default — the client's fallback `instanceof`-checks and rethrows `RaindropNotConfiguredException` (503) before wrapping everything else. Business-rule exceptions (400 "no collection", 409 "disabled") never reach the fallback because that validation happens in `RaindropService` before the client call. Also list `RaindropNotConfiguredException` under `ignore-exceptions` in both the circuit-breaker and retry instances so a missing token never opens the breaker or burns retries
-- **GlobalExceptionHandler mappings**: `IllegalArgumentException` → 400 (Bad Request), `IllegalStateException` → 409 (Configuration error), `RaindropNotConfiguredException` → 503 (Raindrop not configured). Throw the right type from services and the controller layer doesn't need try/catch
+- **GlobalExceptionHandler mappings**: `NotFoundException` → 404 (missing path entity), `IllegalArgumentException` → 400 (Bad Request), `OpmlParseException` → 400, `IllegalStateException` → 409 (Configuration error), `FeedParseException` → 422, `FeedFetchException` → 422 (remote returned an HTTP error), `RaindropNotConfiguredException` → 503. Throw the right type from services and the controller layer doesn't need try/catch
 - Spring Data JDBC does not support derived query methods like JPA — use `@Query` annotation for custom queries
 
 ## Spring Boot 4 / Jackson 3.x Notes
