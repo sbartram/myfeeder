@@ -89,7 +89,7 @@ function MainLayout() {
   const sort = sortOrder === 'oldest-first' ? 'asc' as const : 'desc' as const
   const readFilter = hideReadArticles ? { read: false as const } : {}
   const { data } = useArticles(selectedFeedId ? { feedId: selectedFeedId, sort, ...readFilter } : { sort, ...readFilter })
-  const articles = useMemo(() => data?.pages.flatMap((p) => p.articles) ?? [], [data])
+  const articles = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
 
   useKeyboardShortcuts(articles, {
     onOpenBoard: () => setBoardOpen(true),

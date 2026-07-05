@@ -29,13 +29,8 @@ public class ArticleController {
             @RequestParam(required = false) Long before,
             @RequestParam(defaultValue = "desc") String sort) {
         boolean ascending = "asc".equalsIgnoreCase(sort);
-        List<Article> articles = articleService.findFiltered(feedId, read, starred, before, limit + 1, ascending);
-        boolean hasMore = articles.size() > limit;
-        if (hasMore) {
-            articles = articles.subList(0, limit);
-        }
-        Long nextCursor = hasMore ? articles.getLast().getId() : null;
-        return new PaginatedResponse<>(articles, nextCursor);
+        List<Article> fetched = articleService.findFiltered(feedId, read, starred, before, limit + 1, ascending);
+        return PaginatedResponse.of(fetched, limit, Article::getId);
     }
 
     @GetMapping("/counts")

@@ -37,7 +37,7 @@ class ArticleControllerTest {
 
         mockMvc.perform(get("/api/articles"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.articles[0].title").value("Test Article"));
+                .andExpect(jsonPath("$.items[0].title").value("Test Article"));
     }
 
     @Test

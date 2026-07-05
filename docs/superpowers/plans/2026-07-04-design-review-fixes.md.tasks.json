@@ -57,7 +57,7 @@
     {
       "id": 9,
       "subject": "Task 9: Move resilience to the Raindrop API client",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** @CircuitBreaker/@Retry move from RaindropService to RaindropApiClientImpl; business validation runs outside the breaker; fallback chain shrinks to one instanceof; ignore-exceptions for RaindropNotConfiguredException in application.yaml (check test yaml too); CLAUDE.md convention bullets updated. READ both existing Raindrop test classes first.\n\n**Verify:** ./gradlew test --tests \"org.bartram.myfeeder.integration.*\" then ./gradlew test\n\nComplete code + YAML: plan doc Task 9.\n\n```json:metadata\n{\"files\": [\"src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java\", \"src/main/java/org/bartram/myfeeder/integration/RaindropService.java\", \"src/main/resources/application.yaml\", \"CLAUDE.md\"], \"verifyCommand\": \"./gradlew test --tests \\\"org.bartram.myfeeder.integration.*\\\"\", \"acceptanceCriteria\": [\"resilience on client bean only\", \"single-rethrow fallbacks\", \"ignore-exceptions configured\", \"suite passes\"], \"modelTier\": \"standard\"}\n```"
     },
     {

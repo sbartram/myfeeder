@@ -42,11 +42,7 @@ public class BoardController {
             @PathVariable Long id,
             @RequestParam(defaultValue = "50") int limit,
             @RequestParam(required = false) Long before) {
-        List<Article> articles = boardService.findArticles(id, before, limit + 1);
-        boolean hasMore = articles.size() > limit;
-        if (hasMore) articles = articles.subList(0, limit);
-        Long nextCursor = hasMore ? articles.getLast().getId() : null;
-        return new PaginatedResponse<>(articles, nextCursor);
+        return PaginatedResponse.of(boardService.findArticles(id, before, limit + 1), limit, Article::getId);
     }
 
     @PostMapping("/{id}/articles")
