@@ -107,8 +107,12 @@ public class FeedPollingScheduler {
         int maxMinutes = properties.getPolling().getMaxIntervalMinutes();
 
         if (feed.getErrorCount() >= threshold) {
-            int multiplier = (int) Math.pow(2, feed.getErrorCount() / threshold);
-            int backoffMinutes = Math.min(feed.getPollIntervalMinutes() * multiplier, maxMinutes);
+            // Cap the exponent (result is clamped to maxMinutes anyway) and use long arithmetic so
+            // the doubling never overflows to a negative interval — a negative Duration makes
+            // scheduleAtFixedRate throw and crashes startup for feeds with many errors.
+            int exponent = Math.min(feed.getErrorCount() / threshold, 30);
+            long multiplier = 1L << exponent;
+            long backoffMinutes = Math.min((long) feed.getPollIntervalMinutes() * multiplier, maxMinutes);
             return Duration.ofMinutes(backoffMinutes);
         }
 

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -75,6 +76,23 @@ class FeedPollingSchedulerTest {
 
         // 15 * 4 = 60 minutes
         verify(taskScheduler).scheduleAtFixedRate(any(Runnable.class), eq(Duration.ofMinutes(60)));
+    }
+
+    @Test
+    void clampsBackoffToMaxWhenErrorCountWouldOverflow() {
+        // errorCount 140 -> 2^(140/5) = 2^28; 15 * 2^28 overflows int32 to a negative value,
+        // which previously produced a negative Duration and crashed scheduleAtFixedRate.
+        var feed = feedWith(1L, 15, 140);
+        ArgumentCaptor<Duration> intervalCaptor = ArgumentCaptor.forClass(Duration.class);
+        when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Duration.class)))
+                .thenReturn(mock(ScheduledFuture.class));
+
+        scheduler.registerFeed(feed);
+
+        verify(taskScheduler).scheduleAtFixedRate(any(Runnable.class), intervalCaptor.capture());
+        Duration scheduled = intervalCaptor.getValue();
+        assertThat(scheduled).isPositive();
+        assertThat(scheduled).isEqualTo(Duration.ofMinutes(1440)); // clamped to maxIntervalMinutes
     }
 
     @Test
