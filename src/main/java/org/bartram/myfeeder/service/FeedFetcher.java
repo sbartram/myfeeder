@@ -1,5 +1,6 @@
 package org.bartram.myfeeder.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -16,10 +17,23 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class FeedFetcher {
 
-    private final RestClient restClient;
+    /** Default cap on a decoded feed body; bounds heap use so a huge response can't OOM the pod. */
+    static final int DEFAULT_MAX_FEED_BYTES = 10 * 1024 * 1024;
 
-    public FeedFetcher(RestClient.Builder builder) {
+    private final RestClient restClient;
+    private final FeedUrlValidator urlValidator;
+    private final int maxFeedBytes;
+
+    @Autowired
+    public FeedFetcher(RestClient.Builder builder, FeedUrlValidator urlValidator) {
+        this(builder, urlValidator, DEFAULT_MAX_FEED_BYTES);
+    }
+
+    /** Overloaded constructor exposing the size cap so callers/tests can bound the read explicitly. */
+    FeedFetcher(RestClient.Builder builder, FeedUrlValidator urlValidator, int maxFeedBytes) {
         this.restClient = builder.build();
+        this.urlValidator = urlValidator;
+        this.maxFeedBytes = maxFeedBytes;
     }
 
     /** Unconditional fetch, used at subscribe time. */
@@ -32,6 +46,7 @@ public class FeedFetcher {
      * non-null. Returns FetchResult.notModified304() on 304; throws FeedFetchException on 4xx/5xx.
      */
     public FetchResult fetch(String url, String etag, String lastModified) {
+        urlValidator.validate(url);
         return restClient.get()
                 .uri(url)
                 .headers(headers -> {
@@ -50,7 +65,14 @@ public class FeedFetcher {
                         throw new FeedFetchException(
                                 "HTTP " + response.getStatusCode().value() + " fetching " + url);
                     }
-                    String body = new String(response.getBody().readAllBytes(), charsetOf(response.getHeaders()));
+                    // Bounded read: pull at most maxFeedBytes + 1 so an unbounded/streaming body
+                    // can't exhaust heap. Exceeding the cap is a fetch failure (mapped to 422).
+                    byte[] bytes = response.getBody().readNBytes(maxFeedBytes + 1);
+                    if (bytes.length > maxFeedBytes) {
+                        throw new FeedFetchException(
+                                "Feed body exceeds " + maxFeedBytes + " bytes fetching " + url);
+                    }
+                    String body = new String(bytes, charsetOf(response.getHeaders()));
                     return new FetchResult(
                             body,
                             response.getHeaders().getETag(),
