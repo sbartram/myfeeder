@@ -41,6 +41,41 @@ class ArticleControllerTest {
     }
 
     @Test
+    void capsLimitAtServerMaximum() throws Exception {
+        when(articleService.findFiltered(any(), any(), any(), any(), anyInt(), anyBoolean()))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/articles?limit=1000000"))
+                .andExpect(status().isOk());
+
+        // clamped to 100, then +1 for the pagination look-ahead row
+        verify(articleService).findFiltered(null, null, null, null, 101, false);
+    }
+
+    @Test
+    void clampsNonPositiveLimitToOne() throws Exception {
+        when(articleService.findFiltered(any(), any(), any(), any(), anyInt(), anyBoolean()))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/articles?limit=0"))
+                .andExpect(status().isOk());
+
+        verify(articleService).findFiltered(null, null, null, null, 2, false);
+    }
+
+    @Test
+    void doesNotOverflowAtIntegerMaxLimit() throws Exception {
+        when(articleService.findFiltered(any(), any(), any(), any(), anyInt(), anyBoolean()))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/articles?limit=2147483647"))
+                .andExpect(status().isOk());
+
+        // without the clamp, limit + 1 overflows to Integer.MIN_VALUE
+        verify(articleService).findFiltered(null, null, null, null, 101, false);
+    }
+
+    @Test
     void shouldReturnUnreadCounts() throws Exception {
         when(articleService.countUnreadByFeed()).thenReturn(Map.of(1L, 5L, 2L, 3L));
 

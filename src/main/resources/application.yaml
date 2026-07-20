@@ -1,6 +1,12 @@
 spring:
   application:
     name: myfeeder
+  # Applies to the auto-configured RestClient (feed fetches + Raindrop): bound how long a slow
+  # remote can tie up a request/scheduler thread. Without these the JDK client waits indefinitely.
+  http:
+    client:
+      connect-timeout: 5s
+      read-timeout: 30s
 
 myfeeder:
   polling:

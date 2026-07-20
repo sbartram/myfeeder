@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,6 +20,10 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class FeedFetcherTest {
 
+    /** Resolves every host to a public IP, so URL validation never blocks the stubbed test hosts. */
+    private static final FeedUrlValidator ALLOW_ALL =
+            new FeedUrlValidator(host -> new InetAddress[]{InetAddress.getByName("8.8.8.8")});
+
     private MockRestServiceServer server;
     private FeedFetcher fetcher;
 
@@ -26,7 +31,7 @@ class FeedFetcherTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        fetcher = new FeedFetcher(builder);
+        fetcher = new FeedFetcher(builder, ALLOW_ALL);
     }
 
     @Test
@@ -77,5 +82,46 @@ class FeedFetcherTest {
         assertThatThrownBy(() -> fetcher.fetch("https://example.com/feed"))
                 .isInstanceOf(FeedFetchException.class)
                 .hasMessageContaining("404");
+    }
+
+    @Test
+    void rejectsBodyExceedingMaxSize() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer cappedServer = MockRestServiceServer.bindTo(builder).build();
+        FeedFetcher cappedFetcher = new FeedFetcher(builder, ALLOW_ALL, 16);
+        cappedServer.expect(requestTo("https://example.com/big"))
+                .andRespond(withSuccess("this body is well over sixteen bytes long",
+                        MediaType.APPLICATION_XML));
+
+        assertThatThrownBy(() -> cappedFetcher.fetch("https://example.com/big"))
+                .isInstanceOf(FeedFetchException.class)
+                .hasMessageContaining("exceeds");
+    }
+
+    @Test
+    void acceptsBodyWithinMaxSize() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer cappedServer = MockRestServiceServer.bindTo(builder).build();
+        FeedFetcher cappedFetcher = new FeedFetcher(builder, ALLOW_ALL, 1024);
+        cappedServer.expect(requestTo("https://example.com/small"))
+                .andRespond(withSuccess("<rss><title>ok</title></rss>", MediaType.APPLICATION_XML));
+
+        FetchResult result = cappedFetcher.fetch("https://example.com/small");
+
+        assertThat(result.body()).contains("ok");
+    }
+
+    @Test
+    void rejectsNonPublicUrlBeforeFetching() throws Exception {
+        RestClient.Builder builder = RestClient.builder();
+        // No request expectations: if validation were skipped, the fetch would fail differently.
+        MockRestServiceServer.bindTo(builder).build();
+        FeedUrlValidator blocking =
+                new FeedUrlValidator(host -> new InetAddress[]{InetAddress.getByName("127.0.0.1")});
+        FeedFetcher blockedFetcher = new FeedFetcher(builder, blocking);
+
+        assertThatThrownBy(() -> blockedFetcher.fetch("http://localhost/feed"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("non-public");
     }
 }

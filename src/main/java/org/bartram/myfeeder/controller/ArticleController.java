@@ -17,6 +17,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ArticleController {
 
+    /** Upper bound on page size; clamps caller-supplied {@code limit} to bound reads and JSON payloads. */
+    private static final int MAX_LIMIT = 100;
+
     private final ArticleService articleService;
     private final RaindropService raindropService;
 
@@ -29,8 +32,11 @@ public class ArticleController {
             @RequestParam(required = false) Long before,
             @RequestParam(defaultValue = "desc") String sort) {
         boolean ascending = "asc".equalsIgnoreCase(sort);
-        List<Article> fetched = articleService.findFiltered(feedId, read, starred, before, limit + 1, ascending);
-        return PaginatedResponse.of(fetched, limit, Article::getId);
+        // Clamp to [1, MAX_LIMIT] so an out-of-range limit is well-defined rather than an error,
+        // and so limit + 1 (the pagination look-ahead) can never overflow.
+        int safeLimit = Math.max(1, Math.min(limit, MAX_LIMIT));
+        List<Article> fetched = articleService.findFiltered(feedId, read, starred, before, safeLimit + 1, ascending);
+        return PaginatedResponse.of(fetched, safeLimit, Article::getId);
     }
 
     @GetMapping("/counts")
