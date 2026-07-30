@@ -39,6 +39,7 @@
 
 ## Article Reader
 
+- [ ] option to replace dark mode pages with light
 - [ ] show full timestamp if the article date is less than 24 hours old
 - [ ] youtube feeds are not showing the video description
 - [ ] links like this one - https://theeurotvplace.com/2025/12/euro-tv-premieres-in-january-2026-land-of-sin-sophie-cross-stayer-more/ - are not displaying correctly
