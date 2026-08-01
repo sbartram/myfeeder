@@ -3,7 +3,9 @@ package org.bartram.myfeeder.controller;
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.integration.RaindropService;
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.service.ArticleExtractionService;
 import org.bartram.myfeeder.service.ArticleService;
+import org.bartram.myfeeder.service.ExtractedContent;
 import org.bartram.myfeeder.service.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ public class ArticleController {
 
     private final ArticleService articleService;
     private final RaindropService raindropService;
+    private final ArticleExtractionService articleExtractionService;
 
     @GetMapping
     public PaginatedResponse<Article> listArticles(
@@ -61,6 +64,11 @@ public class ArticleController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void markRead(@RequestBody MarkReadRequest request) {
         articleService.markRead(request.getArticleIds(), request.getFeedId(), request.getOlderThanDays());
+    }
+
+    @GetMapping("/{id}/extracted-content")
+    public ExtractedContent extractedContent(@PathVariable Long id) {
+        return articleExtractionService.extract(id);
     }
 
     @PostMapping("/{id}/raindrop")

@@ -315,6 +315,8 @@ html, body, #root {
 
 .article-body a { color: var(--accent); }
 
+.reader-status { color: var(--text-muted); margin: 24px 0; }
+
 .article-body blockquote {
   border-left: 3px solid var(--accent);
   padding-left: 12px;

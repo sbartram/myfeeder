@@ -1,5 +1,5 @@
 import { apiGet, apiPost, apiPatch } from './client'
-import type { Article, ArticleFilters, PaginatedArticles } from '../types'
+import type { Article, ArticleFilters, ExtractedContent, PaginatedArticles } from '../types'
 
 export const articlesApi = {
   list: (filters: ArticleFilters = {}, limit = 50, before?: number) => {
@@ -13,6 +13,8 @@ export const articlesApi = {
     return apiGet<PaginatedArticles>(`/articles?${params}`)
   },
   getById: (id: number) => apiGet<Article>(`/articles/${id}`),
+  getExtractedContent: (id: number) =>
+    apiGet<ExtractedContent>(`/articles/${id}/extracted-content`),
   updateState: (id: number, state: { read?: boolean; starred?: boolean }) =>
     apiPatch<Article>(`/articles/${id}`, state),
   markRead: (articleIds?: number[], feedId?: number, olderThanDays?: number) =>

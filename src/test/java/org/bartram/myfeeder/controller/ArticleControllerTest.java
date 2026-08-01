@@ -2,7 +2,10 @@ package org.bartram.myfeeder.controller;
 
 import org.bartram.myfeeder.integration.RaindropService;
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.service.ArticleExtractionService;
 import org.bartram.myfeeder.service.ArticleService;
+import org.bartram.myfeeder.service.ExtractedContent;
+import org.bartram.myfeeder.service.FeedFetchException;
 import org.bartram.myfeeder.service.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +29,36 @@ class ArticleControllerTest {
     @Autowired private MockMvc mockMvc;
     @MockitoBean private ArticleService articleService;
     @MockitoBean private RaindropService raindropService;
+    @MockitoBean private ArticleExtractionService articleExtractionService;
+
+    @Test
+    void shouldReturnExtractedContent() throws Exception {
+        when(articleExtractionService.extract(5L))
+                .thenReturn(new ExtractedContent("Page Title", "<p>extracted</p>"));
+
+        mockMvc.perform(get("/api/articles/5/extracted-content"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Page Title"))
+                .andExpect(jsonPath("$.contentHtml").value("<p>extracted</p>"));
+    }
+
+    @Test
+    void extractedContentReturns404ForMissingArticle() throws Exception {
+        when(articleExtractionService.extract(99L))
+                .thenThrow(new NotFoundException("Article not found: 99"));
+
+        mockMvc.perform(get("/api/articles/99/extracted-content"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void extractedContentReturns422WhenPageFetchFails() throws Exception {
+        when(articleExtractionService.extract(5L))
+                .thenThrow(new FeedFetchException("HTTP 403 fetching https://example.com/post"));
+
+        mockMvc.perform(get("/api/articles/5/extracted-content"))
+                .andExpect(status().isUnprocessableEntity());
+    }
 
     @Test
     void shouldListArticles() throws Exception {
