@@ -39,7 +39,7 @@
 
 ## Article Reader
 
-- [ ] option to replace dark mode pages with light
+- [ ] option to replace dark mode pages with light (example: https://tldr.tech/ai/2026-07-17)
 - [ ] show full timestamp if the article date is less than 24 hours old
 - [ ] youtube feeds are not showing the video description
 - [ ] links like this one - https://theeurotvplace.com/2025/12/euro-tv-premieres-in-january-2026-land-of-sin-sophie-cross-stayer-more/ - are not displaying correctly
@@ -58,7 +58,7 @@
 
 ## Bugs
 
-- [ ] `RestClient.body(String.class)` decodes `text/xml` responses as ISO-8859-1 when the server omits a charset, which mojibakes emoji-laden titles. Switch the parser to byte input so ROME respects the XML prolog's `encoding=`.
+- [X] `RestClient.body(String.class)` decodes `text/xml` responses as ISO-8859-1 when the server omits a charset, which mojibakes emoji-laden titles. Switch the parser to byte input so ROME respects the XML prolog's `encoding=`.
 - [ ] `j`/`k` article navigation walks the wrong list on Starred and Folder views. `MainLayout` feeds `useKeyboardShortcuts` an `articles` array from a separate `useArticles` query keyed on `selectedFeedId`, which diverges from the visible list (keyed on the route): Starred has `selectedFeedId === null` (queries all articles, not starred), and Folder views never set `selectedFeedId`. The action shortcuts (`o`/`m`/`s`/`v`/`b`/Enter) were fixed by resolving the target via `useArticle(selectedArticleId)`, but `j`/`k` still need the displayed list. Fix at the source: lift the article-list query to a single source of truth shared by the list components and the shortcut hook (touches board views too).
 
 ## Testing

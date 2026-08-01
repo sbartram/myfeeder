@@ -35,7 +35,7 @@ class FeedFetcherTest {
     }
 
     @Test
-    void decodesBodyUsingResponseCharset() {
+    void returnsRawBodyBytesWithContentType() {
         byte[] latin1 = "<rss><title>café</title></rss>".getBytes(StandardCharsets.ISO_8859_1);
         server.expect(requestTo("https://example.com/feed"))
                 .andRespond(withSuccess(latin1,
@@ -43,7 +43,8 @@ class FeedFetcherTest {
 
         FetchResult result = fetcher.fetch("https://example.com/feed");
 
-        assertThat(result.body()).contains("café");
+        assertThat(result.body()).isEqualTo(latin1);
+        assertThat(result.contentType()).containsIgnoringCase("charset=ISO-8859-1");
         assertThat(result.notModified()).isFalse();
     }
 
@@ -108,7 +109,7 @@ class FeedFetcherTest {
 
         FetchResult result = cappedFetcher.fetch("https://example.com/small");
 
-        assertThat(result.body()).contains("ok");
+        assertThat(new String(result.body(), StandardCharsets.UTF_8)).contains("ok");
     }
 
     @Test

@@ -35,8 +35,8 @@ public class FeedService {
     }
 
     public Feed subscribe(String feedUrl, Long folderId) {
-        String rawContent = feedFetcher.fetch(feedUrl).body();
-        ParsedFeed parsed = feedParser.parse(rawContent);
+        FetchResult fetched = feedFetcher.fetch(feedUrl);
+        ParsedFeed parsed = feedParser.parse(fetched.body(), fetched.contentType());
 
         var feed = new Feed();
         feed.setUrl(feedUrl);

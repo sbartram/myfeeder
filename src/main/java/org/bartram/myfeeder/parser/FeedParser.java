@@ -11,14 +11,18 @@ import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.feed.synd.SyndPerson;
 import com.rometools.rome.io.SyndFeedInput;
+import com.rometools.rome.io.XmlReader;
 import org.bartram.myfeeder.model.FeedType;
 import org.springframework.stereotype.Component;
 
-import java.io.StringReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,10 +35,18 @@ public class FeedParser {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ParsedFeed parse(String rawContent) {
+    /**
+     * Parses a feed document from its raw transport bytes. XML charset resolution follows
+     * HTTP semantics: an explicit charset in {@code contentType} wins; otherwise the charset
+     * is detected from the BOM, then the XML prolog's {@code encoding=}, then UTF-8. JSON
+     * feeds are UTF-8 by spec (Jackson auto-detects the UTF family from the bytes).
+     *
+     * @param contentType the response Content-Type header value, or null if unknown
+     */
+    public ParsedFeed parse(byte[] rawContent, String contentType) {
         FeedType type = detectFeedType(rawContent);
         ParsedFeed parsed = switch (type) {
-            case RSS, ATOM -> parseWithRome(rawContent, type);
+            case RSS, ATOM -> parseWithRome(rawContent, contentType, type);
             case JSON_FEED -> parseJsonFeed(rawContent);
         };
         if ((parsed.title() == null || parsed.title().isBlank())
@@ -46,8 +58,10 @@ public class FeedParser {
         return parsed;
     }
 
-    public FeedType detectFeedType(String rawContent) {
-        String trimmed = rawContent.trim();
+    public FeedType detectFeedType(byte[] rawContent) {
+        // ISO-8859-1 maps every byte to a char, so this sniff finds the ASCII markers below
+        // regardless of the document's real (ASCII-compatible) encoding.
+        String trimmed = new String(rawContent, StandardCharsets.ISO_8859_1).trim();
         if (trimmed.startsWith("{")) {
             return FeedType.JSON_FEED;
         }
@@ -57,10 +71,10 @@ public class FeedParser {
         return FeedType.RSS;
     }
 
-    private ParsedFeed parseWithRome(String rawContent, FeedType type) {
-        try {
+    private ParsedFeed parseWithRome(byte[] rawContent, String contentType, FeedType type) {
+        try (XmlReader reader = newXmlReader(rawContent, contentType)) {
             SyndFeedInput input = new SyndFeedInput();
-            SyndFeed syndFeed = input.build(new StringReader(rawContent));
+            SyndFeed syndFeed = input.build(reader);
 
             List<ParsedArticle> articles = syndFeed.getEntries().stream()
                     .map(this::toArticle)
@@ -76,6 +90,19 @@ public class FeedParser {
         } catch (Exception e) {
             throw new FeedParseException("Failed to parse " + type + " feed", e);
         }
+    }
+
+    /**
+     * An explicit charset in the Content-Type header wins (HTTP semantics). Without one, use
+     * ROME's raw-mode detection (BOM, then the prolog's encoding=, then UTF-8) — HTTP-mode
+     * detection would apply RFC 3023's us-ascii default for text/xml, which mojibakes the
+     * multi-byte characters this method exists to preserve.
+     */
+    private XmlReader newXmlReader(byte[] rawContent, String contentType) throws IOException {
+        ByteArrayInputStream in = new ByteArrayInputStream(rawContent);
+        boolean explicitCharset = contentType != null
+                && contentType.toLowerCase(Locale.ROOT).contains("charset=");
+        return explicitCharset ? new XmlReader(in, contentType, true) : new XmlReader(in, true);
     }
 
     private ParsedArticle toArticle(SyndEntry entry) {
@@ -159,7 +186,7 @@ public class FeedParser {
         return m.find() ? m.group(1) : null;
     }
 
-    private ParsedFeed parseJsonFeed(String rawContent) {
+    private ParsedFeed parseJsonFeed(byte[] rawContent) {
         try {
             JsonNode root = objectMapper.readTree(rawContent);
             List<ParsedArticle> articles = new ArrayList<>();
