@@ -41,7 +41,7 @@ public class FeedPollingService {
                 feed.setLastModifiedHeader(result.lastModified());
             }
 
-            ParsedFeed parsed = feedParser.parse(result.body());
+            ParsedFeed parsed = feedParser.parse(result.body(), result.contentType());
             int newCount = 0;
 
             for (ParsedArticle parsedArticle : parsed.articles()) {

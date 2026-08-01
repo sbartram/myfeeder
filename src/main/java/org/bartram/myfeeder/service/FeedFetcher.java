@@ -2,17 +2,15 @@ package org.bartram.myfeeder.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-
 /**
- * Owns HTTP retrieval of feed documents: conditional requests (ETag / Last-Modified),
- * charset-correct body decoding, and error-status handling. The RestClient.Builder is the
- * auto-configured bean, so the myfeeder User-Agent customizer applies (see RestClientConfig).
+ * Owns HTTP retrieval of feed documents: conditional requests (ETag / Last-Modified) and
+ * error-status handling. The body is returned as raw bytes alongside the Content-Type header
+ * so FeedParser can resolve the charset (header charset, else BOM/XML-prolog detection).
+ * The RestClient.Builder is the auto-configured bean, so the myfeeder User-Agent customizer
+ * applies (see RestClientConfig).
  */
 @Component
 public class FeedFetcher {
@@ -72,18 +70,12 @@ public class FeedFetcher {
                         throw new FeedFetchException(
                                 "Feed body exceeds " + maxFeedBytes + " bytes fetching " + url);
                     }
-                    String body = new String(bytes, charsetOf(response.getHeaders()));
                     return new FetchResult(
-                            body,
+                            bytes,
+                            response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE),
                             response.getHeaders().getETag(),
                             response.getHeaders().getFirst(HttpHeaders.LAST_MODIFIED),
                             false);
                 });
-    }
-
-    private Charset charsetOf(HttpHeaders headers) {
-        MediaType contentType = headers.getContentType();
-        return contentType != null && contentType.getCharset() != null
-                ? contentType.getCharset() : StandardCharsets.UTF_8;
     }
 }

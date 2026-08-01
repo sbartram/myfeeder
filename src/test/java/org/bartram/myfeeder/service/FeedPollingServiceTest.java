@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,7 +63,7 @@ class FeedPollingServiceTest {
 
         pollingService.pollFeed(1L);
 
-        verify(feedParser, never()).parse(any());
+        verify(feedParser, never()).parse(any(), any());
         verify(articleRepository, never()).save(any());
         var captor = ArgumentCaptor.forClass(Feed.class);
         verify(feedRepository).save(captor.capture());
@@ -77,12 +78,14 @@ class FeedPollingServiceTest {
         feed.setErrorCount(3);
         when(feedRepository.findById(1L)).thenReturn(Optional.of(feed));
         when(feedFetcher.fetch(anyString(), any(), any()))
-                .thenReturn(new FetchResult("<rss/>", "\"tag\"", null, false));
+                .thenReturn(new FetchResult("<rss/>".getBytes(StandardCharsets.UTF_8),
+                        "application/rss+xml", "\"tag\"", null, false));
 
         var existing = ParsedArticle.builder().guid("g-existing").title("Old").build();
         var fresh = ParsedArticle.builder().guid("g-fresh").title("New").build();
         var parsed = ParsedFeed.builder().title("Feed").articles(List.of(existing, fresh)).build();
-        when(feedParser.parse("<rss/>")).thenReturn(parsed);
+        when(feedParser.parse("<rss/>".getBytes(StandardCharsets.UTF_8), "application/rss+xml"))
+                .thenReturn(parsed);
         when(articleRepository.existsByFeedIdAndGuid(1L, "g-existing")).thenReturn(true);
         when(articleRepository.existsByFeedIdAndGuid(1L, "g-fresh")).thenReturn(false);
 
