@@ -4,6 +4,7 @@ import org.bartram.myfeeder.model.FeedType;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,7 +16,7 @@ class FeedParserTest {
     @Test
     void shouldParseRssFeed() {
         String xml = loadResource("/feeds/sample-rss.xml");
-        ParsedFeed result = parser.parse(xml);
+        ParsedFeed result = parse(xml);
 
         assertThat(result.feedType()).isEqualTo(FeedType.RSS);
         assertThat(result.title()).isEqualTo("Example RSS Feed");
@@ -31,7 +32,7 @@ class FeedParserTest {
     @Test
     void shouldParseAtomFeed() {
         String xml = loadResource("/feeds/sample-atom.xml");
-        ParsedFeed result = parser.parse(xml);
+        ParsedFeed result = parse(xml);
 
         assertThat(result.feedType()).isEqualTo(FeedType.ATOM);
         assertThat(result.title()).isEqualTo("Example Atom Feed");
@@ -46,7 +47,7 @@ class FeedParserTest {
     @Test
     void shouldParseJsonFeed() {
         String json = loadResource("/feeds/sample-json-feed.json");
-        ParsedFeed result = parser.parse(json);
+        ParsedFeed result = parse(json);
 
         assertThat(result.feedType()).isEqualTo(FeedType.JSON_FEED);
         assertThat(result.title()).isEqualTo("Example JSON Feed");
@@ -77,7 +78,7 @@ class FeedParserTest {
                   </channel>
                 </rss>
                 """;
-        ParsedFeed result = parser.parse(xml);
+        ParsedFeed result = parse(xml);
         assertThat(result.articles().get(0).imageUrl())
                 .isEqualTo("https://cdn.example.com/lead.jpg");
     }
@@ -102,7 +103,7 @@ class FeedParserTest {
                   </channel>
                 </rss>
                 """;
-        ParsedFeed result = parser.parse(xml);
+        ParsedFeed result = parse(xml);
         assertThat(result.articles().get(0).imageUrl())
                 .isEqualTo("https://gizmodo.com/app/uploads/2026/04/post.jpg");
     }
@@ -126,7 +127,7 @@ class FeedParserTest {
                   </channel>
                 </rss>
                 """;
-        ParsedFeed result = parser.parse(xml);
+        ParsedFeed result = parse(xml);
         assertThat(result.articles().get(0).imageUrl())
                 .isEqualTo("https://cdn.example.com/encl.png");
     }
@@ -150,7 +151,7 @@ class FeedParserTest {
                   </channel>
                 </rss>
                 """;
-        ParsedFeed result = parser.parse(xml);
+        ParsedFeed result = parse(xml);
         assertThat(result.articles().get(0).imageUrl())
                 .isEqualTo("https://cdn.example.com/inline.jpg");
     }
@@ -174,7 +175,7 @@ class FeedParserTest {
                   ]
                 }
                 """;
-        ParsedFeed result = parser.parse(json);
+        ParsedFeed result = parse(json);
         assertThat(result.articles().get(0).imageUrl())
                 .isEqualTo("https://cdn.example.com/json.jpg");
     }
@@ -182,23 +183,62 @@ class FeedParserTest {
     @Test
     void shouldReturnNullImageWhenAbsent() {
         String xml = loadResource("/feeds/sample-rss.xml");
-        ParsedFeed result = parser.parse(xml);
+        ParsedFeed result = parse(xml);
         assertThat(result.articles().get(0).imageUrl()).isNull();
     }
 
     @Test
     void shouldDetectFeedType() {
-        assertThat(parser.detectFeedType(loadResource("/feeds/sample-rss.xml"))).isEqualTo(FeedType.RSS);
-        assertThat(parser.detectFeedType(loadResource("/feeds/sample-atom.xml"))).isEqualTo(FeedType.ATOM);
-        assertThat(parser.detectFeedType(loadResource("/feeds/sample-json-feed.json"))).isEqualTo(FeedType.JSON_FEED);
+        assertThat(parser.detectFeedType(utf8(loadResource("/feeds/sample-rss.xml")))).isEqualTo(FeedType.RSS);
+        assertThat(parser.detectFeedType(utf8(loadResource("/feeds/sample-atom.xml")))).isEqualTo(FeedType.ATOM);
+        assertThat(parser.detectFeedType(utf8(loadResource("/feeds/sample-json-feed.json")))).isEqualTo(FeedType.JSON_FEED);
+    }
+
+    @Test
+    void shouldRespectXmlPrologEncodingWhenHeaderHasNoCharset() {
+        String xml = """
+                <?xml version="1.0" encoding="windows-1252"?>
+                <rss version="2.0">
+                  <channel>
+                    <title>Café — Süß</title>
+                    <link>https://example.com</link>
+                    <description>desc</description>
+                  </channel>
+                </rss>
+                """;
+        byte[] bytes = xml.getBytes(Charset.forName("windows-1252"));
+
+        ParsedFeed result = parser.parse(bytes, "text/xml");
+
+        assertThat(result.title()).isEqualTo("Café — Süß");
+    }
+
+    @Test
+    void shouldRespectHeaderCharsetWhenPrologHasNone() {
+        String xml = "<rss version=\"2.0\"><channel><title>café</title>"
+                + "<link>https://example.com</link><description>d</description></channel></rss>";
+        byte[] bytes = xml.getBytes(StandardCharsets.ISO_8859_1);
+
+        ParsedFeed result = parser.parse(bytes, "text/xml; charset=ISO-8859-1");
+
+        assertThat(result.title()).isEqualTo("café");
     }
 
     @Test
     void shouldRejectRateLimitJsonMasqueradingAs200() {
         String body = "{\"data\":\"too many requests\"}";
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> parser.parse(body))
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> parse(body))
                 .isInstanceOf(FeedParseException.class)
                 .hasMessageContaining("recognizable feed");
+    }
+
+    /** Parses UTF-8 test content with no Content-Type header, the common case in these tests. */
+    private ParsedFeed parse(String content) {
+        return parser.parse(utf8(content), null);
+    }
+
+    private byte[] utf8(String content) {
+        return content.getBytes(StandardCharsets.UTF_8);
     }
 
     private String loadResource(String path) {
