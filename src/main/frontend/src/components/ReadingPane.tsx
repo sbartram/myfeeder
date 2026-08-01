@@ -6,6 +6,7 @@ import { useArticle, useUpdateArticleState, useSaveToRaindrop } from '../hooks/u
 import { usePreferences, READING_FONT_PX } from '../stores/preferencesStore'
 import { useReadLater, useRemoveArticleFromBoard } from '../hooks/useBoards'
 import { BoardManager } from './BoardManager'
+import { formatPublishedDate } from '../utils/dates'
 
 interface ReadingPaneProps {
   boardOpen?: boolean
@@ -157,7 +158,7 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
           {article.author && <span>{article.author} &middot; </span>}
           {article.url && <span>{new URL(article.url).hostname}</span>}
           {article.publishedAt && (
-            <span> &middot; {new Date(article.publishedAt).toLocaleDateString()}</span>
+            <span> &middot; {formatPublishedDate(article.publishedAt)}</span>
           )}
         </div>
         {showLeadImage && (
