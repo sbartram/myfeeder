@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useMatch } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { useUIStore } from '../stores/uiStore'
-import { useArticle, useUpdateArticleState, useSaveToRaindrop } from '../hooks/useArticles'
+import {
+  useArticle,
+  useExtractedArticle,
+  useUpdateArticleState,
+  useSaveToRaindrop,
+} from '../hooks/useArticles'
 import { usePreferences, READING_FONT_PX } from '../stores/preferencesStore'
 import { useReadLater, useRemoveArticleFromBoard } from '../hooks/useBoards'
 import { BoardManager } from './BoardManager'
@@ -19,6 +24,17 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
   const keyboardFocus = useUIStore((s) => s.keyboardFocus)
   const { data: article } = useArticle(selectedArticleId)
   const contentRef = useRef<HTMLDivElement>(null)
+
+  // Reader view: null = auto (on only when the feed provided no content for this article).
+  const [readerViewChoice, setReaderViewChoice] = useState<boolean | null>(null)
+  const hasFeedContent = !!(article?.content || article?.summary)
+  const readerView = readerViewChoice ?? (!!article && !hasFeedContent)
+  const extracted = useExtractedArticle(article?.id ?? null, readerView)
+
+  // The manual choice is per-article; a newly selected article returns to auto.
+  useEffect(() => {
+    setReaderViewChoice(null)
+  }, [article?.id])
 
   // When focus moves to the reading pane (e.g. via Enter), focus the scroll
   // container so the keyboard can scroll the article.
@@ -66,7 +82,16 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
   }
 
   const bodyHtml = article.content || article.summary || ''
-  const sanitizedContent = DOMPurify.sanitize(bodyHtml)
+  // Reader view forbids style tags/attributes so publisher styling (e.g. dark backgrounds)
+  // is dropped and the app theme applies.
+  const sanitizedContent = readerView
+    ? extracted.data
+      ? DOMPurify.sanitize(extracted.data.contentHtml, {
+          FORBID_TAGS: ['style'],
+          FORBID_ATTR: ['style'],
+        })
+      : ''
+    : DOMPurify.sanitize(bodyHtml)
   const showLeadImage = !!article.imageUrl && !bodyHtml.includes(article.imageUrl)
 
   const handleStar = () => {
@@ -133,6 +158,9 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
           {saveToRaindrop.isPending ? '💧 Saving…' : '💧 Raindrop'}
         </button>
         <button className="toolbar-btn" onClick={handleCopyLink}>🔗 Copy Link</button>
+        <button className="toolbar-btn" onClick={() => setReaderViewChoice(!readerView)}>
+          {readerView ? '📖 Feed View' : '📖 Reader View'}
+        </button>
         {currentBoardId != null && (
           <button
             className="toolbar-btn"
@@ -164,11 +192,20 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
         {showLeadImage && (
           <img className="article-lead-image" src={article.imageUrl!} alt="" />
         )}
-        <div
-          className="article-body"
-          onClick={handleContentClick}
-          dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-        />
+        {readerView && extracted.isPending ? (
+          <p className="reader-status">Loading full article…</p>
+        ) : readerView && extracted.isError ? (
+          <p className="reader-status">
+            {"Couldn't load the full article. "}
+            <button className="toolbar-btn" onClick={handleOpenOriginal}>↗ Open Original</button>
+          </p>
+        ) : (
+          <div
+            className="article-body"
+            onClick={handleContentClick}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+          />
+        )}
       </div>
       <BoardManager open={boardOpen} articleId={article?.id ?? null} onClose={() => closeBoardDialog()} />
     </div>

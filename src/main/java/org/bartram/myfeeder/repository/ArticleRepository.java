@@ -24,8 +24,16 @@ public interface ArticleRepository extends ListCrudRepository<Article, Long> {
     void markReadByFeedIdOlderThan(Long feedId, Instant cutoff);
 
     @Modifying
-    @Query("UPDATE article SET content = NULL WHERE fetched_at < :cutoff AND content IS NOT NULL")
+    @Query("UPDATE article SET content = NULL, extracted_content = NULL WHERE fetched_at < :cutoff AND (content IS NOT NULL OR extracted_content IS NOT NULL)")
     void clearContentOlderThan(Instant cutoff);
+
+    /** Cached reader-view content, or null when nothing is cached (or the article is missing). */
+    @Query("SELECT extracted_content FROM article WHERE id = :id")
+    String findExtractedContent(Long id);
+
+    @Modifying
+    @Query("UPDATE article SET extracted_content = :content WHERE id = :id")
+    void saveExtractedContent(Long id, String content);
 
     @Query("SELECT EXISTS(SELECT 1 FROM article WHERE feed_id = :feedId AND guid = :guid)")
     boolean existsByFeedIdAndGuid(Long feedId, String guid);

@@ -51,6 +51,11 @@ export interface PaginatedArticles {
   nextCursor: number | null
 }
 
+export interface ExtractedContent {
+  title: string
+  contentHtml: string
+}
+
 export interface ArticleFilters {
   feedId?: number
   read?: boolean

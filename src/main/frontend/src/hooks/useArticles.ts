@@ -21,6 +21,21 @@ export function useArticle(id: number | null) {
   })
 }
 
+/**
+ * Reader view content for an article. The server caches extractions, so a loaded
+ * result never goes stale; failures aren't retried because extraction errors
+ * (fetch blocked, nothing readable) are deterministic.
+ */
+export function useExtractedArticle(id: number | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['article', id, 'extracted'],
+    queryFn: () => articlesApi.getExtractedContent(id!),
+    enabled: id !== null && enabled,
+    staleTime: Infinity,
+    retry: false,
+  })
+}
+
 export function useUnreadCounts() {
   return useQuery({
     queryKey: ['unreadCounts'],

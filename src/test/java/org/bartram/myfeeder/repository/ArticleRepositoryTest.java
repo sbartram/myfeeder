@@ -102,6 +102,29 @@ class ArticleRepositoryTest {
     }
 
     @Test
+    void shouldRoundTripExtractedContent() {
+        var article = articleRepository.save(createArticle("extract-guid", "Extractable"));
+        assertThat(articleRepository.findExtractedContent(article.getId())).isNull();
+
+        articleRepository.saveExtractedContent(article.getId(), "<p>extracted</p>");
+
+        assertThat(articleRepository.findExtractedContent(article.getId()))
+                .isEqualTo("<p>extracted</p>");
+    }
+
+    @Test
+    void shouldClearOldExtractedContent() {
+        var old = createArticle("old-extract-guid", "Old Extracted");
+        old.setFetchedAt(Instant.now().minusSeconds(60 * 60 * 24 * 60)); // 60 days ago
+        old = articleRepository.save(old);
+        articleRepository.saveExtractedContent(old.getId(), "<p>stale</p>");
+
+        articleRepository.clearContentOlderThan(Instant.now().minusSeconds(60 * 60 * 24 * 30));
+
+        assertThat(articleRepository.findExtractedContent(old.getId())).isNull();
+    }
+
+    @Test
     void shouldSortByPublishedAtNotById() {
         // Create articles where ID order does NOT match published_at order.
         // This reproduces the bug: a batch-fetched feed inserts old articles
