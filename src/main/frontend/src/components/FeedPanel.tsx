@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useFeeds, useDeleteFeed, usePollFeed, useMoveFeedToFolder } from '../hooks/useFeeds'
 import { EmptyState } from './EmptyState'
-import { useFolders, useReorderFolders } from '../hooks/useFolders'
+import { useFolders, useReorderFolders, useCreateFolder } from '../hooks/useFolders'
 import { useUnreadCounts } from '../hooks/useArticles'
 import { useBoards } from '../hooks/useBoards'
 import { useVersion } from '../hooks/useVersion'
@@ -105,6 +105,20 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; feed: Feed } | null>(null)
   const [moveSubmenuOpen, setMoveSubmenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<Feed | null>(null)
+  const createFolder = useCreateFolder()
+  const [newFolderOpen, setNewFolderOpen] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
+
+  const closeNewFolder = () => {
+    setNewFolderOpen(false)
+    setNewFolderName('')
+  }
+
+  const submitNewFolder = () => {
+    const name = newFolderName.trim()
+    if (!name) return
+    createFolder.mutate(name, { onSuccess: closeNewFolder })
+  }
 
   const handleContextMenu = useCallback((e: React.MouseEvent, feed: Feed) => {
     e.preventDefault()
@@ -231,7 +245,34 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
           />
         ) : (
           <>
-            <div className="section-label">FOLDERS &amp; FEEDS</div>
+            <div className="section-label section-label-row">
+              <span>FOLDERS &amp; FEEDS</span>
+              <button
+                className="new-folder-btn"
+                title="New folder"
+                aria-label="New folder"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setNewFolderOpen((o) => !o)}
+              >
+                +
+              </button>
+            </div>
+
+            {newFolderOpen && (
+              <input
+                className="new-folder-input"
+                type="text"
+                placeholder="Folder name"
+                value={newFolderName}
+                autoFocus
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') submitNewFolder()
+                  if (e.key === 'Escape') closeNewFolder()
+                }}
+                onBlur={closeNewFolder}
+              />
+            )}
 
         <DndContext
           sensors={sensors}

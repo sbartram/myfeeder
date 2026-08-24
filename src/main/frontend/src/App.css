@@ -85,6 +85,41 @@ html, body, #root {
   margin-bottom: 8px;
 }
 
+.section-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.new-folder-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.new-folder-btn:hover {
+  color: var(--text-primary);
+  background: var(--hover-bg);
+}
+
+.new-folder-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  padding: 5px 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--hover-bg);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  outline: none;
+}
+
 .folder-row, .feed-row {
   padding: 5px 8px;
   cursor: pointer;
