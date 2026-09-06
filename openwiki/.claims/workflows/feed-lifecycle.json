@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:e27e9f08ffa554b85d08d76fb60900c817b83749549239c554229056bf7c0244",
+  "claims": [
+    {
+      "id": "claim_35c24f60b4fe4925b880ce1127fec940",
+      "statement": "FeedService.subscribe performs an unconditional FeedFetcher.fetch(url), parses the result with FeedParser into a ParsedFeed, saves a new Feed row with pollIntervalMinutes from myfeeder.polling.default-interval-minutes, and publishes a FeedSavedEvent that triggers scheduling.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedService.java#L37-L54",
+          "version": "repo-lines-v1:sha256:00d17c1be99e9096b49e2661aa577bf22511eed63b9cdab189bf1e3208736532:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0MGJjNThiOTlmZTE0ZWVlOWVmODMzMjM1Y2EyMDJkYzAwMmJhNGZhMWNjNDQzYjFjYmY5NWZkODZiY2E4NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzYjE2ZDY1MDIxMjZmNzVlYzIxNjJhMjlmZDQ2ZTE2NzZlMDM5MjFlYzVlYjc4MDE3YzJhNjIzNDkyMTI0MWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwNGJmODZhZjczMjM1OTk2ODI2NDNiZmYyN2U2ZDUzOTBlY2RkYWU0Y2VhZjQxZTg1NjJlNDU4ZGJhMjYyYzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9e4ae5a2987842f181d3440a8154cf30",
+      "statement": "FeedFetcher is the single component that performs outbound HTTP retrieval of a caller-supplied URL, and it applies an SSRF guard (FeedUrlValidator.validate) before every request plus a body size cap (DEFAULT_MAX_FEED_BYTES = 10 MiB, enforced via a bounded readNBytes) on every fetch, regardless of caller.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L15-L80",
+          "version": "repo-lines-v1:sha256:8bd513af19d7c04d89661845954b920e5d7b0a185d2cdc5843de1db081545ab0:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4ZmExZTlmNDQ5NDlmYTg5YTNiNDJiMDQ5MmRkYmRmZmEyZWI3NjQ4NDhkMzU3NzhjOWZiNTNjMjA3ZWJkYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhY2JhM2Q3YTYzMDFiNWU4NTQzNTRlNDUzY2ZkZWFmN2ZjMjkwMTUwYjE2MGJlZTVlYjhlN2Y5MzhkMWU3NTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java#L1-L85",
+          "version": "repo-lines-v1:sha256:1001e721b92bb9319c8d5aef689176406a66b97f390b7ebd52621ac3867a28fe:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmZmJjNTFiZDJjZWM3NDBkYzQxM2NhYjBiODI2YjU3NmM3MDY2YjczOWQxNzRhNGZkMDk4ZDdiMDcwNGE0NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwNTMwOTQ0YmQ3ZDEwMjExMDg1MGYyYzA0OTRhNDQxYjIxNjQzODg1NTAzNDgwOWQ0ZGFmYWU0Y2M2NmYzN2UifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1f301488d7d1447ebe81109afd02518b",
+      "statement": "ArticleExtractionService (the reader-view extraction workflow) reuses the same FeedFetcher as feed polling/subscribe to fetch an article's original page, gaining the same SSRF guard and size cap protections for that caller-supplied article URL.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L16-L48",
+          "version": "repo-lines-v1:sha256:6fc6bef65a5be06ee3424d7b11eb5d8f4f19131f81a86aade38724b5d44b7d87:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZjI3NWYyMDY0ODlmMDA5ZDM0MDU5NjdkMDU3MjNjNGYwNWQ5YzMxZTRlMTAxYzRjZjVlNGY4YTZmYWM4MmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0NmNiYzk3ZWM0MjE2ZDExZTVlMWE1YzhkY2IzZDBmNzY5MWY5NGE1OTUzZmI0YTE3ZTljMGQ4MmQwMjIxNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkNTRkZDhlZjZkYTcxYzdkY2VjYjRlZGQzNjg0ZWJhNjRmMDhlM2ZlZTkzYTY2OTI2MjVmMWM3ODdjNTY4M2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_673f2e7088234c3ea2206284bf338692",
+      "statement": "FeedService.update republishes FeedSavedEvent after changing a feed's title or pollIntervalMinutes (rejecting pollIntervalMinutes < 1), which is how the scheduler learns of an interval edit.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedService.java#L56-L73",
+          "version": "repo-lines-v1:sha256:dc72625bea5e02fc6280349d855d9e02e2fa69ad0d95ddeb5f5ec6c773890a3a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MGY0MGYwNzI1ODhmYTQ0YTgyMTE5NjRmNGNiNTRhMjVkMDY4ZmY0Mjg4YzUzZTdkZGI4ZGRjNmM4MjQ2MDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQwNzcyYzAxYmVhM2IxMWU3YWExOTM2MDVkOWNlY2I3ZDBiOWE5Y2IyNzkyNDg0MTE5ZGI0ZTMxYmIxYmYyMzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmMGMwYWJlM2I4NmJhMmQzZTJiZTNkNzY1OGE4YmJhOTZhYzg4MGM1MjBhYTk4MGRkZDA4MTM3MGJiNmQ3OWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c476c1675e5c435a811ae5cb939f90b5",
+      "statement": "OpmlImportService.importOpml creates a new Feed and publishes FeedSavedEvent per new feed (by URL) during bulk OPML import; feeds that already exist by URL are updated in place without republishing the event.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/OpmlImportService.java#L35-L73",
+          "version": "repo-lines-v1:sha256:88699c25e2185ebe707f55da70f4ab719703cae2259951754bf16e59f644bb67:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1MjYzMzA5MjNkNGUwYjVlZWYyNTkyMTEzMTJhY2U0ZWIxYjk5MDE3OGIyNjFhODVlOWViZDRhMWFlYjA5NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxZDk5MjUzMGMwYWNiOWJhYzUyYmU0YmU2MzA1NmQxMWYwYTFhYjRmMWVjYTBhZDM1Y2ZhMzQ2NTdjNzg0NGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3NzgyMmE3NzQ1MGRhNWRmZTY2MGMyOGM3NjZhYTJiZTVlOTJjYmQ0MTY4ZjhiZWVkNDg2NjNhZjM4MTQ4NzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4530f4bd10d9473399cbdcd65d8e42c2",
+      "statement": "FeedParser.parse throws FeedParseException (mapped to HTTP 422) when the parsed result has neither a title nor any articles, guarding against '200 OK with garbage' responses that would otherwise violate the feed.title NOT NULL constraint.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/parser/FeedParser.java#L46-L59",
+          "version": "repo-lines-v1:sha256:8d31258ca37b46a9001983d4ed472dc7df1483f63008e033b1a0d4549b24dfff:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmMDUzMWJlYjE1NTBmOTE4ZGY4MTE1MTdjMDQ5OWFkMTA1NGRhMWZhMGJjMGRhZTgxNWQ0MTRlMWQ3YTY2OTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJhNjg3OWRkNGQzMWM1NWMyYWEwOTA5MDU0OTNjMDMzOTE3ZjcyNmZmMjY1MDFhZWQ4OTRlMzAyOGNhMWQ3NjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyMWY4YzcyZGIyMzNiYjNiYjY0NjhjZDUzMDNhNzQ3YWY0OGIxMWFiMmZlNTg0ZWNiZmZkNzMxYjgwZTU0MjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_258ea9a350e8426ba8ee33f3fa3972c5",
+      "statement": "FeedPollingScheduler listens for FeedSavedEvent/FeedDeletedEvent via @TransactionalEventListener(phase = AFTER_COMMIT, fallbackExecution = true), registering/cancelling scheduled polling only after the feed row is durably committed while still firing in non-transactional test contexts; onStartup (ApplicationReadyEvent) registers every existing feed at boot.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/scheduler/FeedPollingScheduler.java#L37-L61",
+          "version": "repo-lines-v1:sha256:d6b25110f1acb9071690c7fab01b5363a09235dffb82bb36a062134ba674d1c6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhMTEyZDRlOTA5MzJjYzE1OGY3ZGMwMTEyMWUxY2UzNmRhZGYzNTZjMWM5MTk2ZWU4MjEwMDc1MzU0NmFkYmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1ZGEzOWQ3OGI3NGU1NGU1MjdlNmRmYmRlYjQ1MWNkZTUxNTdhZDU0MDlhZDBkMmY0MGNmM2Q3YzU1ZjViOTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRhMmI2NzUyYTFkNmY1OTBmMTkzYzliYmVmMjZmODc5MmZiM2ZhYWFmODM4NTI0YmNkMjIzOTE3Y2M5ZWVmOWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_590a57b70a4a47369af5bb021642519d",
+      "statement": "FeedPollingService.pollFeed does a conditional fetch (If-None-Match/If-Modified-Since); a 304 only updates lastPolledAt, while a 200 re-parses and inserts only articles that don't already exist for (feed_id, guid), preventing duplicate articles across polls.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedPollingService.java#L26-L68",
+          "version": "repo-lines-v1:sha256:c62c8d06279f122c418fbf06e486ca7b55178a010b090d4f925857070b45a83a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1ZGMzNjFmNTMzYWU0ZTc5ZTUwZjVmYzA0MTJkYjBjMWYxYjFmMTY4NjRmZGI0Y2RiMDIzMjJkZmE0YTFlZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM2N2M2ODQ1NTcxOTA3NjY3NzJjZmY4ZGI5NmRlMmFhOTgyNmQyMWM0N2YxYjg1OTU0OGM2ZmE1OTk2ODI4YjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxNDBhMDk2MDFhOGNhODJkOWIyZjNlMGRmNGNmNDYzMDEzOTY4MjZjMGI1NTk0MDA3MDBjZDIwMzIxZjYyYTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5236b260a5a44f359ab510a6c5e9a3e7",
+      "statement": "FeedPollingService.pollFeed swallows any exception during polling: it increments errorCount, records lastError, and logs a warning rather than rethrowing, so a single bad poll cannot crash the scheduler thread; on success errorCount resets to 0 and lastError is cleared.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedPollingService.java#L30-L67",
+          "version": "repo-lines-v1:sha256:85e32db986a975986cf74ddb2d5b36e80ed6b0fb24ee52feb2c77a7e647c018e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4NzhhMDdmNWU3MGFhMjU1NTZlYTAwYWVkZmVhNGRmOWVmOTllZTg2ZDI3NDI3NWUwM2I3ZTk3YjRmY2FkNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiN2Q3MDZkNTQ5Y2IwMTMwZWY1ZDVjNjQwYTVkODY5NjZkMzUwZTA4ZjBmMTM1NWQwZDJiZmZkYjhmYmYzNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhNWI2Y2Q0ZjhkYWI0ZjNhOWViMDZiYWZmN2M5MmM0NDQ2Yzg5NTk3NjdlNWE1ZDhmMDVhOTQ1NzU2ZmE5MzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_06c98d239a424a74ba57b2a37a792142",
+      "statement": "After each poll, FeedPollingScheduler.pollAndAdjust re-reads the feed's current error state from the DB and recomputes the effective interval: once errorCount reaches backoffThreshold (default 5), the interval becomes pollIntervalMinutes * 2^(errorCount/backoffThreshold), capped at maxIntervalMinutes (default 1440); the exponent is clamped and long arithmetic is used to avoid overflow into a negative Duration that would crash scheduleAtFixedRate.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/scheduler/FeedPollingScheduler.java#L79-L120",
+          "version": "repo-lines-v1:sha256:20df92db0bc1122b868d22265b3cca6c41018f51b21c6c3dc0bd6e9f1a879d9a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYjI4MmM5ZDMxNjBkMDk4OWIxM2NiNzA2ZjU0MTQyOTY5MGNiMjMxZDQwZmYxYTg3ZjQyNjMxYWQ3ZDI1YWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjNjY3MWUzZTZhYjczZGQ1OGJjZmQ0MmMwNDY3MmMwMzQwNzMwOTQ1MmYyOGI4MWE0YjAzY2M0MWRlNjRkMjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b13db6b2022d401da376b48aee2b7b5c",
+      "statement": "When the recomputed effective interval differs from the currently scheduled one, FeedPollingScheduler cancels and replaces the fixed-rate task with a new one starting one full interval from now, so backoff engages progressively on repeated failures and clears immediately on the next success, without any external cron sweep; interval re-evaluation is wrapped in try/catch so a transient failure there logs a warning and keeps the current schedule instead of unscheduling the feed.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/scheduler/FeedPollingScheduler.java#L86-L103",
+          "version": "repo-lines-v1:sha256:6c4d20c46ce34236f39c77b49552d2c4a2cb04e0ae10b3ea28d3ab83fb3b1827:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4NzhhMDdmNWU3MGFhMjU1NTZlYTAwYWVkZmVhNGRmOWVmOTllZTg2ZDI3NDI3NWUwM2I3ZTk3YjRmY2FkNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkxZjQ0OGEyYzlkNTk5NGI4ZTExYjYxMGFkYTM5MmZiZWY3MDYyOGRmMGM4ZWQwMmVhYmRiMDRiOGJkMWEwNjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5NDJkYWQ5MDhmZDE0ZDZkMzRhNmIwMjIwMTk4ZDFhZDI1OWJkODYxN2UyNDM2NTVlODI5ODlmZmYyODI1ZGYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b9cf0db842444f92a19dc85dc72a30f7",
+      "statement": "FeedPollingScheduler.pollAndAdjust self-cancels the feed's scheduled task if pollFeed throws NotFoundException, handling the case where the feed was deleted mid-flight.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/scheduler/FeedPollingScheduler.java#L79-L85",
+          "version": "repo-lines-v1:sha256:fa3bf7ec6d598a7540818e1a1312058c9698fe8ea4ad57eca3873dfbd0c2a4c1:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDBiMjgyYzlkMzE2MGQwOTg5YjEzY2I3MDZmNTQxNDI5NjkwY2IyMzFkNDBmZjFhODdmNDI2MzFhZDdkMjVhYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZiMDQ0OTE0Njk3MjJlODM2M2E5NGU0MDQ0NTM4ZTAxM2EyYTIxN2UzNmIxZTU2OGJhNjBhY2I3YjRjOGYyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWM2NjcxZTNlNmFiNzNkZDU4YmNmZDQyYzA0NjcyYzAzNDA3MzA5NDUyZjI4YjgxYTRiMDNjYzQxZGU2NGQyNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWIxMTcwOWQxODE4ZDQ3YWQwZjExOWI5OWMzYzg3MWY2ZDFiNTA4YmFjY2M5MjVmYmMwYTgyOTk1ZWM5YWRjOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_75a45a44b1e04ab28eff5eb141bb8033",
+      "statement": "FeedService.delete deletes the Feed row (cascading to its articles via FK ON DELETE CASCADE) and publishes FeedDeletedEvent, which the scheduler uses to cancel the corresponding scheduled polling task.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedService.java#L75-L78",
+          "version": "repo-lines-v1:sha256:ebf1c688921a0ecb239f79e1282cb30534520258f76935a078c6b2f0030260d2:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjM1NGVhMWJhMjM2MDQzOWZiZGZkOTk2MWQ5MDVmOWQwMjY0ZmNiZjNjYmY4N2ZmMjlmZjhkYmE1MDUxMDgzMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDA3NzJjMDFiZWEzYjExZTdhYTE5MzYwNWQ5Y2VjYjdkMGI5YTljYjI3OTI0ODQxMTlkYjRlMzFiYjFiZjIzNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c1f9a1f44cb94160a60b295c1cc8dc1e",
+      "statement": "RetentionService.cleanupOldContent runs as an independent @Scheduled cron job (default daily at 03:00, configured via myfeeder.retention.cleanup-cron) that clears content/summary text on articles older than full-content-days (default 30) via articleRepository.clearContentOlderThan; it is unrelated to the polling/backoff mechanism and never deletes rows or unschedules feeds.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/RetentionService.java#L1-L27",
+          "version": "repo-lines-v1:sha256:370a78990cb39c719def40c5516c102f3c68f2611de8f83aef7d61fd67dd9ebe:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmZmJjNTFiZDJjZWM3NDBkYzQxM2NhYjBiODI2YjU3NmM3MDY2YjczOWQxNzRhNGZkMDk4ZDdiMDcwNGE0NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-06T12:04:59.431Z"
+  }
+}

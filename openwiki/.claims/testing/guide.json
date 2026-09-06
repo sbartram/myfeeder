@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:54f6e980f4945852d97ec8747b70d2f0c5681af21dd00128eeb91c50252efc36",
+  "claims": [
+    {
+      "id": "claim_4a79f57ba179404a895a880d00330091",
+      "statement": "FeedFetcherTest and FeedUrlValidatorTest test HTTP fetching and SSRF/URL validation with plain unit tests: FeedFetcherTest binds a MockRestServiceServer to the RestClient.Builder passed into FeedFetcher, and FeedUrlValidatorTest constructs FeedUrlValidator via its package-private HostResolver-taking constructor to stub DNS resolution instead of depending on live network lookups.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java#L31-L47",
+          "version": "repo-lines-v1:sha256:f706355121b109a21d2b03bd00976c9aeb18ff858ac3d4ec191e6a36883e7dc1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyM2ZjMDdmM2RmZDMxMDdhMzY5N2U1NGVkODliNTU0YWViOGJiMjQ0MjJiZjgxNjY4ODIwYjNkNTdiMTQwZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhYjFiNzVkMzdmYzc5NTc1OTQ4OGJhNWUyOWNkMjIyYmVhODcwYzMyOTM2YmQyMTAzZTU0NzViZTEzY2EzMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiOGQyNzA1ZTMxZjllMTlmYmY2ZjRiZTQzMGE5ZDNhYTdiZDhjYTU5M2ViZDI1Y2RmNjg4ZjQxYzEwNjhkNjgifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/FeedFetcherTest.java#L21-L35",
+          "version": "repo-lines-v1:sha256:16c9c49a80471156910701970a005543292679f648af881eed3f9e2b90d3488c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzZTM0ZTU3ODRhMGYwYWNhOGUzNmE2NzZkYzRjYWYwMmUyYjE5NDdjNzc2Y2Y4Y2E5ODQ5NDMxNGQ4NmZmZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwN2Y2ZGRiMzRiZTBiZWE3ZTM5NjU3MDMwODYwMDkyMDEwOTJjMjdkMjZiZjc1NjBhY2JlYzZjNmY0ZjlhNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1Mjk1ZThlOWEwMWJmNThiZjQ3Y2ZlN2I5MzhlOTc2MTRiMjI3NDI1ZGVlMWU1YWQ5ZGZmNjQ0MDc1MzRkZWIifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/FeedUrlValidatorTest.java#L10-L21",
+          "version": "repo-lines-v1:sha256:2d5a884e5105737d7f16bfdc159a558485f9aafbbf2f14f35b5fa447a0cefb54:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNDk3NzFkNzU3YzYzOWEzZDI0ZGU5NDRkZmU2MmE0OTIzMzFjZWU5NzRlZDYwMzBlMmQ2N2IyMWI2MDUxYTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MDIzYWZjNTE1ZjRjMGFhOTZlYjY5ZDBkMzQ1ZWZlOGJlZDU4MzBjZjA4NjQ3ZjU4MjRiNWNlNTA4YmY1NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4NzJmYzNmMTA1ZWQwOGI4OGEyNDc0YTdlYTFiN2E1ZGQ4OWY3NmJlMzVmODQ4YjU4YWQwODM5NTQ2YjBhZWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_71286af30f6d4c2291ed3b17b143ace3",
+      "statement": "FeedUrlValidatorTest exercises every non-public-address case FeedUrlValidator must block (loopback, RFC1918 private, link-local/metadata 169.254.169.254, CGNAT 100.64.0.0/10, IPv6 unique-local fc00::/7, IPv4-mapped loopback ::ffff:127.0.0.1, broadcast 255.255.255.255) as well as public IPv4/IPv6 allow cases and the non-http-scheme/malformed-URL rejections, each via the validatorResolvingTo(ip) stubbed-resolver helper.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/FeedUrlValidatorTest.java",
+          "version": "repo-file-v1:sha256:44bffc46d3c9ba8fd226c2478334f6c91f730673bf1484f2f13cd159a4346b6c"
+        }
+      ]
+    },
+    {
+      "id": "claim_abc1012f142f4264bfa9702cabcee00d",
+      "statement": "FeedFetcherTest's rejectsNonPublicUrlBeforeFetching case proves FeedFetcher.fetch calls FeedUrlValidator.validate before issuing any HTTP request: it stubs the resolver to a blocked address (127.0.0.1) and sets up a MockRestServiceServer with no request expectations, so the test fails if validation were skipped and a request were attempted.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L46-L48",
+          "version": "repo-lines-v1:sha256:f128f99e72198dfdd457a1cb5c1f2f8d66f40e7242685baa77346658bc05af7e:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODE5N2RkNGFlNGMwY2FkMjkyNGQyMWZiMWVhYWQzOTJjOGMxNDQyNTQ4ZWU5YjgyNGE3YTA2ZWYwZTgwNDU4YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2YxOTE0NDZhNjM3ZjdiOGNhMjdmZWUyY2FmN2RiYjRiMGU1Zjk3ZGM2YzBjYTI3MmEzZWY0OGUyZDQxMDAyYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWVjOTU5YmY5NTJjNjlmMWU5ODZkODQ1ZWVlNTJiNWYzMzVjMjQ3MzM4ODI5ZjkzY2RjMDAwM2YwYjQ0NDM3ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzU2NTY0MTBjYzhmZjNmZjhlOTNmMmUxNmM0MzBhZWJhNGUxMGQzZWViYjU1YTFhYTIwNjdiYzcyNGVhNzJlZSJ9"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/FeedFetcherTest.java#L115-L127",
+          "version": "repo-lines-v1:sha256:2f24ab7a09c57c22524e2461ba6f24af4e09d0a35ec8688db3cb99b87b0a755c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjZjA5ZWIwYzU3NDRmYjk3MzMxYjk4ZmYzZmJmMDVhNjAyYmEzZjdmNjdlNWRhNWJlOTA5NTAzM2Y2MjU4MjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4ZWQ4ZjQ1YmNkYmYxMGQ3N2ZkM2M1MGQyZjQxM2QyZmZiMjA4NjhiMzdjYmJjODAyNmUyODcwNzg0NTgxOWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bb0db218efb940afb828590ca4464a8d",
+      "statement": "FeedFetcher exposes a package-private three-argument constructor (RestClient.Builder, FeedUrlValidator, int maxFeedBytes) alongside its @Autowired two-argument constructor, so tests can override DEFAULT_MAX_FEED_BYTES (10MB) to exercise the size-cap rejection/acceptance paths (rejectsBodyExceedingMaxSize, acceptsBodyWithinMaxSize) without needing a multi-megabyte fixture.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L18-L35",
+          "version": "repo-lines-v1:sha256:695fd597229a896d388d95d77a0a026d4024333f97c39e755434139060cce47b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1NzliNTQ5NzdmYjFhZmYxNzRhM2VkYmNiYmI0NWU4MzExNGU1N2U0M2VkYjRmODY2Njg0OTc4MjUzODkwNzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhZGUyMTY1ODQyMzUxMTQzYmUxNDM3ZGFjODM5ZDg0NmRmNDhjNzVlOWUyNDRhYjA3YzYzMGFiZWNiYjY3NWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU0MjZiODZlYmVhYTkwNDRmMDcwNTViZjEwZTQ0MjQ3MDIyNDZiZmU2MmQ2NDNmY2RmY2YxMDYwN2UzZDNhMGIifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/FeedFetcherTest.java#L88-L113",
+          "version": "repo-lines-v1:sha256:0be07b3e39764f5e929a7dd09ef871edf9af627718d6f935b644bd35d7d7fc8d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjZjA5ZWIwYzU3NDRmYjk3MzMxYjk4ZmYzZmJmMDVhNjAyYmEzZjdmNjdlNWRhNWJlOTA5NTAzM2Y2MjU4MjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJhOTczMTkyNTg5ZDhmZDRjMDgwMmU5M2E3YmE3MTYzY2JlNjQ4NTJlMTQzODdmZDU4Y2QzM2I3MTc3MzNjOTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ1YmVkODI5Zjk2YjQxYTg4Yzg0YzdjNmJjMTE5ODljOWZkZGJmMjgxNTdkNzk0NGI2OGUzNTIyMzRhZjkwZjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2138951447664a0aaf0dd474f9fdcf47",
+      "statement": "ArticleExtractionServiceTest covers ArticleExtractionService.extract's full behavior contract via Mockito mocks of ArticleRepository and FeedFetcher: successful Readability4J extraction with caching via saveExtractedContent, serving cached content without calling FeedFetcher again, NotFoundException for a missing article, IllegalArgumentException when the article has no URL, and FeedParseException when the fetched page yields no extractable content.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L37-L65",
+          "version": "repo-lines-v1:sha256:b8fbd028a255b3324a05ef88c708f25e045e8964828f894f14d3a71e46a0cf9f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxODRmMTYwZWIxYzVhNTg5NmY3MGI0NmMzMmEzNmQwMTYwZjg1NmRiZGRiZmZmNTk3MmNjMjFhMzU5ZTljNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiZGJlY2ZmNDQ0ZDVkMTFiYTVjMWFmMDgxMzNmZjY0ZWI2ZTg3N2JiZmFlOTA0MGQ5OGZiZDg1ZTEwM2VhMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MGZiZDQ3Zjc5YjhkZDllMzllOGU0M2RkOWMxYTU3MDFhNGQxM2RlYTJhYjI2MmY4ZmUyYTg1ODEyMmIxMjkifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/ArticleExtractionServiceTest.java",
+          "version": "repo-file-v1:sha256:f290435842ccf84d6f91a6bb260cf9d01f3a27ce79064f00ca3d577a6c11002b"
+        }
+      ]
+    },
+    {
+      "id": "claim_7e427e704fbc4f14be55b2c8c2de765a",
+      "statement": "ReadingPane.test.tsx exercises the frontend reader-view toggle end to end at the component level by mocking useArticle/useExtractedArticle: it asserts useExtractedArticle(id, enabled) is called with enabled=false when feed-supplied content already exists, auto-flips to enabled=true when an article has neither content nor summary, switches to extracted contentHtml (verifying inline style attributes are stripped) when the user clicks the reader-view toggle, and covers the pending/loading and isError fallback UI states.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.test.tsx",
+          "version": "repo-file-v1:sha256:bcb8c9e264b559e3aa8c3b22746a81244d01f7f8683848d9e17448435179198a"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-06T12:04:59.431Z"
+  }
+}

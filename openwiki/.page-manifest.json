@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "pages": {
+    "/openwiki/architecture/overview.md": {
+      "pageVersion": "sha256:e409de0ff3e103ffca07271987c4dd0be127bd018b5c930907f358197a1be054",
+      "completedBy": "openwiki/0.5.0",
+      "completedRunId": "38e95cef-0a84-4874-94f1-07445a44d9b5",
+      "gitHead": "67d3dca6c2905cda46a9b45e28c14604610a57fd",
+      "sourceFingerprint": "sha256:51a59c1a2825ead2ae24d0d1301d09d3d4a59b08479169d63820798776ccad08"
+    },
+    "/openwiki/domain/concepts.md": {
+      "pageVersion": "sha256:383173143255b6cb7d57a88a9b7e67774e422d814ee6bc65080adc0b94f36dff",
+      "completedBy": "openwiki/0.5.0",
+      "completedRunId": "38e95cef-0a84-4874-94f1-07445a44d9b5",
+      "gitHead": "67d3dca6c2905cda46a9b45e28c14604610a57fd",
+      "sourceFingerprint": "sha256:51a59c1a2825ead2ae24d0d1301d09d3d4a59b08479169d63820798776ccad08"
+    },
+    "/openwiki/integrations/raindrop.md": {
+      "pageVersion": "sha256:c70ee25e0e2e19b0e88e1f984115088bd8e2f4324292ddef5e036f0f431fee6f",
+      "completedBy": "openwiki/0.5.0",
+      "completedRunId": "38e95cef-0a84-4874-94f1-07445a44d9b5",
+      "gitHead": "67d3dca6c2905cda46a9b45e28c14604610a57fd",
+      "sourceFingerprint": "sha256:51a59c1a2825ead2ae24d0d1301d09d3d4a59b08479169d63820798776ccad08"
+    },
+    "/openwiki/operations/runbook.md": {
+      "pageVersion": "sha256:1ab84e56e8f088bf14486d994220030b50fc294a8f452d17895ab1cc3e5f6414",
+      "completedBy": "openwiki/0.5.0",
+      "completedRunId": "38e95cef-0a84-4874-94f1-07445a44d9b5",
+      "gitHead": "67d3dca6c2905cda46a9b45e28c14604610a57fd",
+      "sourceFingerprint": "sha256:51a59c1a2825ead2ae24d0d1301d09d3d4a59b08479169d63820798776ccad08"
+    },
+    "/openwiki/quickstart.md": {
+      "pageVersion": "sha256:09606f6cd7bf9da6d3ad5d0b814d30809545a588f962bd6ae836094f88a0d103",
+      "completedBy": "openwiki/0.5.0",
+      "completedRunId": "38e95cef-0a84-4874-94f1-07445a44d9b5",
+      "gitHead": "67d3dca6c2905cda46a9b45e28c14604610a57fd",
+      "sourceFingerprint": "sha256:51a59c1a2825ead2ae24d0d1301d09d3d4a59b08479169d63820798776ccad08"
+    },
+    "/openwiki/testing/guide.md": {
+      "pageVersion": "sha256:54f6e980f4945852d97ec8747b70d2f0c5681af21dd00128eeb91c50252efc36",
+      "completedBy": "openwiki/0.5.0",
+      "completedRunId": "38e95cef-0a84-4874-94f1-07445a44d9b5",
+      "gitHead": "67d3dca6c2905cda46a9b45e28c14604610a57fd",
+      "sourceFingerprint": "sha256:51a59c1a2825ead2ae24d0d1301d09d3d4a59b08479169d63820798776ccad08"
+    },
+    "/openwiki/workflows/feed-lifecycle.md": {
+      "pageVersion": "sha256:e27e9f08ffa554b85d08d76fb60900c817b83749549239c554229056bf7c0244",
+      "completedBy": "openwiki/0.5.0",
+      "completedRunId": "38e95cef-0a84-4874-94f1-07445a44d9b5",
+      "gitHead": "67d3dca6c2905cda46a9b45e28c14604610a57fd",
+      "sourceFingerprint": "sha256:51a59c1a2825ead2ae24d0d1301d09d3d4a59b08479169d63820798776ccad08"
+    },
+    "/openwiki/workflows/reader-view-extraction.md": {
+      "pageVersion": "sha256:775fa06847de12e78b4f65b3a9554b23a398c159f4d7e11915738090e5468a88",
+      "completedBy": "openwiki/0.5.0",
+      "completedRunId": "38e95cef-0a84-4874-94f1-07445a44d9b5",
+      "gitHead": "67d3dca6c2905cda46a9b45e28c14604610a57fd",
+      "sourceFingerprint": "sha256:51a59c1a2825ead2ae24d0d1301d09d3d4a59b08479169d63820798776ccad08"
+    }
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:775fa06847de12e78b4f65b3a9554b23a398c159f4d7e11915738090e5468a88",
+  "claims": [
+    {
+      "id": "claim_9ab92a0dfc3949ddb97d53ba1d2a73e4",
+      "statement": "ReadingPane auto-enables reader view when the selected article has neither article.content nor article.summary (hasFeedContent is false), and otherwise lets a manual per-article toggle override the default; switching to a different article resets the manual choice back to auto.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L28-L37",
+          "version": "repo-lines-v1:sha256:bad77982d6776efe14fa90b06e7983c0e5983e66b51dc653bf6a3a3b9a0395ac:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzY2Q1NWI3ZTFmZDY5YjMyNWNiYWUyYjlkZTYyNDI5NDFmNjNhZjhjNWM0ZWVhYjZmNmUyNDc1ZThhOTc3ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1NGQ3MWJhNGIxYjliMzA0ZmY3NTU1NDMwYzdmYjJkNTg0YjA5NDUxZDc3YTdkZjk4YmU2MjQxN2MwZGJkZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyYTQ3MmJlNDE1ZTU0YzlhYzY3MDAyMDE3MzczZTU1NWI1ZmY2ODE3ZDYzYzFmMWQzMzUyNjM2Y2Y2NTc0NGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ1ZThkMjZkNzU2M2JhN2U5M2ZiMDFkZDg0OTQ0YTkzOGViY2I3MjUyNTgzNzNjZGYwNmY0YzgyYzg0OTNkOWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7db9e7df7bf1440cbe77124dccbedd5d",
+      "statement": "useExtractedArticle only fires GET /api/articles/{id}/extracted-content when reader view is enabled, treats a successful result as never stale (staleTime: Infinity) since the server caches the extraction, and disables retries because extraction failures are deterministic.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useArticles.ts#L24-L37",
+          "version": "repo-lines-v1:sha256:a4ad413895a01c8d22a259258dd0431f459d2f8739bca7c48bcdf84bf16e3c2f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjZjk1ZjJhMmZmNDU0NDJlMTM1ZDA0ZjY2ZmIyNTRiYTcwMTBlZTMyYmU4YjNhY2EwMDI3M2UxNzdkMDlmMjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkYTQxNTIyNzc0YjA2NTNjODc5ZDQxZmE2YTdjZjQ3OGViYWI5NTg1ODI0MmEwZjM1YTBjNzE5MjVjYTI0YzkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3d41f1e9122a4842acb600545c15581d",
+      "statement": "GET /api/articles/{id}/extracted-content (ArticleController.extractedContent) delegates directly to ArticleExtractionService.extract(id) and returns its ExtractedContent record, letting thrown exceptions propagate to GlobalExceptionHandler.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L69-L72",
+          "version": "repo-lines-v1:sha256:7de5ee387f58f5adc3ecb19820a18c5beef19568cf99b64c51e67501b8d69938:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjNiMjdkZDc0YzU1ZGEzOGMxYjc0MTNlYTk4ZWRlZDE1OGU0OGY1Mjg2YzdlNWViNmRhNTA0NDYwNzI2N2E2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjAwMTEyMDE4ZDljYmQ1NzA3MTJjZjZmZGQ3Y2ZmZDk3MzhhNzhjY2ViMWIwMjdmYzRkYjJiMDNlNmYxNjhjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTkxYmMxNDRlMTBlM2Q0NTNiZTRlYmRjOTFkODdmZmUzYWU3NjI5Mzg0MmQ5ZGM2NjMyYmQ4MTJkYTQ4ZjQ0MyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_61a03b4c38ff4d4ea877ba96f81e31fd",
+      "statement": "ArticleExtractionService.extract validates the article exists (else NotFoundException, 404) and has a non-blank URL (else IllegalArgumentException, 400) before doing any cache lookup or network fetch.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L37-L42",
+          "version": "repo-lines-v1:sha256:148ccd7513b9d68c3f46f06afdc70897eaf07266bcd99560f0faa0503c9421a6:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTE4NGYxNjBlYjFjNWE1ODk2ZjcwYjQ2YzMyYTM2ZDAxNjBmODU2ZGJkZGJmZmY1OTcyY2MyMWEzNTllOWM0MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZiMDQ0OTE0Njk3MjJlODM2M2E5NGU0MDQ0NTM4ZTAxM2EyYTIxN2UzNmIxZTU2OGJhNjBhY2I3YjRjOGYyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGJkYmVjZmY0NDRkNWQxMWJhNWMxYWYwODEzM2ZmNjRlYjZlODc3YmJmYWU5MDQwZDk4ZmJkODVlMTAzZWEwNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTkzOGUzMGVlZDliZDU5ZWI0NGJkY2FlYTFmZmE4M2MwOWVlMTY2ZjY2MGE2OTk0NzA4MGU1NzViYTE5ODBjMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7e6fa661a3f145e4a8c698ae1e2b3c61",
+      "statement": "ArticleExtractionService checks articleRepository.findExtractedContent(articleId) as a cache; a non-null value is returned immediately as ExtractedContent(article title, cached HTML) without any page fetch.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L43-L46",
+          "version": "repo-lines-v1:sha256:5284eea7d2e3ee6fa72f5e8e368acec69e4fd5fd0d6dc72df7b99037d4c36a36:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjlmZWRjZTQwOTlmZTdjMzYyNjdmMDVlODMyZjRjNjk5YzYzYTIwYzM1NDc5OWJlZmNiZjQ5NWNlYTU3NTczNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZiMDQ0OTE0Njk3MjJlODM2M2E5NGU0MDQ0NTM4ZTAxM2EyYTIxN2UzNmIxZTU2OGJhNjBhY2I3YjRjOGYyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2U3ZTM3Y2RmNzUxMjliYjA5NzQxOWIwMWEzYjAyYjAwNGQyMzg4ZThhMTY0YWY4OWQyZjQwYjYwNjM4ZTJiNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTkxODlhYzAyN2NjNWFjZWM2NGY4ZTdkNmVkZGE5NzMxZDEwMjFhODNlYjZhNGExZTc4YjliZWE3MGIwNGM4NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e4a15d8a084d419380f9b9cf63e93f82",
+      "statement": "On a cache miss, ArticleExtractionService fetches the article's original page via the shared FeedFetcher (feedFetcher.fetch(article.getUrl())), which is the same component used by feed subscribe/poll, so the SSRF guard (FeedUrlValidator) and the 10 MiB size cap (DEFAULT_MAX_FEED_BYTES) apply to reader-view fetches too, and a bad status or oversized body throws FeedFetchException (422).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L48-L54",
+          "version": "repo-lines-v1:sha256:22d78392216659db5b74a5c22bb4b5f10bfc409137d861308b6b92e0e9e7ab4d:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjVmMjc1ZjIwNjQ4OWYwMDlkMzQwNTk2N2QwNTcyM2M0ZjA1ZDljMzFlNGUxMDFjNGNmNWU0ZjhhNmZhYzgyYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjgyMzcxNGZlZjUyZmRmY2E1YzFjOWY1YjAzYTUxNWJmNTY0YjVjNTQ1NTRlNTEzOWQ3ZGQ2MTY4NTIzNGNlNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODgyNmY5Njk0NmEyNDgwNjhjMjBhODc5ZWRlNWEwYTgyNDU3ZGMxOGQwNTg5ZmM4NmRjZGFjNWQ3YzQ1NzA4ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjEwYjk0Njg1ODgxOThkNzg2NTMyYWQ5NTBkYmJhMGU5MDZiOWU1OTFiNjY1YmQyODlkZmY0OGJiZDMzMTkyOSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L37-L80",
+          "version": "repo-lines-v1:sha256:1c4b35af54b3420264f32ddc8a0f1225db0679e6e070e8fcad57242b20cb4919:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4YWQ2NTE1Nzk2NGZhZjFjYTk3Njc1ZmUxYjc2MmUxZmVjNzY2Mjc0MzE4NDI3ODQ0MzczMGE3Y2Y0ZDNhNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2ZGQxZjg0YjZmNDA5YzAyZjU1NmJiNjcwODYwMDM1MGU2Njg2MDI4ZGJkZmU1NDE4N2UxNThmYjY1ZDFlMWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3b57c7a9a8054356818b403ac95ef4a2",
+      "statement": "ArticleExtractionService.decode chooses the charset in priority order: the response's declared Content-Type charset if present, else jsoup's own BOM/meta-tag charset detection, then re-serializes the parsed document to HTML before extraction.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L67-L84",
+          "version": "repo-lines-v1:sha256:49721fb90ea9dc06a0e76e7ea8d02caa0eb03491f5927223fb9468afa4824a2c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzNmVkZjY4MzM4MjkwOWY5ODZiMTJmZDQwMmE4MDA3MDkyMmQzZDQ5MWUxMmJkMTk3Yjg0OWU0ZmFiZmQzZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc0YzQwZGExNDU2OTgzYWZlMGEwOGI3YTViNDYwMzViMzNkMTM1ZGQ5Mjk4ZTI2ZGM5ZTc5ZjA2ZTllN2E0NGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ed109c3e04149e2af58f182e0be98c4",
+      "statement": "ArticleExtractionService runs Readability4J.parse() on the decoded HTML and throws FeedParseException (422) both when parse() itself throws and when it succeeds but yields no usable content (null contentHtml/textContent or blank textContent).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L50-L60",
+          "version": "repo-lines-v1:sha256:a58ec779024534ca81f0f2044ecdb3c78d10abf7658d0389aab674f8595f344f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3YTRhNzczNGI1NWM2YzBhMGRiYjBiZWYyMTMyNDc1MTA0MWMxMTZhN2Q1YjcyMjM1ZWNkNDIyZWU2ZTY5MGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5MTg5YWMwMjdjYzVhY2VjNjRmOGU3ZDZlZGRhOTczMWQxMDIxYTgzZWI2YTRhMWU3OGI5YmVhNzBiMDRjODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjZDcwZjY2N2VkODE0Mjk5MTc5M2ViMGJlNmQ1MmQ3ZWZjYzUwMzVkYmI4YzFjMzNmOGQzYTllMzcwMTJlNTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b00a6a09c59b42e48abbf3da0469c142",
+      "statement": "On successful extraction, ArticleExtractionService persists the extracted HTML via articleRepository.saveExtractedContent(articleId, contentHtml) so subsequent requests for the same article are served from the cache, and returns the extracted title (falling back to the article's stored title if the extracted title is blank).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L56-L65",
+          "version": "repo-lines-v1:sha256:026939da19ebc347d9e7d95ac5bc6814aee91ae8aaaa43c8125ad4f20ec76078:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxY2ZhYTZjZjVhNWE3Nzk2ZWJlNjZmOWEwNGVkM2FmNTE2MGZjNDJiNjJhOTE5OGVkNmQyZDUzYzFmYjQ0NDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhODlkNDdjYzdiYzM4MDkyYzhmOWRmOTY4ZTJhZmJmMjkxNjE2OTFjM2NjMzUzODNmYTgyNWNlNTZmYjA2NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MGZiZDQ3Zjc5YjhkZDllMzllOGU0M2RkOWMxYTU3MDFhNGQxM2RlYTJhYjI2MmY4ZmUyYTg1ODEyMmIxMjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_666b53b5e1fc44c5b1670fd9575c8fa4",
+      "statement": "GlobalExceptionHandler maps NotFoundException to HTTP 404, IllegalArgumentException to HTTP 400, and both FeedFetchException and FeedParseException to HTTP 422 via ProblemDetail responses.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L16-L49",
+          "version": "repo-lines-v1:sha256:c4180bbe0bb9e79b4029a155c69a2f8cdafaab21d161f640d4b6442d5ad0f511:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYTc2OTM0YTRmYzU5NjkyZmM4MjIzMjE5MmFlOTY1NTI2ODcxNWIwZDg4Y2I5NjgwNzdkMDIyMWJjMGMwNzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI2NDI4NzNlMGNjMTUxNjRiYWI1OTRjYjhiYjY5ZGU3ZjUwYzI2YTAzZmVlZjllMGY3MWYwMDNhOWYwYzg2NWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmMDg3MDA5MjYyZDU1NDdkNDhmMDUzZDYzYjhiNmUwNTRiYTk5OTVjNjRkMGFmOGQ1OTY2MWVhYWE0YjEyMmQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b9340498e97046dd923b31077e1dfbe3",
+      "statement": "V5__article_extracted_content.sql adds a single nullable TEXT column article.extracted_content, which is read and written only through ArticleRepository.findExtractedContent/saveExtractedContent and is never exposed as a field on the Article JDBC entity used by ordinary list/detail endpoints.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L30-L36",
+          "version": "repo-lines-v1:sha256:b5524bcc494854775eca087e5c5bc8832f533411e44bde2845a450cdeea99c42:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGJkNzBiOWQwMWExMGE5N2JiN2I4NDRiYmEwYzkwMmJkYjA1ZjQwNWFhMzlkZDUwNDBhZjkwYTVmYjlmYzZhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGQ4MzVjOTUzNTY5ZGFjYjRiN2U5MGFiODQzN2FkNTNjZTRmODFkNDBmZTI3ZGY1ZGRjZWFjOGJmYjNhZTkwZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODQ0ODgyOGFjMjczY2JhOGYxNGNiOWFlMzJjZmJhYWI0ODY5YjNkNjhhYTNmMDNjNDliNTgxNGMwYmRhZDZiZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzkxOTQ5Mzc1N2I5NzUwZGNmYzE1ZmRmNzczYTg2Njc3NGJhM2RkYWJmNDUyMjNmNTcwYmVkNmQ2OTA4ZTY2MiJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V5__article_extracted_content.sql",
+          "version": "repo-file-v1:sha256:40144184eb66db1770bd31199ab5e043f157d4218386b7cc428363058171a6a5"
+        }
+      ]
+    },
+    {
+      "id": "claim_7c819364f3c142999dadeaa73de3b2b8",
+      "statement": "RetentionService.cleanupOldContent clears both article.content and article.extracted_content in the same UPDATE statement for rows older than full-content-days, so the reader-view cache is aged out by the existing retention cron rather than a dedicated schedule.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L26-L28",
+          "version": "repo-lines-v1:sha256:ca50c5b2ef4efb4c41431d6058d497b715767350bf1d14cd97fe6e00c1aae84d:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWMxNzdmZjkxN2U2YWYwZDM3YzhhNGQ4ODI2NzBlNmIwNWJhOTMwZjNhMmQxYzZjYzExZjIzYzA3NTI1YzBjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWEyM2IxYzcyYmEzZTE3Zjc2OWZjZDczYTlmMzlkMjExNmI1NzZlYjUxOTE5YjIzYTY1Nzg2NDM5YzFiMTc1NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWQ3ZDc3NDU3OWMyMjc0OWNiNzlkNmNkZmYxOWYxNWE1MDFhNWRjNDJjN2YxMTNjYWYxODkxMTlmN2UyMTg1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGU3MDgzMTI3NmJkMGZhZmMxZGNjZGFkYzM4ZDE0ODA0Y2MwNzY0N2YwOGRjZDgzZDk4OWFjNzM0YzA0MzEwNiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/RetentionService.java#L21-L27",
+          "version": "repo-lines-v1:sha256:9d98199ead2e3c69352449b47bb38a6e25735ee7ffdbb0c08468debe60242dca:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2NkNmNmNmVmNWQ1Zjg1YjMyNjA2MWQ1ZDIyODAxZjAwNmIyMjc0YTFkMTI4MTczODQxYjExNDdkNDQ1MGZlOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDI1ODE1YmNlOWI5YjZlYjg5OTI1MjYxMGVmOGE4NjZmYThlMjJlYzQzZWExYTM0ZjNmYjdmODVhYjEyOGYyOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d5b0fdfb0dcf47ce82b46d3d795fadd1",
+      "statement": "Because retention nulls extracted_content rather than deleting the article, a reader-view request for an article whose cache was aged out is treated as an ordinary cache miss and re-fetches/re-extracts from the still-live origin page rather than erroring.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L26-L28",
+          "version": "repo-lines-v1:sha256:ca50c5b2ef4efb4c41431d6058d497b715767350bf1d14cd97fe6e00c1aae84d:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWMxNzdmZjkxN2U2YWYwZDM3YzhhNGQ4ODI2NzBlNmIwNWJhOTMwZjNhMmQxYzZjYzExZjIzYzA3NTI1YzBjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWEyM2IxYzcyYmEzZTE3Zjc2OWZjZDczYTlmMzlkMjExNmI1NzZlYjUxOTE5YjIzYTY1Nzg2NDM5YzFiMTc1NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWQ3ZDc3NDU3OWMyMjc0OWNiNzlkNmNkZmYxOWYxNWE1MDFhNWRjNDJjN2YxMTNjYWYxODkxMTlmN2UyMTg1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGU3MDgzMTI3NmJkMGZhZmMxZGNjZGFkYzM4ZDE0ODA0Y2MwNzY0N2YwOGRjZDgzZDk4OWFjNzM0YzA0MzEwNiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L43-L54",
+          "version": "repo-lines-v1:sha256:aec42f1588e4c0eafd5d28042be7ad8a5abb0e198fca52f04647540066f4bddc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5ZmVkY2U0MDk5ZmU3YzM2MjY3ZjA1ZTgzMmY0YzY5OWM2M2EyMGMzNTQ3OTliZWZjYmY0OTVjZWE1NzU3MzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4MjM3MTRmZWY1MmZkZmNhNWMxYzlmNWIwM2E1MTViZjU2NGI1YzU0NTU0ZTUxMzlkN2RkNjE2ODUyMzRjZTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlN2UzN2NkZjc1MTI5YmIwOTc0MTliMDFhM2IwMmIwMDRkMjM4OGU4YTE2NGFmODlkMmY0MGI2MDYzOGUyYjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIxMGI5NDY4NTg4MTk4ZDc4NjUzMmFkOTUwZGJiYTBlOTA2YjllNTkxYjY2NWJkMjg5ZGZmNDhiYmQzMzE5MjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f091d986457f4ba586e31f9f840a4c9d",
+      "statement": "ReadingPane sanitizes reader-view extracted HTML with DOMPurify using FORBID_TAGS/FORBID_ATTR including 'style', stripping style elements and inline style attributes so publisher page styling (e.g. dark backgrounds) is replaced by the app theme, whereas normal feed-supplied content is sanitized with a plain DOMPurify.sanitize() call that preserves inline styling.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L84-L94",
+          "version": "repo-lines-v1:sha256:e078b30cd59a5b02db435e9628067de1460e462440a98f8becff0d0e9d0446b2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjZhMWQxNTkyZTY0MzM1ZmY2ZDgxYTUzMDRlOTBhMTNlZjRiOGQ4OWY0MTUxZTM1MWJmZmFlMTA4YjZmNTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzODBlMzc0MzFmMzAwMGVhODg5Y2MwZmYyZmQ1MzJhNGY4OTVkMmVhNzg4MjY4NjM5MjJhM2RkNzdiNDM4ZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiZjM5YTg3MjM2NzBlYjBhMWFmYmExMzZhMTkwYTM3MjczNzZjMmJmZDAxMWYwZmVhMjEzNTc1NWI0ZjhkNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0NzVjN2M0MjY3NTM1NDk5M2U0NTE3NmEzNjI1ZGMxNmUxMzg2MmM1ODUyNjZlYjIzMGVmODQ3MDA0OTFhOTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c9cd6a9832d9419fabc4b29c2bd25922",
+      "statement": "While reader view is active, ReadingPane shows a loading status during extracted.isPending and, on extracted.isError, shows an error message with an Open Original fallback button instead of the article body.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L195-L208",
+          "version": "repo-lines-v1:sha256:f7d82bdf009d3cb59332f4caf24435db9eedba252bdf950c7cbf9d8504c517ba:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmN2RiY2NhMjNiOGMwZjI1ZTQxZTJjNjc4ZTBlYWEzNWI3NmU1ZDA4MTA0MmY5ZDVmNTAzNjUyM2QwYWFjMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YjhjMTA4NWY5NWExYWZhYmU1ZDE1MmFkNThkYjlkYzI2MzM2YzEyMThlMmI4NDBhZTdhZDgyNmEwZDU3NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzOWJjMDBiZTYwMjBlODBmZWE4NDU0YWZkN2UxOTZhY2Q2NGY1OWRmMjdkODAwMGE4NDg4MTJmZDg3ZjdhN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5ZTg0OWZkMjNiYTI5NjkzZDViNGE1YzRmODQ3NzhlZjVkZjQ1MzgzZTVlOGJkMDMxZmIyZGU3YWVmYzRmMzkifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-06T12:04:59.431Z"
+  }
+}

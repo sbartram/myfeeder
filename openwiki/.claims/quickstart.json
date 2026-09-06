@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:09606f6cd7bf9da6d3ad5d0b814d30809545a588f962bd6ae836094f88a0d103",
+  "claims": [
+    {
+      "id": "claim_97474ae96da24256b12ebc50b5fa525f",
+      "statement": "myfeeder is a self-hosted, single-user Feedly-style feed reader (Spring Boot 4.0.3 / Java 25 backend, React 19 SPA frontend) that polls RSS/Atom/JSON Feed sources, stores articles in PostgreSQL via Spring Data JDBC, and supports folders/boards, Raindrop.io export, and on-demand reader-view content extraction.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L1-L46",
+          "version": "repo-lines-v1:sha256:6a8b1e4a484ca4242553fe4131527f0c770ae023decb4d710e9ed5472bda8e22:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MTIyYmYyYmM2MmQ0OWZlYzRlYTBmMzU1YmIwMDBjYWJlZjJlMzk2ODc3OGI1MGMwNWVjMjNjOTc4YTY5NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ0MjNhN2QwN2RmNTg5ODkxOTM2OTM2Y2QwNmNhOGRiN2NhYmFhOWZlNWQ4NWY1YWNhYzJjZTVhNmUxZDRlMTYifQ"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L1-L45",
+          "version": "repo-lines-v1:sha256:87eefa0e482629b7a55e06cca7b6c2bc7b7afd9b3e4d55b231bd4e192e1255b8:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0MDQwMTAzMTViZGJiMGZlYTBmZDZmZjAyMTRkOGJjOTIxY2UyODM2ZDFjYzZiY2I4ODQ5ZjM1NzZjZjVhNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmZjI0MzYzNThkOTBhMjFkODJkOTA3MmJhMjRkOWZkNmJhOGE4OWU3YjMxNmNhZjNhZDRlNzc4MzkwN2ZlNWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzMTE3ZDQxZDI0ZDFkNTdhYTRmYTAxZDQ3NzA3NGRjZDBiOTFmNjg3Y2Q2ZDM1YjRmZDMyYTljNTAwNmUwMWMifQ"
+        },
+        {
+          "resource": "repo://docs/initial-design.md#L1-L18",
+          "version": "repo-lines-v1:sha256:54c8fc558d1d48443b9a95874ba339c41431ac3cf6bf9a1cab592cf19f9332ba:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjYjM2NTE0OGY1YzM1NTRkZDk3YWZhMTVhYjhlYTEyMmFkOTVjYTAyNGM5ZmRiNjFkMDc4MDY1NmI5ZWEyYjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyMGZmZjNjNjIwZDYxMzUwMWE3ZWU2ZWY3ZWNiOGRjYTVkZTEzNmJiNDliZTJiMGU2MDY0ZTM4N2E2NTBhOGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b9f4c1fb8f06483999a3d9d0bd39c47a",
+      "statement": "The reader-view extraction feature (GET /api/articles/{id}/extracted-content, ArticleExtractionService with Readability4J, article.extracted_content column, ReadingPane auto-enable/toggle, DOMPurify sanitization) is a recent addition layered on top of the original feed-polling/backend implementation and is documented as its own workflow page distinct from feed-lifecycle.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L71-L71",
+          "version": "repo-lines-v1:sha256:db05577e52a8d1fc460403f654c569f69ae4c505f5027af6b85c85fd23476f00:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGIwNTU3N2U1MmE4ZDFmYzQ2MDQwM2Y2NTRjNTY5ZjY5YWU0YzUwNWY1MDI3YWY2Yjg1Yzg1ZmQyMzQ3NmYwMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGIwNTU3N2U1MmE4ZDFmYzQ2MDQwM2Y2NTRjNTY5ZjY5YWU0YzUwNWY1MDI3YWY2Yjg1Yzg1ZmQyMzQ3NmYwMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2RiY2VlMmQ5NzFhYjNkMTkwN2E2YmEwM2VmNzE2MTA2MDU1M2UyZmQxNDk4ZjE5YjkxMTRhOWQxMjBmZjY5ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjM5MTcyZjVhOTExM2NjNGNhYWNhNjhiNTMwODM5NGZlZjBkZTU3MDNmNDYzNGVmZjcxOTZiYzljZGY2YzQxZCJ9"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L43-L43",
+          "version": "repo-lines-v1:sha256:b8dd5765a91ffb82c5e50e726fb7a5963abca4e94a50b1e67a17aecde17d5335:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjhkZDU3NjVhOTFmZmI4MmM1ZTUwZTcyNmZiN2E1OTYzYWJjYTRlOTRhNTBiMWU2N2ExN2FlY2RlMTdkNTMzNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjhkZDU3NjVhOTFmZmI4MmM1ZTUwZTcyNmZiN2E1OTYzYWJjYTRlOTRhNTBiMWU2N2ExN2FlY2RlMTdkNTMzNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODJhYmE2NjI2OGJlYTdjYTY3MmNkZjFhNzdiMzkyM2IyODczMTg0YWE2MGJlODQ0NTgzY2I1NzEyOTU5MGFiYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTE2MDhlYmIxMjZiMjJiMzlhZTIxZWY1NzkyZTZmZmIyOWIzNjdlNzc1MWY0ZDE2ZjBiNWQ3MTZiNGI3N2I2NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_120bf6a7e2a14960a39849f141e5dd1f",
+      "statement": "docs/backlog.md is the live, frequently-changing TODO/bug list (e.g. j/k navigation mismatch on Starred/Folder views, reader-view extraction gaps like missing images or unsuppressed social embeds) and is intentionally not duplicated in the wiki quickstart beyond a summary pointer.",
+      "evidence": [
+        {
+          "resource": "repo://docs/backlog.md#L40-L62",
+          "version": "repo-lines-v1:sha256:35c28804f4cadd5f57607e225cd91a360237a565795eab0f2032a41cff3a85f6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmYTNjZjE0NjExODcxYmE5NDNlYzlhNjBhYjY5M2VmNTg0MDRmZjBmMmMzNWFiMDJhMWQzNDk5MWE1ZmI1ZTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxNDQ0NjhiMmRkMTRkYzk4MjlmMTQwNzRmNDliMDFiMjE5NzNhMTllOTM3ZWY2ODk3ZjdlZGRkNTkyMGIwMzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI2NmMxNzJjZTYyMTY1YTJmNjUxYzg0YmVhMGFmZDIzMmFkMTRkNGI2Njg0M2FmZTM5YTMzMmVmZDAxODg1YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlZGFiN2Y5MzY4MjE4NTJkMjIwNjYzZjE1NzAxMjJjYjhiNDQ3MTI4OTM2OWY2OWI3MDYyNDViMTQ4OTMyMzEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-06T12:04:59.431Z"
+  }
+}

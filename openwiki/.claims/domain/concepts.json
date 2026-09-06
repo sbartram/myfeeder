@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:383173143255b6cb7d57a88a9b7e67774e422d814ee6bc65080adc0b94f36dff",
+  "claims": [
+    {
+      "id": "claim_1ce3e94bcd7d46658df4724f7d78bec7",
+      "statement": "Migration V5__article_extracted_content.sql adds a nullable article.extracted_content TEXT column that caches Readability4J-extracted readable HTML for an article's original page, used to serve the reader view.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/db/migration/V5__article_extracted_content.sql",
+          "version": "repo-file-v1:sha256:40144184eb66db1770bd31199ab5e043f157d4218386b7cc428363058171a6a5"
+        }
+      ]
+    },
+    {
+      "id": "claim_f632d8cb1277481f82bb3e6bae11d915",
+      "statement": "article.extracted_content is not modeled as a field on the Article JDBC entity; it is read and written exclusively through ArticleRepository.findExtractedContent and ArticleRepository.saveExtractedContent, separate from the Article object returned by list/detail endpoints.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/model/Article.java",
+          "version": "repo-file-v1:sha256:9aaa84fcffa2192f5ef7921e766ec12655ec430aa836c65e817bf5b5f56629e7"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L30-L36",
+          "version": "repo-lines-v1:sha256:b5524bcc494854775eca087e5c5bc8832f533411e44bde2845a450cdeea99c42:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGJkNzBiOWQwMWExMGE5N2JiN2I4NDRiYmEwYzkwMmJkYjA1ZjQwNWFhMzlkZDUwNDBhZjkwYTVmYjlmYzZhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGQ4MzVjOTUzNTY5ZGFjYjRiN2U5MGFiODQzN2FkNTNjZTRmODFkNDBmZTI3ZGY1ZGRjZWFjOGJmYjNhZTkwZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODQ0ODgyOGFjMjczY2JhOGYxNGNiOWFlMzJjZmJhYWI0ODY5YjNkNjhhYTNmMDNjNDliNTgxNGMwYmRhZDZiZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzkxOTQ5Mzc1N2I5NzUwZGNmYzE1ZmRmNzczYTg2Njc3NGJhM2RkYWJmNDUyMjNmNTcwYmVkNmQ2OTA4ZTY2MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cffc9ca91a334d19a46b4c7fca7619e5",
+      "statement": "GET /api/articles/{id}/extracted-content (ArticleController.extractedContent, backed by ArticleExtractionService.extract) returns the cached extracted_content column value if present, otherwise fetches the article's original page via FeedFetcher, extracts readable content with Readability4J, persists it via ArticleRepository.saveExtractedContent, and returns it.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L69-L72",
+          "version": "repo-lines-v1:sha256:7de5ee387f58f5adc3ecb19820a18c5beef19568cf99b64c51e67501b8d69938:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjNiMjdkZDc0YzU1ZGEzOGMxYjc0MTNlYTk4ZWRlZDE1OGU0OGY1Mjg2YzdlNWViNmRhNTA0NDYwNzI2N2E2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjAwMTEyMDE4ZDljYmQ1NzA3MTJjZjZmZGQ3Y2ZmZDk3MzhhNzhjY2ViMWIwMjdmYzRkYjJiMDNlNmYxNjhjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTkxYmMxNDRlMTBlM2Q0NTNiZTRlYmRjOTFkODdmZmUzYWU3NjI5Mzg0MmQ5ZGM2NjMyYmQ4MTJkYTQ4ZjQ0MyJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L37-L65",
+          "version": "repo-lines-v1:sha256:b8fbd028a255b3324a05ef88c708f25e045e8964828f894f14d3a71e46a0cf9f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxODRmMTYwZWIxYzVhNTg5NmY3MGI0NmMzMmEzNmQwMTYwZjg1NmRiZGRiZmZmNTk3MmNjMjFhMzU5ZTljNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiZGJlY2ZmNDQ0ZDVkMTFiYTVjMWFmMDgxMzNmZjY0ZWI2ZTg3N2JiZmFlOTA0MGQ5OGZiZDg1ZTEwM2VhMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MGZiZDQ3Zjc5YjhkZDllMzllOGU0M2RkOWMxYTU3MDFhNGQxM2RlYTJhYjI2MmY4ZmUyYTg1ODEyMmIxMjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_07de209782eb4adbb857e9ffe382a5f7",
+      "statement": "RetentionService.cleanupOldContent, scheduled via myfeeder.retention.cleanup-cron, nulls out article.content and article.extracted_content (via ArticleRepository.clearContentOlderThan) for articles whose fetched_at is older than myfeeder.retention.full-content-days, but does not clear article.summary, which remains available indefinitely as a fallback preview.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L26-L28",
+          "version": "repo-lines-v1:sha256:ca50c5b2ef4efb4c41431d6058d497b715767350bf1d14cd97fe6e00c1aae84d:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWMxNzdmZjkxN2U2YWYwZDM3YzhhNGQ4ODI2NzBlNmIwNWJhOTMwZjNhMmQxYzZjYzExZjIzYzA3NTI1YzBjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWEyM2IxYzcyYmEzZTE3Zjc2OWZjZDczYTlmMzlkMjExNmI1NzZlYjUxOTE5YjIzYTY1Nzg2NDM5YzFiMTc1NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWQ3ZDc3NDU3OWMyMjc0OWNiNzlkNmNkZmYxOWYxNWE1MDFhNWRjNDJjN2YxMTNjYWYxODkxMTlmN2UyMTg1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGU3MDgzMTI3NmJkMGZhZmMxZGNjZGFkYzM4ZDE0ODA0Y2MwNzY0N2YwOGRjZDgzZDk4OWFjNzM0YzA0MzEwNiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/RetentionService.java",
+          "version": "repo-file-v1:sha256:96a7c9c5b8ff44c903c11c27c3cb4f0e0567d82045bc4acfead34ca1924336fa"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L17-L17",
+          "version": "repo-lines-v1:sha256:11cec874e4d087a81a861fb4c0297729631908ecfa903c7ba6246548748b0c25:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTFjZWM4NzRlNGQwODdhODFhODYxZmI0YzAyOTc3Mjk2MzE5MDhlY2ZhOTAzYzdiYTYyNDY1NDg3NDhiMGMyNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTFjZWM4NzRlNGQwODdhODFhODYxZmI0YzAyOTc3Mjk2MzE5MDhlY2ZhOTAzYzdiYTYyNDY1NDg3NDhiMGMyNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWI5MDU2NTk4Y2QwMmYwMTEyM2NlNThmNTU2YWRiM2Q1MzEwYzFmNmNhOWI0M2JkMDEwNmY5MmIyY2FiODU5ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2ViMzcyZDg5NTY4Njg2MzA3OTc5ZjQ0ODY4M2Q5YzQ0OTc0NmYyMmY1OWE3NTlhZTJmYzQ4MTU0ZmRkYzlkMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5418fd503538471dac200de98338e9e2",
+      "statement": "Article.summary is a short, feed-supplied description populated by FeedPollingService from the parsed feed entry, and the frontend ReadingPane uses article.content || article.summary as a fallback body when the full content has been cleared or was never present.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L30-L84",
+          "version": "repo-lines-v1:sha256:1584e54d3ce8fe586d8a5e2efb5a66900c81f34c426cd409a94730a94a56c937:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzMGI3YjUxMTA2OTJlNzhhNzA0NDVjYjc1MWQ4ZGFkY2Y1MmExOTBjNGJmOGJhNTI0MjM0OTQzM2U1MjY1ZTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjZhMWQxNTkyZTY0MzM1ZmY2ZDgxYTUzMDRlOTBhMTNlZjRiOGQ4OWY0MTUxZTM1MWJmZmFlMTA4YjZmNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg3NGFjMjhhNDYyN2NlMTBkNTUzOTE1NmU0NjVkYjJkMjM3NWY3ZTk4MzI2N2M1MWQ5YTcxMTVjZDJmMzkwNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxYzAzYWUxMTc3YzhjOTU1YjQyZjY1ODYyZGVmYjE2OGFkMDAxNmE1MDAyOGQxYWJmNWE1MDg5NDkwNTM2MWYifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedPollingService.java#L78-L78",
+          "version": "repo-lines-v1:sha256:499b70268322053c64c1aa003f409bf054870fc124557a7c942fb50c5563ebfe:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDk5YjcwMjY4MzIyMDUzYzY0YzFhYTAwM2Y0MDliZjA1NDg3MGZjMTI0NTU3YTdjOTQyZmI1MGM1NTYzZWJmZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDk5YjcwMjY4MzIyMDUzYzY0YzFhYTAwM2Y0MDliZjA1NDg3MGZjMTI0NTU3YTdjOTQyZmI1MGM1NTYzZWJmZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmNmNzIwNzc4NWU3MjQwOGE5YzE3YjQ5NzNhY2JiMGQ3ZThjNDY0M2RjYThlMzA4YzEwMDdiYmQ1YjhiNDJjYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWIyNDA3MzY2Y2I4YTkzMjljNjEzNjIyODMyMGI2NTlhNDA5NDNjZjU4ODljN2Q0YTE4OTE4ZDNiNjc1YmVkMCJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-06T12:04:59.431Z"
+  }
+}
