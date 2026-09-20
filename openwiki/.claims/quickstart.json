@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b1f67f1e3bc100f31dd056c874808bae669f3c16cb39e6ec07b2ab32bb5bd05b",
+  "claims": [
+    {
+      "id": "claim_95a6803ab12b47128192212543596882",
+      "statement": "myfeeder is a self-hosted, single-user feed reader (Spring Boot 4.0.3 / Java 25 backend, React 19 + TypeScript frontend) that subscribes to RSS/Atom/JSON Feed sources, polls them on a schedule, stores articles in PostgreSQL via Spring Data JDBC, and can export saved articles to Raindrop.io.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L5-L7",
+          "version": "repo-lines-v1:sha256:90bf4e1c0f80182bf0b6a03caa947e45440bd3bba8591113ca28aaa699d755b9:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTdhZGEyN2YxMWMxYzBjYzhjMTk4NWJiZWUyOWU4MGZlMzFhMTljMWVmYmRlMzM3MTYwNmQ4ZGNlZmI2ODRjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODU4YTBhYThmYTY0ODI1YmUzZGNjNDdkZmQxZDdjODQ5YzJmYzdhMjViMjQ5MzIyYTYwNTdkMGQ3YTEyZGE1MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTYxYjUzYzI4OTY4MjM3OTlhYmEyNjgwNTI4OWIxNjFmYWZjZDA3ZjczODIzZTU4YjU2YWVlZDkwNDUzZGE3YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTlhNDQ0MjU4MDIyYmJmOThhYWMyYmNlMDMwNjk4MWI5YjdlMGNjMWZlNjBiN2ZmZGU1ZGE1NGMzY2U5Y2Q2YyJ9"
+        },
+        {
+          "resource": "repo://docs/initial-design.md#L1-L18",
+          "version": "repo-lines-v1:sha256:54c8fc558d1d48443b9a95874ba339c41431ac3cf6bf9a1cab592cf19f9332ba:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjYjM2NTE0OGY1YzM1NTRkZDk3YWZhMTVhYjhlYTEyMmFkOTVjYTAyNGM5ZmRiNjFkMDc4MDY1NmI5ZWEyYjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyMGZmZjNjNjIwZDYxMzUwMWE3ZWU2ZWY3ZWNiOGRjYTVkZTEzNmJiNDliZTJiMGU2MDY0ZTM4N2E2NTBhOGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef6487545bca43c2aa932c5ec8c49902",
+      "statement": "The reader-view / article content extraction feature is fully implemented (not backlog): ArticleExtractionService extracts readable content with Readability4J via the SSRF-guarded FeedFetcher, exposes it at GET /api/articles/{id}/extracted-content, and persists it in the article.extracted_content column added by the V5__article_extracted_content.sql Flyway migration.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L71-L71",
+          "version": "repo-lines-v1:sha256:db05577e52a8d1fc460403f654c569f69ae4c505f5027af6b85c85fd23476f00:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGIwNTU3N2U1MmE4ZDFmYzQ2MDQwM2Y2NTRjNTY5ZjY5YWU0YzUwNWY1MDI3YWY2Yjg1Yzg1ZmQyMzQ3NmYwMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGIwNTU3N2U1MmE4ZDFmYzQ2MDQwM2Y2NTRjNTY5ZjY5YWU0YzUwNWY1MDI3YWY2Yjg1Yzg1ZmQyMzQ3NmYwMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2RiY2VlMmQ5NzFhYjNkMTkwN2E2YmEwM2VmNzE2MTA2MDU1M2UyZmQxNDk4ZjE5YjkxMTRhOWQxMjBmZjY5ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjM5MTcyZjVhOTExM2NjNGNhYWNhNjhiNTMwODM5NGZlZjBkZTU3MDNmNDYzNGVmZjcxOTZiYzljZGY2YzQxZCJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V5__article_extracted_content.sql",
+          "version": "repo-file-v1:sha256:40144184eb66db1770bd31199ab5e043f157d4218386b7cc428363058171a6a5"
+        }
+      ]
+    },
+    {
+      "id": "claim_d677caf3ad124b24b9e0ad4969b8d2e5",
+      "statement": "Dropbox/Google Drive export is a planned but unimplemented integration: docs/backlog.md lists it under the 'Dropbox and Google Drive' TODO section, and no corresponding service, controller, or dependency exists in build.gradle.kts or the source tree.",
+      "evidence": [
+        {
+          "resource": "repo://build.gradle.kts#L31-L66",
+          "version": "repo-lines-v1:sha256:6ac2034a04129c18b109a3e4a56a6be4d1d7983879499be72e084e31edb863fe:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiYTMxNDVhZWUwZGEwNTkyNGQzYWQwYjFlZWI0YWRlNzc2MWI2NjdkOGE5NjE0NmRlZWYzOWFiZDFjZTQ4Y2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkNTQ4NmRhOGJkMGYyOGIxZjEyOWI4NWM2ODY1MDljMzBlYzhlMGNlMzcxMDI0NWQzYWVlODllMGZiM2JiYTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRmMDdiMWQ2ODM1M2I0YzY1OTk2ZDVhNWFkMTlhYjBjNmYyMzU2ZDFjODVmYmUwMTZkYmI1ODkwN2M1NzQ4ZTcifQ"
+        },
+        {
+          "resource": "repo://docs/backlog.md#L53-L57",
+          "version": "repo-lines-v1:sha256:432ae709123a66e745ef87928f4f1cd0b0ee6e0f55af9ff76ac472a3e9b0831a:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGNhMmE0MzU1ZDNmN2NjMjFhOTQ5YmY3MWY2ZDRjOGM4MjIzYmU1OGUxOTc5M2UxNTM2YWVjNWU4ZTRmNmE4ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDQ3Y2M1ZTM1Njc2M2FiMDFiNDA4MDE5MDYzMTVmMDM3NzQ0MzljNjg5ZDk2ODE1YThlM2ExY2RlMGNhNDRjZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDNkMjdhODBkZmQ4M2FiODQ0MThmMzU2NTU1YzY0NmFjMzcxMjEzZDE4MTcwNzUwNGNmNWI0NTVmM2QwODllYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDc5YzdmZTQzNGNjZDExMjQ0MTk2NDE2NGMzMDU4Yjc2MDNhYjM0ODRlZjI0MzU3YjRiNDg1Y2RjMDdhMWNlZCJ9"
+        },
+        {
+          "resource": "repo://docs/backlog.md#L9-L9",
+          "version": "repo-lines-v1:sha256:5be0618b209998a4de29dcd0f024989f00ae7343ad57f990944748f2716f2196:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWJlMDYxOGIyMDk5OThhNGRlMjlkY2QwZjAyNDk4OWYwMGFlNzM0M2FkNTdmOTkwOTQ0NzQ4ZjI3MTZmMjE5NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWJlMDYxOGIyMDk5OThhNGRlMjlkY2QwZjAyNDk4OWYwMGFlNzM0M2FkNTdmOTkwOTQ0NzQ4ZjI3MTZmMjE5NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmQ3Mjc4N2U5OTUyNmVlMTY3NjJiNzNmNjUzZTVhY2I5ODQ3M2M1NWM4ODUzZTg1NjNjMThlNDBjMmE4ZDkwMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzY1YWI3NWJjNjJjZTY2Mzc2NjUxYjg3ZWZmMmY2OWM1YWFhNjRkNDZlODIwMzQyODEzOTRkYTE2M2RkYTJhNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_931475ddc3444a0da8493f22ba82819a",
+      "statement": "Spring AI / Anthropic chat is declared as a dependency (spring-ai-starter-model-anthropic, managed by the springAiVersion BOM) and requires spring.ai.anthropic.api-key, but no controller or service in the codebase currently exposes a chat endpoint, so it is unused/backlog functionality.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L40-L40",
+          "version": "repo-lines-v1:sha256:02013c9c91355f5c41be245865ec6478de0c47ee0bea71b75263ac71c348d572:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDIwMTNjOWM5MTM1NWY1YzQxYmUyNDU4NjVlYzY0NzhkZTBjNDdlZTBiZWE3MWI3NTI2M2FjNzFjMzQ4ZDU3MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDIwMTNjOWM5MTM1NWY1YzQxYmUyNDU4NjVlYzY0NzhkZTBjNDdlZTBiZWE3MWI3NTI2M2FjNzFjMzQ4ZDU3MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTkzZGM0MzQzODRhMWE0YjNjOTgzZWYxNGU0ZWNiNzFmMTEyNTQzZDk2ZTM4N2RhOGYzODQxYmRjYTQzM2Y4OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDRjYWVlZWQ5NDdjNjc5ZDQ5MTYwZTA2Zjc1ODk4ZjE5Njg1N2I2ZjIyNjk1MTJmOTZiOTIwYWU2ZjdiMzI5ZSJ9"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L28-L38",
+          "version": "repo-lines-v1:sha256:b18a53b891fa550dfd86c8b00434f04f06b9ed88114cf8db615160c062cb6120:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0MGQ3NzQ0ZjJiMjMwYjRmMDNmMzlhYjFiNmQ0YzAwNGY0MWM1NTAxMDYyOGRiZDQ5MzgyMjhkYTA5YTVkNGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MTYyODVmZDM1OGUzMGE1YjBmMzkzNGQ5OTNkZGY0ZmFkY2RkNGU3NTczNGE1YjQxMTcyYmZmZDM5YTJmZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjZGVlOGRjNjY4MzAzMzU5Y2JhZjZiMjBkYWVhM2Y0MGQ5ZjFmMzU5NGY1Yzg0MWY4MWM4M2M0NDRlMDg4YjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkMGVhNmRkMjk3OWVlMGE3ODQwOTNiN2NlZDA0YjVmNzIwYWUwYmNiMTllYWFmM2JiOWU4M2UwYjBkNmUzNjAifQ"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L68-L73",
+          "version": "repo-lines-v1:sha256:5c07fb2c67b1a6935a8b91a735e50bcb15b5a3c570eed65e0ad8cfd166abe72a:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWY3NmFmMWFjNmU5OTU4N2Q0OWVlOWRhYTVjMmMxYzg5MzVmNjlkMDMyOWI3OTc4NDcxNTJjY2E2NWY1NjMzYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjBmZmI2MGUxY2JmZGRjYWQ2YzI3MGJhYTBlMmIzMTRiZGI1MjI3ZDliNDNkYTAwNWQxNDNkOTlkMjhhZjU0NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzYxMDE0NDJmMTRmODVkMTUwODY2MTNkMTkzNTk3MDY3MzJhYWQ5ZTZlNjA2NTczOTE0ZTgzN2M5NTdkZDA3NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_66321a361ae641f4a2ecfda5c40ce9c6",
+      "statement": "The repository's OpenWiki maintenance guidance (in AGENTS.md, included into CLAUDE.md) instructs agents to treat source code and tests as authoritative and to not hand-edit generated OpenWiki pages outside the scheduled GitHub Actions regeneration workflow, updating source/docs instead.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L1-L11",
+          "version": "repo-lines-v1:sha256:2066111756019639fd4ad6a1c6bd7323a3db5fdcf9d2b66a57aa9fac5e0ba943:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmMTgwZjljMTI2OTAzYmNjMzMxYWE5NTQ1NmU0OTQ0NGE3ZDRkMDExZThhMmE4M2Y1ZGM4NzAyMzkxODEyZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5Zjc4NzE0ODkzYWE3Nzk0MmNlYTFjNGEyZTAyMzFkYmI3ZmEyYTQxYTcwYzgxNDYwYTNjNjc1NjJkYTNhYWEifQ"
+        },
+        {
+          "resource": "repo://CLAUDE.md#L188-L194",
+          "version": "repo-lines-v1:sha256:cd617c809957b5aeb601ce9856109475f6da8ed78835148d17c3097dd4daa848:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWYxODBmOWMxMjY5MDNiY2MzMzFhYTk1NDU2ZTQ5NDQ0YTdkNGQwMTFlOGEyYTgzZjVkYzg3MDIzOTE4MTJkMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDlmNzg3MTQ4OTNhYTc3OTQyY2VhMWM0YTJlMDIzMWRiYjdmYTJhNDFhNzBjODE0NjBhM2M2NzU2MmRhM2FhYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmUzMmFmZGUyN2Q0ZDI1OTE3NDY3NDRhYTYzNGMzZWUzY2Y2OTJhYjIwZjkyMDZkNzA0NjI2NGQxN2U4NzRjZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a59f974ac29b4b0c9546313b298fda54",
+      "statement": "Flyway migrations V1 through V5 define the schema evolution: V1 initial schema (feeds/articles/integration_configs), V2 folders/boards/feed-folder linkage, V3 article image URL, V4 strips the raw Raindrop API token, V5 adds article extracted-content storage for reader view.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L99-L99",
+          "version": "repo-lines-v1:sha256:d24968dcb0fc7161137cbd34566ede904cbca1a20eb0cd18edec2bdf9bfdef8a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDI0OTY4ZGNiMGZjNzE2MTEzN2NiZDM0NTY2ZWRlOTA0Y2JjYTFhMjBlYjBjZDE4ZWRlYzJiZGY5YmZkZWY4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDI0OTY4ZGNiMGZjNzE2MTEzN2NiZDM0NTY2ZWRlOTA0Y2JjYTFhMjBlYjBjZDE4ZWRlYzJiZGY5YmZkZWY4YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjMxNzZlZmMwYTUzOWZmMmRiZWE2ZGZiOTQwMjM5NGM0ZGNiOGJjMWFhY2YzOTQxYjA1N2ZmNWEyODczMGY3MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDE4NGI1MDFlZWUyM2Q5ZDdiZjdlYTQxODUwZDQ4YjIxMjgyZTMyY2ViNzJjMzlhNzAxNjhhMTJmMjBhNDA1YyJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V5__article_extracted_content.sql",
+          "version": "repo-file-v1:sha256:40144184eb66db1770bd31199ab5e043f157d4218386b7cc428363058171a6a5"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.2",
+    "at": "2026-09-20T12:59:40.431Z"
+  }
+}

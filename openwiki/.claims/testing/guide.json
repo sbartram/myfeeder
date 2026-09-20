@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:02cfa8e8abd8803ec386841330a2e88e51d411f8b5849c48e426408544fff128",
+  "claims": [
+    {
+      "id": "claim_1f25210284b34559a77e48c21ddeff07",
+      "statement": "ArticleExtractionServiceTest uses Mockito to mock ArticleRepository and FeedFetcher (no real network) and loads HTML fixtures (e.g. src/test/resources/pages/dark-article.html) from the classpath to assert that extract() parses readable content and title, strips scripts, writes the result via saveExtractedContent, and skips FeedFetcher entirely when a cached extraction already exists.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L37-L65",
+          "version": "repo-lines-v1:sha256:b8fbd028a255b3324a05ef88c708f25e045e8964828f894f14d3a71e46a0cf9f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxODRmMTYwZWIxYzVhNTg5NmY3MGI0NmMzMmEzNmQwMTYwZjg1NmRiZGRiZmZmNTk3MmNjMjFhMzU5ZTljNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiZGJlY2ZmNDQ0ZDVkMTFiYTVjMWFmMDgxMzNmZjY0ZWI2ZTg3N2JiZmFlOTA0MGQ5OGZiZDg1ZTEwM2VhMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MGZiZDQ3Zjc5YjhkZDllMzllOGU0M2RkOWMxYTU3MDFhNGQxM2RlYTJhYjI2MmY4ZmUyYTg1ODEyMmIxMjkifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/ArticleExtractionServiceTest.java#L22-L55",
+          "version": "repo-lines-v1:sha256:765cee186614182c13be85e1919dc2b628f5a8a59ec63dbdf23734946c6f7984:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2YTgyY2MxMTUyZWE0ZTdjNThiYjQ2ZDhlMTZmYzU0NGQzNWVjMjkxMjAxMjBkNmIxYzJkNzBmMTFmYjA1ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2YzFlNjg1NjE3NTdmNzlhZTI1NDhhYjcxNzFjYmQzNmVkMjFhZGQxZGU3NGViNThlYzk0MmEzMDdkYjc3Y2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhZGE5MzdmZTZiZmEwZGU4NDNmMzYwMTUyNTk2YjU5NTI2OTczNTUwY2ZiYzEwZDUwZTE2M2RiMTVjY2IwZTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0dd4d4906a0e4247a878d29354156681",
+      "statement": "FeedUrlValidator accepts an injectable package-private HostResolver functional interface (defaulting to InetAddress::getAllByName), and FeedUrlValidatorTest constructs validators with a HostResolver stubbed to a literal IP so SSRF-guard behavior (scheme checks, loopback/RFC1918/link-local/CGNAT/unique-local/broadcast/IPv4-mapped rejection) is tested deterministically without depending on live DNS.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java#L31-L47",
+          "version": "repo-lines-v1:sha256:f706355121b109a21d2b03bd00976c9aeb18ff858ac3d4ec191e6a36883e7dc1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyM2ZjMDdmM2RmZDMxMDdhMzY5N2U1NGVkODliNTU0YWViOGJiMjQ0MjJiZjgxNjY4ODIwYjNkNTdiMTQwZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhYjFiNzVkMzdmYzc5NTc1OTQ4OGJhNWUyOWNkMjIyYmVhODcwYzMyOTM2YmQyMTAzZTU0NzViZTEzY2EzMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiOGQyNzA1ZTMxZjllMTlmYmY2ZjRiZTQzMGE5ZDNhYTdiZDhjYTU5M2ViZDI1Y2RmNjg4ZjQxYzEwNjhkNjgifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/FeedUrlValidatorTest.java#L10-L98",
+          "version": "repo-lines-v1:sha256:8427430e1daa60f24b246cc3bca2012aebc82f86883a17743ea9e90bc09fa0a5:eyJzZWxlY3RlZExpbmVDb3VudCI6ODksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNDk3NzFkNzU3YzYzOWEzZDI0ZGU5NDRkZmU2MmE0OTIzMzFjZWU5NzRlZDYwMzBlMmQ2N2IyMWI2MDUxYTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MDIzYWZjNTE1ZjRjMGFhOTZlYjY5ZDBkMzQ1ZWZlOGJlZDU4MzBjZjA4NjQ3ZjU4MjRiNWNlNTA4YmY1NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9e7ad38cf0d64cefa43bae87e005d287",
+      "statement": "FeedFetcher (used by both the feed-polling path and ArticleExtractionService's reader-view fetch) is constructed with a FeedUrlValidator, so the same SSRF guard covered by FeedUrlValidatorTest applies to article-extraction fetches, not just feed subscription URLs.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L20-L31",
+          "version": "repo-lines-v1:sha256:d076ded951a5152ce1b2f4d7c48a19ecde7ed3bded1f4e727326e84a9021e9b5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwOTdkNzgwMjI4Mjc0ZTQ3ZDczYjcxNWVmNzIwNmY1M2VhZDI2NDg3YzI5ODk0Y2ZlMjA4ODFiMTc0Yjc3NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZlMDVlYTU4NjE4NmU5MGUzMzJjMzc5ZDQ2YjA0M2QxMmRhOWQ5OGRjMjdkNTQxZTViZmU3MzdlNmM3YjA4OWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiN2I5OTRlOTU5NDdhOTc2YjA4ODBiMjBjOWFmOTc0YTZlNjYzNmZkNGYxZjJlYzgwYjlhNDFhZmE4ZjNkNzIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f6da2b1005da4a5295582a7cd56f7f2e",
+      "statement": "ReadingPane.test.tsx verifies reader-view behavior: it auto-invokes useExtractedArticle(id, true) when the current article has no content and no summary, calls it with enabled=false when feed content exists, switches to extracted content and enabled=true when the user clicks the '📖 Reader View' toggle, renders a loading message while isPending, and renders a fallback message when isError.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.test.tsx#L71-L128",
+          "version": "repo-lines-v1:sha256:99b9807cdaca997849b81dbcb4f7d10de12a8005bfc74d7d36f728f95c264912:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1M2M0MTg4NDZjNmQyNmIzMDQ1NzIzYmUwNjRkNzRiYmM2ODljNDVhMWUyNDE4YmY2YTBhZTljMmNhOWRhMDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMzUyNTg5YzM0ZDNjNjA2ODU5MzFiNmVjYzRkNTA5OTFhN2M1NmM4ZmJhMjg5NDExNDY1NzY5MDI3MmNhYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMwMThmYWI5NGJlYTNlN2ZjNDJiNTRlMDNjNGMwYTBkNTZmNWYzYjk3NmE5NDUxMzYwNzhiNGRhYmQ2NDVmZTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1ODBiNzY1MThkYWU5NzlmYWViZDAyMzY3YTI5MjkyYTUwZDk3NjA5MjI1MWEzOGE2Y2UzMDg4MGJhNDI4MjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5285e5f5b0004da091d9d0ddd055439c",
+      "statement": "ReadingPane.test.tsx asserts that DOMPurify-sanitized extracted HTML has inline style attributes stripped before rendering: a fixture <p style=\"...\"> element loses its style attribute in the rendered DOM.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.test.tsx#L72-L86",
+          "version": "repo-lines-v1:sha256:7c73b9ad9fdbb273b8bde1ea6b8ebcee947cc3e189283a97944f003940dbebc2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjMTBhNGFkODhkZjU5ZTE2YjNkMjVmMjQ1YTZiMzNmMGRkMjA0N2U2ZDQzMjI1OTVhYTk2NGFmNWI4ZWU1NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMzUyNTg5YzM0ZDNjNjA2ODU5MzFiNmVjYzRkNTA5OTFhN2M1NmM4ZmJhMjg5NDExNDY1NzY5MDI3MmNhYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3YmYwNWQ3YmZlZGJhMWI4YTQwNjk2YWI5MDlhZjY1NWM0ZDQ4ODU1NmFiNDFmMTliZDk2MTVhZTVjOWI5ZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmZDA4N2ZkZTA3YzhlNGVhNzUzZGVhMDI2MzY5ZGQ3YjI2OWU2NzBhNjEyM2ZjYWNjMThiYzYwMzdkMjFlMzUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.2",
+    "at": "2026-09-20T12:59:40.431Z"
+  }
+}

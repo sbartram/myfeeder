@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:0a53897e914e74307d2e06dce7795ba242be523cb6700f22d4f8300aa1db4b1c",
+  "claims": [
+    {
+      "id": "claim_11518ca27f6e421f9318bd69b8fccf46",
+      "statement": "FeedFetcher.fetch validates the target URL via FeedUrlValidator.validate before issuing any HTTP request, so both the subscribe path (FeedService.subscribe) and the recurring poll path (FeedPollingService.pollFeed) share the same SSRF guard because they both go through the single FeedFetcher.fetch entry point.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L37-L57",
+          "version": "repo-lines-v1:sha256:879ea1eb594a62e54b2b42caedabfd99b8ec25b242f444e51f61b097373b76a5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4YWQ2NTE1Nzk2NGZhZjFjYTk3Njc1ZmUxYjc2MmUxZmVjNzY2Mjc0MzE4NDI3ODQ0MzczMGE3Y2Y0ZDNhNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlMGQ2YjQwZGZlYTQyNmVhNWZiZDE3OWRhNmZlMDBkYjQ3ZjcyYzcxMDczZDU3YzMzYjhlNDA5ODBhOGJhZDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2ZGQxZjg0YjZmNDA5YzAyZjU1NmJiNjcwODYwMDM1MGU2Njg2MDI4ZGJkZmU1NDE4N2UxNThmYjY1ZDFlMWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1YmVjYzczYTI5MmI3YzllMWRhNzk5ODc3MDRmZmY3ZTU4M2E4YjUxZjEzNjlkZGFhMDY2MGM1NDg0ZGM0YzUifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedPollingService.java#L26-L31",
+          "version": "repo-lines-v1:sha256:b02ffb442274427943d280baa9b809a59ec67cae8d257550f63ffde6ce1ee44a:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzVkYzM2MWY1MzNhZTRlNzllNTBmNWZjMDQxMmRiMGMxZjFiMWYxNjg2NGZkYjRjZGIwMjMyMmRmYTRhMWVkMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDNjMGY5MWNlMGQzY2Y4ZTE5NTQyYzhkNDA3ZjU1NjM2Mjg3NzNmZGUwYWM5ZDI2NTlmNTViNjY0YzliYmQ3ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzY3YzY4NDU1NzE5MDc2Njc3MmNmZjhkYjk2ZGUyYWE5ODI2ZDIxYzQ3ZjFiODU5NTQ4YzZmYTU5OTY4MjhiMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWNiODUyOTJmY2RhMmUyZTliMTUzN2NiZjE2NGFiNjEyYzZiMWMwZGYzNmQyOTExMTdiY2VkMjU1ZDFhOGNiMiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedService.java#L37-L39",
+          "version": "repo-lines-v1:sha256:20f6855c24f58db0167d377a010f06203c20aa6e0ff5719c08a57df95d9beaab:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjQwYmM1OGI5OWZlMTRlZWU5ZWY4MzMyMzVjYTIwMmRjMDAyYmE0ZmExY2M0NDNiMWNiZjk1ZmQ4NmJjYTg1YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWY2ZjQzMTg2NTU0NDFmNzI4NGQ4YTM2N2NhMDc1OTFlMThjMGJiN2NhMzZkNWYxZjRkYzFmM2YzMjYwYWVkYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjNiMTZkNjUwMjEyNmY3NWVjMjE2MmEyOWZkNDZlMTY3NmUwMzkyMWVjNWViNzgwMTdjMmE2MjM0OTIxMjQxYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTc1OTgzNjZlNDgzY2Y4MjU5MjBjZTc1MjU1MzQ5Y2E3YzdlNmNkYzIzNzVhMDU1NmE3YzMwYzJhNDFhN2Q3MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_1233b4cb43954495afb5696d62d4f3d9",
+      "statement": "FeedUrlValidator.validate rejects feed URLs that are not http/https, have no host, or resolve to a non-public address (loopback, link-local, RFC1918 site-local, any-local, multicast, carrier-grade NAT 100.64.0.0/10, IPv6 unique-local fc00::/7, or the IPv4 limited broadcast address), throwing IllegalArgumentException which GlobalExceptionHandler maps to HTTP 400.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L44-L49",
+          "version": "repo-lines-v1:sha256:d33e9d155eda6eae41ede4fedb52c50b757fc100ed9a4a593ee1972a6812be78:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjk5OWNkYzQ2MjkwMjNiZDBlMGVmNDlkZTU3OTdlMWU0MDkyOWE2NjdmYTA3ZDUxNGNiYmY2OGEzMzRlMzlhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGQwMWQ1YjcwNTY0YzcyMDVhZGI0MzAwYjgwYWE0ODVkMjhkMzhhNTFlYjliNTk3NGQ5NWI2MGI2YjA3OTYyOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWYwODcwMDkyNjJkNTU0N2Q0OGYwNTNkNjNiOGI2ZTA1NGJhOTk5NWM2NGQwYWY4ZDU5NjYxZWFhYTRiMTIyZCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java#L55-L125",
+          "version": "repo-lines-v1:sha256:3dcad2b169718029e50e115c1fbea4b89478a00eaa570a3d70a75a2be43a82ec:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3YzllODM3ZjUzYTVjZTgzMmUyYmY1NDliMzk0NzhlMmJkOTZmMWI3NWY1YjA1NjlkZmY5ZDU1MTE3NTZhMzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1ZDU2YTc0M2Q0N2NmN2ZhOGFjYWE1YmZlMDJmY2Q3OGMxMWNjZmYyODAyNGM3MjFlMmFmMjM5YWYwZGUzOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMyZDhjNWI0ZTk3YWZkZDA5NzBlNjExZDBhY2I0MThkZjBkYjA4YTBiOTAxMWY2OWFiM2QwN2ExOTc3OGRmYWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e0b0c10e303b43708bb69296bcfd4eac",
+      "statement": "FeedUrlValidator documents accepted limitations for its single-user LAN deployment: it does not pin the validated connection to the checked IP address (so DNS rebinding between validation and actual connect can bypass the guard), and it does not re-validate redirect targets per hop.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java#L11-L26",
+          "version": "repo-lines-v1:sha256:34adb679a280ba0f429db718aaa8a3c186b4ae09b221cb69b751d57177989b43:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5YTMxYWU4NmExZTFhYmI3NzIzZDBjYWUyNjYzZmE5ZjgzZTY5ZTJjODk1MDVhN2U2ZGRiMzY1NzljZWQxYzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhNzQ3NWEwYjkxYjY4NWQ4NGY1NTZhZGM0ZjA1YWQ4ZDlkZGRhZDEzNDJmNmYwODg2NGFkNGUyZTc4Y2I0MmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1NDk3NzZjNzkyYjZlYWZkM2RiMGQzZmM5OTEyYmVkMzQyYjFlMjYxZDMwNjUyMGIxNTQyZGY2OTgzNTIzMTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c28d934623754bf9a19c00c620519de8",
+      "statement": "FeedFetcher bounds a fetched feed body to DEFAULT_MAX_FEED_BYTES (10 MiB) by reading at most that many bytes plus one; exceeding the cap throws FeedFetchException, which GlobalExceptionHandler maps to HTTP 422, preventing an oversized or unbounded streaming response from exhausting heap.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L23-L28",
+          "version": "repo-lines-v1:sha256:d2bd6663464a66ac5751f7379d9d7426c0821557a6b19f9b87fc9a88185b2aba:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDRiOTdhYmQ1ZTE5NDNhZDJkYTFlNDYwZGJkNzE1ZjljYTcyM2M3NWJjNDAyNzA0M2JiZjQ4MjFhMjZmNjllMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGQwMWQ1YjcwNTY0YzcyMDVhZGI0MzAwYjgwYWE0ODVkMjhkMzhhNTFlYjliNTk3NGQ5NWI2MGI2YjA3OTYyOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTM3NTE4YTYxNDAwMDAxNTM5ZjYyYzZhZmMzYTNiMzFlMDg1ODM5MmNjNzY2OGQyYTgxMzJmM2I4YmM3ZGJhZSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L18-L19",
+          "version": "repo-lines-v1:sha256:3cdf6b98c26d60d0e8c3cd867b01a6afca1d1f0cb017f49265b6ad60f3c87b0a:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDU3OWI1NDk3N2ZiMWFmZjE3NGEzZWRiY2JiYjQ1ZTgzMTE0ZTU3ZTQzZWRiNGY4NjY2ODQ5NzgyNTM4OTA3NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWY5MDNmYzJhMTFjYjI4ZDdkZWJlY2QyYmNkOTE5MGQ1ZjkxYzYzNzA0YmZlZjlhNTNkYjM1OWExN2FiOTdkNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWFkZTIxNjU4NDIzNTExNDNiZTE0MzdkYWM4MzlkODQ2ZGY0OGM3NWU5ZTI0NGFiMDdjNjMwYWJlY2JiNjc1YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjkxMTkxZGY4NjZkMzI3OTc5MjBkMGVkMjEyYTg4ODU1NmVmMTE3MTUxYmI3OWI3ZTZkZGZmM2FmYTczMmQxZSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L66-L72",
+          "version": "repo-lines-v1:sha256:d1d5a628bca67a3de9abf40cac336c3139164b0892d7745f311aac9b6d9e192e:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGI3NjFlNDhlMmI3MDIzZDIzMTFmMWI1ZTQ2OTE4ODIwNzc1MWViMTk0NWI3NmUzMWIyOTY0M2Y5MTc5NDM3OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGRiMzM5YzE3ZDRjYzU0ZTcwYzRmY2ZlY2I2MTFiYjllN2QzNjNmMjViMThlMDkyM2ExZDMwNmNjOTU5MjRlNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGE0MWExMzI2Y2YyYzgzMzMwZjgyYzg1YjBjOTMyNTE4NDk2NmMxYzkzOTY4YWIwMzFkOTc5YzlkYmZhOTQwYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzkzYThmNGZiYzk4OTAwNGVhYjIyYzVlOTRlODQzMjVhMGZlOWM5ZjgyNTc5NjkwNzg0MTJiOWRmOTg2MmU2NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3c462aa75258447aab0481956d62411e",
+      "statement": "FeedPollingScheduler.computeEffectiveInterval clamps the backoff exponent to 30 and computes the interval multiplier using long arithmetic before capping at maxIntervalMinutes, specifically to prevent the doubling from overflowing into a negative Duration (which would make scheduleAtFixedRate throw and crash startup) for feeds with very high error counts.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/scheduler/FeedPollingScheduler.java#L105-L120",
+          "version": "repo-lines-v1:sha256:f7ee70740cd3638b1d98f2d062c6375d26f37958484b27292f8a8234bce00b63:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0ZWM3NDliNTU1OTVhN2VkYTRiYTRlNmY0YTdkNTc2NDUxNDBmYzc4NDljNGUzYTMyYmRiZjQ4MDRhNGY5NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.2",
+    "at": "2026-09-20T12:59:40.431Z"
+  }
+}

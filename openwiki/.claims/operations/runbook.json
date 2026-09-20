@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:8ab2e7bcf562efdc77ffb0c43f75587ab320d93cb9e427962e903997f4357fbc",
+  "claims": [
+    {
+      "id": "claim_af9ed3cad9c14a04a2022ce27e7f7721",
+      "statement": "Cutting a myfeeder release requires running `./gradlew release` (axion-release cut+push tag) strictly before `./gradlew clean bootJar`; building the jar first stamps it `-SNAPSHOT` instead of the release version.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L103-L118",
+          "version": "repo-lines-v1:sha256:c8eac42e700cfab3a3009ee5c733b9dfc090947e4e42912777a31a9ff0dd2c79:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1ZTU1MmNhNDU1YjQ2Y2QxNjExMTk4NDQ3NThhMWE3ODY4NDdhNGUyYzhhYTQzMzFiNDQyZDFhMjcyM2U2ZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0ZTQ1MTI1ZTU5NGRiYjRkYjFiNTYzMjFhNmQ5ZWYyMDIxZTA3OThkNTI0YmFjZDBmMWMzZjJlNzU5N2U3NzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAxODRiNTAxZWVlMjNkOWQ3YmY3ZWE0MTg1MGQ0OGIyMTI4MmUzMmNlYjcyYzM5YTcwMTY4YTEyZjIwYTQwNWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzNzcyYjcwOTdmYTJhNzZlM2M1OWJkYjgwMTM2NzA2YTJmMmViYzA0ODk5NDE2MGE5ZGFhNWIyMGMyNTk0ZjQifQ"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L1-L20",
+          "version": "repo-lines-v1:sha256:7af320275a54945742d12ad6dfe2ef4f16d10334811f0082625ac32df6e52fcd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0MDQwMTAzMTViZGJiMGZlYTBmZDZmZjAyMTRkOGJjOTIxY2UyODM2ZDFjYzZiY2I4ODQ5ZjM1NzZjZjVhNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2Y2UxMzBkOTg3OTEwN2QwMzFiYmQ3N2JhOTEzMzA1YzJmMDY4MzQxM2ZlMDY3MzJmNjRkOWQ3NTA2ZjNmNzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a0171912e32543b2a437c647d331a446",
+      "statement": "deploy.sh requires MYFEEDER_PG_PASSWORD and MYFEEDER_ANTHROPIC_API_KEY to be set (used unguarded under `set -euo pipefail`), while MYFEEDER_RAINDROP_API_TOKEN is optional and defaults to empty, printing a warning and leaving Raindrop disabled when unset.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh#L1-L25",
+          "version": "repo-lines-v1:sha256:17de04c3fcc740d7d4b19cb28fa0918f08a0290262ddddc39b918270866e4573:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzY2QwNTdiYjIyM2FmMmYzMjQxNmZhYzMwYWFkNGRhZTA2MmVmNjIxNzJkYTdkNmU4ZGFjZDdkYzVmOGVjZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_74bf815fa7b545089af2bc10958338f4",
+      "statement": "deploy.sh always passes an explicit image tag to `helm upgrade --install`; if no version argument is given it falls back to `./gradlew currentVersion -q`, which computes the next snapshot version and will not match a previously pushed release image.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L118-L118",
+          "version": "repo-lines-v1:sha256:a4e45125e594dbb4db1b56321a6d9ef2021e0798d524bacd0f1c3f2e7597e773:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTRlNDUxMjVlNTk0ZGJiNGRiMWI1NjMyMWE2ZDllZjIwMjFlMDc5OGQ1MjRiYWNkMGYxYzNmMmU3NTk3ZTc3MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTRlNDUxMjVlNTk0ZGJiNGRiMWI1NjMyMWE2ZDllZjIwMjFlMDc5OGQ1MjRiYWNkMGYxYzNmMmU3NTk3ZTc3MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzFiNDZhM2JkM2Q3YWQwMjJmODg5N2NhMmIwNTUyMjFiZjcxNGIyMWFhNzRlNTIwNjZmODY1ZDQ3ZDJjMzU2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDM3NzJiNzA5N2ZhMmE3NmUzYzU5YmRiODAxMzY3MDZhMmYyZWJjMDQ4OTk0MTYwYTlkYWE1YjIwYzI1OTRmNCJ9"
+        },
+        {
+          "resource": "repo://deploy.sh#L1-L10",
+          "version": "repo-lines-v1:sha256:72ad51672eb364ab3bca9727e6c4fb5c6448ffc152463dd83893d9c0f527a0ef:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyODI0M2RjNGViNTgyOTQ2MjU1YzQ3NWNiNTg3NjE0MmE3MWYwYmExMWFmNmQwODNhMjY1N2U0MzhiNTMxY2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MTM4OWJiYmNhNGE2NzYzZTA5OTZlMmEzM2I0MTUxOWU1YzVlMjE5NDYwYzBlMTA2NWI2ZWFhMTE0YzAyNGMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d0c119a34a9d47ab8f20d8ccc34e7d2d",
+      "statement": "The container registry is registry.bartram.org/bartram/myfeeder and deploys target the k3s cluster's `myfeeder` namespace via the `myfeeder` Helm release name and `helm/myfeeder` chart.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh#L5-L20",
+          "version": "repo-lines-v1:sha256:9bcc56aee712701123bd59a5442abde362a4f2cdd9624d4f6dc9ad29382b0190:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzMDQ5NzI1MWZkYzExNDk3ZDA4MTAwN2I4NjdlMmE4NTA4ZjE5OWQ1OWJhMmJlOGFiZWIzNTAwMmZhZmE0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1Mzk2NDA3NmZlMWU4Y2JlYmQwMDgzZjBiMmJjOWFkYmVhZWRhNzBmZDA2YTdjNDA3OTE4MmY2Mjk3OTc2N2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmNTc4NjgwZmQ1MzgzOTUwMDFiOGI3NGE5YjhjOGEzYWJiMTU4OWM5NDFhZDY3MzU4NjBkNjVhMjlhYWFjOTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3YzFlOGFkMzMxOTQwY2JmZmUxYTBmNzUyYWQ1YzViNGJkMGYzMDIzZjU1ZjFhNzEzNWQwNDQ1NzA3MjFkZTQifQ"
+        },
+        {
+          "resource": "repo://helm/myfeeder/values.yaml#L4-L8",
+          "version": "repo-lines-v1:sha256:21aecf7390230475e4ac51f2bcb8a8450a685e20defd84e417374a1bbf230e54:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmEwNzUxODRhMjViNDI2MGRkY2I5NjE5ZGMxMzNmODkwYWNiZWUwYjhjYjdiY2Q3YmI3NmQwNDAxM2QxNjNhMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODQyYTZlYWI4ODRiN2JhNDQzNDkzODNlOWE0MGZhNjY1M2EzMGQ3ZTFkYzQ2NzJhNDVjZDIxYjE0MDhmMzdjYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOThiZjBlMjlhOWNkZDE3YmU1ZTZmMmVmZTgxMzczN2E1MmQwMmQ2ZDU3MjVhNjMxMWQ1YzE3NDIyZTZiMzlhYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTBlYjdjYmI3ZjhjYzQ3N2YyNzFkOTEzODFjZGY5ZGM2OTUxZDZjYmE2ZTYxM2NkODE3ZWVhOTE2MjM4MDI5NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_593c8f38c016410da9bb85e9f19b76ce",
+      "statement": "The myfeeder Helm chart deploys the application Deployment plus an in-cluster Redis Deployment/Service, while PostgreSQL is external at pg.bartram.org (configured via externalPostgres.host in values.yaml, injected as SPRING_DATASOURCE_* secret env vars).",
+      "evidence": [
+        {
+          "resource": "repo://helm/myfeeder/templates/app-deployment.yaml#L33-L52",
+          "version": "repo-lines-v1:sha256:8e5fa75da4523253caad6639ef12a36fe53a9b252dc5a418dbd42ca047524d15:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkMzZmMGU2MTllMzg3NTNlZGI3YTA2MmMxYWM3NThmN2VjMTlhYjc3ZTE2YmJjMzc0NjQxOGQ4NmEwMDQ5YzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiYTlkNWJlODVhZGM3YjhjZjM3NzExZjQ5NjI3MmM3OWJjNWMzNGYzMmUyOTdhMzk3MTRmZjBmYzU3YzYxMGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmNDY2OGIzNzFmYzBlYzIyMjdjYWI2OGZhZDYwODE2MGU3ZjQ4YmJlZWM2MGFkZjdlYjkwNjkyYTAxOTMxY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwMzM2ZDE2YzM2MTdlMmFjMTYwZWJhYjNhZDg2M2NmOGQ3NmM4MzU4MjA1ZGViMTRiZDgxZGY3YzM5ZDljMWUifQ"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-secret.yaml#L1-L16",
+          "version": "repo-lines-v1:sha256:84d641af24f05f9c7da373995f666498ca40c23d76c8e2b9db9b54068c644883:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3NmFlMTQyNDI4ZTc1NGI2N2Q3ZDZlM2RmZGJlMWI0NDhmMGJhYzM1NWQ4ZmEyNGVjOTQ3MWUyMWQ5MGI0MzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjM2VkZjJlYzRlOGRiYWVjYTg5OTJmYmMwMWE3NzdiNmQ5NTFlMTYzZDEzMWU5NmRmMTUzY2NkNThkZmRiYTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://helm/myfeeder/values.yaml#L33-L50",
+          "version": "repo-lines-v1:sha256:b9a81d0099e3e34aeb79e3229aaf567025188e187d6ac20787014493115a9082:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkN2U1MDY0NWRjZGMyMzRkYTRjYjUxODUwYjJmNmEzZjc1Mjc4Y2E3NWMzMmZiNjAyNmYwZDFhY2ExOGM0YjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5NTI0ZDZkMDcxMTEyMTkzZWUzZmY3N2JlNmZkNWIxYjJhYTY3ZDQzMWZjNmVlY2MxM2E5YmU3OTBhMWY2YTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxYmVlY2ZiNDVmM2QxOTVlNDIzMDU4ZDFiZWRhNTE0MDRiYjRkNzQ5NzE0MzU2NjcxYTNlNjQ1NmVlMjMyMmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwOTVkZmQwZWY4MmUzNDkzOGI4MDY1N2E3ZWMyZDljM2M0OWM4OGNjZjZmMjk2ODg5MDRmOGFhNDU1OWJjNTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_566e0f3225f64df681493fec6814c149",
+      "statement": "The runtime image is built from a hand-written Dockerfile (eclipse-temurin:25-jre base) that only copies build/libs/*.jar; the jar must be produced on the host beforehand via `./gradlew clean bootJar`, which chains npmBuild -> processResources to embed the frontend and stamps the axion-release version into build-info.",
+      "evidence": [
+        {
+          "resource": "repo://Dockerfile#L1-L21",
+          "version": "repo-lines-v1:sha256:6c10d36f5b9aa6b71f3c2713213888b1aed2fbfbd181ea1c5cf576ecdfc6c349:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmNTkyYTRjNWMyMjkyYzIzYzRlMjhhYmI1MmM3ZWY2MTY3YWEzMDMzYjZiNzI1ZTlmYmFiNGViNTU2ZGQwYmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2MzE3MzA1N2M0ZGRiNTA4YWRiNGEwNjU2OWNlMzk5NWQzNzcyNDc3NTQxNDZmOTQwZjExNjM1ZmE2Zjk4ZWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxODY1MWY3MWNiZDM1OGEyZGFiZmFjMGM3NWIyZjRmY2I3ZDcxZTc2NDIxYTVhY2RiODVmYTA2ZTFkMzRkNDYifQ"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L108-L133",
+          "version": "repo-lines-v1:sha256:3da5c6809b213127a4753402a5cecf0a0268364e30d7baa525c55b5497a77b1b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjMDc4N2MyNmY5NTVjMjRjNzBkYWVkNjdmZTBiM2NkMDc2ZDBhMWFlZTllYzA0MWQ0MjBjMTQ3MGRiMjY4NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0ZTU0MzhjYTM0OWJhMmY0ZDYwYzBhYmQ0NzU0ZjhhYTcwYWQwMjFiODFhZDlkMjJmZTI5OTJiZGRkMzc2ZjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f96bf926f64a4691bc7753aef9a4a75d",
+      "statement": "The build moved from Paketo's `bootBuildImage` to a plain Dockerfile because Docker 29's containerd-backed image store mis-derives layer diffIDs when exporting buildpack images, which strict pull-side verifiers like k3s's containerd reject; a documented skopeo-based emergency recovery procedure exists in CLAUDE.md if this ever recurs with buildpacks.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L171-L171",
+          "version": "repo-lines-v1:sha256:d00c6f1a810a4782bf78ebb9e8cc7a40b3cefeb3f7fd2bd6369b7d44662cf4bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDAwYzZmMWE4MTBhNDc4MmJmNzhlYmI5ZThjYzdhNDBiM2NlZmViM2Y3ZmQyYmQ2MzY5YjdkNDQ2NjJjZjRiYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDAwYzZmMWE4MTBhNDc4MmJmNzhlYmI5ZThjYzdhNDBiM2NlZmViM2Y3ZmQyYmQ2MzY5YjdkNDQ2NjJjZjRiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzVlNDc5YjNiZjU3YWRmN2VjYWRiMDM1YjAwYzFlZWM5NzViZjViOTU4NjNiY2NkYmFkNTg0ZTVjNGI3ZmFjNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGQyN2EwNjkxZDFhNmNiYzFhNjA4OGQ1ZGNjZjQ0NzMyODc2MGM2NWQ0OWFhZmQ4MzY4ZjY5MDY5NDRjMmNhYiJ9"
+        },
+        {
+          "resource": "repo://Dockerfile#L1-L11",
+          "version": "repo-lines-v1:sha256:c2c9f99dc965292c741b97554a90b2e692e442d87a0d792e7f8ee49cd92a94bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmNTkyYTRjNWMyMjkyYzIzYzRlMjhhYmI1MmM3ZWY2MTY3YWEzMDMzYjZiNzI1ZTlmYmFiNGViNTU2ZGQwYmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkMzY4NmFkZTYyOTEzZjMwYjEzMWE1ODBkNGM2OWY0M2U1YzMzZWNlNDk4NTcyY2NhOGU0YTIyZDg2OWI4MWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1YzZjMTg0YjY3YmQ2ZmNmODZiYjMxMTgzNWVjMGQzOWVjNGE1ZmE3MWFjNjMzODU4MDI5OTFkMGRkY2MxMWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5afe0b14b4b84593a43d8887d3644e3f",
+      "statement": "pg.bartram.org resolves only via the LAN DNS resolver (192.168.44.6); k3s nodes are configured (via k3s-ansible's lan_dns_servers) to use that resolver with a CoreDNS forward block routing bartram.org there, while cert-manager bypasses cluster DNS via --dns01-recursive-nameservers-only so ACME challenges still resolve public records.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L170-L170",
+          "version": "repo-lines-v1:sha256:513b26a9c724bbfc64680215b7ed5dd36d64e126942aa7d3c6667bbc10ffd371:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTEzYjI2YTljNzI0YmJmYzY0NjgwMjE1YjdlZDVkZDM2ZDY0ZTEyNjk0MmFhN2QzYzY2NjdiYmMxMGZmZDM3MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTEzYjI2YTljNzI0YmJmYzY0NjgwMjE1YjdlZDVkZDM2ZDY0ZTEyNjk0MmFhN2QzYzY2NjdiYmMxMGZmZDM3MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTQwODk5MjkwNzVjMjYxZTIwOGI5OTBiNTE2NThlMWQ4N2JiZmVlODNkYzlmYjcxN2I0Zjc3MjY5YzBhODMxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGY1MTU0YjY2NDhjOTcxNWZhYjE4ZTE0MTg0NjRhZWFhNTE5MGE2YTUyMzBkNTJjNmEwZjJiMmJmOGZhNWMxMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_05b179c5ea0644668337f5475b8b18cb",
+      "statement": "The Helm chart's startupProbe (periodSeconds=5, failureThreshold=60, i.e. up to 5 minutes) gates the readinessProbe and livenessProbe on the myfeeder Deployment; all three probes hit /actuator/health on port 8080 and are tunable via values.yaml app.probes.{startup,readiness,liveness}.",
+      "evidence": [
+        {
+          "resource": "repo://helm/myfeeder/templates/app-deployment.yaml#L59-L76",
+          "version": "repo-lines-v1:sha256:709a91feeb695aa47a0a67312da7e03454594aa287ba32ae776cf6cec498e402:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwM2NmOTNhMWY0MWVkMzQ0M2I0ZTdlNjBkMmJmYjMxZDk1ZjdhYTkxMmQzNDg5ZDI3Yzc5ZmYzZWViNWQ2MWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4OTRiNjEzMjY3ZGFhMGVhZDZiZDM3MDJlZjBiMGNmMmRkMTk3M2ZkNWVhNmMzMDQ4NjM5ZWM1NDczYTM5YmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4ZDVlMDNhODY3ZWEzYjE1ZTFiMjEzYWJhMDA2NzQ0NDQ5OWRiMzQ1ZDcwNjcyY2QyMjcxMDczYWU2NTZmYzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwZTg5ZjcxZWJkZjkwNmFjM2FmMTUyMGExN2U5NWJiZWEwZjM2NjdkMDFmYzYwMDc5M2Q5YmQzZjNkNDVmYjMifQ"
+        },
+        {
+          "resource": "repo://helm/myfeeder/values.yaml#L22-L31",
+          "version": "repo-lines-v1:sha256:e9d432e33f68210793f9fdaf57dc094446ff2c9b6d9f4eaefae22e6c96e0a235:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3MmFmNTIxN2QyZGRlOTM0N2FiNjllMDg5ZWVmYmE4MGVjMjg1YjBmN2Y2ZjRlNWMxMzYzZWFhOTg0MjBjZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwZmI0YWE1NWQ5MmNlNzRkNmQ0ZmZhYzcwYzAwYjJiMDIwNTkyY2RlY2Q5NTk2NjFlODFiMWQ0OGJkYjY2NWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5N2UxMTFjZTM2OTlkMDU5OWIxY2U3OWQxNDU3ZjkwNTZlYmEzYjI0ODk1M2Q1MGI5YWRkNWVlYmFlZjEzNTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5ODkzMGUyOTc2Zjg2MjhkNDQwYTVmN2I3ZmU3YWNkMGI3NjdhMTAyYTQ2M2UzNGQxNGE5MTg0MmM4YWI5NzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dc7ef8b24c1f42169d96fdede5343e77",
+      "statement": "values.yaml defaults app.image.pullPolicy to Always rather than IfNotPresent, because reused SNAPSHOT/mutable tags would otherwise be cached stale by kubelet; IfNotPresent is only safe once tags are immutable release versions.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L161-L161",
+          "version": "repo-lines-v1:sha256:ec40f9b255227ba44f0855de3faaae4229a6bb1c37ab9258232b8f13e5cf95d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWM0MGY5YjI1NTIyN2JhNDRmMDg1NWRlM2ZhYWFlNDIyOWE2YmIxYzM3YWI5MjU4MjMyYjhmMTNlNWNmOTVkNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWM0MGY5YjI1NTIyN2JhNDRmMDg1NWRlM2ZhYWFlNDIyOWE2YmIxYzM3YWI5MjU4MjMyYjhmMTNlNWNmOTVkNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjQ1MGRiMzY4NTdjY2JhNTE3ZTFhYzE5NTM3ZmM4NDVjYTk3MzliMWEzYTIwNzUxYjE3YmVmNjA0NTExMWIyOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGM4ODgyZDFjYjc2YmQwZWVjZTE4ODE4YmZiZDBiOGE4M2E3ZWViYjkwNWZiNTQyYTM5M2NhNGI4NTU4NTI1NyJ9"
+        },
+        {
+          "resource": "repo://helm/myfeeder/values.yaml#L4-L8",
+          "version": "repo-lines-v1:sha256:21aecf7390230475e4ac51f2bcb8a8450a685e20defd84e417374a1bbf230e54:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmEwNzUxODRhMjViNDI2MGRkY2I5NjE5ZGMxMzNmODkwYWNiZWUwYjhjYjdiY2Q3YmI3NmQwNDAxM2QxNjNhMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODQyYTZlYWI4ODRiN2JhNDQzNDkzODNlOWE0MGZhNjY1M2EzMGQ3ZTFkYzQ2NzJhNDVjZDIxYjE0MDhmMzdjYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOThiZjBlMjlhOWNkZDE3YmU1ZTZmMmVmZTgxMzczN2E1MmQwMmQ2ZDU3MjVhNjMxMWQ1YzE3NDIyZTZiMzlhYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTBlYjdjYmI3ZjhjYzQ3N2YyNzFkOTEzODFjZGY5ZGM2OTUxZDZjYmE2ZTYxM2NkODE3ZWVhOTE2MjM4MDI5NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_bcfcdc0b4db849a3bf9ba874fce0e9d3",
+      "statement": "The Helm Deployment template hardcodes JDK_JAVA_OPTIONS=-XX:MaxDirectMemorySize=64M as a container env var; this superseded the old Paketo buildpack's hardcoded 10M direct-memory cap that had starved Netty/Lettuce (Redis client), and the current Dockerfile-based JRE image no longer needs an override but the chart still sets this env var for tuning.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L159-L159",
+          "version": "repo-lines-v1:sha256:5c21ac51ebce51c1baa5e34933a2ed1147171dcd85a1dea896af0da3d2714a78:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWMyMWFjNTFlYmNlNTFjMWJhYTVlMzQ5MzNhMmVkMTE0NzE3MWRjZDg1YTFkZWE4OTZhZjBkYTNkMjcxNGE3OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWMyMWFjNTFlYmNlNTFjMWJhYTVlMzQ5MzNhMmVkMTE0NzE3MWRjZDg1YTFkZWE4OTZhZjBkYTNkMjcxNGE3OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTU5OWUzMjViMTA0OWNmZTQ0ZDE4MWNlMjYyMDhkMjhmNjViOTlhNWQwMDQ3ZjkxNzM3MDNlOWMyNDczNTgxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzViMDM1ZDFkZDczMzM1Y2VjMGQ4ZTZlMWYzOGU0M2M3OGI1MDQ0OGZjMTkzYjZlYzVmNzYwZGRlYzRjODIzMSJ9"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-deployment.yaml#L53-L54",
+          "version": "repo-lines-v1:sha256:cc33b2b1d8fd83600233f428893917e33539c3846cda28039a47bf4e1f3b4a2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjVkYWE4MzZlMmU5N2Q3ZDkyNDQxODgyMzY4Y2Y0MjQyOTM3ODExODA2Y2Q3MmQxY2ZkYmRjNDA2ZmUxMTM4YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWUzZmViNWJmMDNmZDQwM2FmNTg4OGRkZDdmMDJlYzkyNjgwNTdlNmJlNWViY2MxYTUxZGVjYmNiZTBkYmNmMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDBjMjExNzdlYzgyM2FiYzc3YjAzY2ExZDZkMDFlNGY0NGQxNmQwYzljNzZiZjEyMjRmZGVlNmMwNGU4YmQ1OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWYwZmVlZGVlZmViYzc0MTU5MTFlZDY3ZjM5Y2EyM2JiZmQ2OWIyNzJhMzQxNmNhZmMwOTE2ZGY2MWRjNDczMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d483cede4862487bac6318847b4bfe9b",
+      "statement": "RestClientConfig registers a RestClientCustomizer bean that sets a `myfeeder/<version> (+https://github.com/bartram/myfeeder)` User-Agent header on every outbound RestClient call, working around CDNs (e.g. Vercel) that rate-limit the default JDK HttpClient User-Agent by returning HTTP 200 with a bogus body instead of an error; bypassing the auto-configured RestClient.Builder loses this protection.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L168-L168",
+          "version": "repo-lines-v1:sha256:5064688e7bbfc34c37668fa4149c4edf5aba1a5d0d4fdaa2c3386804326f586f:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTA2NDY4OGU3YmJmYzM0YzM3NjY4ZmE0MTQ5YzRlZGY1YWJhMWE1ZDBkNGZkYWEyYzMzODY4MDQzMjZmNTg2ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTA2NDY4OGU3YmJmYzM0YzM3NjY4ZmE0MTQ5YzRlZGY1YWJhMWE1ZDBkNGZkYWEyYzMzODY4MDQzMjZmNTg2ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWExYjRkMjA0MTY1N2M3MTViMWE2NDJjMzBmOWNiM2RlMTk5MzZjY2MzZGE5ZDAyY2Y4MmVkMjgxMmI4ZGRkNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTY2Y2NiMDlmY2RiMGFiZjkwNDg2ZDlhNTAwMzU0MWFjYjdiNGY5ZTEzYmQ2ZWNlOWMxZjY4YWYzNmM0YWZmMSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/RestClientConfig.java#L1-L18",
+          "version": "repo-lines-v1:sha256:59e251d92d80154e8321de8893781b8485360b3008daaa1aa931a7fb1ede2cb3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4NTAyMmM0MzMxZjQ0NzIzY2FmNWE0OWExMDQ2YjE3ZTdlZDAwZjJkMTFmN2U3Njc4OWI0YTgwMDQyOWY4ZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b0947b62e9764f8484c229ab0cafaf74",
+      "statement": "build.gradle.kts clears axion-release's default jgit-based push action on the `release` and `pushRelease` tasks and finalizes them with a `gitPushRelease` Exec task running `git push --follow-tags origin HEAD`, because axion-release's bundled jgit cannot read OpenSSH-format keys.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L163-L163",
+          "version": "repo-lines-v1:sha256:31d939cc624dce05bb9d10864045e5d41588fc5e50af67354e5b1ee49be87918:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzFkOTM5Y2M2MjRkY2UwNWJiOWQxMDg2NDA0NWU1ZDQxNTg4ZmM1ZTUwYWY2NzM1NGU1YjFlZTQ5YmU4NzkxOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzFkOTM5Y2M2MjRkY2UwNWJiOWQxMDg2NDA0NWU1ZDQxNTg4ZmM1ZTUwYWY2NzM1NGU1YjFlZTQ5YmU4NzkxOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzViMDM1ZDFkZDczMzM1Y2VjMGQ4ZTZlMWYzOGU0M2M3OGI1MDQ0OGZjMTkzYjZlYzVmNzYwZGRlYzRjODIzMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWQwMDg0N2FlNWVkYWVhZmNmYWM5YmZlM2E4ZTAyZDRmMmMwMzA5MzA4MjI4MzFmOTRhY2VlYjU2YjlhMGViMiJ9"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L75-L88",
+          "version": "repo-lines-v1:sha256:8465135d799683f416cfd387d16ed2fc3b0a8138d8f9c8ef1b029861daf77870:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5MzQxZDRkNjk3NGFjOGUzMGJlMDBiNDVjMzdjMDk1MGUwNjIyM2MzZGY2NjZjNjk5YTZmODI0MTZhYjExNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmZmVmYTQ1OTc2MWI0Njk0NzI0ZWE0ZTE3ZGU2MDZiYjNiZTEwZmU2YWE0ZGRjNmM2MjQ2NWI0NzQ2Zjk0MTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7b21cb4fa3564dbc929a16dc5f56f8da",
+      "statement": "ReadingPane's copy action falls back to `document.execCommand('copy')` because the app is served over plain HTTP on the LAN, where the browser Clipboard API (navigator.clipboard) is unavailable (requires a secure context).",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L166-L166",
+          "version": "repo-lines-v1:sha256:e3397711c5f9c48502f775c13549fadedb7ebb0f79a921e054c297bb50c51a6c:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTMzOTc3MTFjNWY5YzQ4NTAyZjc3NWMxMzU0OWZhZGVkYjdlYmIwZjc5YTkyMWUwNTRjMjk3YmI1MGM1MWE2YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTMzOTc3MTFjNWY5YzQ4NTAyZjc3NWMxMzU0OWZhZGVkYjdlYmIwZjc5YTkyMWUwNTRjMjk3YmI1MGM1MWE2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2FkYmMxN2JjMTNmOTNhZThjOWY3ZTJkZjIyOTM5NGY3YmI2MTE2MmRmOTBhMGQzN2M4YzRiMzc4NWU2MzIyMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTQwODk5MjkwNzVjMjYxZTIwOGI5OTBiNTE2NThlMWQ4N2JiZmVlODNkYzlmYjcxN2I0Zjc3MjY5YzBhODMxMCJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L110-L120",
+          "version": "repo-lines-v1:sha256:a9763012014f138372e88850bdfd3987e88fbd912a037fb4f03e1202d79e10c5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1MWEyZWRkMjMzN2VjNzUyM2JjN2JkNjkwZDg0ZWE0ZGNlNDc4ZTE4M2U0Mzk5ZTAwNTkxYTZmM2E0ZGQ5MDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ2Mzg3ZDg5N2EyNWE3MzgwN2FlMjM0Yzk4Mjk5MmFkODc3MWNlOWIwNzc2MWVhZjAwZTAxZGQzNjVmY2Y1ZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU2YzA1OTBjNWRiNzliOGVmMWRmYTI2ZjdhYWQ0NDVmM2RkN2Q0YzM2OTlhYTI2ZDM2NWE0MDk4NzEyNzY1YTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3ZDg2MzJlNTRlOTI5OGFiYjk1ODcyN2UyZDUxNDA4YWJhZjEzNjYwMzUzNzkxMDE0MGFiZjY1YjMwYWI2MTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_21165eca6d674ea3972423d55cc12f22",
+      "statement": "The openwiki-update.yml GitHub Actions workflow regenerates the openwiki/ docs weekly (cron `0 8 * * 0`, Sundays 08:00 UTC) or on manual workflow_dispatch, running `openwiki code --update --print` and opening a PR on branch `openwiki/update` that can touch the openwiki/, AGENTS.md, and CLAUDE.md paths.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/openwiki-update.yml#L1-L49",
+          "version": "repo-lines-v1:sha256:74dc89f404eacda5095d11c59117c123012c967e471cd923b4a13db9bdd79242:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2MDI3ODdhZjZkY2MwODM0ZGUxMjFjYmIxY2I5NWY5NDU5YjcyMWVhYjAzNDlmMTA1MDFiOTk2YzFjNzdmZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0Nzc5NmQzMTczMmZiY2U4OTk4YTJmN2U3YjFiYjk3NTVjMjNlNTg1MDMyMGI5MDkzN2Q4MmMzZmQwZTYyYTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_46795b04488f4668a02cab65af161788",
+      "statement": "AGENTS.md (surfaced into CLAUDE.md between OPENWIKI:START/END markers) instructs agents working with the generated OpenWiki to treat source code and tests as authoritative, treat a brief's unknowns/review items as verification gaps rather than requirements, and prefer the narrowest quiet validation that proves changed behavior while preserving full failure output; generated openwiki/ pages should not be hand-edited outside explicit requests.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L1-L11",
+          "version": "repo-lines-v1:sha256:2066111756019639fd4ad6a1c6bd7323a3db5fdcf9d2b66a57aa9fac5e0ba943:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmMTgwZjljMTI2OTAzYmNjMzMxYWE5NTQ1NmU0OTQ0NGE3ZDRkMDExZThhMmE4M2Y1ZGM4NzAyMzkxODEyZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5Zjc4NzE0ODkzYWE3Nzk0MmNlYTFjNGEyZTAyMzFkYmI3ZmEyYTQxYTcwYzgxNDYwYTNjNjc1NjJkYTNhYWEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.2",
+    "at": "2026-09-20T12:59:40.431Z"
+  }
+}

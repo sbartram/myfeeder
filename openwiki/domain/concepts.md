@@ -4,6 +4,33 @@ title: myfeeder Domain Concepts (Feed, Article, Folder, Board, Integration)
 description: Explains the core data model — Feed, Article, Folder, Board/BoardArticle, IntegrationConfig — their schema, relationships, Flyway migration history, and the business rules around article sort order, cursor pagination, and read/starred state that every API consumer must respect.
 resource: src/main/resources/db/migration
 tags: [domain-model, database, schema, api]
+verified:
+  - by: openwiki/0.5.2
+    at: 2026-09-20T12:59:40.431Z
+sources:
+  - id: openwiki-source-cdc24fc3ca0c47ee6972a535
+    resource: repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java
+  - id: openwiki-source-94de1fcf584b23e4d0d1fd83
+    resource: repo://src/main/java/org/bartram/myfeeder/controller/PaginatedResponse.java
+  - id: openwiki-source-ddb3b890ea464a84e24378db
+    resource: repo://src/main/java/org/bartram/myfeeder/model/Article.java
+  - id: openwiki-source-467204ca8042feb6892811eb
+    resource: repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java
+  - id: openwiki-source-5af9bbadd4381dae61b11d89
+    resource: repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java
+  - id: openwiki-source-6e89b5f8c328f7ec4453ba87
+    resource: repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java
+  - id: openwiki-source-c2e8a8c86a70a529e75122d8
+    resource: repo://src/main/java/org/bartram/myfeeder/service/ExtractedContent.java
+  - id: openwiki-source-dc52751c9213b210ffa4f78c
+    resource: repo://src/main/java/org/bartram/myfeeder/service/OpmlImportService.java
+  - id: openwiki-source-3fe44905fc0d160960775caa
+    resource: repo://src/main/java/org/bartram/myfeeder/service/OpmlService.java
+  - id: openwiki-source-e1ca7236dc9fb7545718d969
+    resource: repo://src/main/java/org/bartram/myfeeder/service/RetentionService.java
+  - id: openwiki-source-51200a041d438c053e6983d3
+    resource: repo://src/main/resources/db/migration/V5__article_extracted_content.sql
+generated: { by: "openwiki/0.5.2", at: "2026-09-20T12:59:40.431Z" }
 ---
 
 # Domain Concepts
@@ -16,12 +43,15 @@ Flyway migrations tell the story of how the domain grew:
 - **`V2__folders_boards_and_feed_folder.sql`**: adds `folder` (feed grouping, with `display_order` for drag-to-reorder) and `board`/`board_article` (curated collections a user saves articles into — see "read later" in `docs/backlog.md`), plus `feed.folder_id`.
 - **`V3__article_image_url.sql`**: adds `article.image_url` (thumbnail extracted from feed content).
 - **`V4__strip_raindrop_api_token.sql`**: removes a legacy `apiToken` field that used to live inside `integration_config.config` JSON — the token moved to `myfeeder.raindrop.api-token` (env-var-backed config property) instead of being stored in the DB. See [Raindrop Integration](../integrations/raindrop.md). This migration is unusual in that it can't be re-triggered by normal Flyway test startup (see `V4StripRaindropApiTokenMigrationTest` in [Testing Guide](../testing/guide.md) for the pattern used to test it).
+- **`V5__article_extracted_content.sql`**: adds `article.extracted_content TEXT` — a cache of the readable content extracted from an article's original page for the reader view. It is populated lazily (only on first reader-view extraction, not at feed-poll time) and is aged out by `RetentionService` alongside `content`/`summary`. See the [Article](#article-modelarticlejava--table-article) section below and the [Reader View Workflow](../workflows/reader-view.md).
 
 ### `Feed` (`model/Feed.java` / table `feed`)
 Tracks a subscribed source: `url`, `title`, `description`, `siteUrl`, `feedType` (RSS/Atom/JSON — `FeedType` enum), `pollIntervalMinutes`, `folderId`, and **poll health state**: `lastPolledAt`, `lastSuccessfulPollAt`, `errorCount`, `lastError`, `etag`, `lastModifiedHeader`. The last four fields exist purely to support conditional GETs and backoff — see [Feed Lifecycle Workflow](../workflows/feed-lifecycle.md).
 
 ### `Article` (`model/Article.java` / table `article`)
 One article from a feed: `feedId` (FK, cascade delete), `guid` (dedup key, unique with `feedId`), `title`, `url`, `author`, `content`, `summary`, `imageUrl`, `publishedAt`, `fetchedAt`, `read`, `starred`. `content`/`summary` get nulled out by `RetentionService` after `full-content-days`.
+
+- **`extracted_content` (reader view cache, added in `V5__article_extracted_content.sql`):** unlike the other columns, this is deliberately **not** a field on the `Article` Spring Data JDBC entity — it's read/written only through two dedicated `ArticleRepository` queries, `findExtractedContent(id)` and `saveExtractedContent(id, content)`, so that loading/saving an `Article` for unrelated purposes (state toggles, list queries) never has to carry around a potentially large HTML blob. `ArticleExtractionService.extract(articleId)` is the only writer: on a cache miss it fetches the article's original page (through `FeedFetcher`, reusing its SSRF guard/size cap/User-Agent), runs it through Readability4J, stores the extracted HTML via `saveExtractedContent`, and returns it; on a cache hit it returns the cached HTML directly without re-fetching. See [Reader View Workflow](../workflows/reader-view.md) for the full request flow and error mapping (404/400/422). Like `content`/`summary`, `extracted_content` is nulled out by `RetentionService.cleanupOldContent()` (`ArticleRepository.clearContentOlderThan`) once an article's `fetchedAt` passes `full-content-days`, so a reader-view request against an old article re-extracts on next access.
 
 **Sort order rule (important, easy to get wrong):** articles are sorted by `COALESCE(published_at, fetched_at)`, **not** by `id`. Batch-fetched articles (e.g. from a bulk OPML import or a feed with a backlog of items) get sequential DB IDs but widely varied publication dates, so `ORDER BY id` does not produce chronological order. Cursor pagination therefore uses a composite `(published_at, id)` comparison — `ArticleController`/`ArticleService` still expose a single article ID as the cursor, but the service looks up that cursor article's date to build the SQL comparison.
 

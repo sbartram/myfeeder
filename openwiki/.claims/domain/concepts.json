@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c84366d9611ae3fa0ce67ae7721d72cf08dc610d94affa647a9772aa170ab573",
+  "claims": [
+    {
+      "id": "claim_0fad62438c05466080e57b13951223ec",
+      "statement": "Migration V5__article_extracted_content.sql adds an article.extracted_content TEXT column that caches readable content extracted from an article's original page for the reader view.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/db/migration/V5__article_extracted_content.sql",
+          "version": "repo-file-v1:sha256:40144184eb66db1770bd31199ab5e043f157d4218386b7cc428363058171a6a5"
+        }
+      ]
+    },
+    {
+      "id": "claim_4d03eb560a114cff86b796f9ee86bc35",
+      "statement": "The Article Spring Data JDBC entity does not declare an extractedContent Java field; the extracted_content column is read and written only via dedicated ArticleRepository query methods findExtractedContent(id) and saveExtractedContent(id, content).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/model/Article.java",
+          "version": "repo-file-v1:sha256:9aaa84fcffa2192f5ef7921e766ec12655ec430aa836c65e817bf5b5f56629e7"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L30-L36",
+          "version": "repo-lines-v1:sha256:b5524bcc494854775eca087e5c5bc8832f533411e44bde2845a450cdeea99c42:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGJkNzBiOWQwMWExMGE5N2JiN2I4NDRiYmEwYzkwMmJkYjA1ZjQwNWFhMzlkZDUwNDBhZjkwYTVmYjlmYzZhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGQ4MzVjOTUzNTY5ZGFjYjRiN2U5MGFiODQzN2FkNTNjZTRmODFkNDBmZTI3ZGY1ZGRjZWFjOGJmYjNhZTkwZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODQ0ODgyOGFjMjczY2JhOGYxNGNiOWFlMzJjZmJhYWI0ODY5YjNkNjhhYTNmMDNjNDliNTgxNGMwYmRhZDZiZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzkxOTQ5Mzc1N2I5NzUwZGNmYzE1ZmRmNzczYTg2Njc3NGJhM2RkYWJmNDUyMjNmNTcwYmVkNmQ2OTA4ZTY2MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_59733915f21c40be87d38c44d6a595d2",
+      "statement": "ArticleExtractionService.extract(articleId) implements lazy caching: on a cache miss it fetches the article's original page via FeedFetcher (reusing its SSRF guard, size cap, and User-Agent), extracts readable content with Readability4J, persists it via ArticleRepository.saveExtractedContent, and returns it; on a cache hit it returns the cached HTML from findExtractedContent without re-fetching.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L37-L65",
+          "version": "repo-lines-v1:sha256:b8fbd028a255b3324a05ef88c708f25e045e8964828f894f14d3a71e46a0cf9f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxODRmMTYwZWIxYzVhNTg5NmY3MGI0NmMzMmEzNmQwMTYwZjg1NmRiZGRiZmZmNTk3MmNjMjFhMzU5ZTljNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiZGJlY2ZmNDQ0ZDVkMTFiYTVjMWFmMDgxMzNmZjY0ZWI2ZTg3N2JiZmFlOTA0MGQ5OGZiZDg1ZTEwM2VhMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MGZiZDQ3Zjc5YjhkZDllMzllOGU0M2RkOWMxYTU3MDFhNGQxM2RlYTJhYjI2MmY4ZmUyYTg1ODEyMmIxMjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ffeff264ef5040e6b062e3778c0d1755",
+      "statement": "ArticleExtractionService.extract throws NotFoundException when the article does not exist, IllegalArgumentException when the article has no URL, and FeedParseException when the page fetch/parse yields no readable content, mapped to 404/400/422 respectively by the API layer.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L28-L65",
+          "version": "repo-lines-v1:sha256:6c5923909ce47cb82de4178c55e8cc9638397bb28100d7d75cf17e60752932c4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyYmMwODg1ZTdhNTQ3ZjY2YjZjMTg1NGY0NDU3Mjg3MWRmYTdhYTZlYjg5MjcxYTc5MzMyNzFhODhjNDkzOGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MGZiZDQ3Zjc5YjhkZDllMzllOGU0M2RkOWMxYTU3MDFhNGQxM2RlYTJhYjI2MmY4ZmUyYTg1ODEyMmIxMjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_112ed8a6ce8c4634b1d7d993d8b747fd",
+      "statement": "RetentionService.cleanupOldContent() nulls out article.content, article.summary, and article.extracted_content together once an article's fetchedAt passes the configured full-content-days retention window, via ArticleRepository.clearContentOlderThan.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L26-L28",
+          "version": "repo-lines-v1:sha256:ca50c5b2ef4efb4c41431d6058d497b715767350bf1d14cd97fe6e00c1aae84d:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWMxNzdmZjkxN2U2YWYwZDM3YzhhNGQ4ODI2NzBlNmIwNWJhOTMwZjNhMmQxYzZjYzExZjIzYzA3NTI1YzBjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWEyM2IxYzcyYmEzZTE3Zjc2OWZjZDczYTlmMzlkMjExNmI1NzZlYjUxOTE5YjIzYTY1Nzg2NDM5YzFiMTc1NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWQ3ZDc3NDU3OWMyMjc0OWNiNzlkNmNkZmYxOWYxNWE1MDFhNWRjNDJjN2YxMTNjYWYxODkxMTlmN2UyMTg1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGU3MDgzMTI3NmJkMGZhZmMxZGNjZGFkYzM4ZDE0ODA0Y2MwNzY0N2YwOGRjZDgzZDk4OWFjNzM0YzA0MzEwNiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/RetentionService.java#L21-L27",
+          "version": "repo-lines-v1:sha256:9d98199ead2e3c69352449b47bb38a6e25735ee7ffdbb0c08468debe60242dca:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2NkNmNmNmVmNWQ1Zjg1YjMyNjA2MWQ1ZDIyODAxZjAwNmIyMjc0YTFkMTI4MTczODQxYjExNDdkNDQ1MGZlOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDI1ODE1YmNlOWI5YjZlYjg5OTI1MjYxMGVmOGE4NjZmYThlMjJlYzQzZWExYTM0ZjNmYjdmODVhYjEyOGYyOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b25a77119c074ad1b1aab195d1109a36",
+      "statement": "ArticleController exposes reader-view extraction at GET /api/articles/{id}/extracted-content, delegating to ArticleExtractionService.extract and returning an ExtractedContent(title, contentHtml) record.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L69-L71",
+          "version": "repo-lines-v1:sha256:57dbb4a3c84d702df168807269dd628e980ae473a2406ae1a54d5dcc83537eea:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjNiMjdkZDc0YzU1ZGEzOGMxYjc0MTNlYTk4ZWRlZDE1OGU0OGY1Mjg2YzdlNWViNmRhNTA0NDYwNzI2N2E2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjRlNzZlZDI3ZmM2ZTJkMDc2ZDFhY2RjY2Y5YWUyNDNlOGNhMjRkMWNjNzIxYWEyZDZmM2U3ODkyYTI0OTYzYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjAwMTEyMDE4ZDljYmQ1NzA3MTJjZjZmZGQ3Y2ZmZDk3MzhhNzhjY2ViMWIwMjdmYzRkYjJiMDNlNmYxNjhjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2E0Y2I0MmE2NmZmMWZmOGRiZjllZjEyNzgzNTI5YjZhZTJlNmNlOGQ4ZmNmZGY1OGZhZjMxOWNjYjU1M2U4YiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ExtractedContent.java",
+          "version": "repo-file-v1:sha256:dd0ea3a2d842de46f7f1325f70d919e7238e087258f74b994a6daecb836ba63f"
+        }
+      ]
+    },
+    {
+      "id": "claim_feb413761c6243c18525996695b86bd7",
+      "statement": "Article list/pagination queries in ArticleRepository sort by COALESCE(published_at, fetched_at) with id as a tiebreaker (not by id alone), and cursor-based pagination (findFilteredBefore/findFilteredAfter) compares on that composite (date, id) pair rather than id alone.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L41-L51",
+          "version": "repo-lines-v1:sha256:851023332ffd6170f98d6d8d1601ac9b81363e66ceb3eeaf772e882640414145:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1YzhlM2I5MzQzNzFhMmMyMGJhNmUxOTQyN2Y5YTA2OWQ0YThhODdiOWE4MjJiZmFiOTdhY2VlMmIxOWQ1ZmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0MGZmMmE5Yzg0NmNkN2I2YWZiYzhjYWM5YjljOTY4ZjY5NjkxZGUxYWNjNDRmZTVmMmVkMDZkNjE1OWMwNGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNjg1ZWFjODNlNWMyNzJiNjQ1NWY1ZjUzNGEzOGZmZDNiNTdhNGQ5NDAxZjc3Njk3NzNhZDI3ZTgyYjMxMGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0N2Q3YmQ0MmI2MzY3MzZmYWY4MWIwMmU1MmI5ZTIyZWQ2YTZjMTRhNDg3OTM4NDgzZTA5NDIyZmJmODM4YjcifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L55-L70",
+          "version": "repo-lines-v1:sha256:4bff7e52dda64d9198cd011c6bc8581aabe6fed1b6c01284f90d97920dd573c7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNmE4NTY1YzI2ZDQzMjAxOGU4ZjhhNmY2NTExOGExOWI2NDZiZmY2ZGEwZThmODY4ZTlmNDg4N2MxZjlhMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5YzQ4MWQyYTdkY2RlMzEwY2VhNmIyYTA3NDYwZWQ2OGRjN2I1N2Y1YTM5OTc0NDI0YWEyMzgzZjQzNjVhNmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_87f8df03c9f446bc8b9db624d2bc833c",
+      "statement": "ArticleService.findFiltered resolves a cursor by looking up the cursor article's publishedAt (falling back to fetchedAt) and passes that date plus the cursor id to the repository's composite comparison queries; the public API still exposes a single article id as the cursor value.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L55-L70",
+          "version": "repo-lines-v1:sha256:4bff7e52dda64d9198cd011c6bc8581aabe6fed1b6c01284f90d97920dd573c7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNmE4NTY1YzI2ZDQzMjAxOGU4ZjhhNmY2NTExOGExOWI2NDZiZmY2ZGEwZThmODY4ZTlmNDg4N2MxZjlhMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5YzQ4MWQyYTdkY2RlMzEwY2VhNmIyYTA3NDYwZWQ2OGRjN2I1N2Y1YTM5OTc0NDI0YWEyMzgzZjQzNjVhNmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9de4e91a7d214981af75ecbc42e6671c",
+      "statement": "All paginated list endpoints return PaginatedResponse<T> with fields {items, nextCursor}; PaginatedResponse.of(fetched, limit, idExtractor) fetches limit+1 rows, trims the extra row when present, and derives nextCursor from the last item's id, centralizing that logic instead of per-controller reimplementation.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/PaginatedResponse.java",
+          "version": "repo-file-v1:sha256:de799e2bd3ff8bf1e18cc83e6f94dd48f2c3cfc755c9480c5c259f9c7a989e34"
+        }
+      ]
+    },
+    {
+      "id": "claim_81bad423f8c14e60a800bf6d2330ce56",
+      "statement": "OpmlService.parseOpml and generateOpml configure DocumentBuilderFactory with FEATURE_SECURE_PROCESSING and disable DOCTYPE declarations and external general/parameter entities, providing explicit XXE protection for OPML import/export.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/OpmlService.java#L32-L69",
+          "version": "repo-lines-v1:sha256:adbcfe30221162bdcd873aadc0d1350db117cd01d21a29edf1587ad3bd1b18a5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmNmY1NGMxOTM2MTY1OGU1NTBhNmVkNWYxMWM1NzFjZDJmMGVlZGNlMzU3Y2ViYzk0ZTZkYjg5MDdiNTNlNzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyZGI4OWQ3M2JlNzMxZDhjNDg5OGFmY2U3MjJjMjU1ZWNmMDkzNjJkZmU0NjcyYWM4Zjc5ZDQ2ZTUzM2MyYWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxNDBmNDNiNWI0OWI3MGMwZjkxM2NmMGM1ZGNlZDFiNmNlNGM1OTExMzkxMGRiYTk2ZDEzZGMwMDI2MDIyMWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwODgzNGYwN2ZjYWRjZmNmMmQ3Y2VhNzAyYTVlNTAwYTQzYzVkZmUyYTBiZmU0MjgxMWEzYzg0MzlmOTI4ZmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f3d2e7865cd449cd877ff8b50cd8dc7a",
+      "statement": "OpmlImportService matches incoming OPML feeds to existing feeds by URL (updating title/folder in place) and folders by case-insensitive name (creating a folder via FolderService.create if missing); only newly created feeds publish a FeedSavedEvent, not updated ones.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/OpmlImportService.java#L36-L88",
+          "version": "repo-lines-v1:sha256:e2c5862702d5af60b759d8ec19f4c50562c03c4fd19f9419ff4b8bf458828947:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4MWQ1NWUyYzdhZTA2Njk0ZmE1OGRhYmU3MTQzZGRlMzY3MGZmNDEzNTFjOWIxMmRhMTg1N2E0MTk1MzVkNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwNWM3NjAzYjNjZmJhOGZkNzI0M2JjY2U4MmIxZDNmNzc5NWE2ZWVjMzkxNDMyNWUyZDMwMzhkZGFmYWYyNGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.2",
+    "at": "2026-09-20T12:59:40.431Z"
+  }
+}

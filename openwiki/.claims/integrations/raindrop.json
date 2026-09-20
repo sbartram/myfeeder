@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ba18a0142bfee5a83fa99692d8daf873cc927d6a25f8f69aed512837847d231b",
+  "claims": [
+    {
+      "id": "claim_e961df7b4b194bfc8db5e443e66234c4",
+      "statement": "myfeeder's only implemented outbound third-party integration is Raindrop.io; Dropbox/Google Drive export (auto-export of saved articles, feed list, and history) is tracked only as unstarted backlog items in docs/backlog.md.",
+      "evidence": [
+        {
+          "resource": "repo://docs/backlog.md#L53-L57",
+          "version": "repo-lines-v1:sha256:432ae709123a66e745ef87928f4f1cd0b0ee6e0f55af9ff76ac472a3e9b0831a:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGNhMmE0MzU1ZDNmN2NjMjFhOTQ5YmY3MWY2ZDRjOGM4MjIzYmU1OGUxOTc5M2UxNTM2YWVjNWU4ZTRmNmE4ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDQ3Y2M1ZTM1Njc2M2FiMDFiNDA4MDE5MDYzMTVmMDM3NzQ0MzljNjg5ZDk2ODE1YThlM2ExY2RlMGNhNDRjZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDNkMjdhODBkZmQ4M2FiODQ0MThmMzU2NTU1YzY0NmFjMzcxMjEzZDE4MTcwNzUwNGNmNWI0NTVmM2QwODllYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDc5YzdmZTQzNGNjZDExMjQ0MTk2NDE2NGMzMDU4Yjc2MDNhYjM0ODRlZjI0MzU3YjRiNDg1Y2RjMDdhMWNlZCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L74-L80",
+          "version": "repo-lines-v1:sha256:22c70cf90283553cb1cc3b6b1e974d16c4777d4a212aa2ad2930b797499ff996:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWUyODI0Yjk0OGNlNGRjMDNiZDU2YjhhNTEwODg2NTVkMzU1Yjg1YTg5OTc2ZTMxYzNiNGNjYzE5ZmYzZTgzMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjRhOTQwZTExNTVlYjg3ZDgyMTAzMGUyZWU5MDRiYWNlM2I3MjZmOTk2YTkxM2Y5YmQxYmEwZDJkNGNhZmY0NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_81a088a954a94cadbf948feccddb8e88",
+      "statement": "ArticleController exposes POST /api/articles/{id}/raindrop, which loads the Article by id and delegates to RaindropService.saveToRaindrop.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L74-L80",
+          "version": "repo-lines-v1:sha256:22c70cf90283553cb1cc3b6b1e974d16c4777d4a212aa2ad2930b797499ff996:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWUyODI0Yjk0OGNlNGRjMDNiZDU2YjhhNTEwODg2NTVkMzU1Yjg1YTg5OTc2ZTMxYzNiNGNjYzE5ZmYzZTgzMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjRhOTQwZTExNTVlYjg3ZDgyMTAzMGUyZWU5MDRiYWNlM2I3MjZmOTk2YTkxM2Y5YmQxYmEwZDJkNGNhZmY0NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_33badd5caec949bd9460da5d02c7c2c4",
+      "statement": "IntegrationConfigController exposes GET /api/integrations/raindrop/status (token-configured check), GET /api/integrations/raindrop/collections (delegates to RaindropService.listCollections), PUT /api/integrations/raindrop (upserts the RaindropConfig collectionId), and DELETE /api/integrations/raindrop.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/IntegrationConfigController.java#L33-L69",
+          "version": "repo-lines-v1:sha256:3fdde085192aeebdceabee4d92b6b27631eebf08914a6d592f743b88c45a6cee:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlZGQ1ZTg4NDIxYTk0MThiZDI3MTQzNDJlNGIxNjgyNDUwOWM4MzRmNTExMzdjMjU1MDQ3YTNhYjU0MWUwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjViYmFhM2UwOGFjZTY2ZjgzMjU3NmMzNDlkZmQ1OTFmNTA3YjNlNTI4Mjk0MWIzZmE0MjMyMjQwNWM3MmRhMjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1bff90a1e39a4f6d945ff95789ec8436",
+      "statement": "RaindropService.saveToRaindrop looks up the IntegrationConfig for IntegrationType.RAINDROP, throws IllegalStateException if missing or disabled or if the config JSON fails to deserialize, throws IllegalArgumentException if no collectionId is selected, and otherwise calls RaindropApiClient.createBookmark; listCollections() is cached via @Cacheable(\"raindrop-collections\").",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L24-L52",
+          "version": "repo-lines-v1:sha256:8b624d2ee3e4e2bac0991f617af15fce82d3be26d171fac89eedd48b41558bf1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxNDQ5ZTM1ODMyZGRhYzYyZDcyNGQxYTFiNGI1ZDdlM2NmMzk3MWE5NDMzY2FiZDFkN2U0YWRmODA3NWFjNzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzM2MzOTAxNzQ2MzZiNDJmMmIzYWIwYmYzN2NhMWM2YWVlMzI5ZGNhZjY5ZGRmZDI2NjVhNmMwYTE4YTQ3NjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e69214aa99d646a9b18c66ebd68cc86d",
+      "statement": "RaindropApiClientImpl is a separate Spring bean from RaindropService specifically so the @CircuitBreaker(name=\"raindrop\")/@Retry(name=\"raindrop\") annotations on listCollections/createBookmark take effect through Spring AOP proxying, avoiding the self-invocation bypass that would occur if the annotated methods lived on RaindropService itself.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L12-L66",
+          "version": "repo-lines-v1:sha256:b28e692238e7e7d6cd5a9f10ba0da3af9d45924be1cf1064ac934cf61dfa6a2e:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYThjMTE2MGViMGE5NTFkOWQxYzkzYmUxYmM0NTRiYjM0ZmY5NTM5NjNkMTNlMTdkZmE4OGM1NDMwZDBhMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxNDE5ZWI2Nzg5ZGFkMjAwMTBlYWE5YTQwMzBlY2JiYTRhYjA1NDk3OTY5ZTBmMTIxMTVmN2JiZWRjYzRjOGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0ZDY1YjJkMWM2MTcxYjc0MjM5NGE4ZmRjNTY3YWJkMDYxMTc5ZWRjZDcyMDU2ZmRjNjQ3MDA2NjQwMTEyODAifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L18-L45",
+          "version": "repo-lines-v1:sha256:1533bfce7807ff98527de964aba07e96fd27cbd8d806deacdffb5108c945ebc6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwMDNiZmUxODRkYmJhNjdjYzdkMmMwMWU1NDMxNzRkY2ZiNTA2OTQwNWI4NGVjNWE4N2ZjNzk0ODY2NjQ4YzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgwZmZiYjNlYTY2MDJmMDMwYWMzZmU3MGIyNzFiZjU0ZTM4M2JkMTEwMzAxYTBhMWI2ZTU1MGU0YjQwM2NlOWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0ZGU0ZWZjMjJiZjlhZmU3ZWJmMzhjZDI0NTM2YmU5NmQ4NGQxNDU2YzUyZGY0MzhjYjk4ZTk4MDNjZmEzMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b5497926db8a4e11aceb971e858445e1",
+      "statement": "RaindropApiClientImpl.requireConfigured() throws RaindropNotConfiguredException whenever the injected apiToken (from MyfeederProperties.Raindrop, bound to MYFEEDER_RAINDROP_API_TOKEN) is null or blank, and both listCollections and createBookmark call it before making the HTTP request.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L14-L36",
+          "version": "repo-lines-v1:sha256:e6b1c7c08134a74aca484580679d19c685144d68d6e45c50b66b66935f59dec1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZTM3NTJkMTU4OGE0ZGNkZWI2OWQ2MjA1ODg5ODlmMmM0NDQ2MmFlOTZkZjRjODc4Zjc4YzVhYmFhYjg1N2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzMjA3ZTMwOGZkNmU3YWUxMThjNGM1YzY0YmVhMmNhNjA5ZTlhMDVhMDVlODY4MDFiZmY5ZWEzNmY2ZGNiYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwNzEzODA0MTM3MTUwNzYyNTliYjZiYWFhODhiNjFjZWEzOTYyYzQ5NzYwMzMwYWVjNTFmMWNjOTQzZTA0MWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI2NjEyYTE0ZWY4MTljNzNmYTE1MjIwY2NjNDdlYjE0NWVjOWRkNjBhYzYzZGI5MmI4YmM0NjBmNDcwZDlhY2UifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropNotConfiguredException.java#L1-L7",
+          "version": "repo-lines-v1:sha256:fba88de39f50e5121376b44ea7155576391d049db734fb96d49ff02e3b18be99:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2ExZDg1ZDIxNzhlYTc2ZWViNzY5ZmUzN2M1MjIzMGRlNGUwNGFhNTFiYTI3ZjljM2RiMTc2MTQ5N2EwZDFkOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_65c906f93a0f4692adcdbefaa052ef0c",
+      "statement": "The fallback methods listCollectionsFallback and createBookmarkFallback on RaindropApiClientImpl explicitly rethrow a caught RaindropNotConfiguredException as-is, and wrap any other throwable as IllegalStateException(\"Raindrop.io is currently unavailable\", throwable).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L68-L84",
+          "version": "repo-lines-v1:sha256:bc8a16de91f5fae8e68ed204f9fec99585fe0522116fb80cb311b80c998cd603:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNDhhNDIxNzRhMzFhYzEzMDBkNWI0OTFkMzRjYTgxZWQ5MWU0NjNiNGUwYzA2ZWQ1NTdjY2Q5ZDVjM2Q0YjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0N2MxNzdhZDMyYmQ0OGRiMzJjYmI4ZmM1YTZiMjQ3Yjg3MjRhYmY1YWM5YTNiZDVjMTY4YjQzMjdlMzRlYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5ODA1MTc3NmY2ZGRhZDA0NmQzZjMzNGJmZjY2MDRmOGRmYTdjMGZjNjJjNmNjNjliOGJlODQzMDNkODc3NDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e4c022c5904d45a49feb6024bde936f9",
+      "statement": "application.yaml lists org.bartram.myfeeder.integration.RaindropNotConfiguredException under ignore-exceptions for both the resilience4j circuitbreaker instance \"raindrop\" and the retry instance \"raindrop\", so an unconfigured token does not open the circuit breaker or consume retry attempts.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L19-L42",
+          "version": "repo-lines-v1:sha256:40ccba8a354b7d2d196f577b4ef103dc07417dacbd1866d658e3de48d400fce7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkNTQyNGZmYjA1NWZkMWE3ZmZmODYxODNlZDUyMTUxOWM5ODhjMzQ5MzNkOWJkNWFmZmIwYTA1OTdhNTg3ZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlMDNlMDdiMzk2NDYzNzc3ZTMwNzU3ZWEzMDA0MDYyNzBkNTEwMGNjYTY1MDNjZGRlMTNiNDI1NDZkMzYyYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2N2M2YzVmMDkzZDM1NDEzYTRlODQ3YWMxMzFlMzQ3NDIyMjMxYmRiYWQ1YjU5ZmVkOWFkN2M0ZjhjYzdiMzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5c67d2ddc5f24b92aae6aa59cd7b009b",
+      "statement": "GlobalExceptionHandler maps RaindropNotConfiguredException to HTTP 503, IllegalStateException to HTTP 409 (\"Configuration error\"), and IllegalArgumentException to HTTP 400 (\"Bad Request\"), which determines the HTTP status a Raindrop failure surfaces as.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L44-L63",
+          "version": "repo-lines-v1:sha256:c04ce22d67f81151251a4f2eed0e9fb9f762c1f85005ec0b4a96bfcaa44690cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5OTljZGM0NjI5MDIzYmQwZTBlZjQ5ZGU1Nzk3ZTFlNDA5MjlhNjY3ZmEwN2Q1MTRjYmJmNjhhMzM0ZTM5YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkMDFkNWI3MDU2NGM3MjA1YWRiNDMwMGI4MGFhNDg1ZDI4ZDM4YTUxZWI5YjU5NzRkOTViNjBiNmIwNzk2MjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_48a39b3e1eb442e6ada39b180f2a71af",
+      "statement": "The Raindrop API token is stored only as the config property myfeeder.raindrop.api-token (env var MYFEEDER_RAINDROP_API_TOKEN, defaulting to empty), not in the database; Flyway migration V4__strip_raindrop_api_token.sql removed an earlier design that stored the token inside integration_config.config's JSON blob, which now only carries the selected collectionId.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropConfig.java#L1-L9",
+          "version": "repo-lines-v1:sha256:709f900f3a7b946c868781ef1e39596fb302a6aac4cad8d1cb21939bf5b4a504:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2ExZDg1ZDIxNzhlYTc2ZWViNzY5ZmUzN2M1MjIzMGRlNGUwNGFhNTFiYTI3ZjljM2RiMTc2MTQ5N2EwZDFkOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzUyNzY5NDM3NjNmNzZmZTQ0MTcyMzBhMjRhYjU4YzMyY2YxNmNhNTExZTBmMzFiZjMxZWQ4NTRkZDUxYWViNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L19-L21",
+          "version": "repo-lines-v1:sha256:da7ab5992fb4ab61ba62006ed0457efc317b7cd3cdbe6bc76e89ecaa8b02ba5b:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmQ1NDI0ZmZiMDU1ZmQxYTdmZmY4NjE4M2VkNTIxNTE5Yzk4OGMzNDkzM2Q5YmQ1YWZmYjBhMDU5N2E1ODdmOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDM1YWVmZDhhNzUwOTNmY2U3MjA1YWQ2ZTViZjJjNDA2ZjlhOGU2YTA0MGZjY2NhMmYzMGI3NmY0NDhhYWVkYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTY3YzZjNWYwOTNkMzU0MTNhNGU4NDdhYzEzMWUzNDc0MjIyMzFiZGJhZDViNTlmZWQ5YWQ3YzRmOGNjN2IzNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODQwNmEyYjAyYjA0ZmZmNTExNTlmYWViODllNDA1YTBmODhhNmE0MzQzYmQ2NmJkNzdhY2E3NWVjOGI2NDUwNCJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V4__strip_raindrop_api_token.sql",
+          "version": "repo-file-v1:sha256:1e2b90683a8332bca99e6b9e866fd8861a385473a30770735963e770550f5cd5"
+        }
+      ]
+    },
+    {
+      "id": "claim_4a9c27012f52497bb1d4461e781d6a0e",
+      "statement": "deploy.sh treats MYFEEDER_RAINDROP_API_TOKEN as optional: if unset it prints a warning and proceeds, passing the (possibly empty) value to Helm via --set secrets.raindropApiToken, which the chart stores as Secret key myfeeder-raindrop-api-token and injects into the app deployment as env var MYFEEDER_RAINDROP_API_TOKEN.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh#L12-L24",
+          "version": "repo-lines-v1:sha256:953138b3afc1937f8681b940c0ae0b1dd1fa847288aa158b67d1f01fe6cb668c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjYmFmZDA2MDYxMGNkYWM2MDA4OGY3YWJmY2Y3NmM1Y2E0YmY4ODM1ZTc4MDdlMWY1ZTUxMmRmZjk5MmE3YTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5NDE4Yzk0MzYzODdmM2RhNTQzODgxNjAyNzU4MmE5Yzc2YjIzNDJiMDIxMjI1N2FlNTE3NjgxODQ5ZGJhNDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjllNDM5ZmNlZDE4MDU5ZjFiMmY3ZDJlZjEyOTMzMjc3ODE5NDFkNDgyZDI5Mzg0YzVjMTg1N2EwZGYzN2FkNTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzY2QwNTdiYjIyM2FmMmYzMjQxNmZhYzMwYWFkNGRhZTA2MmVmNjIxNzJkYTdkNmU4ZGFjZDdkYzVmOGVjZmIifQ"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-deployment.yaml#L48-L52",
+          "version": "repo-lines-v1:sha256:214af286a18022d0b4a9c58ef87cb88857a7667fd9b7039bdfa84c61dbbebf4c:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDIzOWE0NDE1NTcwOTczMzAwYzc2MjQxNzJmMDNkNmM5NmVmYTljYjdlOTRjMjdhM2QyMDUzNWUyMGQ4YmQzZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmJhOWQ1YmU4NWFkYzdiOGNmMzc3MTFmNDk2MjcyYzc5YmM1YzM0ZjMyZTI5N2EzOTcxNGZmMGZjNTdjNjEwYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2M1OTYwNjQ0ZDBkZjFkYWJmMDQxZmYwYTlhYTZlNzM5YWE0YTA4MjBjYmE2NzFjZmRmYWNlNTI3OTZhNWE5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjAzMzZkMTZjMzYxN2UyYWMxNjBlYmFiM2FkODYzY2Y4ZDc2YzgzNTgyMDVkZWIxNGJkODFkZjdjMzlkOWMxZSJ9"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-secret.yaml#L12-L12",
+          "version": "repo-lines-v1:sha256:d72091faf21dc1ce0553152afb3cb6a09e52f01c2804822de9a0f17306bda192:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDcyMDkxZmFmMjFkYzFjZTA1NTMxNTJhZmIzY2I2YTA5ZTUyZjAxYzI4MDQ4MjJkZTlhMGYxNzMwNmJkYTE5MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDcyMDkxZmFmMjFkYzFjZTA1NTMxNTJhZmIzY2I2YTA5ZTUyZjAxYzI4MDQ4MjJkZTlhMGYxNzMwNmJkYTE5MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzAzNTQyOGRjY2IzZWFmY2Y5NWVhZDRiYzkzNmYyNjUwYjUyYjU3ZjBiMDlkZjZmMjkyMzA2ODBlZjE1OTEyYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTEzZjFiOWZmY2RhNzM4MTE4MzdjNDdhYjJhYTllODFiNjU1MWU3YzA5NGVhNjcxNjJmZDE2ODgwZWNhODA5NSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.2",
+    "at": "2026-09-20T12:59:40.431Z"
+  }
+}
