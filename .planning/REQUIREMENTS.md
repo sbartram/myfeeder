@@ -108,12 +108,52 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| UPG-01 | Phase 1 | Pending |
+| UPG-02 | Phase 1 | Pending |
+| UPG-03 | Phase 1 | Pending |
+| JEV-01 | Phase 2 | Pending |
+| JEV-02 | Phase 2 | Pending |
+| JEV-03 | Phase 2 | Pending |
+| JEV-04 | Phase 2 | Pending |
+| JEV-05 | Phase 4 | Pending |
+| INT-01 | Phase 3 | Pending |
+| INT-02 | Phase 3 | Pending |
+| INT-03 | Phase 3 | Pending |
+| INT-04 | Phase 3 | Pending |
+| INT-05 | Phase 4 | Pending |
+| INT-06 | Phase 3 | Pending |
+| SCOR-01 | Phase 4 | Pending |
+| SCOR-02 | Phase 4 | Pending |
+| SCOR-03 | Phase 4 | Pending |
+| SCOR-04 | Phase 4 | Pending |
+| SCOR-05 | Phase 4 | Pending |
+| SCOR-06 | Phase 4 | Pending |
+| SCOR-07 | Phase 4 | Pending |
+| SCOR-08 | Phase 4 | Pending |
+| PRIO-01 | Phase 5 | Pending |
+| PRIO-02 | Phase 5 | Pending |
+| PRIO-03 | Phase 5 | Pending |
+| PRIO-04 | Phase 5 | Pending |
+| PRIO-05 | Phase 5 | Pending |
+| PRIO-06 | Phase 5 | Pending |
+| PRIO-07 | Phase 5 | Pending |
+| PRIO-08 | Phase 5 | Pending |
+| FDBK-01 | Phase 6 | Pending |
+| FDBK-02 | Phase 6 | Pending |
+| FDBK-03 | Phase 6 | Pending |
+| FDBK-04 | Phase 6 | Pending |
+| FDBK-05 | Phase 6 | Pending |
+| FDBK-06 | Phase 6 | Pending |
+| FDBK-07 | Phase 6 | Pending |
+| OPS-01 | Phase 7 | Pending |
+| OPS-02 | Phase 7 | Pending |
+| OPS-03 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 40 total
-- Mapped to phases: 0
-- Unmapped: 40 ⚠️
+- Mapped to phases: 40
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-22*
-*Last updated: 2026-09-22 after initial definition*
+*Last updated: 2026-09-22 after roadmap creation*
