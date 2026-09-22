@@ -30,7 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. `./gradlew build` on Spring Boot 4.0.8, Spring AI BOM 2.0.1 and Spring Cloud 2025.1.3 passes every backend test
   2. Frontend dependencies are on their latest minor/patch versions (no major bumps; react-router stays on v6), and `npm test` and `npx tsc -b` both pass
   3. The upgraded release is deployed to k3s, starts with clean logs, and feeds keep polling so new articles appear in the reader as before
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Backend BOM bump to Boot 4.0.8 / Spring AI 2.0.1 / Spring Cloud 2025.1.3, keep Reactor Netty (D-01), bind timeouts (D-02), CLAUDE.md (wave 1)
+- [ ] 01-02-PLAN.md — Frontend in-major `npm update --save` with blocking-human version approval before install/commit (D-04) (wave 1)
+- [ ] 01-03-PLAN.md — Combined build + local end-to-end smoke, STACK.md, `.serena` decision, `--no-ff` merge to local main (wave 2)
+- [ ] 01-04-PLAN.md — Read-only release preflight, approval gate, push + release v0.1.24 + image + k3s deploy + soak verification (D-05) (wave 3)
 
 ### Phase 2: Jev Client Foundation
 **Goal**: The app can make resilient Jev judgment calls on a pinned model when a key is configured, and runs exactly as before when no key is set
