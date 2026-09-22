@@ -42,8 +42,8 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 ### Out of Scope
 
-- Re-scoring existing articles when the profile text or topic list changes — user chose new-articles-only; weight changes still apply instantly via query-time blend
-- Using full article content or on-demand Readability extraction as Jev input — title + summary + feed is cheaper and available at ingest
+- Automatic re-scoring when the profile text or topic list changes — a manual, user-triggered "Re-score unread" covers this; weight changes still apply instantly via query-time blend
+- Full article content or on-demand Readability extraction as Jev input — title + summary (falling back to stripped, truncated content) is enough
 - Using liked/disliked articles as in-context examples — feedback adjusts topic weights instead
 - Sort-by-interest on every article list and hiding/dimming low-interest articles — Priority view + badge only for this milestone
 - CONCERNS.md fixes (JSON Feed dates, SSRF DNS rebinding) and FeedPanel refactor — milestone kept focused on Jev ranking
@@ -82,7 +82,12 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | Thumbs feedback adjusts topic weights (not in-context examples) | Deterministic and explainable | — Pending |
 | Jev input = title + summary + feed name | Cheap, always available at ingest, no extra fetches | — Pending |
 | Optional integration, degrade gracefully + background backfill | Ingest must never fail because of Jev | — Pending |
-| Profile/topic edits apply to new articles only | Avoid re-scoring cost | — Pending |
+| Profile/topic edits apply to new articles, plus a manual "Re-score unread" button | Research: ~$0.10/1k articles; only way edits reach existing unread | — Pending |
+| Score in points on a 0–100 scale: 100×profile + Σ hinge(noul)×weight; weights −50..+50; learned ±20 derived from stored votes, no sign flip | One coherent, explainable model (research R1/R2/R6) | — Pending |
+| Eligibility window: unread, published within 14 days, newest first | Prevents subscribe/OPML/startup floods | — Pending |
+| Summary falls back to stripped/truncated content | Many Atom feeds have content but no summary | — Pending |
+| NULL-GUID articles skipped by scorer; parser fix is a separate task | Existing re-insert bug would cause re-scoring | — Pending |
+| App-owned TypeSafeClient bean; Resilience4j as the single retry layer | Starter crashes on a blank key; avoid 9× stacked retries | — Pending |
 | Priority view = unread by blended score, unscored after by date | Useful even while backfill is in progress | — Pending |
 | One-time backfill of unread backlog at launch | Priority view useful immediately | — Pending |
 | Upgrade deps (patch/GA line) as the first phase, before Jev work | TypeSafe starter built against Boot 4.0.7; project was on 4.0.3 + Spring AI milestone M2 | — Pending |
