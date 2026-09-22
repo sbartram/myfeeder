@@ -28,6 +28,7 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 ### Active
 
+- [ ] Upgrade dependencies before Jev work (patch/GA line): Spring Boot 4.0.3→4.0.8, Spring AI BOM 2.0.0-M2→2.0.1, Spring Cloud 2025.1.0→2025.1.3, frontend minor/patch bumps; all backend + frontend tests green and a deploy verified
 - [ ] Integrate TypeSafe Jev via Spring AI community starter (`org.springaicommunity:spring-ai-starter-typesafe` 0.1.0), optional like Raindrop — app runs normally without an API key
 - [ ] Reader can write and edit a free-text interest profile
 - [ ] Reader can manage a topic rubric: add/remove topics, each with a description and a (possibly negative) weight
@@ -48,6 +49,7 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - CONCERNS.md fixes (JSON Feed dates, SSRF DNS rebinding) and FeedPanel refactor — milestone kept focused on Jev ranking
 - Jev advisors (self-refine, guardrails), RAG reranking, tool index — not relevant to feed ranking
 - Multi-user profiles — single-user app
+- Spring Boot 4.1 / react-router 7 / frontend major upgrades — Spring Cloud has no GA line for Boot 4.1 yet; router major is unrelated churn
 
 ## Context
 
@@ -63,7 +65,7 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - **Tech stack**: Spring Boot 4.0.3, Java 25, Spring Data JDBC (not JPA), Flyway migrations (next is V6), Jackson 3.x (`tools.jackson.*`), React 19 + TanStack Query + Zustand — follow existing conventions in CLAUDE.md
 - **Build**: Gradle Kotlin DSL only (never Maven), even though the reference article shows Maven coordinates
 - **Resilience**: Jev calls wrapped with `@CircuitBreaker` (outer) + `@Retry` (inner) on a dedicated API-client bean, following the Raindrop pattern
-- **Compatibility**: Spring AI TypeSafe 0.1.0 must work with the project's Spring AI / Spring Boot 4 versions — verify early
+- **Compatibility**: Spring AI TypeSafe 0.1.0 (built against Boot 4.0.7) — upgrade to Boot 4.0.8 first, then verify the starter resolves and starts
 - **Performance**: Ingest must not block on Jev; polling latency and failure behavior unchanged when Jev is slow or down
 - **Cost**: one Jev call per new article (plus one-time backlog backfill); no re-scoring loops
 - **Deployment**: new secret `MYFEEDER_TYPESAFE_API_KEY` threaded through `deploy.sh` and Helm chart as optional
@@ -83,6 +85,7 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | Profile/topic edits apply to new articles only | Avoid re-scoring cost | — Pending |
 | Priority view = unread by blended score, unscored after by date | Useful even while backfill is in progress | — Pending |
 | One-time backfill of unread backlog at launch | Priority view useful immediately | — Pending |
+| Upgrade deps (patch/GA line) as the first phase, before Jev work | TypeSafe starter built against Boot 4.0.7; project was on 4.0.3 + Spring AI milestone M2 | — Pending |
 
 ## Evolution
 
