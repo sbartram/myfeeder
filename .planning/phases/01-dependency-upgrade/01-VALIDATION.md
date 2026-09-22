@@ -50,7 +50,7 @@ created: "2026-09-22"
 | UPG-02 | Type-check + tests | unit | `cd src/main/frontend && npx tsc -b && npm test` | ✅ | ⬜ pending |
 | UPG-03 | Deployed version | smoke | `curl -s http://192.168.44.204/api/version` → 0.1.24 | ✅ | ⬜ pending |
 | UPG-03 | Clean startup | smoke | `kubectl -n myfeeder rollout status deploy/myfeeder`; logs contain `Started MyfeederApplication` and 0 ` ERROR ` lines | ✅ | ⬜ pending |
-| UPG-03 | Feeds poll as before | smoke (before/after) | `/api/feeds` compared before and after: no feed goes from errorCount 0 to >0, and `lastSuccessfulPollAt` advances | ✅ (baseline: 46 feeds, 6 erroring) | ⬜ pending |
+| UPG-03 | Feeds poll as before | smoke (before/after) | `/api/feeds` compared before and after. Every feed that was healthy before is polled after deploy time (`lastPolledAt` > deploy-time; 304s count) with errorCount 0, or is classified by the recheck and remote-probe step in 01-04 Task 3. `soak.log` contains `Registered polling tasks for N feeds` | ✅ (baseline: 46 feeds, 6 erroring) | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
