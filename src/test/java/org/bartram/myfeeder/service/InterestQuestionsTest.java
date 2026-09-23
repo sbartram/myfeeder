@@ -62,6 +62,16 @@ class InterestQuestionsTest {
     }
 
     @Test
+    void topicAsksWhetherTheArticleIsSubstantiallyAboutTheTopic() {
+        Noul topic = InterestQuestions.topic("Rust");
+
+        String question = (String) topic.instructions().asMap().get("question");
+        assertThat(question).contains("substantially about `topic`").doesNotContain("primarily");
+        assertThat(InterestQuestions.TOPIC_WHEN_TRUE).contains("`topic`").doesNotContain("main subject");
+        assertThat(InterestQuestions.TOPIC_WHEN_FALSE).contains("`topic`").contains("brief mention");
+    }
+
+    @Test
     void topicRejectsBlankDescription() {
         assertThatThrownBy(() -> InterestQuestions.topic(null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> InterestQuestions.topic("")).isInstanceOf(IllegalArgumentException.class);
