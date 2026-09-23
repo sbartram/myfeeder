@@ -41,6 +41,22 @@ resilience4j:
         minimum-number-of-calls: 5
         ignore-exceptions:
           - org.bartram.myfeeder.integration.RaindropNotConfiguredException
+      jev:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 60s
+        slow-call-duration-threshold: 3s
+        slow-call-rate-threshold: 50
+        permitted-number-of-calls-in-half-open-state: 3
+        # 401/403 (TypeSafeAuthentication/PermissionDenied) are deliberately absent: a bad key is recorded (D-06)
+        ignore-exceptions:
+          - org.bartram.myfeeder.integration.JevNotConfiguredException
+          - org.springaicommunity.typesafe.exception.TypeSafeBadRequestException
+          - org.springaicommunity.typesafe.exception.TypeSafeUnprocessableEntityException
+          - org.springaicommunity.typesafe.exception.TypeSafeMissingAnswerException
+          - org.springaicommunity.typesafe.exception.TypeSafeAnswerTypeException
   retry:
     instances:
       raindrop:
@@ -49,3 +65,14 @@ resilience4j:
         exponential-backoff-multiplier: 2
         ignore-exceptions:
           - org.bartram.myfeeder.integration.RaindropNotConfiguredException
+      jev:
+        max-attempts: 3
+        # Base interval for TypeSafeConfig.jevRetryInterval, which doubles it per attempt (1s, 2s) and
+        # honors a 429's retry-after-ms instead when present (capped at 10s).
+        wait-duration: 1s
+        retry-exceptions:
+          - org.springaicommunity.typesafe.exception.TypeSafeRateLimitException
+          - org.springaicommunity.typesafe.exception.TypeSafeInternalServerException
+          - org.springaicommunity.typesafe.exception.TypeSafeApiConnectionException
+        ignore-exceptions:
+          - org.bartram.myfeeder.integration.JevNotConfiguredException

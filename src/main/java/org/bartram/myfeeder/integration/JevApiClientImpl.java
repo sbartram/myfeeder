@@ -1,5 +1,7 @@
 package org.bartram.myfeeder.integration;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springaicommunity.typesafe.autoconfigure.TypeSafeProperties;
@@ -35,6 +37,9 @@ public class JevApiClientImpl implements JevApiClient {
         }
     }
 
+    // No fallbackMethod: typed SDK exceptions and CallNotPermittedException propagate unchanged (D-08)
+    @CircuitBreaker(name = "jev")
+    @Retry(name = "jev")
     @Override
     public JevJudgment judge(Map<String, ?> state, Map<String, ? extends Question> questions) {
         requireConfigured();
