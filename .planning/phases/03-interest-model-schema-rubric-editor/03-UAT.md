@@ -38,16 +38,16 @@ result: pass
 
 ### 7. Decide on CR-01 (ArticleStateBuilder.truncate)
 expected: Either fix now (/gsd-quick fix plus a CJK/URL test) or explicitly carry it into Phase 4. Whitespace-sparse summaries currently truncate to a few characters.
-result: skipped
-reason: "Deferred follow-up: defer — CR-01 carried into Phase 4 (logged in deferred-items.md)"
+result: pass
+decision: "defer — CR-01 explicitly carried into Phase 4 (logged in deferred-items.md); expected outcome (fix now OR carry forward) met"
 
 ## Summary
 
 total: 7
-passed: 6
+passed: 7
 issues: 0
 pending: 0
-skipped: 1
+skipped: 0
 blocked: 0
 
 ## Gaps
