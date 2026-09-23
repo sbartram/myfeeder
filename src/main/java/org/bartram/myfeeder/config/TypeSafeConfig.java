@@ -1,10 +1,13 @@
 package org.bartram.myfeeder.config;
 
 import io.github.resilience4j.common.retry.configuration.RetryConfigCustomizer;
+import io.github.resilience4j.core.IntervalBiFunction;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springaicommunity.typesafe.autoconfigure.TypeSafeProperties;
+import org.springaicommunity.typesafe.exception.TypeSafeRateLimitException;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
 import org.springframework.boot.http.client.HttpClientSettings;
 import org.springframework.context.annotation.Bean;
@@ -35,7 +38,7 @@ import java.util.Objects;
 public class TypeSafeConfig {
 
     static final Duration JEV_CONNECT_TIMEOUT = Duration.ofSeconds(5);
-    static final long MAX_RETRY_AFTER_MS = 10_000L;
+    static final long MAX_RETRY_AFTER_MS = 10_000L; // D-07 cap on a server-supplied Retry-After
 
     @Bean
     TypeSafeClient typeSafeClient(TypeSafeProperties properties, RestClient.Builder restClientBuilder) {
@@ -57,8 +60,26 @@ public class TypeSafeConfig {
                 .build();
     }
 
+    /**
+     * Wait between "jev" retry attempts. Keeps Resilience4j as the one retry layer without losing the
+     * server's Retry-After hint (D-07): a 429 carrying {@code retryAfterMs} waits that long, clamped to
+     * [0, {@link #MAX_RETRY_AFTER_MS}]; anything else backs off exponentially from
+     * {@code resilience4j.retry.instances.jev.wait-duration} (1s, then 2s). Runs after YAML binding and
+     * replaces the wait-duration interval function.
+     */
     @Bean
     RetryConfigCustomizer jevRetryInterval(Environment environment) {
-        return RetryConfigCustomizer.of("jev", builder -> { }); // TDD RED skeleton: no interval yet
+        // Binder, not @Value Duration: ApplicationContextRunner has no conversion service for Duration
+        Duration base = Binder.get(environment)
+                .bind("resilience4j.retry.instances.jev.wait-duration", Duration.class)
+                .orElse(Duration.ofSeconds(1));
+        IntervalBiFunction<Object> interval = (attempt, either) -> {
+            if (either.isLeft() && either.getLeft() instanceof TypeSafeRateLimitException rateLimit
+                    && rateLimit.retryAfterMs() != null) {
+                return Math.max(0L, Math.min(rateLimit.retryAfterMs(), MAX_RETRY_AFTER_MS));
+            }
+            return base.toMillis() * (1L << (attempt - 1)); // attempt 1 waits the base, attempt 2 twice it
+        };
+        return RetryConfigCustomizer.of("jev", builder -> builder.intervalBiFunction(interval));
     }
 }
