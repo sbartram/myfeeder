@@ -42,13 +42,16 @@ created: "2026-09-22"
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| TBD | TBD | TBD | JEV-01 | — | Key never logged (value, length, prefix) | context (runner) + OutputCapture | `./gradlew test --tests '*TypeSafeConfigTest'` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | JEV-01 | — | N/A | integration | `./gradlew test --tests '*MyfeederApplicationTests'` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | JEV-02 | — | N/A | context + JDK HttpServer stub | `./gradlew test --tests '*JevResilienceTest'` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | JEV-02/03 | — | N/A | unit (main YAML) | `./gradlew test --tests '*TypeSafeConfigTest'` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | JEV-03 | — | Bearer header only on wire | unit (MockRestServiceServer) | `./gradlew test --tests '*JevApiClientImplTest'` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | JEV-04 | — | Secret never in plain env/values output | shell | `helm template ... --set secrets.typesafeApiKey=A` / `B` / empty + `helm lint helm/myfeeder` | n/a | ⬜ pending |
-| TBD | TBD | TBD | JEV-04 | — | N/A | shell | `bash -n deploy.sh` | n/a | ⬜ pending |
+| 02-01-T1 | 02-01 | 1 | JEV-01, JEV-02/03 (pins) | T-02-01, T-02-02, T-02-03, T-02-04 | Key never logged (value, prefix); blank key cannot crash startup | context (runner) + OutputCapture + main YAML from disk | `./gradlew test -x npmBuild -x npmInstall --tests 'org.bartram.myfeeder.config.TypeSafeConfigTest'` | ❌ created in task | ⬜ pending |
+| 02-01-T2 | 02-01 | 1 | JEV-01, JEV-02 (AspectJ) | T-02-SC | Only the two TypeSafe artifacts resolve; no Spring/Jackson downgrade | full suite (Docker) + resolved classpath | `DOCKER_HOST=unix:///Users/scottb/.docker/run/docker.sock ./gradlew cleanTest test -x npmBuild -x npmInstall` + `./gradlew -q dependencies --configuration runtimeClasspath` check | ✅ (MyfeederApplicationTests) | ⬜ pending |
+| 02-02-T1 | 02-02 | 2 | JEV-03, JEV-01 | T-02-08 | Keyless call makes no HTTP request | unit (MockRestServiceServer) | `./gradlew test -x npmBuild -x npmInstall --tests 'org.bartram.myfeeder.integration.JevApiClientImplTest'` | ❌ created in task | ⬜ pending |
+| 02-02-T2 | 02-02 | 2 | JEV-03 | T-02-06, T-02-07 | 401/403 WARN has status + requestId only; bearer header only on the wire | unit (MockRestServiceServer) + OutputCapture | same as 02-02-T1 | ✅ (after T1) | ⬜ pending |
+| 02-02-T3 | 02-02 | 2 | JEV-03 (SC2) | T-02-09 | Live test only on JEV_LIVE_SMOKE=true | gated live test (skipped by default) + end-of-phase human-check | `env -u JEV_LIVE_SMOKE ./gradlew cleanTest test -x npmBuild -x npmInstall --tests 'org.bartram.myfeeder.integration.JevLiveSmokeTest'` (asserts skipped) | ❌ created in task | ⬜ pending |
+| 02-03-T1 | 02-03 | 3 | JEV-02 | T-02-12 | N/A | context + AOP + JDK HttpServer stub | `./gradlew test -x npmBuild -x npmInstall --tests 'org.bartram.myfeeder.integration.JevResilienceTest'` | ❌ created in task | ⬜ pending |
+| 02-03-T2 | 02-03 | 3 | JEV-02 (D-07) | T-02-11 | Retry-After wait clamped to [0, 10s] | unit (interval function) + stub | `./gradlew test -x npmBuild -x npmInstall --tests 'org.bartram.myfeeder.config.TypeSafeConfigTest' --tests 'org.bartram.myfeeder.integration.JevResilienceTest'` | ✅ | ⬜ pending |
+| 02-03-T3 | 02-03 | 3 | JEV-02 (SC3) | T-02-12, T-02-13, T-02-14 | Bad key opens breaker without retries; no key in output | context + stub + main/test YAML + full suite (Docker) | `./gradlew test -x npmBuild -x npmInstall --tests 'org.bartram.myfeeder.integration.Jev*' --tests 'org.bartram.myfeeder.config.*'` then the full-suite command | ✅ | ⬜ pending |
+| 02-04-T1 | 02-04 | 1 | JEV-04 | T-02-17, T-02-18, T-02-19 | Secret only via stringData + secretKeyRef; checksum rolls pod on key change | shell | `helm lint helm/myfeeder --set app.image.tag=t` + `helm template` key-A / key-B / tag-only / unset checks | n/a | ⬜ pending |
+| 02-04-T2 | 02-04 | 1 | JEV-04 | T-02-16, T-02-18, T-02-20 | deploy.sh never echoes the key | shell (fake helm on PATH, KUBECONFIG=/nonexistent) | `bash -n deploy.sh` + keyless and keyed fake-helm runs | n/a | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -56,11 +59,13 @@ created: "2026-09-22"
 
 ## Wave 0 Requirements
 
-- [ ] `src/test/java/org/bartram/myfeeder/config/TypeSafeConfigTest.java` — JEV-01 cases, keyless log, leak check, main-YAML pins, interval function
-- [ ] `src/test/java/org/bartram/myfeeder/integration/JevApiClientImplTest.java` — wire contract, mapping, typed errors
-- [ ] `src/test/java/org/bartram/myfeeder/integration/JevResilienceTest.java` — AOP proxy, retry, breaker, 429
-- [ ] `src/test/java/org/bartram/myfeeder/integration/JevLiveSmokeTest.java` — gated by `JEV_LIVE_SMOKE`
-- [ ] `src/test/resources/application.yaml` — `spring.ai.typesafe` (model, pinned base-url, `retry.max-retries: 0`, no api-key) + `resilience4j.*.instances.jev`
+Each test file is created by the tracer/first task that needs it; no separate Wave 0 plan exists.
+
+- [ ] `src/test/java/org/bartram/myfeeder/config/TypeSafeConfigTest.java`: JEV-01 cases, keyless log, leak check, main-YAML pins (02-01-T1); interval function (02-03-T2)
+- [ ] `src/test/java/org/bartram/myfeeder/integration/JevApiClientImplTest.java`: wire contract, mapping, typed errors (02-02-T1, T2)
+- [ ] `src/test/java/org/bartram/myfeeder/integration/JevResilienceTest.java`: AOP proxy, retry, breaker, 429, timeout, headers, config binding (02-03-T1..T3)
+- [ ] `src/test/java/org/bartram/myfeeder/integration/JevLiveSmokeTest.java`: gated by `JEV_LIVE_SMOKE` (02-02-T3)
+- [ ] `src/test/resources/application.yaml`: `spring.ai.typesafe` (model, pinned base-url, `retry.max-retries: 0`, no api-key) (02-01-T1) + `resilience4j.*.instances.jev` (02-03-T1)
 
 *Framework install: none — only new main deps are the TypeSafe starter and `spring-boot-starter-aspectj`.*
 
@@ -70,7 +75,7 @@ created: "2026-09-22"
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Live Jev call returns `model == jev-1.13.0` | JEV-03 (SC2) | Needs a real TypeSafe key, not available to agents | `JEV_LIVE_SMOKE=true MYFEEDER_TYPESAFE_API_KEY=… ./gradlew test --tests '*JevLiveSmokeTest'` |
+| Live Jev call returns `model == jev-1.13.0` | JEV-03 (SC2) | Needs a real TypeSafe key, not available to agents | `JEV_LIVE_SMOKE=true MYFEEDER_TYPESAFE_API_KEY=… ./gradlew cleanTest test -x npmBuild -x npmInstall --tests 'org.bartram.myfeeder.integration.JevLiveSmokeTest' --info` (`cleanTest` is required because Gradle does not treat env vars as test inputs); harvested from 02-02-T3's human-check |
 
 ---
 
