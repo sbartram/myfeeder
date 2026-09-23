@@ -1,9 +1,10 @@
 ---
 phase: 03-interest-model-schema-rubric-editor
 verified: 2026-09-23T21:23:47Z
-status: human_needed
+status: passed
 score: 5/5 roadmap success criteria verified (all test-backed plan truths verified; 5 backstop truths routed to human)
 covered_files:
+
   - .planning/REQUIREMENTS.md
   - .planning/phases/03-interest-model-schema-rubric-editor/03-01-PLAN.md
   - .planning/phases/03-interest-model-schema-rubric-editor/03-01-SUMMARY.md
@@ -73,10 +74,12 @@ covered_files:
   - src/test/java/org/bartram/myfeeder/service/InterestQuestionsTest.java
   - src/test/java/org/bartram/myfeeder/service/InterestServiceTest.java
   - src/test/java/org/bartram/myfeeder/service/InterestStatusServiceTest.java
+
 covered_digest: "v1:sha256:d8dbfe7b3d90f9438a4e8329a474b059a532dafbbf353c235857436bd0e7ba0f"
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "Visual/UAT pass from 03-07's end-of-phase human-check: ./gradlew bootTestRun + npm run dev, open an article, Settings -> 'Edit interests…'. (1) save a profile, reload, reopen, text is still there; (2) add a topic, move slider/type number, try 51; (3) type 'not about crypto'; (4) with no key, see 'Scoring isn't set up yet.' and Preview disabled with the no-key reason; (6) switch through all 6 themes and narrow the window below 600px"
     expected: "Everything matches 03-UI-SPEC.md. Colors follow each theme, weight signs show +/− characters as well as color, row line 2 wraps with actions right-aligned below 600px, nothing scrolls horizontally"
     why_human: "Layout, theme contrast and media-query wrapping cannot be seen in jsdom; App.tsx Settings->Interests hand-off is type-checked and read but not rendered in a test"
@@ -246,6 +249,7 @@ No TBD/FIXME/XXX markers in phase-modified files. The only `PLACEHOLDER` match i
 ### Gaps Summary
 
 No blocking gaps. All five roadmap success criteria and all five requirement IDs are implemented, wired and covered by passing tests I ran (121 backend, 70 frontend, tsc clean). What remains:
+
 - visual and live-key UAT
 - five backstop truths that only a human can confirm
 - a set of review warnings

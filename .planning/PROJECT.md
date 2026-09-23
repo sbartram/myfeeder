@@ -27,11 +27,10 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Helm/k3s deployment with release pipeline (axion tags, Dockerfile image) — existing
 - ✓ Dependencies upgraded (patch/GA line): Spring Boot 4.0.8, Spring AI BOM 2.0.1, Spring Cloud 2025.1.3, frontend in-major bumps; 162 backend + 47 frontend tests green; released and deployed as v0.1.24 — Phase 1
 - ✓ TypeSafe Jev integrated via `spring-ai-starter-typesafe` 0.1.0, optional like Raindrop (keyless startup), `JevApiClient.judge()` behind Resilience4j `jev` breaker/retry, optional Helm secret; live smoke returned `jev-1.13.0` — Phase 2
+- ✓ Interest profile (≤2,000 chars) and topic rubric (≤25 topics, weights −50..+50) editor with negation warning, not-configured/cold-start notices and one-call topic preview against the open article; V6 interest schema; question wording calibrated (v2 "substantially about") — Phase 3
 
 ### Active
 
-- [ ] Reader can write and edit a free-text interest profile
-- [ ] Reader can manage a topic rubric: add/remove topics, each with a description and a (possibly negative) weight
 - [ ] Each newly ingested article is judged once by Jev (title + summary + feed name as state): a profile-interest `Score` plus a `Noul` per topic, in a single `systemOne` call
 - [ ] Raw Jev outputs are stored per article; the blended interest score (profile score blended with Σ topic match × weight) is computed at query time
 - [ ] Thumbs up/down on an article nudges the weights of the topics that article matched; ranking updates immediately with no new Jev calls
@@ -93,6 +92,7 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | Upgrade deps (patch/GA line) as the first phase, before Jev work | TypeSafe starter built against Boot 4.0.7; project was on 4.0.3 + Spring AI milestone M2 | ✓ Good — shipped v0.1.24 (Phase 1), soak clean |
 | Pin RestClient transport to Reactor Netty via explicit `reactor-netty-http` (D-01) | Spring AI 2.0.1 dropped it transitively; Boot would silently fall back to the JDK client | ✓ Good — guarded by HttpClientConfigurationTest |
 | Bind outbound timeouts under `spring.http.clients.*` (D-02) | Old singular keys were silently unbound, so the 5s/30s timeouts never applied | ✓ Good — stalled feeds now time out (Phase 1) |
+| Topic question wording v2 ("substantially about `topic`") (Phase 3 calibration) | v1 "primarily about" under-fired: obvious matches stayed far below noul 0.5 | ✓ Good — v2 doubles obvious-match nouls; under-firing threshold tuning deferred to Phase 4/5 |
 | Accept react-router v6 advisories (GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg) | Fix needs v7 major; no SSR, internal-only navigation targets | ⚠️ Revisit — when a v7 migration is scheduled |
 
 ## Evolution
@@ -113,4 +113,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-23 after Phase 2*
+*Last updated: 2026-09-23 after Phase 3*

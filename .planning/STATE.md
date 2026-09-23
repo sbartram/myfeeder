@@ -1,19 +1,20 @@
 ---
 gsd_state_version: "1.0"
 milestone: v0.1.24
-current_phase: 03
-current_phase_name: Interest Model, Schema & Rubric Editor
-status: verifying
-stopped_at: Completed 03-08-PLAN.md
-last_updated: "2026-09-23T21:14:43.790Z"
+current_phase: 4
+current_phase_name: Scoring Pipeline & Backfill Sweep
+status: planning
+stopped_at: Phase 03 complete, ready to plan Phase 4
+last_updated: "2026-09-23T22:17:19.065Z"
 last_activity: 2026-09-23
-last_activity_desc: Phase 03 execution started
-state_head: 6930a4d2c7c3f90f81412e9cbc5ec0153cb4542a
+last_activity_desc: Phase 03 complete, transitioned to Phase 4
+state_head: 46874bb8406cbcebd6d6a61976b7ab68296ea3da
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 16
   completed_plans: 16
+  percent: 43
 ---
 
 # Project State
@@ -23,22 +24,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-23)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 03 — Interest Model, Schema & Rubric Editor
+**Current focus:** Phase 4 — Scoring Pipeline & Backfill Sweep
 
 ## Current Position
 
-Phase: 03 (Interest Model, Schema & Rubric Editor) — EXECUTING
-Plan: 8 of 8
-Status: Phase complete — ready for verification
-Last activity: 2026-09-23 — Phase 03 execution started
+Phase: 4 — Scoring Pipeline & Backfill Sweep
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-23 — Phase 03 complete, transitioned to Phase 4
 
-Progress: [███░░░░░░░] 29%
+Progress: [████░░░░░░] 43%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 8
+- Total plans completed: 16
 - Average duration: -
 - Total execution time: 0.0 hours
 
@@ -48,6 +49,7 @@ Progress: [███░░░░░░░] 29%
 |-------|-------|-------|----------|
 | 01 | 4 | - | - |
 | 2 | 4 | - | - |
+| 03 | 8 | - | - |
 
 **Recent Trend:**
 
@@ -127,7 +129,9 @@ Recent decisions affecting current work:
 ### Blockers/Concerns
 
 - [Phase 2] Code review 02-REVIEW.md: 5 warnings open (Retry-outer breaker counting, Raindrop POST retries, caller bugs recorded as breaker failures, choice answers dropped, untrimmed key) — address before/within Phase 4
-- Phase 3: calibration spike needs a live `MYFEEDER_TYPESAFE_API_KEY` (key confirmed working 2026-09-23 via JevLiveSmokeTest)
+- [Phase 3] CR-01 `ArticleStateBuilder.truncate` shrinks whitespace-sparse (CJK / long-URL) summaries to a few chars — deferred at UAT, fix before/within Phase 4 (see 03 deferred-items.md)
+- [Phase 3] Scorer needs a Jev timeout well above the 5s production setting (profile + 7 topics, cold call >5s)
+- [Phase 3] 03-REVIEW.md WR-01..WR-05 (dialog save race, keyboard shortcuts behind modal, error copy, failed article load) still open
 - Phase 4: verify jsoup is on the classpath via Readability4J (or add it explicitly)
 - Phase 7: 429 behavior during launch backfill is unobserved; fallback is concurrency 1 or the SDK retry layer (keep exactly one)
 
@@ -141,6 +145,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-23T21:14:43.760Z
-Stopped at: Completed 03-08-PLAN.md
+Last session: 2026-09-23T22:20:00Z
+Stopped at: Phase 03 complete, ready to plan Phase 4
 Resume file: None
