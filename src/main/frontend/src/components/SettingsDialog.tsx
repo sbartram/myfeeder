@@ -6,6 +6,7 @@ import { themeList } from '../themes'
 interface SettingsDialogProps {
   open: boolean
   onClose: () => void
+  onOpenInterests?: () => void
 }
 
 type RaindropState =
@@ -23,7 +24,7 @@ function readSavedCollectionId(configJson: string): number | null {
   }
 }
 
-export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
+export function SettingsDialog({ open, onClose, onOpenInterests }: SettingsDialogProps) {
   const prefs = usePreferences()
   const [raindrop, setRaindrop] = useState<RaindropState>({ phase: 'loading' })
 
@@ -217,6 +218,16 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
             Tip: press <kbd>+</kbd> / <kbd>-</kbd> to adjust the focused panel's font size.
           </div>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: 14, marginBottom: 8 }}>Interests</h3>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+            Describe what you care about so articles can be ranked for you.
+          </div>
+          <button className="btn-secondary" onClick={onOpenInterests} style={{ marginTop: 8 }}>
+            Edit interests…
+          </button>
         </div>
 
         <div style={{ marginBottom: 20 }}>

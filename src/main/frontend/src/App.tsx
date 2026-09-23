@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { FeedPanel } from './components/FeedPanel'
@@ -13,21 +13,13 @@ import { useUIStore } from './stores/uiStore'
 import { usePreferences } from './stores/preferencesStore'
 import { AddFeedDialog } from './components/AddFeedDialog'
 import { SettingsDialog } from './components/SettingsDialog'
+import { InterestsDialog } from './components/InterestsDialog'
 import { ShortcutOverlay } from './components/ShortcutOverlay'
-import { ToastContainer, useToastStore } from './components/Toast'
-import { MutationCache } from '@tanstack/react-query'
+import { ToastContainer } from './components/Toast'
+import { createQueryClient } from './queryClient'
 import './App.css'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { staleTime: 30_000, retry: 1 },
-  },
-  mutationCache: new MutationCache({
-    onError: (error) => {
-      useToastStore.getState().addToast(error.message || 'An error occurred')
-    },
-  }),
-})
+const queryClient = createQueryClient()
 
 function FeedArticles() {
   const { feedId } = useParams()
@@ -81,6 +73,7 @@ function BoardArticles() {
 function MainLayout() {
   const [addFeedOpen, setAddFeedOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [interestsOpen, setInterestsOpen] = useState(false)
   const [boardOpen, setBoardOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const selectedFeedId = useUIStore((s) => s.selectedFeedId)
@@ -113,7 +106,15 @@ function MainLayout() {
         readingPane={<ReadingPane boardOpen={boardOpen} onBoardClose={() => setBoardOpen(false)} />}
       />
       <AddFeedDialog open={addFeedOpen} onClose={() => setAddFeedOpen(false)} />
-      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onOpenInterests={() => {
+          setSettingsOpen(false)
+          setInterestsOpen(true)
+        }}
+      />
+      <InterestsDialog open={interestsOpen} onClose={() => setInterestsOpen(false)} />
       <ShortcutOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <ToastContainer />
     </>
