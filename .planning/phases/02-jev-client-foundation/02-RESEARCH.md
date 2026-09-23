@@ -486,16 +486,19 @@ All class names here compiled and ran in the probe (`PROBE runner isAopProxy=tru
 | A1 | Real TypeSafe API keys contain no `,` or `\` (safe with `helm --set`) | Pitfall 6 | Deploy would store a mangled key → 401 → breaker opens (a visible failure). Mitigate with `--set-string` if in doubt |
 | A2 | `jev-1.13.0` is still served by the live API (alias pin per docs.typesafe.ai/models, MEDIUM in STACK.md; SDK constant `TypeSafeModels.JEV_1_13_0 = "jev-1.13.0"` verified) | Phase Requirements JEV-03 | A retired model → 400 `TypeSafeBadRequestException`. Only the live smoke test can confirm |
 | A3 | A 401/403 response body from TypeSafe does not echo the key (the SDK puts the body in the exception message) | Pitfall 5 | Key in logs if the exception message is logged. Mitigation: log `status` + `requestId` only, never `e.getMessage()` |
-| A4 | Activating Raindrop's latent retry/breaker (Pitfall 1 side effect) is acceptable to the user | Standard Stack / Open Questions | Raindrop errors change from raw 5xx to 409 after up to 3×1s retries |
+| A4 | Activating Raindrop's latent retry/breaker (Pitfall 1 side effect) is acceptable to the user. **CONFIRMED by the user on 2026-09-22** (Open Question 1) | Standard Stack / Open Questions | Raindrop errors change from raw 5xx to 409 after up to 3×1s retries |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Add `spring-boot-starter-aspectj` (not in CONTEXT)?**
    - What we know: without it, JEV-02/SC3 are unachievable with the locked annotation approach (verified). It also activates Raindrop's currently inert resilience config.
    - What's unclear: whether the user wants Raindrop's newly active behavior left as is, or tuned (`retry-exceptions`, `enable-exponential-backoff`) in a separate quick task.
    - Recommendation: add it in the first plan. Run the full backend suite. Record "Raindrop resilience now active" in the phase summary. Propose a follow-up quick task for Raindrop tuning and a CLAUDE.md correction ("the annotations require `spring-boot-starter-aspectj`"). Don't tune Raindrop here.
+   - **RESOLVED (user decision, 2026-09-22): accepted as planned.** 02-01 Task 2 adds `spring-boot-starter-aspectj` in its own commit. Raindrop's resilience config and `RaindropApiClientImpl` stay unchanged in this phase, and the user accepts the app-wide side effect: Raindrop failures now surface as HTTP 409 after up to 3 attempts 1s apart. A follow-up quick task is tracked for Raindrop tuning (`retry-exceptions`, `enable-exponential-backoff`) and for correcting the Resilience4j/AspectJ note in CLAUDE.md. CLAUDE.md is not edited in this phase. Assumption A4 is confirmed.
 2. **Live smoke (SC2) needs a key that isn't present.** `MYFEEDER_TYPESAFE_API_KEY` and `TYPESAFE_API_KEY` are both unset in this environment and in `.envrc`. The planner should add an end-of-phase `checkpoint:human-verify` where the user runs `JEV_LIVE_SMOKE=true MYFEEDER_TYPESAFE_API_KEY=… ./gradlew test --tests '*JevLiveSmokeTest'`.
+   - **RESOLVED (2026-09-22): as planned.** 02-02 Task 3 adds `JevLiveSmokeTest`, an opt-in test that runs only when `JEV_LIVE_SMOKE=true` and is skipped in the default `./gradlew test`. The user runs it with their key as an end-of-phase human check (`<human-check>` in 02-02, per `human_verify_mode=end-of-phase`).
 3. **Deploy to k3s this phase?** Recommendation: no. There's no user-visible feature, and the first deploy with the key is Phase 7. SC4 is verified with `helm template` / `helm lint` plus `bash -n deploy.sh`. If the user wants the keyless deploy exercised, ride it on the next release.
+   - **RESOLVED (2026-09-22): no k3s deploy this phase.** 02-04 proves SC4 with `helm template` / `helm lint`, `bash -n deploy.sh` and a fake-helm dry run, with no cluster access. The first deploy with the key is Phase 7.
 
 ## Environment Availability
 
