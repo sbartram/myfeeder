@@ -62,13 +62,13 @@ Plans:
   3. Sustained transient failures (429/5xx/timeout) are retried only by Resilience4j (SDK retries are off) and open the circuit breaker; per-article 400/422 errors are neither retried nor able to open the breaker
   4. `deploy.sh` and the Helm chart treat `MYFEEDER_TYPESAFE_API_KEY` as optional: a deploy without it succeeds with a warning, and changing only the key rolls the pod
 
-**Plans**: 1/4 plans executed
+**Plans**: 2/4 plans executed
 
 Plans:
 **Wave 1**
 
 - [x] 02-01-PLAN.md — App-owned keyless-safe TypeSafeClient (Pattern A, Reactor Netty, D-05/D-10), model pin + SDK retries off, then spring-boot-starter-aspectj in its own commit + full suite (wave 1)
-- [ ] 02-04-PLAN.md — Optional TypeSafe key in Helm (secret, env, `checksum/secret` pod roll) and deploy.sh warning; helm template/lint + fake-helm proof, no cluster deploy (wave 1)
+- [x] 02-04-PLAN.md — Optional TypeSafe key in Helm (secret, env, `checksum/secret` pod roll) and deploy.sh warning; helm template/lint + fake-helm proof, no cluster deploy (wave 1)
 
 **Wave 2** *(blocked on 02-01)*
 
@@ -173,7 +173,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Dependency Upgrade | 4/4 | Complete    | 2026-09-22 |
-| 2. Jev Client Foundation | 1/4 | In Progress|  |
+| 2. Jev Client Foundation | 2/4 | In Progress|  |
 | 3. Interest Model, Schema & Rubric Editor | 0/TBD | Not started | - |
 | 4. Scoring Pipeline & Backfill Sweep | 0/TBD | Not started | - |
 | 5. Blend & Priority View | 0/TBD | Not started | - |

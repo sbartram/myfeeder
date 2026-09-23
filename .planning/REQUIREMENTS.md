@@ -18,7 +18,7 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 - [ ] **JEV-01**: App starts and runs normally when the TypeSafe API key is absent, blank, or set (app-owned `TypeSafeClient` bean; context tests for each case)
 - [ ] **JEV-02**: Jev calls go through a dedicated client bean with `@CircuitBreaker` + `@Retry` (Resilience4j is the only retry layer; SDK retries disabled; per-article 400/422 errors don't open the breaker)
 - [ ] **JEV-03**: Jev model is pinned (`jev-1.13.0`) and the model id is stored with every score
-- [ ] **JEV-04**: TypeSafe API key is an optional secret in `deploy.sh` and the Helm chart; changing only the key rolls the pod
+- [x] **JEV-04**: TypeSafe API key is an optional secret in `deploy.sh` and the Helm chart; changing only the key rolls the pod
 - [ ] **JEV-05**: `GET /api/interest/status` reports whether Jev is configured, circuit-breaker state, and counts of eligible-unscored and failed articles
 
 ### Interest Model
@@ -114,7 +114,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | JEV-01 | Phase 2 | Pending |
 | JEV-02 | Phase 2 | Pending |
 | JEV-03 | Phase 2 | Pending |
-| JEV-04 | Phase 2 | Pending |
+| JEV-04 | Phase 2 | Complete |
 | JEV-05 | Phase 4 | Pending |
 | INT-01 | Phase 3 | Pending |
 | INT-02 | Phase 3 | Pending |

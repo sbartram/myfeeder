@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 02
 current_phase_name: Jev Client Foundation
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-09-23T03:09:24.098Z"
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-09-23T03:12:27.481Z"
 last_activity: 2026-09-22
 last_activity_desc: Phase 02 execution started
-state_head: 0e858119b9cf613d213cffabafd5ba6c5b49acf2
+state_head: "0b51ae0b6c497b1ed111862229674ac9905e7659"
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-22)
 ## Current Position
 
 Phase: 02 (Jev Client Foundation) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-09-22 — Phase 02 execution started
 
@@ -63,6 +63,7 @@ Progress: [█░░░░░░░░░] 14%
 | Phase 01 P03 | 1 min | 3 tasks | 1 files |
 | Phase 01 P04 | 26 min | 3 tasks | 1 files |
 | Phase 02 P01 | 4 min | 2 tasks | 6 files |
+| Phase 02 P04 | 1 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,7 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-04: 20-min soak passed (40/40 healthy feeds clean, 18 via 304); reader UI human check queued for end-of-phase UAT
 - [Phase 02]: 02-01: App-owned TypeSafeClient (Pattern A) with Supplier-only key; Jev-only Reactor Netty transport (5s/5s) on a cloned RestClient.Builder
 - [Phase 02]: 02-01: spring-boot-starter-aspectj added in its own commit (0e85811); Raindrop resilience now live (retry 3x/1s, breaker, 409 fallback), user-accepted 2026-09-22; tuning + CLAUDE.md fix tracked as pending todo
+- [Phase 02]: 02-04: TypeSafe key is an optional deploy secret mirroring Raindrop (values/Secret stringData/secretKeyRef env/deploy.sh warning); checksum/secret on app pod template rolls the pod on any Secret change (first deploy rolls once); --set comma limitation shared with Raindrop; Helm lookup preservation deferred to Phase 4/7
 
 ### Pending Todos
 
@@ -107,6 +109,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-23T03:09:24.078Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-09-23T03:12:27.458Z
+Stopped at: Completed 02-04-PLAN.md
 Resume file: None
