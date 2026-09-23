@@ -421,6 +421,91 @@ html, body, #root {
   font-size: 13px;
 }
 
+/* Interests dialog */
+.interests-dialog {
+  width: 720px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.interests-dialog h2 { font-weight: 600; }
+
+.interests-body { flex: 1; overflow-y: auto; }
+
+.interests-loading { font-size: 13px; color: var(--text-muted); }
+
+.interests-section { margin-bottom: 24px; }
+
+.interests-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+
+.interests-tips {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding-left: 16px;
+  margin-bottom: 8px;
+}
+
+.interests-tips li + li { margin-top: 4px; }
+
+.interests-profile {
+  resize: vertical;
+  min-height: 160px;
+  font-family: inherit;
+}
+
+.interests-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.interests-save-state { color: var(--text-muted); }
+.interests-save-state.dirty { color: var(--text-secondary); }
+
+.interests-counter { font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.interests-counter.at-limit { color: var(--text-secondary); }
+
+.interests-actions { margin-top: 8px; }
+
+.interests-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.interests-notice {
+  background: var(--hover-bg);
+  border-left: 3px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.interests-notice.cold-start { border-left-color: var(--accent); }
+
+.interests-notice strong { color: var(--text-primary); font-weight: 600; }
+
+.interests-note { font-size: 13px; color: var(--text-muted); margin-top: 16px; }
+
+.interests-confirm {
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.interests-confirm-actions { display: flex; gap: 8px; }
+
+.btn-primary.interests-danger { background: var(--toast-error-text); }
+
 /* Board Picker */
 .board-picker-item {
   padding: 8px 12px;

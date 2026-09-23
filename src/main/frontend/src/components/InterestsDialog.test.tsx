@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
 import { InterestsDialog } from './InterestsDialog'
+import { createQueryClient } from '../queryClient'
+import { useToastStore } from './Toast'
 
 type Reply = { status: number; body?: unknown }
 type Handler = (init?: RequestInit) => Reply | Promise<Reply>
@@ -32,6 +34,19 @@ function profile(profileText: string) {
 function route(method: string, url: string, handler: Handler) {
   routes[`${method} ${url}`] = handler
 }
+
+function status(overrides: Partial<{ configured: boolean; breakerState: string; coldStart: boolean }>) {
+  route('GET', '/api/interest/status', () => ({
+    status: 200,
+    body: { configured: true, breakerState: 'CLOSED', coldStart: false, ...overrides },
+  }))
+}
+
+function profilePuts() {
+  return calls.filter((c) => c.method === 'PUT' && c.url === '/api/interest/profile')
+}
+
+const CONFIRM_COPY = 'Discard unsaved changes? You have unsaved edits to the profile.'
 
 function renderDialog(ui: ReactElement, client?: QueryClient) {
   const qc =
@@ -142,5 +157,156 @@ describe('InterestsDialog', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+  })
+
+  it('notConfiguredNoticeShownAndProfileStillSaves', async () => {
+    const user = userEvent.setup()
+    status({ configured: false })
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    expect(await screen.findByText("Scoring isn't set up yet.")).toBeInTheDocument()
+    expect(screen.getByText('MYFEEDER_TYPESAFE_API_KEY')).toBeInTheDocument()
+    await user.type(screen.getByRole('textbox', { name: 'Interest profile' }), 'Java')
+    await user.click(screen.getByRole('button', { name: 'Save profile' }))
+
+    await waitFor(() => expect(screen.getByText('Saved')).toBeInTheDocument())
+    expect(profilePuts().map((c) => c.body)).toEqual(['{"profileText":"Java"}'])
+  })
+
+  it('noticesStackInFixedOrder', async () => {
+    status({ configured: false, breakerState: 'OPEN', coldStart: true })
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    await screen.findByText('Start here.')
+    const leads = Array.from(container.querySelectorAll('.interests-notice strong')).map(
+      (el) => el.textContent,
+    )
+    expect(leads).toEqual([
+      "Scoring isn't set up yet.",
+      'Jev is temporarily unavailable.',
+      'Start here.',
+    ])
+    expect(container.querySelector('.interests-notice:last-child')).toHaveClass('cold-start')
+  })
+
+  it('showsPausedNoticeForForcedOpenBreaker', async () => {
+    status({ breakerState: 'FORCED_OPEN' })
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    expect(await screen.findByText('Jev is temporarily unavailable.')).toBeInTheDocument()
+    expect(container.querySelectorAll('.interests-notice')).toHaveLength(1)
+  })
+
+  it('coldStartFocusesTheTextareaAndClearsAfterSave', async () => {
+    const user = userEvent.setup()
+    let coldStart = true
+    route('GET', '/api/interest/status', () => ({
+      status: 200,
+      body: { configured: true, breakerState: 'CLOSED', coldStart },
+    }))
+    route('PUT', '/api/interest/profile', (init) => {
+      coldStart = false
+      const { profileText } = JSON.parse(String(init?.body)) as { profileText: string }
+      return { status: 200, body: profile(profileText) }
+    })
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    expect(await screen.findByText('Start here.')).toBeInTheDocument()
+    const textarea = screen.getByRole('textbox', { name: 'Interest profile' })
+    await waitFor(() => expect(textarea).toHaveFocus())
+
+    await user.type(textarea, 'Postgres')
+    await user.click(screen.getByRole('button', { name: 'Save profile' }))
+
+    await waitFor(() => expect(screen.queryByText('Start here.')).not.toBeInTheDocument())
+    expect(calls.filter((c) => c.url === '/api/interest/status')).toHaveLength(2)
+  })
+
+  it('doesNotAutofocusWithoutColdStart', async () => {
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    const textarea = await screen.findByRole('textbox', { name: 'Interest profile' })
+    await waitFor(() => expect(calls.some((c) => c.url === '/api/interest/status')).toBe(true))
+    expect(textarea).not.toHaveFocus()
+  })
+
+  it('statusFailureShowsNoNoticeAndEditingWorks', async () => {
+    const user = userEvent.setup()
+    route('GET', '/api/interest/status', () => ({ status: 500 }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    const textarea = await screen.findByRole('textbox', { name: 'Interest profile' })
+    await user.type(textarea, 'Go')
+    await user.click(screen.getByRole('button', { name: 'Save profile' }))
+
+    await waitFor(() => expect(screen.getByText('Saved')).toBeInTheDocument())
+    expect(container.querySelector('.interests-notice')).toBeNull()
+    expect(profilePuts()).toHaveLength(1)
+  })
+
+  it('closeWhileDirtyAsksFirst', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    renderDialog(<InterestsDialog open={true} onClose={onClose} />)
+    await user.type(await screen.findByRole('textbox', { name: 'Interest profile' }), 'Rust')
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.getByText(CONFIRM_COPY)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Keep editing' }))
+    expect(screen.queryByText(CONFIRM_COPY)).not.toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Interest profile' })).toHaveValue('Rust')
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    await user.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('closeWhenCleanClosesImmediately', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    renderDialog(<InterestsDialog open={true} onClose={onClose} />)
+    await screen.findByRole('textbox', { name: 'Interest profile' })
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText(CONFIRM_COPY)).not.toBeInTheDocument()
+  })
+
+  it('overlayClickUsesTheSameGuard', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={onClose} />)
+    await user.type(await screen.findByRole('textbox', { name: 'Interest profile' }), 'Rust')
+
+    const overlay = container.querySelector('.dialog-overlay')!
+    fireEvent.click(overlay)
+    expect(screen.getByText(CONFIRM_COPY)).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('dialog'))
+    expect(onClose).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Keep editing' }))
+    await user.clear(screen.getByRole('textbox', { name: 'Interest profile' }))
+    fireEvent.click(overlay)
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('saveErrorIsNotToasted', async () => {
+    const user = userEvent.setup()
+    useToastStore.setState({ toasts: [] })
+    route('PUT', '/api/interest/profile', () => ({
+      status: 400,
+      body: { title: 'Bad Request', detail: 'The profile can be at most 2,000 characters' },
+    }))
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />, createQueryClient())
+
+    await user.type(await screen.findByRole('textbox', { name: 'Interest profile' }), 'Rust')
+    await user.click(screen.getByRole('button', { name: 'Save profile' }))
+
+    expect(await screen.findByText(/Couldn't save the profile/)).toBeInTheDocument()
+    expect(useToastStore.getState().toasts).toEqual([])
   })
 })
