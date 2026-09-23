@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { InterestTopic } from '../api/interest'
-import { TopicRow, type TopicRowState } from './TopicRow'
+import { TopicRow, type PreviewBlock, type TopicRowState } from './TopicRow'
 
 type Reply = { status: number; body?: unknown }
-type Handler = (init?: RequestInit) => Reply
+type Handler = (init?: RequestInit) => Reply | Promise<Reply>
 
 interface RecordedCall {
   method: string
@@ -86,25 +86,72 @@ interface HarnessProps {
   onSaved?: (topic: InterestTopic) => void
   onDeleted?: () => void
   onDiscard?: () => void
+  articleId?: number | null
+  previewBlock?: PreviewBlock | null
 }
 
 /** Owns the row state the way InterestsDialog does, so TopicRow runs controlled. */
-function Harness({ initial, onSaved = () => {}, onDeleted = () => {}, onDiscard = () => {} }: HarnessProps) {
+function Harness({
+  initial,
+  onSaved = () => {},
+  onDeleted = () => {},
+  onDiscard = () => {},
+  articleId,
+  previewBlock,
+}: HarnessProps) {
   const [row, setRow] = useState(initial)
   return (
-    <TopicRow row={row} onChange={setRow} onSaved={onSaved} onDeleted={onDeleted} onDiscard={onDiscard} />
+    <TopicRow
+      row={row}
+      onChange={setRow}
+      onSaved={onSaved}
+      onDeleted={onDeleted}
+      onDiscard={onDiscard}
+      articleId={articleId}
+      previewBlock={previewBlock}
+    />
   )
 }
 
-function renderRow(props: HarnessProps) {
-  const qc = new QueryClient({
+function testQueryClient() {
+  return new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
-  return render(
+}
+
+function renderRow(props: HarnessProps, qc: QueryClient = testQueryClient()) {
+  const result = render(
     <QueryClientProvider client={qc}>
       <Harness {...props} />
     </QueryClientProvider>,
   )
+  return {
+    ...result,
+    /** Re-renders the same row with new props, keeping its state (e.g. a new articleId). */
+    rerenderRow: (next: HarnessProps) =>
+      result.rerender(
+        <QueryClientProvider client={qc}>
+          <Harness {...next} />
+        </QueryClientProvider>,
+      ),
+  }
+}
+
+function previewCalls() {
+  return calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/preview')
+}
+
+function previewSlot(container: HTMLElement): HTMLElement {
+  return container.querySelector<HTMLElement>('.interests-preview-result')!
+}
+
+/** A response the test resolves by hand, to observe the in-flight state. */
+function deferred() {
+  let resolve!: (reply: Reply) => void
+  const promise = new Promise<Reply>((r) => {
+    resolve = r
+  })
+  return { promise, resolve }
 }
 
 describe('TopicRow', () => {
@@ -117,7 +164,7 @@ describe('TopicRow', () => {
       calls.push({ method, url, body: init?.body as string | undefined })
       const handler = routes[`${method} ${url}`]
       if (!handler) return new Response(null, { status: 404 })
-      return jsonResponse(handler(init))
+      return jsonResponse(await handler(init))
     })
   })
 
@@ -306,5 +353,67 @@ describe('TopicRow', () => {
     renderRow({ initial: draftRow() })
     expect(screen.getByRole('button', { name: 'Discard draft: new topic' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save topic: new topic' })).toBeDisabled()
+  })
+  it('previewSendsTheRowAndShowsTheMath', async () => {
+    const user = userEvent.setup()
+    route('POST', '/api/interest/preview', () => ({ status: 200, body: { noul: 0.82, model: 'jev-1.13.0' } }))
+    const { container } = renderRow({ initial: savedRow(), articleId: 1 })
+
+    await user.click(screen.getByRole('button', { name: 'Preview topic: Rust' }))
+
+    await waitFor(() =>
+      expect(previewSlot(container).textContent).toBe('Match 82% → counts 64% × +20 = +12.8 pts'),
+    )
+    expect(previewCalls()).toHaveLength(1)
+    expect(previewCalls()[0].body).toBe(
+      '{"articleId":1,"description":"The Rust programming language","topicId":7}',
+    )
+    expect(container.querySelector('.interests-preview-points')).toHaveClass('weight-positive')
+    expect(calls).toHaveLength(1)
+  })
+
+  it('draftPreviewSendsNullTopicId', async () => {
+    const user = userEvent.setup()
+    route('POST', '/api/interest/preview', () => ({ status: 200, body: { noul: 0.9, model: 'jev-1.13.0' } }))
+    renderRow({ initial: draftRow({ name: 'Go', description: '  The Go language  ' }), articleId: 3 })
+
+    await user.click(screen.getByRole('button', { name: 'Preview topic: Go' }))
+
+    await waitFor(() => expect(previewCalls()).toHaveLength(1))
+    expect(previewCalls()[0].body).toBe('{"articleId":3,"description":"The Go language","topicId":null}')
+  })
+
+  it('inFlightShowsPreviewingAndAskingJev', async () => {
+    const user = userEvent.setup()
+    const reply = deferred()
+    route('POST', '/api/interest/preview', () => reply.promise)
+    const qc = testQueryClient()
+    const { container } = render(
+      <QueryClientProvider client={qc}>
+        <Harness initial={savedRow()} articleId={1} />
+        <Harness
+          initial={savedRow({ key: 't-8', id: 8, name: 'Go', description: 'The Go language' })}
+          articleId={1}
+        />
+      </QueryClientProvider>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Preview topic: Rust' }))
+
+    const busy = screen.getByRole('button', { name: 'Preview topic: Rust' })
+    expect(busy).toHaveTextContent('Previewing…')
+    expect(busy).toBeDisabled()
+    const slots = container.querySelectorAll('.interests-preview-result')
+    expect(slots[0]).toHaveTextContent('Asking Jev…')
+    expect(slots[0]).toHaveAttribute('aria-live', 'polite')
+    expect(slots[1]).toBeEmptyDOMElement()
+    expect(screen.getByRole('button', { name: 'Preview topic: Go' })).toBeEnabled()
+
+    await act(async () => {
+      reply.resolve({ status: 200, body: { noul: 0.4, model: 'jev-1.13.0' } })
+    })
+    await waitFor(() => expect(slots[0]).toHaveTextContent('Match 40% · No match (contributes 0)'))
+    expect(screen.getByRole('button', { name: 'Preview topic: Rust' })).toHaveTextContent('Preview topic')
+    expect(previewCalls()).toHaveLength(1)
   })
 })

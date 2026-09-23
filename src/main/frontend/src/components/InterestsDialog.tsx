@@ -6,6 +6,8 @@ import {
   useInterestTopics,
   useSaveInterestProfile,
 } from '../hooks/useInterest'
+import { useArticle } from '../hooks/useArticles'
+import { useUIStore } from '../stores/uiStore'
 import { isTopicDirty } from '../utils/interest'
 import { TopicRow, type TopicRowState } from './TopicRow'
 
@@ -268,6 +270,9 @@ interface TopicsSectionProps {
  */
 function TopicsSection({ topics, onDirtyCountChange }: TopicsSectionProps) {
   const [rows, setRows] = useState<TopicRowState[]>(() => seedRows(topics))
+  // The preview target is read live and never written here (D-07, D-12).
+  const selectedArticleId = useUIStore((s) => s.selectedArticleId)
+  const article = useArticle(selectedArticleId)
   const draftCounter = useRef(0)
 
   const updateRow = (key: string, update: (row: TopicRowState) => TopicRowState) =>
@@ -322,6 +327,13 @@ function TopicsSection({ topics, onDirtyCountChange }: TopicsSectionProps) {
         </span>
       </div>
       <p className="interests-help">{TOPICS_HELP}</p>
+      {article.data ? (
+        <p className="interests-preview-target" title={article.data.title}>
+          Previewing against: <span className="interests-preview-title">{article.data.title}</span>
+        </p>
+      ) : (
+        <p className="interests-preview-target">Previewing against: loading article…</p>
+      )}
       {rows.length === 0 ? (
         <>
           <p className="interests-empty-heading">No topics yet.</p>
@@ -340,6 +352,8 @@ function TopicsSection({ topics, onDirtyCountChange }: TopicsSectionProps) {
               onSaved={(topic) => markSaved(row.key, topic)}
               onDiscard={() => removeRow(row.key)}
               onDeleted={() => removeRow(row.key)}
+              articleId={selectedArticleId}
+              previewBlock={null}
             />
           ))}
         </div>

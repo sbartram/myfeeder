@@ -4,6 +4,7 @@ import {
   type InterestProfile,
   type InterestTopic,
   type TopicInput,
+  type TopicPreviewRequest,
 } from '../api/interest'
 
 /** Status is refetched on every dialog open (staleTime 0); the server owns coldStart (D-05). */
@@ -66,6 +67,17 @@ export function useUpdateInterestTopic() {
         old?.map((t) => (t.id === topic.id ? topic : t)),
       )
     },
+  })
+}
+
+/**
+ * Judges one topic description against one article (D-12). Nothing changes server-side, so no
+ * query is invalidated; each call is billed, so it is never retried (TanStack's mutation default).
+ */
+export function usePreviewTopic() {
+  return useMutation({
+    mutationFn: (request: TopicPreviewRequest) => interestApi.preview(request),
+    meta: { inlineError: true },
   })
 }
 

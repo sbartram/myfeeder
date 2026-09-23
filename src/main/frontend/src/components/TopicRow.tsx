@@ -3,10 +3,13 @@ import type { InterestTopic } from '../api/interest'
 import {
   useCreateInterestTopic,
   useDeleteInterestTopic,
+  usePreviewTopic,
   useUpdateInterestTopic,
 } from '../hooks/useInterest'
 import {
+  formatPreviewText,
   formatSigned,
+  hinge,
   isNegated,
   isTopicDirty,
   parseWeight,
@@ -29,6 +32,14 @@ export type TopicRowState = {
   weight: number
   saved: { name: string; description: string; weight: number } | null
 }
+
+/** Why Preview is unavailable for every row; InterestsDialog computes at most one (D-14). */
+export type PreviewBlockKind = 'not-configured' | 'breaker' | 'no-article' | 'status-pending' | 'status-unknown'
+
+export type PreviewBlock = { kind: PreviewBlockKind; reason: string }
+
+/** The last successful preview, with the inputs it was judged on. */
+type PreviewResult = { noul: number; description: string; articleId: number }
 
 const NEGATION_DEBOUNCE_MS = 400
 
@@ -97,22 +108,70 @@ function topicLabel(row: TopicRowState): string {
   return 'new topic'
 }
 
+interface TopicPreviewResultProps {
+  pending: boolean
+  result: PreviewResult | null
+  weight: number
+}
+
+/**
+ * The preview slot under the row (D-13). The math is recomputed from the stored noul and the
+ * row's current weight, so a weight change updates the points without a new call.
+ */
+function TopicPreviewResult({ pending, result, weight }: TopicPreviewResultProps) {
+  let content = null
+  if (pending) {
+    content = <span className="interests-preview-pending">Asking Jev…</span>
+  } else if (result) {
+    const m = hinge(result.noul)
+    if (m > 0) {
+      const points = m * weight
+      content = (
+        <>
+          {`Match ${Math.round(result.noul * 100)}% → counts ${Math.round(m * 100)}% × ${formatSigned(weight)} = `}
+          <span className={`interests-preview-points ${weightClass(points)}`}>{formatSigned(points, 1)}</span>
+          {' pts'}
+        </>
+      )
+    } else {
+      content = <span className="interests-preview-nomatch">{formatPreviewText(result.noul, weight)}</span>
+    }
+  }
+  return (
+    <div className="interests-preview-result" aria-live="polite">
+      {content}
+    </div>
+  )
+}
+
 interface TopicRowProps {
   row: TopicRowState
   onChange: (row: TopicRowState) => void
   onSaved: (topic: InterestTopic) => void
   onDiscard: () => void
   onDeleted: () => void
+  /** The article open in the reading pane, which Preview judges the row against. */
+  articleId?: number | null
+  previewBlock?: PreviewBlock | null
 }
 
 /**
  * A controlled topic row. Each row owns its mutations, so saving or deleting one row shows
  * "Saving…" and errors in that row only (D-08).
  */
-export function TopicRow({ row, onChange, onSaved, onDiscard, onDeleted }: TopicRowProps) {
+export function TopicRow({
+  row,
+  onChange,
+  onSaved,
+  onDiscard,
+  onDeleted,
+  articleId = null,
+}: TopicRowProps) {
   const create = useCreateInterestTopic()
   const update = useUpdateInterestTopic()
   const remove = useDeleteInterestTopic()
+  const preview = usePreviewTopic()
+  const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null)
   const [negated, setNegated] = useState(false)
   const [nameBlurredEmpty, setNameBlurredEmpty] = useState(false)
   const [descriptionBlurredEmpty, setDescriptionBlurredEmpty] = useState(false)
@@ -150,6 +209,17 @@ export function TopicRow({ row, onChange, onSaved, onDiscard, onDeleted }: Topic
       update.mutate({ id: row.id, input }, { onSuccess: onSaved })
     }
   }
+
+  // One request per click (D-14); the draft text is sent as-is and nothing is persisted (D-12).
+  const handlePreview = () => {
+    if (articleId === null) return
+    const description = row.description.trim()
+    preview.mutate(
+      { articleId, description, topicId: row.id },
+      { onSuccess: (result) => setPreviewResult({ noul: result.noul, description, articleId }) },
+    )
+  }
+  const previewDisabled = preview.isPending || articleId === null || descriptionBlank
 
   const handleDelete = () => {
     if (row.id !== null) remove.mutate(row.id, { onSuccess: onDeleted })
@@ -230,6 +300,14 @@ export function TopicRow({ row, onChange, onSaved, onDiscard, onDeleted }: Topic
           </div>
         ) : (
           <div className="interests-row-actions">
+            <button
+              className="btn-secondary"
+              aria-label={`Preview topic: ${label}`}
+              disabled={previewDisabled}
+              onClick={handlePreview}
+            >
+              {preview.isPending ? 'Previewing…' : 'Preview topic'}
+            </button>
             {dirty && (
               <button
                 className="btn-primary"
@@ -261,6 +339,7 @@ export function TopicRow({ row, onChange, onSaved, onDiscard, onDeleted }: Topic
           {message}
         </div>
       ))}
+      <TopicPreviewResult pending={preview.isPending} result={previewResult} weight={row.weight} />
     </div>
   )
 }
