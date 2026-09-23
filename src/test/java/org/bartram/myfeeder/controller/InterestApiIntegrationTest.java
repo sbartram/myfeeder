@@ -109,6 +109,24 @@ class InterestApiIntegrationTest {
     }
 
     @Test
+    void statusReportsKeylessClosedAndColdStart() throws Exception {
+        mockMvc.perform(get("/api/interest/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.configured").value(false))
+                .andExpect(jsonPath("$.breakerState").value("CLOSED"))
+                .andExpect(jsonPath("$.coldStart").value(true));
+
+        mockMvc.perform(put("/api/interest/profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"profileText\":\"Rust\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/interest/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coldStart").value(false));
+    }
+
+    @Test
     void weightOutOfRangeIs400BeforeTheDatabase() throws Exception {
         mockMvc.perform(post("/api/interest/topics")
                         .contentType(MediaType.APPLICATION_JSON)
