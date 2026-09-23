@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 03
 current_phase_name: Interest Model, Schema & Rubric Editor
 status: executing
-stopped_at: Completed 03-05-PLAN.md
-last_updated: "2026-09-23T18:11:36.583Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-09-23T18:22:09.260Z"
 last_activity: 2026-09-23
 last_activity_desc: Phase 03 execution started
-state_head: d902baa08d9118f7901a96b3420b9a8699eba8c4
+state_head: c8a68457b86addad5f07b4883b8d296eb51e0b87
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 16
-  completed_plans: 12
+  completed_plans: 13
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-23)
 ## Current Position
 
 Phase: 03 (Interest Model, Schema & Rubric Editor) — EXECUTING
-Plan: 5 of 8
+Plan: 6 of 8
 Status: Ready to execute
 Last activity: 2026-09-23 — Phase 03 execution started
 
@@ -71,6 +71,7 @@ Progress: [███░░░░░░░] 29%
 | Phase 03 P02 | 4 min | 3 tasks | 7 files |
 | Phase 03 P03 | 5 min | 3 tasks | 7 files |
 | Phase 03 P05 | 6 min | 3 tasks | 12 files |
+| Phase 03 P04 | 7 min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-05: Interest types live in src/api/interest.ts (following api/integrations.ts); Phase 5 reuses MainLayout interestsOpen for the Priority cold-start CTA
 - [Phase 03]: 03-05: Interest mutations set meta.inlineError and createQueryClient() skips their toast; ApiError exposes status + ProblemDetail title for 03-07 preview copy
 - [Phase 03]: 03-05: 03-06 feeds its dirty-topic count into describeUnsaved(profileDirty, dirtyTopics) in InterestsDialog.tsx; topic hooks go in useInterest.ts
+- [Phase 03]: 03-04: /api/interest/status is exactly {configured, breakerState, coldStart}; Phase 4 appends JEV-05 counts to InterestStatus as NEW components, never renames these three
+- [Phase 03]: 03-04: Jev failures map to fixed-text ProblemDetails (503 'Jev not configured', 503 'Jev unavailable', 422 'Jev rejected the request (HTTP <status>)', 503 'Jev request failed'); preview is one judge() call, no transaction, nothing persisted; WR-01 stays open for Phase 4
 
 ### Pending Todos
 
@@ -128,6 +131,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-23T18:11:36.556Z
-Stopped at: Completed 03-05-PLAN.md
+Last session: 2026-09-23T18:22:09.227Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None

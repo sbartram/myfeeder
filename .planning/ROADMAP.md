@@ -91,7 +91,7 @@ Plans:
   4. User can preview a draft topic against the article open in the reading pane and see its match result (one Jev call) before saving it
   5. The interest settings UI shows a "not configured" notice when no API key is set, and a "cold start" prompt when the profile is empty and there are no topics
 
-**Plans**: 4/8 plans executed
+**Plans**: 5/8 plans executed
 
 Plans:
 **Wave 1**
@@ -106,7 +106,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 03-04-PLAN.md — GET /api/interest/status (D-04), one-call topic preview (D-12..D-14), Jev error mapping, CLAUDE.md + roadmap note fix (wave 3)
+- [x] 03-04-PLAN.md — GET /api/interest/status (D-04), one-call topic preview (D-12..D-14), Jev error mapping, CLAUDE.md + roadmap note fix (wave 3)
 - [ ] 03-06-PLAN.md — Topic rubric editor: weight slider/number, negation warning, per-row save/delete, 25 cap (INT-02, INT-03) (wave 3)
 
 **Wave 4** *(blocked on Wave 3)*
@@ -196,7 +196,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 |-------|----------------|--------|-----------|
 | 1. Dependency Upgrade | 4/4 | Complete    | 2026-09-22 |
 | 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
-| 3. Interest Model, Schema & Rubric Editor | 4/8 | In Progress|  |
+| 3. Interest Model, Schema & Rubric Editor | 5/8 | In Progress|  |
 | 4. Scoring Pipeline & Backfill Sweep | 0/TBD | Not started | - |
 | 5. Blend & Priority View | 0/TBD | Not started | - |
 | 6. Thumbs Feedback | 0/TBD | Not started | - |
