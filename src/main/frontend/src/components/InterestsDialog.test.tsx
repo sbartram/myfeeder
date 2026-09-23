@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
@@ -29,6 +29,26 @@ function jsonResponse({ status, body }: Reply): Response {
 
 function profile(profileText: string) {
   return { id: 1, profileText, version: 1, updatedAt: '2026-09-23T00:00:00Z' }
+}
+
+function topic(id: number, name: string, description: string, weight = 20) {
+  return {
+    id,
+    name,
+    description,
+    weight,
+    version: 1,
+    createdAt: '2026-09-23T00:00:00Z',
+    updatedAt: '2026-09-23T00:00:00Z',
+  }
+}
+
+function topicRows(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>('.interests-topic-row'))
+}
+
+function statusFetches() {
+  return calls.filter((c) => c.method === 'GET' && c.url === '/api/interest/status')
 }
 
 function route(method: string, url: string, handler: Handler) {
@@ -64,6 +84,7 @@ describe('InterestsDialog', () => {
       body: { configured: true, breakerState: 'CLOSED', coldStart: false },
     }))
     route('GET', '/api/interest/profile', () => ({ status: 200, body: profile('') }))
+    route('GET', '/api/interest/topics', () => ({ status: 200, body: [] }))
     route('PUT', '/api/interest/profile', (init) => {
       const { profileText } = JSON.parse(String(init?.body)) as { profileText: string }
       return { status: 200, body: { ...profile(profileText), version: 2 } }
@@ -308,5 +329,89 @@ describe('InterestsDialog', () => {
 
     expect(await screen.findByText(/Couldn't save the profile/)).toBeInTheDocument()
     expect(useToastStore.getState().toasts).toEqual([])
+  })
+  it('addsADraftTopicAndSavesItInPlace', async () => {
+    const user = userEvent.setup()
+    route('POST', '/api/interest/topics', (init) => ({
+      status: 201,
+      body: { ...topic(7, '', ''), ...(JSON.parse(String(init?.body)) as object) },
+    }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    expect(await screen.findByText('No topics yet.')).toBeInTheDocument()
+    expect(screen.getByText('0 / 25')).toBeInTheDocument()
+    await waitFor(() => expect(statusFetches()).toHaveLength(1))
+
+    await user.click(screen.getByRole('button', { name: '+ Add topic' }))
+    const row = topicRows(container)[0]
+    expect(within(row).getByRole('textbox', { name: 'Topic name' })).toHaveFocus()
+    expect(within(row).getByRole('spinbutton', { name: 'Topic weight value' })).toHaveValue(20)
+    expect(row.querySelector('.interests-weight-sign')).toHaveTextContent('+20')
+    expect(within(row).getByText('Unsaved')).toBeInTheDocument()
+
+    await user.type(within(row).getByRole('textbox', { name: 'Topic name' }), 'Rust')
+    await user.type(
+      within(row).getByRole('textbox', { name: 'Topic description' }),
+      'The Rust programming language',
+    )
+    await user.click(screen.getByRole('button', { name: 'Save topic: Rust' }))
+
+    await waitFor(() => expect(within(row).queryByText('Unsaved')).not.toBeInTheDocument())
+    const post = calls.find((c) => c.method === 'POST' && c.url === '/api/interest/topics')
+    expect(post?.body).toBe(
+      '{"name":"Rust","description":"The Rust programming language","weight":20}',
+    )
+    expect(within(row).queryByRole('button', { name: /Save topic/ })).not.toBeInTheDocument()
+    expect(topicRows(container)[0]).toBe(row)
+    expect(screen.getByText('1 / 25')).toBeInTheDocument()
+    await waitFor(() => expect(statusFetches()).toHaveLength(2))
+  })
+
+  it('listsSavedTopicsInIdOrder', async () => {
+    route('GET', '/api/interest/topics', () => ({
+      status: 200,
+      body: [topic(9, 'Kubernetes', 'Running Kubernetes at home'), topic(3, 'Rust', 'The Rust language')],
+    }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    await screen.findByText('2 / 25')
+    const names = topicRows(container).map(
+      (row) => (within(row).getByRole('textbox', { name: 'Topic name' }) as HTMLInputElement).value,
+    )
+    expect(names).toEqual(['Rust', 'Kubernetes'])
+    expect(screen.queryByText('No topics yet.')).not.toBeInTheDocument()
+  })
+
+  it('sliderAndNumberStaySynced', async () => {
+    route('GET', '/api/interest/topics', () => ({
+      status: 200,
+      body: [topic(3, 'Crypto', 'Cryptocurrency and blockchains')],
+    }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await screen.findByText('1 / 25')
+    const row = topicRows(container)[0]
+
+    fireEvent.change(within(row).getByRole('slider', { name: 'Topic weight' }), {
+      target: { value: '-15' },
+    })
+
+    expect(within(row).getByRole('spinbutton', { name: 'Topic weight value' })).toHaveValue(-15)
+    const sign = row.querySelector('.interests-weight-sign')
+    expect(sign).toHaveTextContent('−15')
+    expect(sign).toHaveClass('weight-negative')
+  })
+
+  it('discardDraftSendsNoRequest', async () => {
+    const user = userEvent.setup()
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await screen.findByText('No topics yet.')
+
+    await user.click(screen.getByRole('button', { name: '+ Add topic' }))
+    expect(topicRows(container)).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: 'Discard draft: new topic' }))
+
+    expect(topicRows(container)).toHaveLength(0)
+    expect(screen.getByText('No topics yet.')).toBeInTheDocument()
+    expect(calls.filter((c) => c.url.startsWith('/api/interest/topics') && c.method !== 'GET')).toEqual([])
   })
 })

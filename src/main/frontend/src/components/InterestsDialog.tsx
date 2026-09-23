@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import type { InterestProfile, InterestStatus } from '../api/interest'
-import { useInterestProfile, useInterestStatus, useSaveInterestProfile } from '../hooks/useInterest'
+import type { InterestProfile, InterestStatus, InterestTopic } from '../api/interest'
+import {
+  useInterestProfile,
+  useInterestStatus,
+  useInterestTopics,
+  useSaveInterestProfile,
+} from '../hooks/useInterest'
+import { TopicRow, type TopicRowState } from './TopicRow'
 
 const PROFILE_MAX = 2000
 
@@ -15,6 +21,11 @@ const PROFILE_PLACEHOLDER =
   "I'm a backend engineer. I want in-depth articles about Java, Spring Boot and PostgreSQL performance, running Kubernetes at home, and practical uses of LLMs in developer tools. I like release notes for tools I use and post-mortems of real outages."
 
 const OPEN_BREAKER_STATES = ['OPEN', 'FORCED_OPEN']
+
+const TOPICS_MAX = 25
+
+const TOPICS_HELP =
+  'Describe each topic as what an article is primarily about. The weight sets how much a match moves the article: +50 boosts it strongly, −50 buries it.'
 
 /** What the close guard names: "the profile", "1 topic", "N topics" or "the profile and N topics". */
 function describeUnsaved(profileDirty: boolean, dirtyTopics: number): string {
@@ -36,13 +47,15 @@ export function InterestsDialog({ open, onClose }: InterestsDialogProps) {
 
 function InterestsDialogBody({ onClose }: { onClose: () => void }) {
   const profile = useInterestProfile()
+  const topics = useInterestTopics()
   const status = useInterestStatus()
   const [profileDirty, setProfileDirty] = useState(false)
+  const [dirtyTopics, setDirtyTopics] = useState(0)
   const [confirmingClose, setConfirmingClose] = useState(false)
 
   // Esc is deliberately not bound: the global handler clears the preview target.
   const requestClose = () => {
-    if (profileDirty) {
+    if (profileDirty || dirtyTopics > 0) {
       setConfirmingClose(true)
     } else {
       onClose()
@@ -50,14 +63,15 @@ function InterestsDialogBody({ onClose }: { onClose: () => void }) {
   }
 
   let content
-  if (profile.isPending) {
-    content = <p className="interests-loading">Loading interests…</p>
-  } else if (profile.isError) {
+  const loadError = profile.error ?? topics.error
+  if (loadError) {
     content = (
       <div className="dialog-error">
-        Couldn't load your interests: {profile.error.message}. Close this dialog and open it again to retry.
+        Couldn't load your interests: {loadError.message}. Close this dialog and open it again to retry.
       </div>
     )
+  } else if (!profile.isSuccess || !topics.isSuccess) {
+    content = <p className="interests-loading">Loading interests…</p>
   } else {
     content = (
       <>
@@ -67,6 +81,7 @@ function InterestsDialogBody({ onClose }: { onClose: () => void }) {
           coldStart={status.data?.coldStart === true}
           onDirtyChange={setProfileDirty}
         />
+        <TopicsSection topics={topics.data} onDirtyCountChange={setDirtyTopics} />
         <p className="interests-note">Profile and topic changes apply to newly arriving articles.</p>
       </>
     )
@@ -89,7 +104,7 @@ function InterestsDialogBody({ onClose }: { onClose: () => void }) {
         {confirmingClose ? (
           <div className="dialog-actions interests-confirm">
             <span>
-              Discard unsaved changes? You have unsaved edits to {describeUnsaved(profileDirty, 0)}.
+              Discard unsaved changes? You have unsaved edits to {describeUnsaved(profileDirty, dirtyTopics)}.
             </span>
             <span className="interests-confirm-actions">
               <button className="btn-secondary" onClick={() => setConfirmingClose(false)}>
@@ -223,6 +238,107 @@ function ProfileEditor({ profile, coldStart, onDirtyChange }: ProfileEditorProps
           Couldn't save the profile: {save.error.message}. Your text is still here. Try Save profile again.
         </div>
       )}
+    </section>
+  )
+}
+
+function seedRows(topics: InterestTopic[]): TopicRowState[] {
+  return [...topics]
+    .sort((a, b) => a.id - b.id)
+    .map((t) => ({
+      key: `t-${t.id}`,
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      weightText: String(t.weight),
+      weight: t.weight,
+      saved: { name: t.name, description: t.description, weight: t.weight },
+    }))
+}
+
+interface TopicsSectionProps {
+  topics: InterestTopic[]
+  onDirtyCountChange: (count: number) => void
+}
+
+/**
+ * Seeds its rows once from the loaded topics. After that, each row changes only through its own
+ * callbacks, so a refetch or another row's save never overwrites unsaved edits (Pitfall 7).
+ */
+function TopicsSection({ topics, onDirtyCountChange }: TopicsSectionProps) {
+  const [rows, setRows] = useState<TopicRowState[]>(() => seedRows(topics))
+  const draftCounter = useRef(0)
+
+  const updateRow = (key: string, update: (row: TopicRowState) => TopicRowState) =>
+    setRows((current) => current.map((r) => (r.key === key ? update(r) : r)))
+  const removeRow = (key: string) => setRows((current) => current.filter((r) => r.key !== key))
+
+  const addDraft = () => {
+    draftCounter.current += 1
+    setRows((current) => [
+      ...current,
+      {
+        key: `d-${draftCounter.current}`,
+        id: null,
+        name: '',
+        description: '',
+        weightText: '20',
+        weight: 20,
+        saved: null,
+      },
+    ])
+  }
+
+  // The draft becomes a saved row in place: same key, same position, no re-sort (D-08).
+  const markSaved = (key: string, topic: InterestTopic) =>
+    updateRow(key, () => ({
+      key,
+      id: topic.id,
+      name: topic.name,
+      description: topic.description,
+      weightText: String(topic.weight),
+      weight: topic.weight,
+      saved: { name: topic.name, description: topic.description, weight: topic.weight },
+    }))
+
+  useEffect(() => {
+    onDirtyCountChange(0)
+  }, [onDirtyCountChange])
+
+  return (
+    <section className="interests-section">
+      <div className="interests-topics-head">
+        <h3>Topics</h3>
+        <span className="interests-topic-count">
+          {rows.length} / {TOPICS_MAX}
+        </span>
+      </div>
+      <p className="interests-help">{TOPICS_HELP}</p>
+      {rows.length === 0 ? (
+        <>
+          <p className="interests-empty-heading">No topics yet.</p>
+          <p className="interests-help">
+            Add a topic for each subject you want boosted or buried. You can also rank with the
+            profile alone.
+          </p>
+        </>
+      ) : (
+        <div className="interests-topic-list">
+          {rows.map((row) => (
+            <TopicRow
+              key={row.key}
+              row={row}
+              onChange={(next) => updateRow(row.key, () => next)}
+              onSaved={(topic) => markSaved(row.key, topic)}
+              onDiscard={() => removeRow(row.key)}
+              onDeleted={() => removeRow(row.key)}
+            />
+          ))}
+        </div>
+      )}
+      <button className="btn-secondary interests-add-topic" onClick={addDraft}>
+        + Add topic
+      </button>
     </section>
   )
 }
