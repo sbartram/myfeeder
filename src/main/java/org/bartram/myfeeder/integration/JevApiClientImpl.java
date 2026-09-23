@@ -31,8 +31,14 @@ public class JevApiClientImpl implements JevApiClient {
         this.properties = properties;
     }
 
+    // No resilience annotations: a configuration check must never touch the breaker (D-04)
+    @Override
+    public boolean isConfigured() {
+        return StringUtils.hasText(properties.getApiKey());
+    }
+
     private void requireConfigured() {
-        if (!StringUtils.hasText(properties.getApiKey())) {
+        if (!isConfigured()) {
             throw new JevNotConfiguredException();
         }
     }

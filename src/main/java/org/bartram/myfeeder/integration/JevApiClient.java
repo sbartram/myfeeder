@@ -7,6 +7,13 @@ import java.util.Map;
 public interface JevApiClient {
 
     /**
+     * True when the TypeSafe key has text. Never throws, never calls Jev, and is not wrapped by
+     * the circuit breaker or retry. The interest status endpoint (D-04) and the Phase 4 scorer
+     * gate both read it, so it is the single "configured" rule.
+     */
+    boolean isConfigured();
+
+    /**
      * Sends one TypeSafe Jev call. The client is a generic pass-through: it knows nothing about
      * articles or topics, and callers build the SDK {@code Noul}/{@code Score} questions themselves.
      *
