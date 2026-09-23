@@ -1,10 +1,16 @@
 package org.bartram.myfeeder.config;
 
+import io.github.resilience4j.common.retry.configuration.RetryConfigCustomizer;
+import io.github.resilience4j.core.functions.Either;
+import io.github.resilience4j.retry.RetryConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springaicommunity.typesafe.autoconfigure.TypeSafeAutoConfiguration;
 import org.springaicommunity.typesafe.autoconfigure.TypeSafeProperties;
+import org.springaicommunity.typesafe.exception.TypeSafeApiConnectionException;
+import org.springaicommunity.typesafe.exception.TypeSafeInternalServerException;
+import org.springaicommunity.typesafe.exception.TypeSafeRateLimitException;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.context.annotation.UserConfigurations;
 import org.springframework.boot.env.YamlPropertySourceLoader;
@@ -18,9 +24,12 @@ import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -159,6 +168,45 @@ class TypeSafeConfigTest {
         for (String name : ((EnumerablePropertySource<?>) testYaml).getPropertyNames()) {
             assertThat(String.valueOf(testYaml.getProperty(name))).as(name).doesNotContain("MYFEEDER_TYPESAFE_API_KEY");
         }
+    }
+
+    @Test
+    void retryIntervalHonorsRetryAfterUpToCap() {
+        // D-07: the server hint wins, clamped to [0, MAX_RETRY_AFTER_MS]
+        assertThat(interval(rateLimited(700L), 1)).isEqualTo(700L);
+        assertThat(interval(rateLimited(9_999L), 1)).isEqualTo(9_999L);
+        assertThat(interval(rateLimited(10_000L), 1)).isEqualTo(10_000L);
+        assertThat(interval(rateLimited(10_001L), 1)).isEqualTo(10_000L);
+        assertThat(interval(rateLimited(60_000L), 1)).isEqualTo(10_000L);
+        assertThat(interval(rateLimited(0L), 1)).isEqualTo(0L);
+        assertThat(interval(rateLimited(-5L), 1)).isEqualTo(0L);
+    }
+
+    @Test
+    void retryIntervalFallsBackToExponentialBackoff() {
+        // No usable hint: base (wait-duration) * 2^(attempt - 1)
+        assertThat(interval(rateLimited(null), 1)).isEqualTo(1_000L);
+        assertThat(interval(rateLimited(null), 2)).isEqualTo(2_000L);
+        TypeSafeInternalServerException serverError = new TypeSafeInternalServerException(
+                "server error", 500, "", new HttpHeaders(), "POST /v1/systemone");
+        assertThat(interval(serverError, 1)).isEqualTo(1_000L);
+        assertThat(interval(serverError, 2)).isEqualTo(2_000L);
+        TypeSafeApiConnectionException connectionError =
+                new TypeSafeApiConnectionException("connection failed", new ConnectException("refused"));
+        assertThat(interval(connectionError, 1)).isEqualTo(1_000L);
+    }
+
+    private static TypeSafeRateLimitException rateLimited(Long retryAfterMs) {
+        return new TypeSafeRateLimitException("rate limited", 429, "", new HttpHeaders(), "POST /v1/systemone",
+                retryAfterMs);
+    }
+
+    private static long interval(Throwable failure, int attempt) {
+        RetryConfigCustomizer customizer = new TypeSafeConfig().jevRetryInterval(
+                new MockEnvironment().withProperty("resilience4j.retry.instances.jev.wait-duration", "1s"));
+        RetryConfig.Builder<Object> builder = RetryConfig.custom();
+        customizer.customize(builder);
+        return builder.build().getIntervalBiFunction().apply(attempt, Either.left(failure));
     }
 
     private static PropertySource<?> loadYaml(String path) throws IOException {

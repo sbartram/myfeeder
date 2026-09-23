@@ -1,5 +1,6 @@
 package org.bartram.myfeeder.config;
 
+import io.github.resilience4j.common.retry.configuration.RetryConfigCustomizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springaicommunity.typesafe.autoconfigure.TypeSafeProperties;
@@ -8,6 +9,7 @@ import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
 import org.springframework.boot.http.client.HttpClientSettings;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.client.ReactorClientHttpRequestFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
@@ -33,6 +35,7 @@ import java.util.Objects;
 public class TypeSafeConfig {
 
     static final Duration JEV_CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    static final long MAX_RETRY_AFTER_MS = 10_000L;
 
     @Bean
     TypeSafeClient typeSafeClient(TypeSafeProperties properties, RestClient.Builder restClientBuilder) {
@@ -52,5 +55,10 @@ public class TypeSafeConfig {
                 .retryPolicy(properties.toRetryPolicy())
                 .restClientBuilder(restClientBuilder.clone().requestFactory(requestFactory))
                 .build();
+    }
+
+    @Bean
+    RetryConfigCustomizer jevRetryInterval(Environment environment) {
+        return RetryConfigCustomizer.of("jev", builder -> { }); // TDD RED skeleton: no interval yet
     }
 }

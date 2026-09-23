@@ -121,6 +121,22 @@ class JevResilienceTest {
         });
     }
 
+    @Test
+    void rateLimitWaitsForRetryAfterThenSucceeds() {
+        // The test's base wait is 10ms, so only the retry-after-ms hint can explain a ~700ms wait (D-07).
+        stub.enqueue(429, Map.of("retry-after-ms", "700"));
+        stub.enqueue(200);
+        runner.run(ctx -> {
+            JevApiClient client = ctx.getBean(JevApiClient.class);
+            long start = System.nanoTime();
+            JevJudgment judgment = client.judge(state(), questions());
+            long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+            assertThat(judgment.model()).isEqualTo("jev-1.13.0");
+            assertThat(stub.hits()).isEqualTo(2);
+            assertThat(elapsedMs).isGreaterThanOrEqualTo(650L).isLessThan(5_000L);
+        });
+    }
+
     private static Map<String, Question> questions() {
         Map<String, Question> questions = new LinkedHashMap<>();
         questions.put("profile", Score.builder()
