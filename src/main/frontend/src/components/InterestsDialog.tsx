@@ -9,7 +9,7 @@ import {
 import { useArticle } from '../hooks/useArticles'
 import { useUIStore } from '../stores/uiStore'
 import { isTopicDirty } from '../utils/interest'
-import { TopicRow, type TopicRowState } from './TopicRow'
+import { TopicRow, type PreviewBlock, type TopicRowState } from './TopicRow'
 
 const PROFILE_MAX = 2000
 
@@ -84,7 +84,12 @@ function InterestsDialogBody({ onClose }: { onClose: () => void }) {
           coldStart={status.data?.coldStart === true}
           onDirtyChange={setProfileDirty}
         />
-        <TopicsSection topics={topics.data} onDirtyCountChange={setDirtyTopics} />
+        <TopicsSection
+          topics={topics.data}
+          status={status.data}
+          statusFailed={status.isError}
+          onDirtyCountChange={setDirtyTopics}
+        />
         <p className="interests-note">Profile and topic changes apply to newly arriving articles.</p>
       </>
     )
@@ -259,8 +264,33 @@ function seedRows(topics: InterestTopic[]): TopicRowState[] {
     }))
 }
 
+/**
+ * The one reason Preview is unavailable for every row, or null (D-14, D-06). First match wins:
+ * not configured, circuit open, no article, status still loading, status failed.
+ */
+function computePreviewBlock(
+  status: InterestStatus | undefined,
+  statusFailed: boolean,
+  selectedArticleId: number | null,
+): PreviewBlock | null {
+  if (status?.configured === false) {
+    return { kind: 'not-configured', reason: 'no TypeSafe API key is configured.' }
+  }
+  if (status && OPEN_BREAKER_STATES.includes(status.breakerState)) {
+    return { kind: 'breaker', reason: 'Jev is temporarily unavailable. Try again in a minute.' }
+  }
+  if (selectedArticleId === null) {
+    return { kind: 'no-article', reason: 'open an article in the reading pane first.' }
+  }
+  if (!status && !statusFailed) return { kind: 'status-pending', reason: '' }
+  if (!status) return { kind: 'status-unknown', reason: "couldn't check Jev status." }
+  return null
+}
+
 interface TopicsSectionProps {
   topics: InterestTopic[]
+  status: InterestStatus | undefined
+  statusFailed: boolean
   onDirtyCountChange: (count: number) => void
 }
 
@@ -268,11 +298,12 @@ interface TopicsSectionProps {
  * Seeds its rows once from the loaded topics. After that, each row changes only through its own
  * callbacks, so a refetch or another row's save never overwrites unsaved edits (Pitfall 7).
  */
-function TopicsSection({ topics, onDirtyCountChange }: TopicsSectionProps) {
+function TopicsSection({ topics, status, statusFailed, onDirtyCountChange }: TopicsSectionProps) {
   const [rows, setRows] = useState<TopicRowState[]>(() => seedRows(topics))
   // The preview target is read live and never written here (D-07, D-12).
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
   const article = useArticle(selectedArticleId)
+  const previewBlock = computePreviewBlock(status, statusFailed, selectedArticleId)
   const draftCounter = useRef(0)
 
   const updateRow = (key: string, update: (row: TopicRowState) => TopicRowState) =>
@@ -327,7 +358,9 @@ function TopicsSection({ topics, onDirtyCountChange }: TopicsSectionProps) {
         </span>
       </div>
       <p className="interests-help">{TOPICS_HELP}</p>
-      {article.data ? (
+      {previewBlock && previewBlock.kind !== 'status-pending' ? (
+        <p className="interests-preview-target">Preview unavailable: {previewBlock.reason}</p>
+      ) : article.data ? (
         <p className="interests-preview-target" title={article.data.title}>
           Previewing against: <span className="interests-preview-title">{article.data.title}</span>
         </p>
@@ -353,7 +386,7 @@ function TopicsSection({ topics, onDirtyCountChange }: TopicsSectionProps) {
               onDiscard={() => removeRow(row.key)}
               onDeleted={() => removeRow(row.key)}
               articleId={selectedArticleId}
-              previewBlock={null}
+              previewBlock={previewBlock}
             />
           ))}
         </div>

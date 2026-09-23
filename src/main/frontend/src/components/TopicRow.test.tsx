@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { InterestTopic } from '../api/interest'
+import { createQueryClient } from '../queryClient'
 import { TopicRow, type PreviewBlock, type TopicRowState } from './TopicRow'
 
 type Reply = { status: number; body?: unknown }
@@ -415,5 +416,176 @@ describe('TopicRow', () => {
     await waitFor(() => expect(slots[0]).toHaveTextContent('Match 40% · No match (contributes 0)'))
     expect(screen.getByRole('button', { name: 'Preview topic: Rust' })).toHaveTextContent('Preview topic')
     expect(previewCalls()).toHaveLength(1)
+  })
+  it('previewDisabledReasonsFollowTheSpecOrder', () => {
+    const cases: Array<[PreviewBlock, string]> = [
+      [{ kind: 'not-configured', reason: 'no TypeSafe API key is configured.' }, 'No TypeSafe API key is configured.'],
+      [
+        { kind: 'breaker', reason: 'Jev is temporarily unavailable. Try again in a minute.' },
+        'Jev is temporarily unavailable. Try again in a minute.',
+      ],
+      [
+        { kind: 'no-article', reason: 'open an article in the reading pane first.' },
+        'Open an article in the reading pane first.',
+      ],
+      [{ kind: 'status-pending', reason: '' }, 'Checking Jev status…'],
+      [{ kind: 'status-unknown', reason: "couldn't check Jev status." }, "Couldn't check Jev status."],
+    ]
+    for (const [block, title] of cases) {
+      const view = renderRow({ initial: savedRow(), articleId: 1, previewBlock: block })
+      const button = screen.getByRole('button', { name: 'Preview topic: Rust' })
+      expect(button).toBeDisabled()
+      expect(button).toHaveAttribute('title', title)
+      view.unmount()
+    }
+
+    // Blank description, no block.
+    const blank = renderRow({ initial: draftRow({ name: 'Go' }), articleId: 1, previewBlock: null })
+    expect(screen.getByRole('button', { name: 'Preview topic: Go' })).toHaveAttribute(
+      'title',
+      'Write a description first.',
+    )
+    blank.unmount()
+
+    // Not configured outranks a blank description; a blank description outranks status unknown.
+    const both = renderRow({
+      initial: draftRow({ name: 'Go' }),
+      articleId: 1,
+      previewBlock: { kind: 'not-configured', reason: 'no TypeSafe API key is configured.' },
+    })
+    expect(screen.getByRole('button', { name: 'Preview topic: Go' })).toHaveAttribute(
+      'title',
+      'No TypeSafe API key is configured.',
+    )
+    both.unmount()
+    renderRow({
+      initial: draftRow({ name: 'Go' }),
+      articleId: 1,
+      previewBlock: { kind: 'status-unknown', reason: "couldn't check Jev status." },
+    })
+    expect(screen.getByRole('button', { name: 'Preview topic: Go' })).toHaveAttribute(
+      'title',
+      'Write a description first.',
+    )
+  })
+
+  it('previewEnabledHasNoTitle', () => {
+    renderRow({ initial: savedRow(), articleId: 1, previewBlock: null })
+    const button = screen.getByRole('button', { name: 'Preview topic: Rust' })
+    expect(button).toBeEnabled()
+    expect(button).not.toHaveAttribute('title')
+  })
+
+  it('weightChangeRecomputesWithoutANewCall', async () => {
+    const user = userEvent.setup()
+    route('POST', '/api/interest/preview', () => ({ status: 200, body: { noul: 0.82, model: 'jev-1.13.0' } }))
+    const { container } = renderRow({ initial: savedRow(), articleId: 1 })
+    await user.click(screen.getByRole('button', { name: 'Preview topic: Rust' }))
+    await waitFor(() =>
+      expect(previewSlot(container).textContent).toBe('Match 82% → counts 64% × +20 = +12.8 pts'),
+    )
+
+    const number = screen.getByRole('spinbutton', { name: 'Topic weight value' })
+    await user.clear(number)
+    await user.type(number, '-20')
+
+    expect(previewSlot(container).textContent).toBe('Match 82% → counts 64% × −20 = −12.8 pts')
+    expect(previewSlot(container)).not.toHaveClass('stale')
+    expect(container.querySelector('.interests-preview-points')).toHaveClass('weight-negative')
+    expect(previewCalls()).toHaveLength(1)
+  })
+
+  it('descriptionOrArticleChangeMarksTheResultStale', async () => {
+    const user = userEvent.setup()
+    const STALE = 'Description or article changed. Preview again to update.'
+    route('POST', '/api/interest/preview', () => ({ status: 200, body: { noul: 0.82, model: 'jev-1.13.0' } }))
+
+    const edited = renderRow({ initial: savedRow(), articleId: 1 })
+    await user.click(screen.getByRole('button', { name: 'Preview topic: Rust' }))
+    await waitFor(() => expect(previewSlot(edited.container)).toHaveTextContent('Match 82%'))
+    expect(screen.queryByText(STALE)).not.toBeInTheDocument()
+    await user.type(screen.getByRole('textbox', { name: 'Topic description' }), ' ecosystem')
+    expect(previewSlot(edited.container)).toHaveClass('stale')
+    expect(screen.getByText(STALE)).toBeInTheDocument()
+    expect(previewSlot(edited.container)).toHaveTextContent('Match 82% → counts 64% × +20 = +12.8 pts')
+    edited.unmount()
+
+    const moved = renderRow({ initial: savedRow(), articleId: 1 })
+    await user.click(screen.getByRole('button', { name: 'Preview topic: Rust' }))
+    await waitFor(() => expect(previewSlot(moved.container)).toHaveTextContent('Match 82%'))
+    moved.rerenderRow({ initial: savedRow(), articleId: 2 })
+    expect(previewSlot(moved.container)).toHaveClass('stale')
+    expect(screen.getByText(STALE)).toBeInTheDocument()
+    expect(previewCalls()).toHaveLength(2)
+  })
+
+  it('noMatchShowsMutedCopy', async () => {
+    const user = userEvent.setup()
+    route('POST', '/api/interest/preview', () => ({ status: 200, body: { noul: 0.31, model: 'jev-1.13.0' } }))
+    const { container } = renderRow({ initial: savedRow(), articleId: 1 })
+    await user.click(screen.getByRole('button', { name: 'Preview topic: Rust' }))
+
+    await waitFor(() =>
+      expect(previewSlot(container).textContent).toBe('Match 31% · No match (contributes 0)'),
+    )
+    expect(container.querySelector('.interests-preview-nomatch')).toHaveTextContent(
+      'Match 31% · No match (contributes 0)',
+    )
+    expect(container.querySelector('.interests-preview-points')).toBeNull()
+  })
+
+  it('previewFailuresShowStatusSpecificCopy', async () => {
+    const user = userEvent.setup()
+    const TRANSIENT = 'Preview failed: Jev is unavailable right now. Try Preview topic again in a minute.'
+    const cases: Array<[Reply, string]> = [
+      [
+        { status: 503, body: { title: 'Jev not configured', detail: 'No TypeSafe API key is configured' } },
+        'Preview failed: no TypeSafe API key is configured.',
+      ],
+      // The dialog still showed CLOSED (no block), but the breaker has opened since.
+      [{ status: 503, body: { title: 'Jev unavailable', detail: 'Jev is temporarily unavailable' } }, TRANSIENT],
+      [{ status: 503, body: { title: 'Jev request failed', detail: 'Jev request failed' } }, TRANSIENT],
+      [{ status: 429, body: { title: 'Too Many Requests' } }, TRANSIENT],
+      [{ status: 500 }, TRANSIENT],
+      [
+        { status: 422, body: { title: 'Jev rejected the request', detail: 'Jev rejected the request (HTTP 422)' } },
+        "Preview failed: Jev couldn't judge this article (Jev rejected the request (HTTP 422)). Try rewording the description.",
+      ],
+      [
+        { status: 400, body: { title: 'Bad Request', detail: 'Article has no text to judge' } },
+        "Preview failed: Jev couldn't judge this article (Article has no text to judge). Try rewording the description.",
+      ],
+      [
+        { status: 404, body: { title: 'Not Found', detail: 'Article not found: 1' } },
+        'Preview failed: Article not found: 1. Try Preview topic again.',
+      ],
+    ]
+    for (const [reply, copy] of cases) {
+      route('POST', '/api/interest/preview', () => reply)
+      const view = renderRow({ initial: savedRow(), articleId: 1, previewBlock: null })
+      await user.click(screen.getByRole('button', { name: 'Preview topic: Rust' }))
+      const error = await within(previewSlot(view.container)).findByText(copy)
+      expect(error).toHaveClass('dialog-error')
+      expect(screen.getByRole('button', { name: 'Preview topic: Rust' })).toBeEnabled()
+      view.unmount()
+    }
+  })
+
+  it('failedPreviewIsNeverRetried', async () => {
+    route('POST', '/api/interest/preview', () => ({
+      status: 503,
+      body: { title: 'Jev unavailable', detail: 'Jev is temporarily unavailable' },
+    }))
+    // The app's own client, so a default mutation retry would show up here.
+    const { container } = renderRow({ initial: savedRow(), articleId: 1 }, createQueryClient())
+    fireEvent.click(screen.getByRole('button', { name: 'Preview topic: Rust' }))
+    await within(previewSlot(container)).findByText(/^Preview failed: Jev is unavailable right now/)
+
+    vi.useFakeTimers()
+    advance(5000)
+    vi.useRealTimers()
+
+    expect(previewCalls()).toHaveLength(1)
+    expect(previewSlot(container)).toHaveTextContent('Preview failed: Jev is unavailable right now.')
   })
 })

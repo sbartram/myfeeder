@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react'
+import { act, render, screen, waitFor, fireEvent, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
 import { InterestsDialog } from './InterestsDialog'
 import { createQueryClient } from '../queryClient'
 import { useToastStore } from './Toast'
+import { useUIStore } from '../stores/uiStore'
 
 type Reply = { status: number; body?: unknown }
 type Handler = (init?: RequestInit) => Reply | Promise<Reply>
@@ -40,6 +41,24 @@ function topic(id: number, name: string, description: string, weight = 20) {
     version: 1,
     createdAt: '2026-09-23T00:00:00Z',
     updatedAt: '2026-09-23T00:00:00Z',
+  }
+}
+
+function article(id: number, title: string) {
+  return {
+    id,
+    feedId: 1,
+    guid: `g-${id}`,
+    title,
+    url: `https://example.com/${id}`,
+    author: null,
+    content: null,
+    summary: 'Summary',
+    imageUrl: null,
+    publishedAt: '2026-09-23T00:00:00Z',
+    fetchedAt: '2026-09-23T00:00:00Z',
+    read: false,
+    starred: false,
   }
 }
 
@@ -101,6 +120,7 @@ describe('InterestsDialog', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+    useUIStore.setState({ selectedArticleId: null })
   })
 
   it('rendersNothingWhenClosed', () => {
@@ -549,5 +569,166 @@ describe('InterestsDialog', () => {
     expect(
       calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/topics').map((c) => c.body),
     ).toEqual(['{"name":"Crypto","description":"Cryptocurrency","weight":20}'])
+  })
+  it('previewTargetLineShowsTheOpenArticleTitle', async () => {
+    useUIStore.setState({ selectedArticleId: 1 })
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(1, 'Rust 1.90 released') }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    await screen.findByText('No topics yet.')
+    const line = container.querySelector('.interests-preview-target')!
+    await waitFor(() => expect(line.textContent).toBe('Previewing against: Rust 1.90 released'))
+    expect(line).toHaveAttribute('title', 'Rust 1.90 released')
+    expect(line.querySelector('.interests-preview-title')).toHaveTextContent('Rust 1.90 released')
+  })
+
+  it('previewTargetLineShowsLoadingWhileTheArticleLoads', async () => {
+    useUIStore.setState({ selectedArticleId: 1 })
+    route('GET', '/api/articles/1', () => new Promise<Reply>(() => {}))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    await screen.findByText('No topics yet.')
+    await waitFor(() => expect(statusFetches()).toHaveLength(1))
+    expect(container.querySelector('.interests-preview-target')?.textContent).toBe(
+      'Previewing against: loading article…',
+    )
+  })
+
+  it('previewTargetLineShowsUnavailableReasons', async () => {
+    const user = userEvent.setup()
+    const line = (c: HTMLElement) => c.querySelector('.interests-preview-target')?.textContent
+    route('GET', '/api/interest/topics', () => ({
+      status: 200,
+      body: [topic(3, 'Rust', 'The Rust language')],
+    }))
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(1, 'Rust 1.90 released') }))
+
+    // No article selected.
+    const none = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await screen.findByText('1 / 25')
+    await waitFor(() =>
+      expect(line(none.container)).toBe(
+        'Preview unavailable: open an article in the reading pane first.',
+      ),
+    )
+    expect(screen.getByRole('button', { name: 'Preview topic: Rust' })).toHaveAttribute(
+      'title',
+      'Open an article in the reading pane first.',
+    )
+    none.unmount()
+
+    useUIStore.setState({ selectedArticleId: 1 })
+    const cases: Array<[Partial<{ configured: boolean; breakerState: string }>, string, string]> = [
+      [
+        { configured: false },
+        'Preview unavailable: no TypeSafe API key is configured.',
+        'No TypeSafe API key is configured.',
+      ],
+      [
+        { breakerState: 'OPEN' },
+        'Preview unavailable: Jev is temporarily unavailable. Try again in a minute.',
+        'Jev is temporarily unavailable. Try again in a minute.',
+      ],
+    ]
+    for (const [overrides, copy, title] of cases) {
+      status(overrides)
+      const view = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await waitFor(() => expect(line(view.container)).toBe(copy))
+      expect(screen.getByRole('button', { name: 'Preview topic: Rust' })).toHaveAttribute('title', title)
+      view.unmount()
+    }
+
+    // Status failed (E1 partial): the editor still renders and a topic still saves.
+    route('GET', '/api/interest/status', () => ({ status: 500 }))
+    route('PUT', '/api/interest/topics/3', (init) => ({
+      status: 200,
+      body: { ...topic(3, '', ''), ...(JSON.parse(String(init?.body)) as object), version: 2 },
+    }))
+    const failed = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await waitFor(() =>
+      expect(line(failed.container)).toBe("Preview unavailable: couldn't check Jev status."),
+    )
+    expect(screen.getByRole('button', { name: 'Preview topic: Rust' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Preview topic: Rust' })).toHaveAttribute(
+      'title',
+      "Couldn't check Jev status.",
+    )
+    const number = screen.getByRole('spinbutton', { name: 'Topic weight value' })
+    await user.clear(number)
+    await user.type(number, '30')
+    await user.click(screen.getByRole('button', { name: 'Save topic: Rust' }))
+    await waitFor(() => expect(screen.queryByText('Unsaved')).not.toBeInTheDocument())
+    expect(calls.filter((c) => c.method === 'PUT' && c.url === '/api/interest/topics/3')).toHaveLength(1)
+    expect(calls.some((c) => c.url === '/api/interest/preview')).toBe(false)
+  })
+
+  it('articleChangeMarksExistingResultsStale', async () => {
+    const user = userEvent.setup()
+    useUIStore.setState({ selectedArticleId: 1 })
+    route('GET', '/api/interest/topics', () => ({
+      status: 200,
+      body: [topic(3, 'Rust', 'The Rust language')],
+    }))
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(1, 'Rust 1.90 released') }))
+    route('GET', '/api/articles/2', () => ({ status: 200, body: article(2, 'Go 1.30 released') }))
+    route('POST', '/api/interest/preview', () => ({ status: 200, body: { noul: 0.82, model: 'jev-1.13.0' } }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    const button = await screen.findByRole('button', { name: 'Preview topic: Rust' })
+    await waitFor(() => expect(button).toBeEnabled())
+    await user.click(button)
+    const slot = container.querySelector('.interests-preview-result')!
+    await waitFor(() => expect(slot.textContent).toBe('Match 82% → counts 64% × +20 = +12.8 pts'))
+    expect(JSON.parse(calls.find((c) => c.url === '/api/interest/preview')!.body!)).toEqual({
+      articleId: 1,
+      description: 'The Rust language',
+      topicId: 3,
+    })
+
+    act(() => useUIStore.setState({ selectedArticleId: 2 }))
+
+    expect(slot).toHaveClass('stale')
+    expect(
+      within(slot as HTMLElement).getByText('Description or article changed. Preview again to update.'),
+    ).toBeInTheDocument()
+    await waitFor(() =>
+      expect(container.querySelector('.interests-preview-target')?.textContent).toBe(
+        'Previewing against: Go 1.30 released',
+      ),
+    )
+    expect(calls.filter((c) => c.url === '/api/interest/preview')).toHaveLength(1)
+  })
+
+  it('previewTriggersNoOtherRequests', async () => {
+    const user = userEvent.setup()
+    useUIStore.setState({ selectedArticleId: 1 })
+    route('GET', '/api/interest/topics', () => ({
+      status: 200,
+      body: [topic(3, 'Rust', 'The Rust language')],
+    }))
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(1, 'Rust 1.90 released') }))
+    route('POST', '/api/interest/preview', () => ({ status: 200, body: { noul: 0.82, model: 'jev-1.13.0' } }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />, createQueryClient())
+
+    const button = await screen.findByRole('button', { name: 'Preview topic: Rust' })
+    await waitFor(() => expect(button).toBeEnabled())
+    await waitFor(() =>
+      expect(container.querySelector('.interests-preview-target')?.textContent).toBe(
+        'Previewing against: Rust 1.90 released',
+      ),
+    )
+    const before = calls.length
+
+    await user.click(button)
+    await waitFor(() =>
+      expect(container.querySelector('.interests-preview-result')?.textContent).toBe(
+        'Match 82% → counts 64% × +20 = +12.8 pts',
+      ),
+    )
+    // Let any follow-up refetch fire before counting.
+    await new Promise((r) => setTimeout(r, 50))
+
+    expect(calls.slice(before).map((c) => `${c.method} ${c.url}`)).toEqual(['POST /api/interest/preview'])
+    expect(useUIStore.getState().selectedArticleId).toBe(1)
   })
 })

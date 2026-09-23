@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { InterestTopic } from '../api/interest'
+import { ApiError } from '../api/client'
 import {
   useCreateInterestTopic,
   useDeleteInterestTopic,
@@ -40,6 +41,47 @@ export type PreviewBlock = { kind: PreviewBlockKind; reason: string }
 
 /** The last successful preview, with the inputs it was judged on. */
 type PreviewResult = { noul: number; description: string; articleId: number }
+
+/** Blocks that outrank a blank description in the D-14 order. */
+const LEADING_BLOCKS: PreviewBlockKind[] = ['not-configured', 'breaker', 'no-article']
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+/**
+ * Why this row's Preview is disabled, or null when it can run. First match wins: not configured,
+ * circuit open, no article, blank description, status pending, status unknown (D-14, D-06).
+ */
+function previewDisabledReason(
+  block: PreviewBlock | null,
+  articleId: number | null,
+  descriptionBlank: boolean,
+): string | null {
+  const effective: PreviewBlock | null =
+    block ?? (articleId === null ? { kind: 'no-article', reason: 'open an article in the reading pane first.' } : null)
+  if (effective && LEADING_BLOCKS.includes(effective.kind)) return capitalize(effective.reason)
+  if (descriptionBlank) return 'Write a description first.'
+  if (effective?.kind === 'status-pending') return 'Checking Jev status…'
+  if (effective?.kind === 'status-unknown') return capitalize(effective.reason)
+  return null
+}
+
+/** The UI-SPEC failure copy for a preview error, chosen by HTTP status and ProblemDetail title. */
+function previewErrorMessage(error: Error): string {
+  if (error instanceof ApiError) {
+    if (error.status === 503 && error.title === 'Jev not configured') {
+      return 'Preview failed: no TypeSafe API key is configured.'
+    }
+    if (error.status === 503 || error.status === 429 || error.status >= 500) {
+      return 'Preview failed: Jev is unavailable right now. Try Preview topic again in a minute.'
+    }
+    if (error.status === 400 || error.status === 422) {
+      return `Preview failed: Jev couldn't judge this article (${error.message}). Try rewording the description.`
+    }
+  }
+  return `Preview failed: ${error.message}. Try Preview topic again.`
+}
 
 const NEGATION_DEBOUNCE_MS = 400
 
@@ -110,7 +152,9 @@ function topicLabel(row: TopicRowState): string {
 
 interface TopicPreviewResultProps {
   pending: boolean
+  error: Error | null
   result: PreviewResult | null
+  stale: boolean
   weight: number
 }
 
@@ -118,10 +162,12 @@ interface TopicPreviewResultProps {
  * The preview slot under the row (D-13). The math is recomputed from the stored noul and the
  * row's current weight, so a weight change updates the points without a new call.
  */
-function TopicPreviewResult({ pending, result, weight }: TopicPreviewResultProps) {
+function TopicPreviewResult({ pending, error, result, stale, weight }: TopicPreviewResultProps) {
   let content = null
   if (pending) {
     content = <span className="interests-preview-pending">Asking Jev…</span>
+  } else if (error) {
+    content = <div className="dialog-error">{previewErrorMessage(error)}</div>
   } else if (result) {
     const m = hinge(result.noul)
     if (m > 0) {
@@ -136,9 +182,18 @@ function TopicPreviewResult({ pending, result, weight }: TopicPreviewResultProps
     } else {
       content = <span className="interests-preview-nomatch">{formatPreviewText(result.noul, weight)}</span>
     }
+    if (stale) {
+      content = (
+        <>
+          {content}
+          <p>Description or article changed. Preview again to update.</p>
+        </>
+      )
+    }
   }
+  const showStale = stale && !pending && !error && result !== null
   return (
-    <div className="interests-preview-result" aria-live="polite">
+    <div className={showStale ? 'interests-preview-result stale' : 'interests-preview-result'} aria-live="polite">
       {content}
     </div>
   )
@@ -166,6 +221,7 @@ export function TopicRow({
   onDiscard,
   onDeleted,
   articleId = null,
+  previewBlock = null,
 }: TopicRowProps) {
   const create = useCreateInterestTopic()
   const update = useUpdateInterestTopic()
@@ -210,16 +266,21 @@ export function TopicRow({
     }
   }
 
-  // One request per click (D-14); the draft text is sent as-is and nothing is persisted (D-12).
+  // One request per click and never a retry (D-14): mutate runs only from this handler, never
+  // from an effect or a timer. The draft text is sent as-is and nothing is persisted (D-12).
+  const disabledReason = previewDisabledReason(previewBlock, articleId, descriptionBlank)
   const handlePreview = () => {
-    if (articleId === null) return
+    if (articleId === null || disabledReason !== null) return
     const description = row.description.trim()
     preview.mutate(
       { articleId, description, topicId: row.id },
       { onSuccess: (result) => setPreviewResult({ noul: result.noul, description, articleId }) },
     )
   }
-  const previewDisabled = preview.isPending || articleId === null || descriptionBlank
+  // A weight-only change recomputes the math; a new description or article makes it stale.
+  const previewStale =
+    previewResult !== null &&
+    (previewResult.description !== row.description.trim() || previewResult.articleId !== articleId)
 
   const handleDelete = () => {
     if (row.id !== null) remove.mutate(row.id, { onSuccess: onDeleted })
@@ -303,7 +364,8 @@ export function TopicRow({
             <button
               className="btn-secondary"
               aria-label={`Preview topic: ${label}`}
-              disabled={previewDisabled}
+              disabled={preview.isPending || disabledReason !== null}
+              title={disabledReason ?? undefined}
               onClick={handlePreview}
             >
               {preview.isPending ? 'Previewing…' : 'Preview topic'}
@@ -339,7 +401,13 @@ export function TopicRow({
           {message}
         </div>
       ))}
-      <TopicPreviewResult pending={preview.isPending} result={previewResult} weight={row.weight} />
+      <TopicPreviewResult
+        pending={preview.isPending}
+        error={preview.error}
+        result={previewResult}
+        stale={previewStale}
+        weight={row.weight}
+      />
     </div>
   )
 }
