@@ -23,7 +23,7 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 
 ### Interest Model
 
-- [ ] **INT-01**: User can write and edit a free-text interest profile (≤2,000 chars) with writing guidance shown in the editor
+- [x] **INT-01**: User can write and edit a free-text interest profile (≤2,000 chars) with writing guidance shown in the editor
 - [ ] **INT-02**: User can add, edit and delete topics (≤25), each with a positively-phrased description and a signed weight in −50..+50 (default +20)
 - [ ] **INT-03**: Editor warns when a topic description is negated (e.g. "not about crypto") and suggests a negative weight instead
 - [ ] **INT-04**: User can preview a topic against the currently open article (one Jev call) before saving it
@@ -116,7 +116,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | JEV-03 | Phase 2 | Complete |
 | JEV-04 | Phase 2 | Complete |
 | JEV-05 | Phase 4 | Pending |
-| INT-01 | Phase 3 | Pending |
+| INT-01 | Phase 3 | Complete |
 | INT-02 | Phase 3 | Pending |
 | INT-03 | Phase 3 | Pending |
 | INT-04 | Phase 3 | Pending |
