@@ -43,7 +43,7 @@ Enumerated by `grep -oE '^\.[a-zA-Z0-9_-]+' src/main/frontend/src/App.css | sort
 | `<h3 style={{ fontSize: 14 }}>` sections | `SettingsDialog.tsx` | Promote to a class `.interests-section h3` (14px / 600) |
 | `.dialog-input` | `App.css` | Profile textarea, topic description input, weight number input |
 | `.btn-primary` / `.btn-secondary` | `App.css` | Save actions / neutral actions |
-| `.toolbar-btn` | `App.css` | Low-emphasis row actions (Delete, Discard) |
+| `.toolbar-btn` | `App.css` | Low-emphasis row actions (Delete topic, Discard draft) |
 | `.dialog-error` | `App.css` | Inline save / preview / validation errors |
 | `.dialog-subtitle` | `App.css` | Dialog subtitle line |
 | `.dialog-actions` | `App.css` | Footer (Close) and inline confirm bars |
@@ -79,6 +79,11 @@ New components (names are prescriptive, file split is the planner's call per `[C
 | Initial focus | Focus the profile textarea on open **only when** `coldStart === true`; otherwise no autofocus |
 | Narrow viewport (< 600px wide) | Topic row line 2 wraps: weight control on its own line, actions below it, right-aligned |
 
+### Primary visual anchor
+
+- When `coldStart === true`: the **profile textarea** is the focal point. It is the first input, the largest element (160px minimum height), receives initial focus, and sits directly under the accent-ruled cold-start notice.
+- Otherwise: the **topic list** is the focal point. It is the section the user returns to most (tuning weights and previewing), and dirty rows draw attention with the accent left rule. No autofocus is applied, and the dialog opens scrolled to the top so notices stay visible.
+
 ### Body order and structure
 
 1. **Notices** (`InterestNotices`), 0–3 stacked, 8px apart, 16px below the last notice:
@@ -108,10 +113,10 @@ New components (names are prescriptive, file split is the planner's call per `[C
 | Unsaved state | `.interests-topic-row.dirty`: `border-left: 3px solid var(--accent)` plus an "Unsaved" tag (12px, `--text-muted`) at the right of line 1 |
 | Line 1 | Description input (`.dialog-input`, `flex: 1`). **If the planner adopts a short topic `name`** (Claude's discretion), render a name input first at `width: 160px` with 8px gap; otherwise line 1 is the description only |
 | Under line 1 | Negation warning slot (only when triggered) |
-| Line 2 | `WeightControl` (flex: 1) on the left; actions (8px gap) on the right: Preview (`.btn-secondary`), Save (`.btn-primary`, only rendered when the row is dirty or a draft), Delete / Discard (`.toolbar-btn`) |
+| Line 2 | `WeightControl` (flex: 1) on the left; actions (8px gap) on the right: `Preview topic` (`.btn-secondary`), `Save topic` (`.btn-primary`, only rendered when the row is dirty or a draft), `Delete topic` / `Discard draft` (`.toolbar-btn`). Each row button carries an `aria-label` naming the topic (see Copywriting Contract, Row button accessible names) |
 | Under line 2 | Validation error slot (`.dialog-error`), then preview result slot (`TopicPreviewResult`) |
-| Delete confirm | Replaces line 2's actions in place with confirm copy + Cancel / Delete topic (see Copywriting). Saved topics only |
-| Draft rows | Created by "+ Add topic". Weight starts at +20, description empty, focus moves to the new description input. Action label is "Discard" (no confirm) instead of "Delete" |
+| Delete confirm | Replaces line 2's actions in place with confirm copy + `Keep topic` / `Delete topic` (see Copywriting). Saved topics only |
+| Draft rows | Created by "+ Add topic". Weight starts at +20, description empty, focus moves to the new description input. Action label is `Discard draft` (no confirm) instead of `Delete topic` |
 
 ### Weight control (`WeightControl`) `[CTX D-10]`
 
@@ -128,8 +133,8 @@ New components (names are prescriptive, file split is the planner's call per `[C
 
 ### Preview (`TopicPreviewResult`) `[CTX D-12]` `[CTX D-13]` `[CTX D-14]`
 
-- One Preview button per row (drafts and saved topics). A click sends one request with the row's **current draft** description and weight plus `uiStore.selectedArticleId`. Nothing is persisted.
-- In flight: the button label becomes "Previewing…" (disabled), and the result slot shows "Asking Jev…" (12px, `--text-muted`). Other rows' Preview buttons stay enabled.
+- One `Preview topic` button per row (drafts and saved topics). A click sends one request with the row's **current draft** description and weight plus `uiStore.selectedArticleId`. Nothing is persisted.
+- In flight: the button label becomes "Previewing…" (disabled), and the result slot shows "Asking Jev…" (12px, `--text-muted`). Other rows' `Preview topic` buttons stay enabled.
 - The result slot is `aria-live="polite"`, 13px, on a `background: var(--bg-secondary)` strip, `padding: 8px`, `border-radius: 4px`.
 - **Math display (exact formula):** `noul` = returned match in [0,1]; `m = max(0, (noul − 0.5) × 2)`; `pts = m × weight`.
   - `matchPct = Math.round(noul × 100)`, `countsPct = Math.round(m × 100)`, `pts` to 1 decimal with explicit sign (U+2212 for negatives).
@@ -206,7 +211,7 @@ Accent reserved for (exhaustive list):
 3. The 3px left rule on a dirty/draft topic row (`.interests-topic-row.dirty`)
 4. The 3px left rule on the cold-start notice (the only notice that is an invitation rather than a limitation)
 
-Accent is **not** used for: Preview buttons, "+ Add topic", Close, Keep editing, notices other than cold start, or the weight slider (the slider uses the sign color).
+Accent is **not** used for: `Preview topic` buttons, "+ Add topic", Close, Keep editing, notices other than cold start, or the weight slider (the slider uses the sign color).
 
 **Weight sign colors** `[CTX D-10]`, applied to the sign label, the slider's `accent-color`, and the `pts` value in preview results:
 
@@ -237,11 +242,26 @@ Straight double quotes in UI strings; `…` (U+2026) for in-progress labels; `�
 | Primary CTA (profile) | `Save profile` (in-flight: `Saving…`) |
 | Primary CTA (topic row) | `Save topic` (in-flight: `Saving…`) |
 | Add topic | `+ Add topic` |
-| Preview | `Preview` (in-flight: `Previewing…`) |
-| Draft row remove | `Discard` |
-| Saved row remove | `Delete` |
+| Preview (topic row) | `Preview topic` (in-flight: `Previewing…`) |
+| Draft row remove | `Discard draft` |
+| Saved row remove | `Delete topic` |
+| Delete confirm: keep | `Keep topic` |
+| Delete confirm: proceed | `Delete topic` |
 | Dialog close | `Close` |
 | Settings entry button | `Edit interests…` |
+
+No interactive control in this phase uses a generic `Submit`, `OK`, `Cancel` or `Save` label. Confirm strips pair a specific keep action (`Keep topic`, `Keep editing`) with a specific destructive action (`Delete topic`, `Discard changes`).
+
+**Row button accessible names.** Every topic row repeats the same visible labels, so each row button gets an `aria-label` that names its topic. `{topic}` = the topic name if the planner adds one, otherwise the description truncated to 40 characters with `…`, or `new topic` for a draft with a blank description:
+
+| Button | `aria-label` |
+|--------|--------------|
+| Preview topic | `Preview topic: {topic}` |
+| Save topic | `Save topic: {topic}` |
+| Delete topic (row action) | `Delete topic: {topic}` |
+| Discard draft | `Discard draft: {topic}` |
+| Keep topic (confirm strip) | `Keep topic: {topic}` |
+| Delete topic (confirm strip) | `Confirm delete topic: {topic}` |
 
 ### Static copy
 
@@ -297,7 +317,7 @@ Straight double quotes in UI strings; `…` (U+2026) for in-progress labels; `�
 | Breaker open | `Preview unavailable: Jev is temporarily unavailable. Try again in a minute.` |
 | Status unknown | `Preview unavailable: couldn't check Jev status.` |
 
-The disabled Preview button's `title` uses the same text without the `Preview unavailable: ` prefix (capitalized). Row-specific: blank description → `Write a description first.`
+The disabled `Preview topic` button's `title` uses the same text without the `Preview unavailable: ` prefix (capitalized). Row-specific: blank description → `Write a description first.`
 
 ### Preview results `[CTX D-13]`
 
@@ -331,9 +351,9 @@ Trigger: debounced 400ms after the last keystroke; case-insensitive whole-word o
 | 26th topic (client) | `+ Add topic` disabled with `title="You have 25 topics, the maximum. Delete one to add another."`; the count reads `25 / 25` |
 | Server limit rejections (400) | Shown via the save-failure copy above, with `{detail}` = the server's ProblemDetail `detail` (e.g. `A maximum of 25 topics is allowed`) |
 | Preview: not configured (503) | `Preview failed: no TypeSafe API key is configured.` |
-| Preview: breaker open / transient (503, 429, 5xx, timeout) | `Preview failed: Jev is unavailable right now. Try Preview again in a minute.` |
+| Preview: breaker open / transient (503, 429, 5xx, timeout) | `Preview failed: Jev is unavailable right now. Try Preview topic again in a minute.` |
 | Preview: rejected input (400 / 422) | `Preview failed: Jev couldn't judge this article ({detail}). Try rewording the description.` |
-| Preview: other | `Preview failed: {detail}. Try Preview again.` |
+| Preview: other | `Preview failed: {detail}. Try Preview topic again.` |
 
 `{detail}` = `Error.message` produced by `raiseIfBad` in `api/client.ts`.
 
@@ -341,8 +361,8 @@ Trigger: debounced 400ms after the last keystroke; case-insensitive whole-word o
 
 | Action | Confirmation approach | Copy |
 |--------|-----------------------|------|
-| Delete a saved topic | Inline two-step in the row. Delete swaps the row actions for a confirm strip. No nested dialog | `Delete this topic? Its scores and feedback are removed too. This can't be undone.` · buttons `Cancel` (`.btn-secondary`) / `Delete topic` (danger `.btn-primary`) |
-| Discard a draft row | None (never saved, nothing lost server-side) | Button `Discard` |
+| Delete a saved topic | Inline two-step in the row. Delete swaps the row actions for a confirm strip. No nested dialog | `Delete this topic? Its scores and feedback are removed too. This can't be undone.` · buttons `Keep topic` (`.btn-secondary`) / `Delete topic` (danger `.btn-primary`) |
+| Discard a draft row | None (never saved, nothing lost server-side) | Button `Discard draft` |
 | Close with unsaved changes | Inline confirm bar replaces the footer | `Discard unsaved changes? You have unsaved edits to {the profile / 1 topic / N topics / the profile and N topics}.` · buttons `Keep editing` (`.btn-secondary`) / `Discard changes` (danger `.btn-primary`) |
 | Clearing the profile text and saving | No confirmation (it is a normal edit; with zero topics the cold-start notice reappears) | — |
 
@@ -359,7 +379,7 @@ Trigger: debounced 400ms after the last keystroke; case-insensitive whole-word o
 | Save button enablement | Profile Save is enabled when the text differs from the saved text. Row Save is enabled when the row is dirty AND the weight is valid AND the description is non-blank |
 | In-flight saves | The saving control shows `Saving…` and is disabled; the rest of the dialog stays interactive |
 | After a successful row save | The dirty rule and "Unsaved" tag disappear, and the Save button is removed. The row keeps its position (a draft becomes a saved row in place; no re-sort until the dialog reopens) |
-| Keyboard | Tab order: notices (non-focusable) → textarea → Save profile → per row: [name] → description → slider → numeric → Preview → Save → Delete → + Add topic → Close. Enter in the description input does **not** submit. The global single-key shortcuts are already suppressed while focus is in an INPUT/TEXTAREA |
+| Keyboard | Tab order: notices (non-focusable) → textarea → Save profile → per row: [name] → description → slider → numeric → Preview topic → Save topic → Delete topic / Discard draft → + Add topic → Close. Enter in the description input does **not** submit. The global single-key shortcuts are already suppressed while focus is in an INPUT/TEXTAREA |
 | Preview target changes | The preview target line reads `selectedArticleId` live. If the user changes the article with `j`/`k` while the dialog is open (focus outside inputs), the line updates and existing results go stale |
 | Configured but no key at preview time | The server returns 503 → "Preview: not configured" error copy (defense in depth; the button is normally already disabled) |
 
