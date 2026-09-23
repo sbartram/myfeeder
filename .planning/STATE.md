@@ -1,19 +1,19 @@
 ---
 gsd_state_version: "1.0"
 milestone: v0.1.24
-current_phase: 3
+current_phase: 03
 current_phase_name: Interest Model, Schema & Rubric Editor
 status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-09-23T17:34:55.602Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-09-23T17:48:16.043Z"
 last_activity: 2026-09-23
-last_activity_desc: Phase 2 complete, transitioned to Phase 3
-state_head: d6eb08d797369cf28da1b2d4f013af648215461f
+last_activity_desc: Phase 03 execution started
+state_head: 73d708b9dd71e2f170e901944461a07aab6f6674
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 16
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-23)
 
 ## Current Position
 
-Phase: 3 (Interest Model, Schema & Rubric Editor) — READY TO EXECUTE
-Plan: Not started
+Phase: 03 (Interest Model, Schema & Rubric Editor) — EXECUTING
+Plan: 2 of 8
 Status: Ready to execute
-Last activity: 2026-09-23 — Phase 2 complete, transitioned to Phase 3
+Last activity: 2026-09-23 — Phase 03 execution started
 
 Progress: [███░░░░░░░] 29%
 
@@ -67,6 +67,7 @@ Progress: [███░░░░░░░] 29%
 | Phase 02 P04 | 1 min | 2 tasks | 4 files |
 | Phase 02 P02 | 5 min | 3 tasks | 6 files |
 | Phase 02 P03 | 6 min | 3 tasks | 6 files |
+| Phase 03 P01 | 3 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-04: TypeSafe key is an optional deploy secret mirroring Raindrop (values/Secret stringData/secretKeyRef env/deploy.sh warning); checksum/secret on app pod template rolls the pod on any Secret change (first deploy rolls once); --set comma limitation shared with Raindrop; Helm lookup preservation deferred to Phase 4/7
 - [Phase 02]: 02-02: JevApiClient.judge(state, questions) returns app-owned JevJudgment; model = response.model() (canary-tested), 401/403 WARN logs status+requestId only, answers checked via SDK noul/score/answer accessors; live SC2 smoke gated on JEV_LIVE_SMOKE=true (end-of-phase human check)
 - [Phase 02]: 02-03: jev breaker/retry via @CircuitBreaker+@Retry on JevApiClientImpl.judge, no fallback (typed exceptions + CallNotPermittedException propagate); Retry outer so breaker records every attempt; 429 retry-after-ms honored, capped 10s, else 1s/2s; Phase 4 reads breaker from CircuitBreakerRegistry 'jev', timeouts are TypeSafeApiConnectionException
+- [Phase 03]: 03-01: V6 topic name is required (name TEXT NOT NULL), user-confirmed in plan-phase 2026-09-23; user accepted both fixed choices (article_topic_score -> article_score ON DELETE CASCADE; INTEGER columns, no DB length CHECKs)
+- [Phase 03]: 03-01: Phase 4 inserts article_score before article_topic_score in one transaction; Re-score unread deletes article_score rows and lets the cascade drop nouls; Phase 6 learned CTE must honor topics_narrowed (D-02)
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-23T16:06:32.107Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-interest-model-schema-rubric-editor/03-UI-SPEC.md
+Last session: 2026-09-23T17:48:16.015Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None
