@@ -1,7 +1,8 @@
 ---
 phase: "03"
 slug: "interest-model-schema-rubric-editor"
-status: draft
+status: approved
+reviewed_at: "2026-09-23"
 shadcn_initialized: false
 preset: none
 created: "2026-09-23"
@@ -387,28 +388,50 @@ Trigger: debounced 400ms after the last keystroke; case-insensitive whole-word o
 
 ## UI Considerations
 
-Applicable state considerations resolved: 16 covered, 2 backstop, 0 unresolved.
+Probe run: 2026-09-23 (`ui-consideration-probe.cjs`, 7 elements, 38 applicable). Kinds confirmed by the user. Resolved: 32 explicit, 3 backstop, 3 dismissed, 0 unresolved. Empty-state and error copy lives in the Copywriting Contract; the rows below point to it and do not repeat it.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| loading | form (Interests dialog load) | ✅ covered | While profile/topics queries are pending, the dialog body shows "Loading interests…" and no editor controls render |
-| error | form (Interests dialog load) | ✅ covered | A failed profile or topics load renders the "Couldn't load your interests" copy (Copywriting Contract, Error states) with Close still available |
-| empty | form (profile textarea) | ✅ covered | An empty profile shows the example profile as a greyed placeholder and the counter reads "0 / 2,000" |
-| long-text | form (profile textarea) | ✅ covered | The textarea enforces maxLength 2,000, resizes vertically, and at the limit the counter reads "2,000 / 2,000 · limit reached" |
-| error | form (profile save) | ✅ covered | A failed profile save keeps the typed text and shows the profile save-failure copy under the Save button |
-| partial | form (dialog with some unsaved items) | ✅ covered | Dirty profile shows "Unsaved changes"; dirty/draft rows show the accent left rule and "Unsaved" tag; closing while dirty shows the discard confirm bar |
-| empty | list-collection (topic list) | ✅ covered | With zero topics and no drafts, the list renders "No topics yet." plus the documented body copy and the "+ Add topic" button |
-| zero-one-many | list-collection (topic list) | ✅ covered | The count reads "0 / 25", "1 / 25" … "25 / 25"; at 25 the "+ Add topic" button is disabled with the maximum-topics title |
-| populated | list-collection (topic list) | ✅ covered | Saved topics render as bordered rows in id order with description, weight control and actions; drafts are appended at the bottom |
-| overflow | list-collection (topic list) | ✅ covered | Header and footer stay fixed; `.interests-body` scrolls within max-height 85vh, so 25 rows never push Close off-screen |
-| long-text | form (topic description input) | 🧪 backstop | A description at the server's max length stays on one line inside the input (horizontal scroll within the input) and does not widen the row or the dialog |
-| error | form (topic save / delete) | ✅ covered | Row-level save/delete failures render inline in that row's `.dialog-error` slot with the documented copy; other rows are unaffected |
-| partial | interactive-control (weight numeric input) | ✅ covered | An out-of-range, non-integer or empty value keeps the typed text, shows "Weight must be a whole number from −50 to +50." and disables Save |
-| loading | interactive-control (Preview) | ✅ covered | During a preview call the button reads "Previewing…" (disabled) and the result slot reads "Asking Jev…" |
-| error | interactive-control (Preview) | ✅ covered | A failed preview shows the matching "Preview failed: …" copy inline under the row and is not retried automatically |
-| empty | interactive-control (Preview with no article / not configured / breaker open) | ✅ covered | Preview is disabled with the reason in the button title and once on the preview target line, per the documented condition order |
-| long-text | static-content (preview target article title) | ✅ covered | The preview target line is single-line with an ellipsis; the full title is in the `title` attribute |
-| long-text | static-content (notices at 90vw on narrow screens) | 🧪 backstop | Notices wrap onto multiple lines within the dialog width without horizontal scrolling at 360px viewport width |
+Elements: **E1** Interests dialog · **E2** Profile textarea · **E3** Topic list · **E4** Topic row · **E5** Preview button + result · **E6** Status notices · **E7** Preview target line
+
+| ID | Category | Status | Verification | Resolution / Reason |
+|----|----------|--------|--------------|---------------------|
+| E1 | empty | resolved | explicit | With no profile and no topics, the dialog shows the profile placeholder example, "No topics yet." (see Copywriting) and, when `coldStart`, the cold-start notice |
+| E1 | loading | resolved | explicit | While the profile or topics query is pending, the body shows "Loading interests…" and no editor controls render |
+| E1 | error | resolved | explicit | A failed profile or topics load shows the "Couldn't load your interests" copy (Copywriting, Error states). Close stays available |
+| E1 | partial | resolved | explicit | If the status query fails but profile and topics load, the editor renders and Preview is disabled with the "status unknown" reason |
+| E1 | long-text | dismissed | — | The header is fixed copy ("Interests" + subtitle), so no user text can flow into it |
+| E2 | empty | resolved | explicit | An empty profile shows the greyed example placeholder, and the counter reads "0 / 2,000" |
+| E2 | loading | resolved | explicit | Covered by the dialog-level "Loading interests…". Saving shows "Saving…" on a disabled Save profile |
+| E2 | error | resolved | explicit | A failed save keeps the typed text and shows the profile save-failure copy under Save profile |
+| E2 | partial | resolved | explicit | Text that differs from the saved value shows "Unsaved changes" in the meta row and triggers the close guard |
+| E2 | overflow | resolved | explicit | The textarea scrolls internally (`resize: vertical`, min-height 160px) and never widens the dialog |
+| E2 | long-text | resolved | explicit | `maxLength` 2,000. At the limit the counter reads "2,000 / 2,000 · limit reached" |
+| E3 | empty | resolved | explicit | With zero topics and no drafts, the list shows "No topics yet." + body copy + "+ Add topic" |
+| E3 | loading | resolved | explicit | Covered by the dialog-level "Loading interests…" (the topics query gates the render) |
+| E3 | error | resolved | explicit | Covered by the dialog-level load-failure copy |
+| E3 | populated | resolved | explicit | Saved topics show as bordered rows in id order, with drafts appended at the bottom, 8px gap |
+| E3 | partial | resolved | explicit | Saved and draft rows appear together; drafts and dirty rows carry the accent left rule + "Unsaved" tag |
+| E3 | overflow | resolved | explicit | Header and footer stay fixed; `.interests-body` scrolls within max-height 85vh, so 25 rows never push Close off-screen |
+| E3 | zero-one-many | resolved | explicit | The count reads "0 / 25" … "25 / 25". At 25, "+ Add topic" is disabled with the maximum-topics title |
+| E3 | long-text | resolved | explicit | Long text is handled per row (see E4 long-text) |
+| E4 | empty | resolved | explicit | A draft starts with a blank description and weight +20. Save topic and Preview topic are disabled while the description is blank ("Description blank" title) |
+| E4 | loading | resolved | explicit | While saving or deleting, the control shows "Saving…" (or the equivalent) and is disabled; other rows stay interactive |
+| E4 | error | resolved | explicit | A save or delete failure shows inline in that row's `.dialog-error` slot (Copywriting, Error states); other rows are unaffected |
+| E4 | populated | resolved | explicit | A saved row shows the description input, WeightControl with the sign-coloured value, Preview topic and Delete topic |
+| E4 | partial | resolved | explicit | An invalid weight (out of range, non-integer, empty) keeps the typed text, shows the weight error and disables Save; the value is never clamped silently |
+| E4 | overflow | resolved | explicit | Below 600px width, line 2 wraps: the weight control goes on its own line and the actions sit below it, right-aligned |
+| E4 | zero-one-many | dismissed | — | A single row is not a collection; list cardinality is covered in E3 |
+| E4 | long-text | resolved | backstop | A description at the server's maximum length stays on one line inside the input (scrolling horizontally within it) and does not widen the row or the dialog |
+| E5 | empty | resolved | explicit | Preview is disabled with its reason (not configured → circuit open → no article → description blank → status unknown) in the button title and once on the preview target line |
+| E5 | loading | resolved | explicit | While a preview runs, the button reads "Previewing…" (disabled) and the result slot reads "Asking Jev…" |
+| E5 | error | resolved | explicit | A failure shows the matching "Preview failed: …" copy inline in `.dialog-error`; it is never retried automatically |
+| E5 | populated | resolved | explicit | `Match {matchPct}% → counts {countsPct}% × {signedWeight} = {signedPts} pts`, or `Match {matchPct}% · No match (contributes 0)` |
+| E5 | partial | resolved | explicit | A stale result (description or article changed) stays dimmed at opacity 0.5 with the stale line appended. A weight-only change recomputes locally |
+| E5 | overflow | resolved | backstop | In a narrow row, the math line wraps onto a second line inside the result strip rather than being truncated or causing horizontal scroll |
+| E5 | zero-one-many | dismissed | — | There is at most one result per row (the latest replaces the previous one), so there is no collection to lay out |
+| E5 | long-text | resolved | explicit | The result text is a fixed-format template of bounded numbers; the failure copy wraps inside the strip |
+| E6 | unclassified | resolved | backstop | 0–3 notices stack 8px apart in the order not configured → paused → cold start, and wrap onto multiple lines within the dialog width with no horizontal scroll at a 360px viewport |
+| E7 | overflow | resolved | explicit | Single line with `text-overflow: ellipsis`; the full title is in the `title` attribute |
+| E7 | long-text | resolved | explicit | Same as overflow; when unavailable, the reason copy replaces the title (Copywriting, Preview target line) |
 
 ---
 
@@ -424,12 +447,12 @@ No new npm dependencies are introduced by this contract. The slider and numeric 
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-09-23
