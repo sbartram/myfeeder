@@ -96,7 +96,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — V6 interest-scoring schema (one-way decision checkpoint: topic name, article_topic_score parent), profile/topic entities and repositories (wave 1)
+- [ ] 03-01-PLAN.md — V6 interest-scoring schema (required topic name confirmed by the user; decision checkpoint for the article_topic_score parent and INTEGER/no-length-CHECK choices), profile/topic entities and repositories (wave 1)
 
 **Wave 2** *(blocked on 03-01)*
 

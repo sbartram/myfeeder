@@ -709,20 +709,45 @@ Recommended mechanics (discretion):
 | A8 | Jackson 3 keeps `ACCEPT_FLOAT_AS_INT` on by default, so `"weight": 20.5` binds to `Integer` 20 | Open Questions | Low: the client rejects non-integers; the server CHECK still bounds the range |
 | A9 | Recommended topic limits: name 1–40 chars, description ≤ 500 chars | Pattern 1/2 | Low: service constants, no DB constraint |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Topic `name`: required or optional?**
+All questions below were resolved during `/gsd-plan-phase 3` on 2026-09-23. Each carries its outcome and the plan that implements it.
+
+1. **Topic `name`: required or optional?** — RESOLVED (user-confirmed): required name.
    - What we know: Phase 5/6 need short labels, and V6 is the last migration. UI-SPEC supports both layouts.
    - Recommendation: required `name TEXT NOT NULL` (1–40 chars). Confirm with the user during planning, because it adds a field to every row.
-2. **jsoup 1.11.2 (CVE-2021-37714)**
+   - **Resolution:** On 2026-09-23 the plan-phase orchestrator asked the user: "Should each interest topic have a separate short name besides its description? V6 is the last migration, so this is one-way." The user chose **"Required name"**: `name TEXT NOT NULL`, 1–40 characters, entered by the user. The name is a display label and is never sent to Jev. It is covered by 03-01 (the V6 column and the `rejectsTopicWithoutName` migration test), 03-03 (the service rejects a blank name or one over 40 characters with a 400), and 03-05/03-06 (the frontend topic type and the editor's name input). Plan 03-01 Task 1 records the name as pre-resolved. Its checkpoint now asks only about the planner's two remaining one-way choices: the `article_topic_score` parent, and INTEGER columns with no database length CHECKs.
+2. **jsoup 1.11.2 (CVE-2021-37714)** — RESOLVED: the upgrade is out of scope for Phase 3. The input cap mitigates the risk here.
    - What we know: this is pre-existing (ArticleExtractionService already parses untrusted pages with it). The latest jsoup is 1.23.2 (Maven Central metadata, lastUpdated 2026-08-26).
    - Recommendation: cap the input in this phase and file a separate quick task to pin a newer jsoup after checking Readability4J compatibility. Not in scope here.
-3. **Phase 2 WR-01 (`IllegalArgumentException` recorded by the breaker)**
+   - **Resolution:** 03-02 Task 3 caps raw HTML at `MAX_RAW_HTML_CHARS = 50,000` before `Jsoup.parse`. The `boundsRawHtmlBeforeParsing` test proves it: a 1 MB input builds within 2 s (threat T-03-04). The jsoup upgrade becomes a follow-up `/gsd-quick` task, which must first check Readability4J 1.0.8 compatibility. The 03-02 SUMMARY records that follow-up.
+3. **Phase 2 WR-01 (`IllegalArgumentException` recorded by the breaker)** — RESOLVED: deferred to Phase 4 with the other 02-REVIEW warnings.
    - Recommendation: the preview avoids it by validating first (Pattern 5). Adding `java.lang.IllegalArgumentException` to the `jev` breaker `ignore-exceptions` in **both** YAMLs is a two-line hardening. The planner may fold it in, but STATE.md schedules the WR items for "before/within Phase 4".
-4. **Roadmap note fix (deferred item)**
+   - **Resolution:** Phase 3 does not change the breaker YAML. No IllegalArgumentException from this phase reaches the proxied `judge()`, because validation always runs first:
+     - 03-02 Task 2: the blank-question guards in `InterestQuestions.profile`/`topic`
+     - 03-04 Task 2: the preview's description and article checks
+     - threats T-03-07 and T-03-15
+
+     03-04 records this decision under "Decisions recorded by the planner", and its SUMMARY carries WR-01 forward as open for Phase 4, where the scorer becomes the heavy caller.
+4. **Roadmap note fix (deferred item)** — RESOLVED: applied in the planning commit.
    - Planner: include a doc-only task correcting `.planning/ROADMAP.md` line 100 ("Phase 2 lays down `/api/interest/status`…").
-5. **CLAUDE.md accuracy**
+   - **Resolution:** The planner corrected the note directly in planning commit `72f09c3`, because the orchestrator is the single writer of ROADMAP.md during execution, so no execution task is needed. ROADMAP.md §Phase 3 notes now read "Phase 3 creates `GET /api/interest/status` with `configured`, `breakerState` and `coldStart` (D-04; Phase 2 deferred it)". 03-04's Output paragraph records this.
+5. **CLAUDE.md accuracy** — RESOLVED: covered by 03-04 Task 3.
    - `Flyway migrations` list (add V6), `API endpoints` list (add `/api/interest`), and the `@Table` import claim (see Project Constraints). A small doc task keeps CLAUDE.md truthful; OPS-03 (Phase 7) covers the fuller Jev docs.
+   - **Resolution:** 03-04 Task 3 updates the committed CLAUDE.md:
+     - adds `V6__interest_scoring.sql` to the Flyway list
+     - adds `/api/interest` to the endpoints
+     - documents the new Jev handler mappings
+     - corrects the `@Table` package to `org.springframework.data.relational.core.mapping`
+
+     It stages only its own hunks, leaving the user's uncommitted CLAUDE.md edits in place. The fuller Jev docs stay with OPS-03 (Phase 7).
+6. **Calibration-spike mechanics (Claude's Discretion; see "Calibration Spike" above)** — RESOLVED: adopted by 03-08.
+   - **Resolution:** 03-08 implements the recommended mechanics:
+     - **Runner and gating:** a `JEV_CALIBRATION=true`-gated `InterestCalibrationSpikeTest`, reported as skipped in every default `./gradlew test` run, plus a unit-tested `CalibrationStats`.
+     - **Input and report:** both live outside git, under `$HOME/.cache/myfeeder-phase03/`.
+     - **Run:** a blocking human-action checkpoint for the live-key run and the user's high/low labels.
+     - **Findings:** recorded in `03-CALIBRATION.md` (aggregate numbers, wording versions tried, wording chosen, and no profile text). The Assumption A6 thresholds stay heuristics; the user's judgment on the ranked output decides.
+     - **Fallback:** if the deployed `/api/articles` is unreachable (Assumption A7), 03-08 Task 1 notes this in its SUMMARY, and the user adds the 10–20 articles when completing the input at Task 2.
 
 ## Environment Availability
 
