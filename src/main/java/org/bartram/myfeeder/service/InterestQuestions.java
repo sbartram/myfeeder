@@ -38,10 +38,11 @@ public final class InterestQuestions {
             + "match what the reader wants to read, as described in `reader_profile`? "
             + "Judge what the article is about, not how important or relevant it claims to be.";
 
-    static final String TOPIC_QUESTION = "Is the article in `title` and `summary` primarily about `topic`?";
-    static final String TOPIC_WHEN_TRUE = "The article's main subject is `topic`";
+    static final String TOPIC_QUESTION = "Is the article in `title` and `summary` substantially about `topic`?";
+    static final String TOPIC_WHEN_TRUE =
+            "`topic` is the article's subject or a significant part of what the article discusses";
     static final String TOPIC_WHEN_FALSE =
-            "The article's main subject is something else, even if it mentions `topic` in passing";
+            "The article is about something else; `topic` appears only as a brief mention or not at all";
 
     private InterestQuestions() {
     }
