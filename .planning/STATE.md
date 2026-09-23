@@ -3,17 +3,17 @@ gsd_state_version: "1.0"
 milestone: v0.1.24
 current_phase: 03
 current_phase_name: Interest Model, Schema & Rubric Editor
-status: executing
-stopped_at: Completed 03-07-PLAN.md
-last_updated: "2026-09-23T18:41:44.538Z"
+status: verifying
+stopped_at: Completed 03-08-PLAN.md
+last_updated: "2026-09-23T21:14:43.790Z"
 last_activity: 2026-09-23
 last_activity_desc: Phase 03 execution started
-state_head: e1f6267d7cf5e74558bd367bdad1966ef128a71b
+state_head: 6930a4d2c7c3f90f81412e9cbc5ec0153cb4542a
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 16
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-23)
 
 Phase: 03 (Interest Model, Schema & Rubric Editor) — EXECUTING
 Plan: 8 of 8
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-23 — Phase 03 execution started
 
 Progress: [███░░░░░░░] 29%
@@ -74,6 +74,7 @@ Progress: [███░░░░░░░] 29%
 | Phase 03 P04 | 7 min | 3 tasks | 13 files |
 | Phase 03 P06 | 8 min | 3 tasks | 8 files |
 | Phase 03 P07 | 6 min | 2 tasks | 6 files |
+| Phase 03 P08 | 2h 30m | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,9 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-06: Rows seed once per open; isTopicDirty/parseWeight live in utils/interest.ts; the close guard counts edited saved rows plus drafts with any name/description text
 - [Phase 03]: 03-07: One PreviewBlock per dialog (not configured, breaker, no article, status pending, status unknown) passed to every TopicRow; the row adds only the blank-description reason; status-unknown only when the status query has no data and failed
 - [Phase 03]: 03-07: Preview stores {noul, description, articleId}; math renders from noul and the current weight, staleness compares stored inputs; mutate only from the click handler, no retries, no invalidation
+- [Phase 03]: 03-08: Shipped v2 topic wording ('substantially about `topic`'); v1/v2 both pass A6, label agreement 0.859, v2 doubles obvious-match topic nouls
+- [Phase 03]: 03-08: Topic under-firing (no obvious match crosses noul 0.5) deferred to Phase 4/5 OPS-02 tuning
+- [Phase 03]: 03-08: Phase 4 scoring needs a Jev timeout well above 5s (profile+7 topics ~2.6s avg, cold >5s)
 
 ### Pending Todos
 
@@ -137,6 +141,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-23T18:41:35.326Z
-Stopped at: Completed 03-07-PLAN.md
+Last session: 2026-09-23T21:14:43.760Z
+Stopped at: Completed 03-08-PLAN.md
 Resume file: None
