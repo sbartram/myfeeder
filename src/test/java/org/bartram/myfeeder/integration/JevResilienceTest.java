@@ -1,46 +1,78 @@
 package org.bartram.myfeeder.integration;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpServer;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import io.github.resilience4j.springboot3.circuitbreaker.autoconfigure.CircuitBreakerAutoConfiguration;
 import io.github.resilience4j.springboot3.retry.autoconfigure.RetryAutoConfiguration;
+import io.netty.handler.timeout.ReadTimeoutException;
+import org.bartram.myfeeder.config.RestClientConfig;
 import org.bartram.myfeeder.config.TypeSafeConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springaicommunity.typesafe.autoconfigure.TypeSafeAutoConfiguration;
+import org.springaicommunity.typesafe.exception.TypeSafeAnswerTypeException;
+import org.springaicommunity.typesafe.exception.TypeSafeApiConnectionException;
+import org.springaicommunity.typesafe.exception.TypeSafeApiTimeoutException;
+import org.springaicommunity.typesafe.exception.TypeSafeAuthenticationException;
+import org.springaicommunity.typesafe.exception.TypeSafeBadRequestException;
 import org.springaicommunity.typesafe.exception.TypeSafeInternalServerException;
+import org.springaicommunity.typesafe.exception.TypeSafeMissingAnswerException;
+import org.springaicommunity.typesafe.exception.TypeSafeOverloadedException;
+import org.springaicommunity.typesafe.exception.TypeSafePermissionDeniedException;
+import org.springaicommunity.typesafe.exception.TypeSafeRateLimitException;
+import org.springaicommunity.typesafe.exception.TypeSafeUnprocessableEntityException;
 import org.springaicommunity.typesafe.question.Noul;
 import org.springaicommunity.typesafe.question.Question;
 import org.springaicommunity.typesafe.question.Score;
+import org.springaicommunity.typesafe.response.AnswerType;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
 import org.springframework.boot.context.annotation.UserConfigurations;
 import org.springframework.boot.env.YamlPropertySourceLoader;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.http.client.autoconfigure.HttpClientAutoConfiguration;
 import org.springframework.boot.http.client.autoconfigure.imperative.ImperativeHttpClientAutoConfiguration;
 import org.springframework.boot.restclient.autoconfigure.RestClientAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 /**
  * Proves the Jev resilience wiring through the real AOP proxy and a real socket: the production
@@ -53,6 +85,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class JevResilienceTest {
 
     private static final String FAKE_KEY = "sk-test-LEAKCHECK";
+    private static final String ENDPOINT = "POST /v1/systemone";
 
     private static final String OK_BODY = """
             {
@@ -137,6 +170,186 @@ class JevResilienceTest {
         });
     }
 
+    @Test
+    void badRequestAndUnprocessableAreNotRetriedOrRecorded() {
+        // Per-article errors: attempted once and ignored by the breaker, so they can never open it.
+        stub.enqueue(400);
+        runner.run(ctx -> {
+            assertThatThrownBy(() -> ctx.getBean(JevApiClient.class).judge(state(), questions()))
+                    .isExactlyInstanceOf(TypeSafeBadRequestException.class);
+            assertThat(stub.hits()).isEqualTo(1);
+            assertNotRecorded(ctx);
+        });
+
+        stub.enqueue(422);
+        runner.run(ctx -> {
+            assertThatThrownBy(() -> ctx.getBean(JevApiClient.class).judge(state(), questions()))
+                    .isExactlyInstanceOf(TypeSafeUnprocessableEntityException.class);
+            assertThat(stub.hits()).isEqualTo(2); // one more hit, in a fresh context
+            assertNotRecorded(ctx);
+        });
+    }
+
+    @Test
+    void rejectedKeyIsNotRetriedButRecorded(CapturedOutput output) {
+        // D-06: a bad key is not retried, but it is a breaker failure, so on its own it opens the breaker.
+        stub.enqueue(401);
+        runner.run(ctx -> {
+            assertThatThrownBy(() -> ctx.getBean(JevApiClient.class).judge(state(), questions()))
+                    .isExactlyInstanceOf(TypeSafeAuthenticationException.class);
+            assertThat(stub.hits()).isEqualTo(1);
+            assertThat(jevBreaker(ctx).getMetrics().getNumberOfFailedCalls()).isEqualTo(1);
+        });
+        assertThat(output.toString()).contains("req-1").doesNotContain("LEAKCHECK");
+
+        stub.enqueue(403);
+        runner.run(ctx -> {
+            assertThatThrownBy(() -> ctx.getBean(JevApiClient.class).judge(state(), questions()))
+                    .isExactlyInstanceOf(TypeSafePermissionDeniedException.class);
+            assertThat(stub.hits()).isEqualTo(2);
+            assertThat(jevBreaker(ctx).getMetrics().getNumberOfFailedCalls()).isEqualTo(1);
+        });
+        assertThat(output.toString()).contains("req-2").doesNotContain("LEAKCHECK");
+    }
+
+    @Test
+    void notConfiguredIsNeitherRetriedNorRecorded() {
+        runner.withPropertyValues("spring.ai.typesafe.api-key=")
+                .run(ctx -> {
+                    assertThatThrownBy(() -> ctx.getBean(JevApiClient.class).judge(state(), questions()))
+                            .isExactlyInstanceOf(JevNotConfiguredException.class);
+                    assertThat(stub.hits()).isZero();
+                    assertThat(jevBreaker(ctx).getMetrics().getNumberOfFailedCalls()).isZero();
+                });
+    }
+
+    @Test
+    void breakerOpensAtMinimumCallsAndShortCircuits() {
+        for (int i = 0; i < 12; i++) {
+            stub.enqueue(500);
+        }
+        runner.run(ctx -> {
+            JevApiClient client = ctx.getBean(JevApiClient.class);
+            CircuitBreaker breaker = jevBreaker(ctx);
+
+            // Retry is the outer aspect, so the breaker records every attempt: 3 calls x 3 attempts.
+            for (int call = 1; call <= 3; call++) {
+                assertThatThrownBy(() -> client.judge(state(), questions()))
+                        .isExactlyInstanceOf(TypeSafeInternalServerException.class);
+            }
+            assertThat(stub.hits()).isEqualTo(9);
+            assertThat(breaker.getMetrics().getNumberOfFailedCalls()).isEqualTo(9);
+            assertThat(breaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
+
+            // The 10th recorded failure (minimum-number-of-calls) opens it; the retry then short-circuits.
+            assertThatThrownBy(() -> client.judge(state(), questions()))
+                    .isExactlyInstanceOf(CallNotPermittedException.class);
+            assertThat(stub.hits()).isEqualTo(10);
+            assertThat(breaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
+
+            // Open: no HTTP request, and CallNotPermittedException is not retried.
+            assertThatThrownBy(() -> client.judge(state(), questions()))
+                    .isExactlyInstanceOf(CallNotPermittedException.class);
+            assertThat(stub.hits()).isEqualTo(10);
+        });
+    }
+
+    @Test
+    void readTimeoutSurfacesAsConnectionExceptionAndIsRetried() {
+        stub.enqueueDelayed(200, 1_500);
+        stub.enqueueDelayed(200, 1_500);
+        stub.enqueueDelayed(200, 1_500);
+        runner.withPropertyValues("spring.ai.typesafe.timeout=300ms")
+                .run(ctx -> {
+                    Throwable thrown = catchThrowable(() -> ctx.getBean(JevApiClient.class).judge(state(), questions()));
+                    // D-05: Reactor Netty timeouts are the base connection type, never the timeout subtype.
+                    assertThat(thrown).isExactlyInstanceOf(TypeSafeApiConnectionException.class)
+                            .isNotInstanceOf(TypeSafeApiTimeoutException.class);
+                    assertThat(causeChain(thrown)).anyMatch(ReadTimeoutException.class::isInstance);
+                    assertThat(stub.hits()).isEqualTo(3);
+                });
+    }
+
+    @Test
+    void outboundRequestCarriesUserAgentAndBearer() {
+        Properties props = new Properties();
+        props.setProperty("version", "9.9.9-test");
+        runner.withConfiguration(UserConfigurations.of(RestClientConfig.class))
+                .withBean(BuildProperties.class, () -> new BuildProperties(props))
+                .run(ctx -> {
+                    ctx.getBean(JevApiClient.class).judge(state(), questions());
+                    Headers headers = stub.headers().getFirst();
+                    assertThat(headers.getFirst(HttpHeaders.USER_AGENT)).startsWith("myfeeder/9.9.9-test");
+                    assertThat(headers.getFirst(HttpHeaders.AUTHORIZATION)).isEqualTo("Bearer " + FAKE_KEY);
+                });
+    }
+
+    @Test
+    void retriedAttemptsSendIdenticalBodies() {
+        stub.enqueue(500);
+        stub.enqueue(500);
+        stub.enqueue(200);
+        runner.run(ctx -> {
+            JevJudgment judgment = ctx.getBean(JevApiClient.class).judge(state(), questions());
+            assertThat(judgment.model()).isEqualTo("jev-1.13.0");
+            assertThat(stub.bodies()).hasSize(3);
+            assertThat(stub.bodies().get(0)).isNotBlank();
+            assertThat(stub.bodies()).allMatch(body -> body.equals(stub.bodies().get(0)));
+        });
+    }
+
+    @Test
+    void mainYamlJevInstancesBindAsSpecified() {
+        runner.run(ctx -> {
+            CircuitBreaker breaker = jevBreaker(ctx);
+            CircuitBreakerConfig cb = breaker.getCircuitBreakerConfig();
+            assertThat(cb.getSlidingWindowType()).isEqualTo(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED);
+            assertThat(cb.getSlidingWindowSize()).isEqualTo(20);
+            assertThat(cb.getMinimumNumberOfCalls()).isEqualTo(10);
+            assertThat(cb.getFailureRateThreshold()).isEqualTo(50f);
+            assertThat(cb.getWaitIntervalFunctionInOpenState().apply(1)).isEqualTo(60_000L);
+            assertThat(cb.getSlowCallDurationThreshold()).isEqualTo(Duration.ofSeconds(3));
+            assertThat(cb.getSlowCallRateThreshold()).isEqualTo(50f);
+            assertThat(cb.getPermittedNumberOfCallsInHalfOpenState()).isEqualTo(3);
+
+            Predicate<Throwable> ignored = cb.getIgnoreExceptionPredicate();
+            assertThat(ignored.test(new JevNotConfiguredException())).isTrue();
+            assertThat(ignored.test(badRequest())).isTrue();
+            assertThat(ignored.test(unprocessable())).isTrue();
+            assertThat(ignored.test(new TypeSafeMissingAnswerException("t1", List.of("profile")))).isTrue();
+            assertThat(ignored.test(new TypeSafeAnswerTypeException("t1", AnswerType.NOUL, AnswerType.SCORE))).isTrue();
+            assertThat(ignored.test(unauthorized())).isFalse();
+            assertThat(ignored.test(forbidden())).isFalse();
+            assertThat(ignored.test(serverError())).isFalse();
+
+            RetryConfig retry = ctx.getBean(RetryRegistry.class).retry("jev").getRetryConfig();
+            assertThat(retry.getMaxAttempts()).isEqualTo(3);
+            Predicate<Throwable> retried = retry.getExceptionPredicate();
+            assertThat(retried.test(new TypeSafeRateLimitException(
+                    "rate limited", 429, "", new HttpHeaders(), ENDPOINT, 700L))).isTrue();
+            assertThat(retried.test(serverError())).isTrue();
+            assertThat(retried.test(new TypeSafeOverloadedException(
+                    "overloaded", 529, "", new HttpHeaders(), ENDPOINT))).isTrue();
+            assertThat(retried.test(new TypeSafeApiConnectionException(
+                    "connection failed", new ConnectException("refused")))).isTrue();
+            assertThat(retried.test(unauthorized())).isFalse();
+            assertThat(retried.test(forbidden())).isFalse();
+            assertThat(retried.test(badRequest())).isFalse();
+            assertThat(retried.test(unprocessable())).isFalse();
+            assertThat(retried.test(new JevNotConfiguredException())).isFalse();
+            assertThat(retried.test(CallNotPermittedException.createCallNotPermittedException(breaker))).isFalse();
+        });
+    }
+
+    @Test
+    void testYamlMirrorsMainJevInstances() throws IOException {
+        // The test application.yaml shadows main on the classpath, so its jev blocks must be identical.
+        Map<String, String> main = jevProperties(loadYaml("src/main/resources/application.yaml"));
+        Map<String, String> test = jevProperties(loadYaml("src/test/resources/application.yaml"));
+        assertThat(main).isNotEmpty();
+        assertThat(test).isEqualTo(main);
+    }
+
     private static Map<String, Question> questions() {
         Map<String, Question> questions = new LinkedHashMap<>();
         questions.put("profile", Score.builder()
@@ -162,6 +375,56 @@ class JevResilienceTest {
         return state;
     }
 
+    private static CircuitBreaker jevBreaker(ApplicationContext ctx) {
+        return ctx.getBean(CircuitBreakerRegistry.class).circuitBreaker("jev");
+    }
+
+    private static void assertNotRecorded(ApplicationContext ctx) {
+        CircuitBreaker breaker = jevBreaker(ctx);
+        assertThat(breaker.getMetrics().getNumberOfFailedCalls()).isZero();
+        assertThat(breaker.getMetrics().getNumberOfSuccessfulCalls()).isZero();
+        assertThat(breaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
+    }
+
+    private static List<Throwable> causeChain(Throwable thrown) {
+        List<Throwable> chain = new ArrayList<>();
+        for (Throwable t = thrown; t != null && !chain.contains(t); t = t.getCause()) {
+            chain.add(t);
+        }
+        return chain;
+    }
+
+    private static Map<String, String> jevProperties(PropertySource<?> yaml) {
+        Map<String, String> jev = new TreeMap<>();
+        for (String name : ((EnumerablePropertySource<?>) yaml).getPropertyNames()) {
+            if (name.startsWith("resilience4j.circuitbreaker.instances.jev.")
+                    || name.startsWith("resilience4j.retry.instances.jev.")) {
+                jev.put(name, String.valueOf(yaml.getProperty(name)));
+            }
+        }
+        return jev;
+    }
+
+    private static TypeSafeBadRequestException badRequest() {
+        return new TypeSafeBadRequestException("bad request", 400, "", new HttpHeaders(), ENDPOINT);
+    }
+
+    private static TypeSafeUnprocessableEntityException unprocessable() {
+        return new TypeSafeUnprocessableEntityException("unprocessable", 422, "", new HttpHeaders(), ENDPOINT);
+    }
+
+    private static TypeSafeAuthenticationException unauthorized() {
+        return new TypeSafeAuthenticationException("unauthorized", 401, "", new HttpHeaders(), ENDPOINT);
+    }
+
+    private static TypeSafePermissionDeniedException forbidden() {
+        return new TypeSafePermissionDeniedException("forbidden", 403, "", new HttpHeaders(), ENDPOINT);
+    }
+
+    private static TypeSafeInternalServerException serverError() {
+        return new TypeSafeInternalServerException("server error", 500, "", new HttpHeaders(), ENDPOINT);
+    }
+
     private static PropertySource<?> loadYaml(String path) throws IOException {
         return new YamlPropertySourceLoader().load(path, new FileSystemResource(path)).getFirst();
     }
@@ -181,7 +444,7 @@ class JevResilienceTest {
         private final ConcurrentLinkedQueue<Resp> responses = new ConcurrentLinkedQueue<>();
         private final AtomicInteger hits = new AtomicInteger();
         private final List<String> bodies = new CopyOnWriteArrayList<>();
-        private final List<Map<String, List<String>>> headers = new CopyOnWriteArrayList<>();
+        private final List<Headers> headers = new CopyOnWriteArrayList<>();
 
         StubServer() throws IOException {
             server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
@@ -189,7 +452,7 @@ class JevResilienceTest {
             server.createContext("/", exchange -> {
                 int hit = hits.incrementAndGet();
                 bodies.add(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
-                headers.add(Map.copyOf(exchange.getRequestHeaders()));
+                headers.add(new Headers(exchange.getRequestHeaders()));
                 Resp resp = responses.poll();
                 if (resp == null) {
                     resp = new Resp(200, Map.of(), OK_BODY, 0);
@@ -237,7 +500,7 @@ class JevResilienceTest {
             return bodies;
         }
 
-        List<Map<String, List<String>>> headers() {
+        List<Headers> headers() {
             return headers;
         }
 
