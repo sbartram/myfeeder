@@ -12,6 +12,8 @@ spec:
       {{- include "myfeeder.appSelectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        checksum/secret: {{ include (print $.Template.BasePath "/app-secret.yaml") . | sha256sum }}
       labels:
         {{- include "myfeeder.labels" . | nindent 8 }}
         {{- include "myfeeder.appSelectorLabels" . | nindent 8 }}
@@ -50,6 +52,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "myfeeder.fullname" . }}-secret
                   key: myfeeder-raindrop-api-token
+            - name: MYFEEDER_TYPESAFE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "myfeeder.fullname" . }}-secret
+                  key: myfeeder-typesafe-api-key
             - name: JDK_JAVA_OPTIONS
               value: "-XX:MaxDirectMemorySize=64M"
             {{- if .Values.secrets.googleApplicationCredentials }}

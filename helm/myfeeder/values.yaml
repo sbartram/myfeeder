@@ -48,4 +48,5 @@ secrets:
   postgresPassword: ""
   anthropicApiKey: ""
   raindropApiToken: ""
+  typesafeApiKey: ""
   googleApplicationCredentials: ""
