@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 03
 current_phase_name: Interest Model, Schema & Rubric Editor
 status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-09-23T17:55:55.238Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-09-23T18:03:10.036Z"
 last_activity: 2026-09-23
 last_activity_desc: Phase 03 execution started
-state_head: 899e16cafd6429547f3644afb1b6e849d29ef8ef
+state_head: 037dd38c06ba637da43297acbea25ea3c20a8f60
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 16
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-23)
 ## Current Position
 
 Phase: 03 (Interest Model, Schema & Rubric Editor) — EXECUTING
-Plan: 3 of 8
+Plan: 4 of 8
 Status: Ready to execute
 Last activity: 2026-09-23 — Phase 03 execution started
 
@@ -69,6 +69,7 @@ Progress: [███░░░░░░░] 29%
 | Phase 02 P03 | 6 min | 3 tasks | 6 files |
 | Phase 03 P01 | 3 min | 3 tasks | 7 files |
 | Phase 03 P02 | 4 min | 3 tasks | 7 files |
+| Phase 03 P03 | 5 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-01: Phase 4 inserts article_score before article_topic_score in one transaction; Re-score unread deletes article_score rows and lets the cascade drop nouls; Phase 6 learned CTE must honor topics_narrowed (D-02)
 - [Phase 03]: 03-02: JevApiClient.isConfigured() = hasText(apiKey), no breaker/retry, requireConfigured delegates (D-04); InterestQuestions/ArticleStateBuilder are pure static builders shared by preview and Phase 4 scorer (D-12)
 - [Phase 03]: 03-02: Phase 4 must check isConfigured() and InterestService.isColdStart() before forRubric, never judge an empty question map, skip when hasJudgeableText is false; jsoup >1.14.2 upgrade is a separate quick task (check Readability4J 1.0.8 first)
+- [Phase 03]: 03-03: InterestService.isColdStart() is the single cold-start predicate (blank-after-trim profile AND zero topics); 03-04 status and Phase 4 SCOR-06 call it, never reimplement
+- [Phase 03]: 03-03: Topic version bumps only on a trimmed-description change (name/weight edits keep it); profile version only on exact text change; limits are InterestService constants with fixed-text 400s
 
 ### Pending Todos
 
@@ -121,6 +124,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-23T17:55:55.212Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-09-23T18:03:10.009Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
