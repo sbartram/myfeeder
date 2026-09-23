@@ -1,6 +1,6 @@
 plugins {
 	java
-	id("org.springframework.boot") version "4.0.3"
+	id("org.springframework.boot") version "4.0.8"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("pl.allegro.tech.build.axion-release") version "1.21.1"
 }
@@ -25,8 +25,8 @@ repositories {
 	mavenCentral()
 }
 
-extra["springAiVersion"] = "2.0.0-M2"
-extra["springCloudVersion"] = "2025.1.0"
+extra["springAiVersion"] = "2.0.1"
+extra["springCloudVersion"] = "2025.1.3"
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -34,6 +34,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("org.springframework.boot:spring-boot-starter-restclient")
+	// Pins the auto-configured RestClient transport to Reactor Netty (Spring AI 2.0.0-M2 used to bring it in transitively)
+	implementation("io.projectreactor.netty:reactor-netty-http")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.springframework.ai:spring-ai-starter-model-anthropic")
 
