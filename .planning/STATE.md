@@ -1,19 +1,19 @@
 ---
 gsd_state_version: "1.0"
 milestone: v0.1.24
-current_phase: 2
+current_phase: 02
 current_phase_name: Jev Client Foundation
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-09-23T02:55:04.369Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-09-23T03:09:24.098Z"
 last_activity: 2026-09-22
-last_activity_desc: Phase 01 complete, transitioned to Phase 2
-state_head: 830d1a8e240815ea62c157efe7f3f0fcfe52a719
+last_activity_desc: Phase 02 execution started
+state_head: 0e858119b9cf613d213cffabafd5ba6c5b49acf2
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 8
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-22)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 2 — Jev Client Foundation
+**Current focus:** Phase 02 — Jev Client Foundation
 
 ## Current Position
 
-Phase: 2 (Jev Client Foundation) — READY TO EXECUTE
-Plan: Not started
+Phase: 02 (Jev Client Foundation) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-09-22 — Phase 01 complete, transitioned to Phase 2
+Last activity: 2026-09-22 — Phase 02 execution started
 
 Progress: [█░░░░░░░░░] 14%
 
@@ -62,6 +62,7 @@ Progress: [█░░░░░░░░░] 14%
 | Phase 01 P02 | 16 min | 3 tasks | 2 files |
 | Phase 01 P03 | 1 min | 3 tasks | 1 files |
 | Phase 01 P04 | 26 min | 3 tasks | 1 files |
+| Phase 02 P01 | 4 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -83,10 +84,12 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-03: sbartram/main merged --no-ff into local main (29da9aa); unpushed until 01-04 approval (D-05); axion computes 0.1.24-SNAPSHOT
 - [Phase 01]: 01-04: User approved (verbatim: approve); v0.1.24 released from main 29da9aa, image myfeeder:0.1.24 sha256:f1517e2d, Helm rev 17; no rollback or Redis flush needed
 - [Phase 01]: 01-04: 20-min soak passed (40/40 healthy feeds clean, 18 via 304); reader UI human check queued for end-of-phase UAT
+- [Phase 02]: 02-01: App-owned TypeSafeClient (Pattern A) with Supplier-only key; Jev-only Reactor Netty transport (5s/5s) on a cloned RestClient.Builder
+- [Phase 02]: 02-01: spring-boot-starter-aspectj added in its own commit (0e85811); Raindrop resilience now live (retry 3x/1s, breaker, 409 fallback), user-accepted 2026-09-22; tuning + CLAUDE.md fix tracked as pending todo
 
 ### Pending Todos
 
-None yet.
+- [2026-09-23] [backend] Tune Raindrop resilience and fix CLAUDE.md AspectJ note — [todo file](.planning/todos/pending/2026-09-23-tune-raindrop-resilience-and-fix-claude-md-aspectj-note.md)
 
 ### Blockers/Concerns
 
@@ -104,6 +107,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-23T02:00:19.220Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-jev-client-foundation/02-CONTEXT.md
+Last session: 2026-09-23T03:09:24.078Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
