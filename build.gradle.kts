@@ -40,6 +40,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.springframework.ai:spring-ai-starter-model-anthropic")
 
+	// Activates Resilience4j's @CircuitBreaker/@Retry aspects (resilience4j registers them only when AspectJ is on the classpath)
+	implementation("org.springframework.boot:spring-boot-starter-aspectj")
 	// Not in any BOM, so the version is explicit; myfeeder owns the TypeSafeClient bean (Pattern A)
 	implementation("org.springaicommunity:spring-ai-starter-typesafe:${property("typesafeVersion")}")
 	implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
