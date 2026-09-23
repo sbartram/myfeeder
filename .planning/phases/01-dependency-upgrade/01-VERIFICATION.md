@@ -1,9 +1,10 @@
 ---
 phase: 01-dependency-upgrade
 verified: 2026-09-23T01:30:00Z
-status: human_needed
+status: passed
 score: 21/22 must-haves verified
 covered_files:
+
   - .planning/REQUIREMENTS.md
   - .planning/codebase/STACK.md
   - .planning/phases/01-dependency-upgrade/01-01-PLAN.md
@@ -20,10 +21,12 @@ covered_files:
   - src/main/frontend/package.json
   - src/main/resources/application.yaml
   - src/test/java/org/bartram/myfeeder/config/HttpClientConfigurationTest.java
+
 covered_digest: "v1:sha256:50462b3f14933f94b3e658b16ce115244a082724b1b5736c3b007c9c32f6b35b"
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "Open http://192.168.44.204 in a browser. Load the feed tree, open a feed with recent items, open an article, and switch to Reader View once. Compare the newest articles' times with the deploy time (2026-09-23T00:56:05Z, in $HOME/.cache/myfeeder-phase01/deploy-time.txt)."
     expected: "The three-panel reader loads with your usual theme. Articles fetched after the deploy appear in the list and open in the reading pane. Reader View works. Nothing looks or behaves differently from 0.1.23."
     why_human: "ROADMAP SC3 says new articles appear in the reader as before. The API shows 2 post-rollout articles and the new bundle is served, but UI regressions from the React 19.3 / TanStack Query 5.103 / DOMPurify 3.4.15 refresh cannot be detected with grep or curl. This check was deferred from the 01-04 plan's <human-check>."

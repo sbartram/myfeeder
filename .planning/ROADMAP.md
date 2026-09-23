@@ -13,7 +13,7 @@ This milestone adds interest ranking to myfeeder. First the dependency stack mov
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Dependency Upgrade** - Move to Boot 4.0.8 / Spring AI 2.0.1 / Spring Cloud 2025.1.3 and frontend minor/patch versions, then deploy
+- [x] **Phase 1: Dependency Upgrade** - Move to Boot 4.0.8 / Spring AI 2.0.1 / Spring Cloud 2025.1.3 and frontend minor/patch versions, then deploy (completed 2026-09-22)
 - [ ] **Phase 2: Jev Client Foundation** - Optional, pinned-model Jev client with a single Resilience4j retry layer and deploy-time secret
 - [ ] **Phase 3: Interest Model, Schema & Rubric Editor** - Profile and weighted topic editor, topic preview, and the full V6 interest schema
 - [ ] **Phase 4: Scoring Pipeline & Backfill Sweep** - Background, never-blocking scoring of new articles plus the sweep that backfills, recovers and re-scores
@@ -158,7 +158,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Dependency Upgrade | 4/4 | In Progress|  |
+| 1. Dependency Upgrade | 4/4 | Complete    | 2026-09-22 |
 | 2. Jev Client Foundation | 0/TBD | Not started | - |
 | 3. Interest Model, Schema & Rubric Editor | 0/TBD | Not started | - |
 | 4. Scoring Pipeline & Backfill Sweep | 0/TBD | Not started | - |

@@ -25,10 +25,10 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Retention cleanup job — existing
 - ✓ Vim-style keyboard shortcuts, 6 themes, persisted preferences — existing
 - ✓ Helm/k3s deployment with release pipeline (axion tags, Dockerfile image) — existing
+- ✓ Dependencies upgraded (patch/GA line): Spring Boot 4.0.8, Spring AI BOM 2.0.1, Spring Cloud 2025.1.3, frontend in-major bumps; 162 backend + 47 frontend tests green; released and deployed as v0.1.24 — Phase 1
 
 ### Active
 
-- [ ] Upgrade dependencies before Jev work (patch/GA line): Spring Boot 4.0.3→4.0.8, Spring AI BOM 2.0.0-M2→2.0.1, Spring Cloud 2025.1.0→2025.1.3, frontend minor/patch bumps; all backend + frontend tests green and a deploy verified
 - [ ] Integrate TypeSafe Jev via Spring AI community starter (`org.springaicommunity:spring-ai-starter-typesafe` 0.1.0), optional like Raindrop — app runs normally without an API key
 - [ ] Reader can write and edit a free-text interest profile
 - [ ] Reader can manage a topic rubric: add/remove topics, each with a description and a (possibly negative) weight
@@ -90,7 +90,10 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | App-owned TypeSafeClient bean; Resilience4j as the single retry layer | Starter crashes on a blank key; avoid 9× stacked retries | — Pending |
 | Priority view = unread by blended score, unscored after by date | Useful even while backfill is in progress | — Pending |
 | One-time backfill of unread backlog at launch | Priority view useful immediately | — Pending |
-| Upgrade deps (patch/GA line) as the first phase, before Jev work | TypeSafe starter built against Boot 4.0.7; project was on 4.0.3 + Spring AI milestone M2 | — Pending |
+| Upgrade deps (patch/GA line) as the first phase, before Jev work | TypeSafe starter built against Boot 4.0.7; project was on 4.0.3 + Spring AI milestone M2 | ✓ Good — shipped v0.1.24 (Phase 1), soak clean |
+| Pin RestClient transport to Reactor Netty via explicit `reactor-netty-http` (D-01) | Spring AI 2.0.1 dropped it transitively; Boot would silently fall back to the JDK client | ✓ Good — guarded by HttpClientConfigurationTest |
+| Bind outbound timeouts under `spring.http.clients.*` (D-02) | Old singular keys were silently unbound, so the 5s/30s timeouts never applied | ✓ Good — stalled feeds now time out (Phase 1) |
+| Accept react-router v6 advisories (GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg) | Fix needs v7 major; no SSR, internal-only navigation targets | ⚠️ Revisit — when a v7 migration is scheduled |
 
 ## Evolution
 
@@ -110,4 +113,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-22 after initialization*
+*Last updated: 2026-09-22 after Phase 1*
