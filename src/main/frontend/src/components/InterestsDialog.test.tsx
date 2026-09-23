@@ -414,4 +414,140 @@ describe('InterestsDialog', () => {
     expect(screen.getByText('No topics yet.')).toBeInTheDocument()
     expect(calls.filter((c) => c.url.startsWith('/api/interest/topics') && c.method !== 'GET')).toEqual([])
   })
+  it('savingOneRowKeepsAnotherRowsUnsavedEdits', async () => {
+    const user = userEvent.setup()
+    route('GET', '/api/interest/topics', () => ({
+      status: 200,
+      body: [topic(3, 'Rust', 'The Rust language'), topic(9, 'Go', 'The Go language')],
+    }))
+    route('PUT', '/api/interest/topics/3', (init) => ({
+      status: 200,
+      body: { ...topic(3, '', ''), ...(JSON.parse(String(init?.body)) as object), version: 2 },
+    }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await screen.findByText('2 / 25')
+    const [first, second] = topicRows(container)
+
+    await user.type(within(first).getByRole('textbox', { name: 'Topic description' }), ' and Cargo')
+    await user.type(within(second).getByRole('textbox', { name: 'Topic description' }), ' and its tooling')
+    await user.click(screen.getByRole('button', { name: 'Save topic: Rust' }))
+
+    await waitFor(() => expect(within(first).queryByText('Unsaved')).not.toBeInTheDocument())
+    expect(within(first).getByRole('textbox', { name: 'Topic description' })).toHaveValue(
+      'The Rust language and Cargo',
+    )
+    expect(within(second).getByRole('textbox', { name: 'Topic description' })).toHaveValue(
+      'The Go language and its tooling',
+    )
+    expect(within(second).getByText('Unsaved')).toBeInTheDocument()
+    expect(second).toHaveClass('dirty')
+    expect(calls.filter((c) => c.method === 'PUT').map((c) => c.url)).toEqual([
+      '/api/interest/topics/3',
+    ])
+  })
+
+  it('addTopicDisabledAt25WithTitle', async () => {
+    route('GET', '/api/interest/topics', () => ({
+      status: 200,
+      body: Array.from({ length: 25 }, (_, i) => topic(i + 1, `Topic ${i + 1}`, `Subject ${i + 1}`)),
+    }))
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+    expect(await screen.findByText('25 / 25')).toBeInTheDocument()
+    const add = screen.getByRole('button', { name: '+ Add topic' })
+    expect(add).toBeDisabled()
+    expect(add).toHaveAttribute('title', 'You have 25 topics, the maximum. Delete one to add another.')
+  })
+
+  it('closeGuardCountsDirtyTopics', async () => {
+    const user = userEvent.setup()
+    route('GET', '/api/interest/topics', () => ({
+      status: 200,
+      body: [topic(3, 'Rust', 'The Rust language'), topic(9, 'Go', 'The Go language')],
+    }))
+    const onClose = vi.fn()
+    const first = renderDialog(<InterestsDialog open={true} onClose={onClose} />)
+    await user.type(await screen.findByRole('textbox', { name: 'Interest profile' }), 'Java')
+    for (const row of topicRows(first.container)) {
+      await user.type(within(row).getByRole('textbox', { name: 'Topic name' }), '!')
+    }
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(
+      screen.getByText('Discard unsaved changes? You have unsaved edits to the profile and 2 topics.'),
+    ).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+    first.unmount()
+
+    const second = renderDialog(<InterestsDialog open={true} onClose={onClose} />)
+    await screen.findByText('2 / 25')
+    await user.type(
+      within(topicRows(second.container)[1]).getByRole('spinbutton', { name: 'Topic weight value' }),
+      '5',
+    )
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(
+      screen.getByText('Discard unsaved changes? You have unsaved edits to 1 topic.'),
+    ).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('blankDraftDoesNotBlockClose', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={onClose} />)
+    await screen.findByText('No topics yet.')
+
+    await user.click(screen.getByRole('button', { name: '+ Add topic' }))
+    expect(topicRows(container)).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText(/Discard unsaved changes\?/)).not.toBeInTheDocument()
+  })
+
+  it('deleteRemovesTheRowAndRefreshesStatus', async () => {
+    const user = userEvent.setup()
+    route('GET', '/api/interest/topics', () => ({
+      status: 200,
+      body: [topic(3, 'Rust', 'The Rust language')],
+    }))
+    route('DELETE', '/api/interest/topics/3', () => ({ status: 204 }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await screen.findByText('1 / 25')
+    await waitFor(() => expect(statusFetches()).toHaveLength(1))
+
+    await user.click(screen.getByRole('button', { name: 'Delete topic: Rust' }))
+    await user.click(screen.getByRole('button', { name: 'Confirm delete topic: Rust' }))
+
+    await waitFor(() => expect(topicRows(container)).toHaveLength(0))
+    expect(screen.getByText('0 / 25')).toBeInTheDocument()
+    expect(screen.getByText('No topics yet.')).toBeInTheDocument()
+    expect(calls.filter((c) => c.method === 'DELETE').map((c) => c.url)).toEqual([
+      '/api/interest/topics/3',
+    ])
+    await waitFor(() => expect(statusFetches()).toHaveLength(2))
+  })
+
+  it('topicsStayEditableWithoutAKey', async () => {
+    const user = userEvent.setup()
+    status({ configured: false })
+    route('POST', '/api/interest/topics', (init) => ({
+      status: 201,
+      body: { ...topic(4, '', ''), ...(JSON.parse(String(init?.body)) as object) },
+    }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    expect(await screen.findByText("Scoring isn't set up yet.")).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '+ Add topic' }))
+    const row = topicRows(container)[0]
+    await user.type(within(row).getByRole('textbox', { name: 'Topic name' }), 'Crypto')
+    await user.type(within(row).getByRole('textbox', { name: 'Topic description' }), 'Cryptocurrency')
+    await user.click(screen.getByRole('button', { name: 'Save topic: Crypto' }))
+
+    await waitFor(() => expect(within(row).queryByText('Unsaved')).not.toBeInTheDocument())
+    expect(
+      calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/topics').map((c) => c.body),
+    ).toEqual(['{"name":"Crypto","description":"Cryptocurrency","weight":20}'])
+  })
 })

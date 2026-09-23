@@ -6,6 +6,7 @@ import {
   useInterestTopics,
   useSaveInterestProfile,
 } from '../hooks/useInterest'
+import { isTopicDirty } from '../utils/interest'
 import { TopicRow, type TopicRowState } from './TopicRow'
 
 const PROFILE_MAX = 2000
@@ -301,9 +302,16 @@ function TopicsSection({ topics, onDirtyCountChange }: TopicsSectionProps) {
       saved: { name: topic.name, description: topic.description, weight: topic.weight },
     }))
 
+  // A blank draft never blocks closing; a draft with any text, or an edited saved row, does.
+  const dirtyCount = rows.filter((r) =>
+    r.saved === null ? r.name.trim() !== '' || r.description.trim() !== '' : isTopicDirty(r),
+  ).length
+
   useEffect(() => {
-    onDirtyCountChange(0)
-  }, [onDirtyCountChange])
+    onDirtyCountChange(dirtyCount)
+  }, [dirtyCount, onDirtyCountChange])
+
+  const atMax = rows.length >= TOPICS_MAX
 
   return (
     <section className="interests-section">
@@ -336,7 +344,12 @@ function TopicsSection({ topics, onDirtyCountChange }: TopicsSectionProps) {
           ))}
         </div>
       )}
-      <button className="btn-secondary interests-add-topic" onClick={addDraft}>
+      <button
+        className="btn-secondary interests-add-topic"
+        onClick={addDraft}
+        disabled={atMax}
+        title={atMax ? 'You have 25 topics, the maximum. Delete one to add another.' : undefined}
+      >
         + Add topic
       </button>
     </section>
