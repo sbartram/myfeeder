@@ -2,11 +2,13 @@ package org.bartram.myfeeder.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.model.InterestProfile;
+import org.bartram.myfeeder.model.InterestTopic;
 import org.bartram.myfeeder.repository.InterestProfileRepository;
 import org.bartram.myfeeder.repository.InterestTopicRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * The interest profile and topic rubric. All limits are enforced here (not only in the UI),
@@ -52,5 +54,25 @@ public class InterestService {
         profile.setProfileText(text);
         profile.setUpdatedAt(Instant.now());
         return profileRepository.save(profile);
+    }
+
+    public List<InterestTopic> listTopics() {
+        throw new UnsupportedOperationException("not implemented");
+    }
+
+    public InterestTopic createTopic(String name, String description, Integer weight) {
+        throw new UnsupportedOperationException("not implemented");
+    }
+
+    public InterestTopic updateTopic(Long id, String name, String description, Integer weight) {
+        throw new UnsupportedOperationException("not implemented");
+    }
+
+    public void deleteTopic(Long id) {
+        throw new UnsupportedOperationException("not implemented");
+    }
+
+    public boolean isColdStart() {
+        throw new UnsupportedOperationException("not implemented");
     }
 }
