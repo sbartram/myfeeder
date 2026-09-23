@@ -18,8 +18,9 @@ live outside the repository under `$HOME/.cache/myfeeder-phase03/`.
 | Wording fingerprint | `6816f6b7` | `5ba35e63` |
 | Jev timeout | 60s via `SPRING_AI_TYPESAFE_TIMEOUT` env override (see Notes) | same |
 
-Articles came from the deployed instance (`/api/articles?limit=20`); the user supplied the profile,
-the topics and every label, and authorized the billed runs ("run it").
+The input (`calibration-input.json`, outside the repo) holds 20 real articles. Task 1 prepared the file and
+the user completed it. The user supplied the profile, the topics and every label, and authorized the
+billed runs ("run it").
 
 ## Numbers
 
