@@ -7,3 +7,16 @@ export function formatSigned(n: number, digits = 0): string {
   if (n < 0) return `−${s}`
   return s
 }
+
+// RED stubs: replaced by the real implementations in the GREEN step.
+export function isNegated(_text: string): boolean {
+  return false
+}
+
+export function hinge(_noul: number): number {
+  return -1
+}
+
+export function formatPreviewText(_noul: number, _weight: number): string {
+  return ''
+}
