@@ -49,13 +49,13 @@ cd src/main/frontend && npm run dev
 ```
 org.bartram.myfeeder
 ├── config/           MyfeederProperties, RestClientConfig (User-Agent customizer), SpaForwardController
-├── model/            Feed, FeedType, Article, Folder, Board, BoardArticle, IntegrationConfig, IntegrationType, UnreadCount
-├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig repositories
+├── model/            Feed, FeedType, Article, Folder, Board, BoardArticle, IntegrationConfig, IntegrationType, UnreadCount, InterestProfile, InterestTopic
+├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig/InterestProfile/InterestTopic repositories
 ├── parser/           FeedParser (ROME + Jackson), ParsedFeed, ParsedArticle, FeedParseException, OpmlFeed, OpmlParseException
 ├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, OpmlImportResult, FeedFetcher, FetchResult, NotFoundException, FeedFetchException
 ├── integration/      RaindropService, RaindropApiClientImpl (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig
 ├── event/            FeedSavedEvent, FeedDeletedEvent (after-commit feed scheduling events)
-├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml/Version controllers + PaginatedResponse + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest, FeedUpdateRequest + board/folder request records)
+├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml/Version/Interest/InterestStatus/InterestPreview controllers + PaginatedResponse + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest, FeedUpdateRequest, ProfileUpdateRequest, TopicRequest, TopicPreviewRequest + board/folder request records)
 ├── scheduler/        FeedPollingScheduler (dynamic per-feed scheduling with backoff)
 └── MyfeederApplication.java (@EnableScheduling, @ConfigurationPropertiesScan)
 ```
@@ -72,7 +72,7 @@ org.bartram.myfeeder
 - **RetentionService** is a `@Scheduled` cron job — config under `myfeeder.retention.*`
 - **OpmlService** has XXE protection enabled — maintain this when modifying XML parsing
 - **OpmlImportService** publishes `FeedSavedEvent` per new feed; the scheduler's `@TransactionalEventListener(AFTER_COMMIT)` registers them post-commit (no manual `TransactionSynchronization`)
-- **API endpoints**: `/api/feeds`, `/api/articles`, `/api/integrations`, `/api/opml`, `/api/boards`, `/api/folders`
+- **API endpoints**: `/api/feeds`, `/api/articles`, `/api/integrations`, `/api/opml`, `/api/boards`, `/api/folders`, `/api/interest`
 
 ## Frontend
 
@@ -131,13 +131,22 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 ## Key Conventions
 
 - Base package: `org.bartram.myfeeder`
-- Uses Spring Data JDBC (not JPA) -- entities use `@Table`/`@Id` annotations from `org.springframework.data.annotation`, not `jakarta.persistence`
+- Uses Spring Data JDBC (not JPA) -- entities use `@Id` from `org.springframework.data.annotation` and `@Table` from `org.springframework.data.relational.core.mapping`, not `jakarta.persistence`
 - Gradle Kotlin DSL for build configuration
 - BOM-managed versions for Spring AI and Spring Cloud (do not specify versions on individual dependencies)
 - Resilience4j: Use `@CircuitBreaker(name = "...")` (outer) + `@Retry(name = "...")` (inner) annotations on external service calls. Put them on the **API-client bean** (e.g. `RaindropApiClientImpl`), not on the service — so business validation (not-configured/disabled/no-collection checks in `RaindropService`) runs outside the breaker and only the real HTTP call is wrapped. (Self-invocation bypasses the AOP proxy, so the annotated methods must live on a separate bean that the service calls.) Config in `application.yaml` under `resilience4j.circuitbreaker.instances` and `resilience4j.retry.instances`
 - **Resilience4j fallback re-throw pattern**: a `@CircuitBreaker` fallback wraps everything as a 5xx (`IllegalStateException`→409) by default — the client's fallback `instanceof`-checks and rethrows `RaindropNotConfiguredException` (503) before wrapping everything else. Business-rule exceptions (400 "no collection", 409 "disabled") never reach the fallback because that validation happens in `RaindropService` before the client call. Also list `RaindropNotConfiguredException` under `ignore-exceptions` in both the circuit-breaker and retry instances so a missing token never opens the breaker or burns retries
-- **GlobalExceptionHandler mappings**: `NotFoundException` → 404 (missing path entity), `IllegalArgumentException` → 400 (Bad Request), `OpmlParseException` → 400, `IllegalStateException` → 409 (Configuration error), `FeedParseException` → 422, `FeedFetchException` → 422 (remote returned an HTTP error), `RaindropNotConfiguredException` → 503. Throw the right type from services and the controller layer doesn't need try/catch
+- **GlobalExceptionHandler mappings**: `NotFoundException` → 404 (missing path entity), `IllegalArgumentException` → 400 (Bad Request), `OpmlParseException` → 400, `IllegalStateException` → 409 (Configuration error), `FeedParseException` → 422, `FeedFetchException` → 422 (remote returned an HTTP error), `RaindropNotConfiguredException` → 503, `JevNotConfiguredException` → 503 ("Jev not configured"), `CallNotPermittedException` → 503 ("Jev unavailable", the jev breaker is open), `TypeSafeBadRequestException`/`TypeSafeUnprocessableEntityException` → 422 ("Jev rejected the request"), any other `TypeSafeException` → 503 ("Jev request failed"); the Jev details are fixed text and never echo a TypeSafe message or body. Throw the right type from services and the controller layer doesn't need try/catch
 - Spring Data JDBC does not support derived query methods like JPA — use `@Query` annotation for custom queries
+
+## Interest Ranking
+
+- **Schema**: `V6__interest_scoring.sql` creates all six interest tables (`interest_profile` singleton row 1, `interest_topic`, `article_score`, `article_topic_score`, `article_feedback`, `article_feedback_topic`); later milestone phases add no migrations
+- **InterestService** owns the profile/topic limits (service constants, fixed-text 400s) and the version rules; `isColdStart()` is the single cold-start predicate (blank profile AND zero topics) — callers never reimplement it
+- **InterestQuestions** and **ArticleStateBuilder** are pure static builders shared by the preview and the scorer, so the preview judges exactly what scoring sends
+- **InterestStatusService**/`InterestStatus` serve `{configured, breakerState, coldStart}` (breaker state read from `CircuitBreakerRegistry.circuitBreaker("jev")`); later fields are appended, these three are never renamed
+- **InterestPreviewService**/`TopicPreviewResponse` judge one description against one article with one `JevApiClient.judge` call and return `{noul, model}`; validation runs before `judge()`, there is no transaction and no service retry, and the preview persists nothing
+- **Routes** under `/api/interest`: `GET|PUT /profile`, `GET|POST /topics`, `PUT|DELETE /topics/{id}`, `GET /status`, `POST /preview`
 
 ## Spring Boot 4 / Jackson 3.x Notes
 
@@ -153,7 +162,7 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 
 - **Docker required**: Must be running for both `./gradlew test` (Testcontainers) and `./gradlew bootRun` (Docker Compose)
 - **Zustand persist + new preferences**: Adding a new field to `preferencesStore` with a default value only applies to fresh installs. Existing users with a `myfeeder-prefs` localStorage key get `undefined` for the new field (Zustand merges stored state over defaults). Use a `merge` function or version migration if the default must apply to everyone.
-- **Spring Data JDBC ≠ JPA**: No lazy loading, no derived query methods, no `@Entity` — use `@Table`/`@Id` from `org.springframework.data.annotation` and `@Query` for custom queries
+- **Spring Data JDBC ≠ JPA**: No lazy loading, no derived query methods, no `@Entity` — use `@Id` from `org.springframework.data.annotation`, `@Table` from `org.springframework.data.relational.core.mapping`, and `@Query` for custom queries
 - **Jackson 3.x imports**: Must use `tools.jackson.databind.*`, not `com.fasterxml.jackson.databind.*`
 - **FeedPollingScheduler is event-driven**: feed mutations publish `FeedSavedEvent`/`FeedDeletedEvent`; the scheduler (re-)registers or cancels via `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)`. New feed-mutating paths publish the event — never call `registerFeed`/`cancelFeed` directly.
 - **MaxDirectMemorySize (historical, Paketo-only)**: the old Paketo buildpack hardcoded `-XX:MaxDirectMemorySize=10M`, which starved Netty (Lettuce/Redis); the Helm chart overrides it via the `JDK_JAVA_OPTIONS` env var. The Dockerfile (`eclipse-temurin:25-jre`) has no such cap — direct memory defaults are container-aware — so the override is no longer required, but the chart still sets `JDK_JAVA_OPTIONS` and the JVM honors it. Tune JVM flags via `JDK_JAVA_OPTIONS` (auto-read by the `java -jar` entrypoint), not `_JAVA_OPTIONS`.
