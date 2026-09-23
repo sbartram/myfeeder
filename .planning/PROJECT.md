@@ -26,10 +26,10 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Vim-style keyboard shortcuts, 6 themes, persisted preferences — existing
 - ✓ Helm/k3s deployment with release pipeline (axion tags, Dockerfile image) — existing
 - ✓ Dependencies upgraded (patch/GA line): Spring Boot 4.0.8, Spring AI BOM 2.0.1, Spring Cloud 2025.1.3, frontend in-major bumps; 162 backend + 47 frontend tests green; released and deployed as v0.1.24 — Phase 1
+- ✓ TypeSafe Jev integrated via `spring-ai-starter-typesafe` 0.1.0, optional like Raindrop (keyless startup), `JevApiClient.judge()` behind Resilience4j `jev` breaker/retry, optional Helm secret; live smoke returned `jev-1.13.0` — Phase 2
 
 ### Active
 
-- [ ] Integrate TypeSafe Jev via Spring AI community starter (`org.springaicommunity:spring-ai-starter-typesafe` 0.1.0), optional like Raindrop — app runs normally without an API key
 - [ ] Reader can write and edit a free-text interest profile
 - [ ] Reader can manage a topic rubric: add/remove topics, each with a description and a (possibly negative) weight
 - [ ] Each newly ingested article is judged once by Jev (title + summary + feed name as state): a profile-interest `Score` plus a `Noul` per topic, in a single `systemOne` call
@@ -64,7 +64,7 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 - **Tech stack**: Spring Boot 4.0.3, Java 25, Spring Data JDBC (not JPA), Flyway migrations (next is V6), Jackson 3.x (`tools.jackson.*`), React 19 + TanStack Query + Zustand — follow existing conventions in CLAUDE.md
 - **Build**: Gradle Kotlin DSL only (never Maven), even though the reference article shows Maven coordinates
-- **Resilience**: Jev calls wrapped with `@CircuitBreaker` (outer) + `@Retry` (inner) on a dedicated API-client bean, following the Raindrop pattern
+- **Resilience**: Jev calls wrapped with `@CircuitBreaker` + `@Retry` on a dedicated API-client bean (`JevApiClientImpl`), following the Raindrop pattern; runtime aspect order is Retry outer / breaker inner, so the breaker records every attempt (Phase 2)
 - **Compatibility**: Spring AI TypeSafe 0.1.0 (built against Boot 4.0.7) — upgrade to Boot 4.0.8 first, then verify the starter resolves and starts
 - **Performance**: Ingest must not block on Jev; polling latency and failure behavior unchanged when Jev is slow or down
 - **Cost**: one Jev call per new article (plus one-time backlog backfill); no re-scoring loops
@@ -87,7 +87,7 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | Eligibility window: unread, published within 14 days, newest first | Prevents subscribe/OPML/startup floods | — Pending |
 | Summary falls back to stripped/truncated content | Many Atom feeds have content but no summary | — Pending |
 | NULL-GUID articles skipped by scorer; parser fix is a separate task | Existing re-insert bug would cause re-scoring | — Pending |
-| App-owned TypeSafeClient bean; Resilience4j as the single retry layer | Starter crashes on a blank key; avoid 9× stacked retries | — Pending |
+| App-owned TypeSafeClient bean; Resilience4j as the single retry layer | Starter crashes on a blank key; avoid 9× stacked retries | ✓ Good — keyless startup + SDK max-retries 0 tested (Phase 2) |
 | Priority view = unread by blended score, unscored after by date | Useful even while backfill is in progress | — Pending |
 | One-time backfill of unread backlog at launch | Priority view useful immediately | — Pending |
 | Upgrade deps (patch/GA line) as the first phase, before Jev work | TypeSafe starter built against Boot 4.0.7; project was on 4.0.3 + Spring AI milestone M2 | ✓ Good — shipped v0.1.24 (Phase 1), soak clean |
@@ -113,4 +113,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-22 after Phase 1*
+*Last updated: 2026-09-23 after Phase 2*

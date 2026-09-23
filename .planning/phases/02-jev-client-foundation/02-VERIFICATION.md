@@ -1,9 +1,10 @@
 ---
 phase: 02-jev-client-foundation
 verified: 2026-09-23T03:45:00Z
-status: human_needed
+status: passed
 score: 3/4 roadmap success criteria verified (SC2 live call pending human); plan truths all verified except 2 backstop truths (insufficient_spec)
 covered_files:
+
   - .planning/REQUIREMENTS.md
   - .planning/phases/02-jev-client-foundation/02-01-PLAN.md
   - .planning/phases/02-jev-client-foundation/02-01-SUMMARY.md
@@ -29,10 +30,12 @@ covered_files:
   - src/test/java/org/bartram/myfeeder/integration/JevLiveSmokeTest.java
   - src/test/java/org/bartram/myfeeder/integration/JevResilienceTest.java
   - src/test/resources/application.yaml
+
 covered_digest: "v1:sha256:eba6df247ca4af23f4b3d9d67af506f1304beaf3ed684101e0e563e84805d48a"
 behavior_unverified: 0
 overrides_applied: 0
 deferred:
+
   - truth: "JEV-03 second half: the model id is stored with every score"
     addressed_in: "Phase 3 (V6 article_score schema) and Phase 4"
     evidence: "Phase 4 SC1: 'each eligible one ... gets exactly one stored judgment: profile score and confidence, a noul per topic, the model id, and the profile/topic versions'. Phase 2 SC2 only requires the client to expose the model id so it can be stored; JevJudgment.model() does that."
@@ -40,6 +43,7 @@ deferred:
     addressed_in: "Phase 4"
     evidence: "Phase 4 SC4: 'GET /api/interest/status reports whether Jev is configured, the circuit-breaker state ...'. 02-CONTEXT.md explicitly scopes it out of Phase 2 ('GET /api/interest/status (JEV-05, Phase 4)'). Not a Phase 2 SC or requirement. The Phase 3 note is stale and INT-06 (Phase 3) will need at least the configured flag there."
 human_verification:
+
   - test: "SC2 live smoke: JEV_LIVE_SMOKE=true MYFEEDER_TYPESAFE_API_KEY=<your key> ./gradlew cleanTest test -x npmBuild -x npmInstall --tests 'org.bartram.myfeeder.integration.JevLiveSmokeTest' --info"
     expected: "1 test run, 0 skipped, 0 failures; the output line 'Jev live smoke: model=jev-1.13.0 requestId=<non-empty> ...' appears; profile score maxLevel 4, noul t1 in [0,1]"
     why_human: "Needs the user's real, billed TypeSafe key. The verifier must not run it. The offline canary test only proves the model is read from the response body, not that the live API returns jev-1.13.0."
@@ -77,6 +81,7 @@ human_verification:
 ### Plan must-have truths (merged, 02-01..02-04)
 
 All plan truths were checked against code and tests. Every non-backstop truth is VERIFIED, including: D-04 ordered/null-dropped state, D-06 key-free WARN, D-07 Retry-After cap boundaries (unit plus a live 700 ms stub), D-08 typed propagation, D-09 breaker binding values, idempotent retry bodies, the User-Agent and Bearer headers on the Jev transport, and the test-YAML mirrors of the jev blocks and typesafe pins. Two truths are tagged `verification: backstop` and are recorded as `insufficient_spec`, routed to human verification:
+
 - 02-02 "concurrent judge() calls share no mutable request state". Inspection supports it (final fields only, per-call local copy), but there is no concurrent test.
 - 02-04 "RollingUpdate keeps the old pod serving during a key-only rollout". This needs a cluster.
 
@@ -203,6 +208,7 @@ Code-review warnings (02-REVIEW.md), assessed against the success criteria:
 ### Gaps Summary
 
 No blocking gaps. The codebase achieves the phase goal for everything that can be checked offline:
+
 - The app-owned client starts in every key state, including the full app context keyless.
 - The model pin is bound and sent on the wire.
 - The response model id is exposed.
