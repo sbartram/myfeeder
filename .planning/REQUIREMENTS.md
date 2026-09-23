@@ -24,8 +24,8 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 ### Interest Model
 
 - [x] **INT-01**: User can write and edit a free-text interest profile (≤2,000 chars) with writing guidance shown in the editor
-- [ ] **INT-02**: User can add, edit and delete topics (≤25), each with a positively-phrased description and a signed weight in −50..+50 (default +20)
-- [ ] **INT-03**: Editor warns when a topic description is negated (e.g. "not about crypto") and suggests a negative weight instead
+- [x] **INT-02**: User can add, edit and delete topics (≤25), each with a positively-phrased description and a signed weight in −50..+50 (default +20)
+- [x] **INT-03**: Editor warns when a topic description is negated (e.g. "not about crypto") and suggests a negative weight instead
 - [ ] **INT-04**: User can preview a topic against the currently open article (one Jev call) before saving it
 - [ ] **INT-05**: User can trigger "Re-score unread", which shows how many articles will be re-judged, then re-scores unread articles within the eligibility window
 - [ ] **INT-06**: Settings show a "not configured" notice when no API key is set, and a "cold start" prompt when the profile is empty and there are no topics
@@ -117,8 +117,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | JEV-04 | Phase 2 | Complete |
 | JEV-05 | Phase 4 | Pending |
 | INT-01 | Phase 3 | Complete |
-| INT-02 | Phase 3 | Pending |
-| INT-03 | Phase 3 | Pending |
+| INT-02 | Phase 3 | Complete |
+| INT-03 | Phase 3 | Complete |
 | INT-04 | Phase 3 | Pending |
 | INT-05 | Phase 4 | Pending |
 | INT-06 | Phase 3 | Pending |
