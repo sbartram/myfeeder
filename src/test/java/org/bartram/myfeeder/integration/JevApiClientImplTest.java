@@ -303,7 +303,7 @@ class JevApiClientImplTest {
                 Arguments.of(529, TypeSafeOverloadedException.class));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] status {0}")
     @MethodSource("httpErrors")
     void httpErrorsSurfaceAsTypedExceptions(int status, Class<? extends TypeSafeApiException> expected) {
         // JUnit creates a fresh test instance per invocation, so each case has its own builder and server
