@@ -30,6 +30,8 @@ class InterestApiIntegrationTest {
     @Autowired private WebApplicationContext wac;
     @Autowired private JdbcTemplate jdbcTemplate;
 
+    private static final String PREVIEW_FEED_URL = "https://example.test/interest-preview-feed.xml";
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -37,6 +39,7 @@ class InterestApiIntegrationTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
         jdbcTemplate.update("DELETE FROM interest_topic");
         jdbcTemplate.update("UPDATE interest_profile SET profile_text = '', version = 1 WHERE id = 1");
+        jdbcTemplate.update("DELETE FROM feed WHERE url = ?", PREVIEW_FEED_URL); // the article cascades
     }
 
     @Test
@@ -124,6 +127,31 @@ class InterestApiIntegrationTest {
         mockMvc.perform(get("/api/interest/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.coldStart").value(false));
+    }
+
+    @Test
+    void keylessPreviewIs503ThroughTheFullStack() throws Exception {
+        Long feedId = jdbcTemplate.queryForObject(
+                "INSERT INTO feed (url, title, feed_type) VALUES (?, ?, ?) RETURNING id",
+                Long.class, PREVIEW_FEED_URL, "Preview Feed", "RSS");
+        Long articleId = jdbcTemplate.queryForObject(
+                "INSERT INTO article (feed_id, guid, title, url, summary) VALUES (?, ?, ?, ?, ?) RETURNING id",
+                Long.class, feedId, "preview-1", "Rust 1.90 released", "https://example.test/rust-1-90",
+                "Faster compile times");
+
+        mockMvc.perform(post("/api/interest/preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"articleId\":" + articleId + ",\"description\":\"Rust\",\"topicId\":null}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.title").value("Jev not configured"));
+    }
+
+    @Test
+    void previewOfMissingArticleIs404() throws Exception {
+        mockMvc.perform(post("/api/interest/preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"articleId\":999999,\"description\":\"Rust\",\"topicId\":null}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
