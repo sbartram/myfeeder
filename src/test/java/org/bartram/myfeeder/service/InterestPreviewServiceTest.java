@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -142,7 +143,7 @@ class InterestPreviewServiceTest {
 
         CallNotPermittedException breakerOpen =
                 CallNotPermittedException.createCallNotPermittedException(CircuitBreaker.ofDefaults("jev"));
-        when(jevApiClient.judge(anyMap(), anyMap())).thenThrow(breakerOpen);
+        doThrow(breakerOpen).when(jevApiClient).judge(anyMap(), anyMap());
         assertThatThrownBy(() -> previewService.preview(5L, "Rust", null)).isSameAs(breakerOpen);
         verify(jevApiClient, times(2)).judge(anyMap(), anyMap());
     }
