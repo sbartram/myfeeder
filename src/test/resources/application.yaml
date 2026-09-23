@@ -2,6 +2,14 @@ spring:
   ai:
     anthropic:
       api-key: test-dummy-key
+    # Mirrors the main spring.ai.typesafe pins, without a key. The base-url is local: port 9
+    # refuses at once, so a stray call can never reach the network.
+    typesafe:
+      base-url: http://127.0.0.1:9
+      model: jev-1.13.0
+      timeout: 5s
+      retry:
+        max-retries: 0
   datasource:
     hikari:
       connection-timeout: 30000

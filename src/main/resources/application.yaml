@@ -7,6 +7,16 @@ spring:
     clients:
       connect-timeout: 5s
       read-timeout: 30s
+  # TypeSafe Jev (interest scoring). The key is optional: blank means Jev is disabled and the app
+  # still starts. The model is pinned (JEV-03). SDK retries are off because the Resilience4j "jev"
+  # instance is the only retry layer.
+  ai:
+    typesafe:
+      api-key: ${MYFEEDER_TYPESAFE_API_KEY:}
+      model: jev-1.13.0
+      timeout: 5s
+      retry:
+        max-retries: 0
 
 myfeeder:
   polling:
