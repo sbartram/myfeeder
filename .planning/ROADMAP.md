@@ -91,13 +91,35 @@ Plans:
   4. User can preview a draft topic against the article open in the reading pane and see its match result (one Jev call) before saving it
   5. The interest settings UI shows a "not configured" notice when no API key is set, and a "cold start" prompt when the profile is empty and there are no topics
 
-**Plans**: TBD
+**Plans**: 8 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — V6 interest-scoring schema (one-way decision checkpoint: topic name, article_topic_score parent), profile/topic entities and repositories (wave 1)
+
+**Wave 2** *(blocked on 03-01)*
+
+- [ ] 03-02-PLAN.md — Pure question/state builders shared with Phase 4 (D-12) and JevApiClient.isConfigured(), proven on the wire (wave 2)
+- [ ] 03-03-PLAN.md — InterestService limits/versions/cold-start predicate (D-05) and profile + topic REST (INT-01, INT-02) (wave 2)
+- [ ] 03-05-PLAN.md — Interests dialog from Settings: profile editor with guidance, status notices, unsaved guard, ApiError, toast opt-out (wave 2)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 03-04-PLAN.md — GET /api/interest/status (D-04), one-call topic preview (D-12..D-14), Jev error mapping, CLAUDE.md + roadmap note fix (wave 3)
+- [ ] 03-06-PLAN.md — Topic rubric editor: weight slider/number, negation warning, per-row save/delete, 25 cap (INT-02, INT-03) (wave 3)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 03-07-PLAN.md — Topic preview UI: scoring math, disabled reasons, stale results, failure copy (INT-04) (wave 4)
+- [ ] 03-08-PLAN.md — Gated calibration spike with the live key, human run, findings in 03-CALIBRATION.md (wave 4)
+
 **UI hint**: yes
 **Notes**:
 
   - `V6__interest_scoring.sql` ships the whole schema now (`interest_profile`, `interest_topic`, `article_score`, `article_topic_score`, `article_feedback`, with `ON DELETE CASCADE` and the weight CHECK −50..50), so later phases add no migrations. The feedback schema must support FDBK-06: a thumbs-down can penalize only the topics the user picks, so the feedback tables need per-topic selection (for example an `article_feedback_topic` child table, or per-topic feedback rows), not just `article_feedback(article_id, vote)`.
   - The question builder (5-level profile `Score`; one positively phrased `Noul` per topic) and the state builder (feed, title, summary; HTML stripped, truncated, content fallback) are pure functions delivered here, because INT-04 preview and the calibration spike both need them. Phase 4 reuses them.
-  - Phase 2 lays down `/api/interest/status` with the `configured` flag and breaker state, which INT-06 needs. The full JEV-05 endpoint (counts) is completed in Phase 4.
+  - Phase 3 creates `GET /api/interest/status` with `configured`, `breakerState` and `coldStart` (D-04; Phase 2 deferred it), which INT-06 needs. Phase 4 adds the eligible-unscored and failed counts to the same response to complete JEV-05.
   - **Research flag:** end with a calibration spike. Run the question builder against 10–20 real articles with the live key, check the spread and confidence of scores, and iterate the wording before Phase 5 builds the UI on it.
 
 ### Phase 4: Scoring Pipeline & Backfill Sweep
@@ -174,7 +196,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 |-------|----------------|--------|-----------|
 | 1. Dependency Upgrade | 4/4 | Complete    | 2026-09-22 |
 | 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
-| 3. Interest Model, Schema & Rubric Editor | 0/TBD | Not started | - |
+| 3. Interest Model, Schema & Rubric Editor | 0/8 | Planned | - |
 | 4. Scoring Pipeline & Backfill Sweep | 0/TBD | Not started | - |
 | 5. Blend & Priority View | 0/TBD | Not started | - |
 | 6. Thumbs Feedback | 0/TBD | Not started | - |
