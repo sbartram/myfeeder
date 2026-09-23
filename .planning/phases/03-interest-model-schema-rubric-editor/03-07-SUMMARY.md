@@ -203,3 +203,7 @@ None. A live preview optionally needs `MYFEEDER_TYPESAFE_API_KEY` (end-of-phase 
 ---
 *Phase: 03-interest-model-schema-rubric-editor*
 *Completed: 2026-09-23*
+
+## Self-Check: PASSED
+
+All modified files exist; commits 2c515cf, 52fd7a9 and e1f6267 are in history; full frontend suite 108/108 and `tsc -b` clean.

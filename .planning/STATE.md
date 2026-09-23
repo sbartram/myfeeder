@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 03
 current_phase_name: Interest Model, Schema & Rubric Editor
 status: executing
-stopped_at: Completed 03-06-PLAN.md
-last_updated: "2026-09-23T18:32:58.546Z"
+stopped_at: Completed 03-07-PLAN.md
+last_updated: "2026-09-23T18:41:44.538Z"
 last_activity: 2026-09-23
 last_activity_desc: Phase 03 execution started
-state_head: f58b919caf9b864eaf08f841f8f9d37f412dfbef
+state_head: e1f6267d7cf5e74558bd367bdad1966ef128a71b
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-23)
 ## Current Position
 
 Phase: 03 (Interest Model, Schema & Rubric Editor) — EXECUTING
-Plan: 7 of 8
+Plan: 8 of 8
 Status: Ready to execute
 Last activity: 2026-09-23 — Phase 03 execution started
 
@@ -73,6 +73,7 @@ Progress: [███░░░░░░░] 29%
 | Phase 03 P05 | 6 min | 3 tasks | 12 files |
 | Phase 03 P04 | 7 min | 3 tasks | 13 files |
 | Phase 03 P06 | 8 min | 3 tasks | 8 files |
+| Phase 03 P07 | 6 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-04: Jev failures map to fixed-text ProblemDetails (503 'Jev not configured', 503 'Jev unavailable', 422 'Jev rejected the request (HTTP <status>)', 503 'Jev request failed'); preview is one judge() call, no transaction, nothing persisted; WR-01 stays open for Phase 4
 - [Phase 03]: 03-06: TopicRowState {key,id,name,description,weightText,weight,saved} with a stable t-<id>/d-<n> key; each TopicRow owns its create/update/delete mutations (03-07 adds preview the same way)
 - [Phase 03]: 03-06: Rows seed once per open; isTopicDirty/parseWeight live in utils/interest.ts; the close guard counts edited saved rows plus drafts with any name/description text
+- [Phase 03]: 03-07: One PreviewBlock per dialog (not configured, breaker, no article, status pending, status unknown) passed to every TopicRow; the row adds only the blank-description reason; status-unknown only when the status query has no data and failed
+- [Phase 03]: 03-07: Preview stores {noul, description, articleId}; math renders from noul and the current weight, staleness compares stored inputs; mutate only from the click handler, no retries, no invalidation
 
 ### Pending Todos
 
@@ -134,6 +137,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-23T18:32:58.515Z
-Stopped at: Completed 03-06-PLAN.md
+Last session: 2026-09-23T18:41:35.326Z
+Stopped at: Completed 03-07-PLAN.md
 Resume file: None

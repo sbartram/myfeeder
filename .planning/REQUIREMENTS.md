@@ -28,7 +28,7 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 - [x] **INT-03**: Editor warns when a topic description is negated (e.g. "not about crypto") and suggests a negative weight instead
 - [ ] **INT-04**: User can preview a topic against the currently open article (one Jev call) before saving it
 - [ ] **INT-05**: User can trigger "Re-score unread", which shows how many articles will be re-judged, then re-scores unread articles within the eligibility window
-- [ ] **INT-06**: Settings show a "not configured" notice when no API key is set, and a "cold start" prompt when the profile is empty and there are no topics
+- [x] **INT-06**: Settings show a "not configured" notice when no API key is set, and a "cold start" prompt when the profile is empty and there are no topics
 
 ### Scoring Pipeline
 
@@ -121,7 +121,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INT-03 | Phase 3 | Complete |
 | INT-04 | Phase 3 | Pending |
 | INT-05 | Phase 4 | Pending |
-| INT-06 | Phase 3 | Pending |
+| INT-06 | Phase 3 | Complete |
 | SCOR-01 | Phase 4 | Pending |
 | SCOR-02 | Phase 4 | Pending |
 | SCOR-03 | Phase 4 | Pending |
