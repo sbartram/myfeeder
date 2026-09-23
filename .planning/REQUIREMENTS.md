@@ -11,7 +11,7 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 
 - [x] **UPG-01**: Backend runs on Spring Boot 4.0.8, Spring AI BOM 2.0.1 and Spring Cloud 2025.1.3 with all backend tests passing
 - [x] **UPG-02**: Frontend dependencies are on latest minor/patch versions (no major bumps) with `npm test` and `npx tsc -b` passing
-- [ ] **UPG-03**: Upgraded app is released and deployed to k3s and starts cleanly, with feeds polling as before
+- [x] **UPG-03**: Upgraded app is released and deployed to k3s and starts cleanly, with feeds polling as before
 
 ### Jev Integration
 
@@ -110,7 +110,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | UPG-01 | Phase 1 | Complete |
 | UPG-02 | Phase 1 | Complete |
-| UPG-03 | Phase 1 | Pending |
+| UPG-03 | Phase 1 | Complete |
 | JEV-01 | Phase 2 | Pending |
 | JEV-02 | Phase 2 | Pending |
 | JEV-03 | Phase 2 | Pending |

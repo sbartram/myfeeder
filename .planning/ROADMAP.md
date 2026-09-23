@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Frontend dependencies are on their latest minor/patch versions (no major bumps; react-router stays on v6), and `npm test` and `npx tsc -b` both pass
   3. The upgraded release is deployed to k3s, starts with clean logs, and feeds keep polling so new articles appear in the reader as before
 
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans executed
 
 Plans:
 **Wave 1**
@@ -48,7 +48,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-04-PLAN.md — Read-only release preflight, approval gate, push + release v0.1.24 + image + k3s deploy + soak verification (D-05) (wave 3)
+- [x] 01-04-PLAN.md — Read-only release preflight, approval gate, push + release v0.1.24 + image + k3s deploy + soak verification (D-05) (wave 3)
 
 ### Phase 2: Jev Client Foundation
 
@@ -158,7 +158,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Dependency Upgrade | 3/4 | In Progress|  |
+| 1. Dependency Upgrade | 4/4 | In Progress|  |
 | 2. Jev Client Foundation | 0/TBD | Not started | - |
 | 3. Interest Model, Schema & Rubric Editor | 0/TBD | Not started | - |
 | 4. Scoring Pipeline & Backfill Sweep | 0/TBD | Not started | - |
