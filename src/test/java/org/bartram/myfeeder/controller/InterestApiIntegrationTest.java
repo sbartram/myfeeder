@@ -1,5 +1,6 @@
 package org.bartram.myfeeder.controller;
 
+import com.jayway.jsonpath.JsonPath;
 import org.bartram.myfeeder.TestcontainersConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,5 +64,59 @@ class InterestApiIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.version").value(2));
         }
+    }
+
+    @Test
+    void topicCrudRoundTripsThroughTheDatabase() throws Exception {
+        String created = mockMvc.perform(post("/api/interest/topics")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Rust\",\"description\":\"The Rust programming language\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.weight").value(20))
+                .andExpect(jsonPath("$.version").value(1))
+                .andReturn().getResponse().getContentAsString();
+        long id = ((Number) JsonPath.read(created, "$.id")).longValue();
+
+        mockMvc.perform(get("/api/interest/topics"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(id))
+                .andExpect(jsonPath("$[0].name").value("Rust"));
+
+        mockMvc.perform(put("/api/interest/topics/" + id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Rust\",\"description\":\"Rust systems programming\",\"weight\":20}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.version").value(2));
+
+        mockMvc.perform(put("/api/interest/topics/" + id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Rust\",\"description\":\"Rust systems programming\",\"weight\":-15}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.weight").value(-15))
+                .andExpect(jsonPath("$.version").value(2));
+
+        mockMvc.perform(delete("/api/interest/topics/" + id))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/interest/topics/" + id))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/interest/topics"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+    }
+
+    @Test
+    void weightOutOfRangeIs400BeforeTheDatabase() throws Exception {
+        mockMvc.perform(post("/api/interest/topics")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Rust\",\"description\":\"Rust lang\",\"weight\":51}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Weight must be a whole number from -50 to +50"));
+
+        Integer rows = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM interest_topic", Integer.class);
+        assertThat(rows).isZero();
     }
 }
