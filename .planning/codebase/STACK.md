@@ -39,11 +39,11 @@ last_mapped_at: 2026-09-22
 
 **Core:**
 
-- Spring Boot 4.0.3 - Backend framework
+- Spring Boot 4.0.8 - Backend framework
 - Spring MVC (servlet stack) - Web layer
 - Spring Data JDBC - Database abstraction (not JPA)
 - Spring Cache - Cache abstraction
-- Spring RestClient - HTTP client
+- Spring RestClient - HTTP client (Reactor Netty transport via reactor-netty-http, D-01)
 - Spring Actuator - Monitoring and health checks
 - Spring Scheduling - Scheduled tasks (@EnableScheduling)
 
@@ -54,7 +54,7 @@ last_mapped_at: 2026-09-22
 
 **Resilience:**
 
-- Spring Cloud Resilience4j 2025.1.0 - Circuit breaker pattern
+- Spring Cloud Resilience4j 2025.1.3 - Circuit breaker pattern
   - `@CircuitBreaker` for Raindrop API calls
   - `@Retry` for transient failure handling
 
@@ -70,18 +70,18 @@ last_mapped_at: 2026-09-22
 
 **AI/ML (included, not yet active):**
 
-- Spring AI 2.0.0-M2 - LLM abstraction
+- Spring AI 2.0.1 - LLM abstraction
 - spring-ai-starter-model-anthropic - Anthropic Claude integration (dependency available)
 
 **Frontend:**
 
-- React 19.2.4 - UI library
-- React Router v6.30.3 - Client-side routing
-- TanStack Query (React Query) 5.90.21 - Server state management
-- Zustand 5.0.11 - Client state management
-- Vite 8.0.0 - Frontend build tool
+- React 19.3.0 - UI library
+- React Router v6.30.6 - Client-side routing
+- TanStack Query (React Query) 5.103.2 - Server state management
+- Zustand 5.0.15 - Client state management
+- Vite 8.3.0 - Frontend build tool
 - TypeScript 5.9.3 - Type-safe JavaScript
-- DOMPurify 3.3.3 - HTML sanitization
+- DOMPurify 3.4.15 - HTML sanitization
 
 **Testing:**
 
@@ -90,8 +90,8 @@ last_mapped_at: 2026-09-22
 - Testcontainers 1.x - Docker-based test infrastructure
   - PostgreSQL containers for integration tests
   - Redis containers for cache testing
-- Vitest 4.1.0 - Frontend test runner
-- React Testing Library 16.3.2 - React component testing
+- Vitest 4.1.11 - Frontend test runner
+- React Testing Library 16.3.3 - React component testing
 - JSDOM 29.x - DOM simulation for tests
 
 **Build & Dev Tools:**
@@ -104,7 +104,7 @@ last_mapped_at: 2026-09-22
 
 **Linting & Formatting:**
 
-- ESLint 9.39.4 - JavaScript/TypeScript linting
+- ESLint 9.39.5 - JavaScript/TypeScript linting
 - @typescript-eslint - TypeScript ESLint support
 - eslint-plugin-react-hooks - React hooks linting
 - eslint-plugin-react-refresh - React refresh validation
@@ -112,14 +112,14 @@ last_mapped_at: 2026-09-22
 **Frontend Build Process:**
 
 - TypeScript compiler (tsc -b) - Type checking before build
-- @vitejs/plugin-react 6.0.0 - React support for Vite
+- @vitejs/plugin-react 6.1.1 - React support for Vite
 - Vite builds to `src/main/resources/static/` (embedded in JAR)
 
 ## Key Dependencies
 
 **Critical (Backend):**
 
-- Spring Boot 4.0.3 - Entire application framework
+- Spring Boot 4.0.8 - Entire application framework
 - PostgreSQL - Primary persistent store
 - Redis - Distributed cache layer
 - ROME 2.1.0 - Feed subscription and parsing
@@ -136,7 +136,7 @@ last_mapped_at: 2026-09-22
 **Frontend:**
 
 - React 19 - Core UI framework
-- TanStack Query 5.90 - Synchronizing server state with UI
+- TanStack Query 5.103 - Synchronizing server state with UI
 - Zustand - Lightweight client-side stores (selections, preferences)
 - React Router v6 - Three-panel navigation (feed tree / list / reader)
 - Vite - Fast incremental builds and dev server
@@ -151,7 +151,7 @@ last_mapped_at: 2026-09-22
   - `MYFEEDER_RAINDROP_API_TOKEN` - Raindrop.io API token (optional)
   - `MYFEEDER_ANTHROPIC_API_KEY` - Anthropic Claude API (Helm chart secret)
   - `MYFEEDER_PG_PASSWORD` - PostgreSQL password (Helm chart secret)
-- Spring HTTP Client timeouts: `spring.http.client.{connect-timeout: 5s, read-timeout: 30s}`
+- Spring HTTP Client timeouts: `spring.http.clients.{connect-timeout: 5s, read-timeout: 30s}`
 - Local dev (.envrc): Sources from `$HOME/.config/secrets.env` and exports `MYFEEDER_RAINDROP_API_TOKEN`
 
 **Build:**
