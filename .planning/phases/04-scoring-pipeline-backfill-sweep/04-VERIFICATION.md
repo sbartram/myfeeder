@@ -1,8 +1,8 @@
 ---
 phase: 04-scoring-pipeline-backfill-sweep
 verified: 2026-09-24T22:06:00Z
-status: human_needed
-score: 95/96 must-haves verified (5/5 roadmap success criteria; 83/83 plan 04-01..04-08 truths, 1 of them by human acceptance; 7/7 plan 04-09 truths; G-04-1 live-drain truth present, behavior unverified)
+status: passed
+score: 96/96 must-haves verified (5/5 roadmap success criteria; 83/83 plan 04-01..04-08 truths, 1 of them by human acceptance; 7/7 plan 04-09 truths; G-04-1 live drain verified by UAT test 1 on 2026-09-24)
 covered_files:
   - .planning/REQUIREMENTS.md
   - .planning/phases/04-scoring-pipeline-backfill-sweep/04-01-PLAN.md
@@ -53,8 +53,8 @@ covered_files:
   - src/test/java/org/bartram/myfeeder/TestMyfeederApplication.java
   - src/test/resources/application-dev.yaml
   - src/test/resources/application.yaml
-covered_digest: "v1:sha256:9caf8c68f02f041427467cb835df18f9ffd7c4d3dba145d0c0b06575ae41e806"
-behavior_unverified: 1
+covered_digest: "v1:sha256:48acf65aaca13add5743734629e9daf5f46c5a79e93eaf4aeb544acac417d798"
+behavior_unverified: 0
 overrides_applied: 1
 overrides:
   - must_have: "Two concurrent writes for the same article cannot create two rows or an FK error, because ON CONFLICT on the article_score primary key serializes them"
@@ -84,22 +84,20 @@ coincidental_reliance_items:
   - truth: "Without the dev profile (what every @SpringBootTest context sees) nothing changes: no TypeSafe key is bound even when MYFEEDER_TYPESAFE_API_KEY is set"
     reason: undeclared-precondition
     harden: "The no-profile probe removes the systemEnvironment source, so it proves the yaml side only. The real suite also depends on the shell not exporting SPRING_AI_TYPESAFE_API_KEY or SPRING_PROFILES_ACTIVE. CLAUDE.md states this but nothing enforces it before contexts start. Strip those variables in the Gradle Test task (see 04-REVIEW WR-01)"
-behavior_unverified_items:
-  - truth: "G-04-1: with MYFEEDER_TYPESAFE_API_KEY exported and ./gradlew bootTestRun (no SPRING_AI_TYPESAFE_* or MYFEEDER_INTEREST_* overrides), Jev is configured and the backlog sweep drains within about 3 minutes of startup"
-    test: "Export the real MYFEEDER_TYPESAFE_API_KEY only, run ./gradlew bootTestRun, save a profile or a topic, then watch /api/interest/status, article_score, a feed refresh, Re-score unread and the poll logs"
-    expected: "The startup log shows 'The following 1 profile is active: \"dev\"' and no 'TypeSafe Jev not configured' line. eligibleUnscored drains to 0 with SCORED rows (model jev-1.13.0, request id). New arrivals are scored without waiting for the sweep. Re-score resets and re-drains. No new feed errors"
-    why_human: "The configured half is proven by the smoke log and DevProfileConfigTest. The drain half needs the billed TypeSafe API. The automated smoke deliberately used a fake key in cold start, so no Jev call was made under the dev profile"
-human_verification:
-  - test: "Live-key re-run of UAT test 1 under the documented procedure (04-05 human-check, as updated by 04-09). Export the real MYFEEDER_TYPESAFE_API_KEY with no SPRING_AI_TYPESAFE_* or MYFEEDER_INTEREST_* overrides, run ./gradlew bootTestRun, confirm the dev-profile startup line and the absence of the keyless TypeSafe INFO line, then save a profile or at least one topic. (1) Within about 3 minutes GET /api/interest/status shows eligibleUnscored falling to 0, and article_score rows appear with status SCORED, model jev-1.13.0 and a request id. (2) A feed refresh that brings new articles scores them without waiting for the sweep. (3) Interests -> Re-score unread shows a count; confirming resets and re-drains (not separately exercised in the first UAT run). (4) Poll logs show no new feed errors."
-    expected: "Backlog drains through the sweep; new arrivals are scored via the ArticlesIngestedEvent hand-off; Re-score resets and re-drains; feeds keep errorCount 0"
-    why_human: "Needs the live, billed TypeSafe API and a running app. The verifier never calls the billed API and does not start servers"
+behavior_unverified_items: []
+human_verification: []
+human_verification_resolved:
+  - test: "Live-key re-run of UAT test 1 under the documented procedure (bootTestRun + dev profile, real MYFEEDER_TYPESAFE_API_KEY only)"
+    result: pass
+    source: "04-UAT.md test 1"
+    resolved_at: "2026-09-24"
 ---
 
 # Phase 4: Scoring Pipeline & Backfill Sweep Verification Report
 
 **Phase Goal:** Every eligible article, including the existing unread backlog, is judged once by Jev in the background, and feed polling is never slowed or failed by it.
 **Verified:** 2026-09-24T22:06:00Z
-**Status:** human_needed
+**Status:** passed (G-04-1 live drain confirmed by UAT test 1, 2026-09-24)
 **Re-verification:** Yes. This follows UAT gap G-04-1 and gap-closure plan 04-09 (commits 28d64fb, 79492fe, 0ecce98, 15a36d2, 394237e). It also covers the review fixes committed after the first verification (00ca174 WR-01 rubric discard, e67b696 WR-02 JSON confirm body, 81dd8c7 WR-03 poll gate).
 
 ## Goal Achievement
@@ -120,7 +118,7 @@ human_verification:
 
 | Truth | Status | Evidence |
 |-------|--------|----------|
-| With MYFEEDER_TYPESAFE_API_KEY set and `./gradlew bootTestRun`, Jev is configured and the backlog sweep drains within about 3 minutes of startup | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | The config half is closed (truths 1-2 above). The overlay supplies exactly the three overrides that UAT test 1 used to get a live drain (key, base-url, initial delay), plus the timeouts. The drain under the new procedure with a real key has not been run: the smoke used a fake key in cold start by design. Routed to human verification |
+| With MYFEEDER_TYPESAFE_API_KEY set and `./gradlew bootTestRun`, Jev is configured and the backlog sweep drains within about 3 minutes of startup | ✓ VERIFIED (UAT test 1, 2026-09-24) | The config half is closed (truths 1-2 above). The overlay supplies exactly the three overrides that UAT test 1 used to get a live drain (key, base-url, initial delay), plus the timeouts. The drain under the new procedure with a real key has not been run: the smoke used a fake key in cold start by design. Routed to human verification |
 
 ### Roadmap Success Criteria (regression check)
 
