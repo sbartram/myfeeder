@@ -144,9 +144,9 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 - **Schema**: `V6__interest_scoring.sql` creates all six interest tables (`interest_profile` singleton row 1, `interest_topic`, `article_score`, `article_topic_score`, `article_feedback`, `article_feedback_topic`); later milestone phases add no migrations
 - **InterestService** owns the profile/topic limits (service constants, fixed-text 400s) and the version rules; `isColdStart()` is the single cold-start predicate (blank profile AND zero topics) — callers never reimplement it
 - **InterestQuestions** and **ArticleStateBuilder** are pure static builders shared by the preview and the scorer, so the preview judges exactly what scoring sends
-- **InterestStatusService**/`InterestStatus` serve `{configured, breakerState, coldStart}` (breaker state read from `CircuitBreakerRegistry.circuitBreaker("jev")`); later fields are appended, these three are never renamed
+- **InterestStatusService**/`InterestStatus` serve `{configured, breakerState, coldStart, eligibleUnscored, failed}` (breaker state read from `CircuitBreakerRegistry.circuitBreaker("jev")`); both counts come from one query over eligible articles (unread, inside the window): `eligibleUnscored` = no score row or a FAILED row under 3 attempts, `failed` = FAILED with all 3 attempts used; later fields are appended, existing ones are never renamed
 - **InterestPreviewService**/`TopicPreviewResponse` judge one description against one article with one `JevApiClient.judge` call and return `{noul, model}`; validation runs before `judge()`, there is no transaction and no service retry, and the preview persists nothing
-- **Routes** under `/api/interest`: `GET|PUT /profile`, `GET|POST /topics`, `PUT|DELETE /topics/{id}`, `GET /status`, `POST /preview`
+- **Routes** under `/api/interest`: `GET|PUT /profile`, `GET|POST /topics`, `PUT|DELETE /topics/{id}`, `GET /status`, `POST /preview`, `GET|POST /rescore` (the POST is 409 when Jev is unconfigured or in cold start)
 
 ## Spring Boot 4 / Jackson 3.x Notes
 
