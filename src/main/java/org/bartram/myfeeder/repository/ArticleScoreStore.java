@@ -140,14 +140,52 @@ public class ArticleScoreStore {
         return true;
     }
 
+    /**
+     * Records a failed attempt (SCOR-07): inserts a FAILED row with attempts 1, then increments
+     * attempts only while the row is still FAILED. It never overwrites a SCORED or SKIPPED row, and
+     * a missing article is a silent no-op.
+     *
+     * @param lastError fixed text only (exception class name, HTTP status, request id), never an
+     *                  exception message or a response body
+     */
     public void writeFailed(long articleId, String lastError) {
+        jdbc.sql("INSERT INTO article_score (article_id, status, attempts, last_error) "
+                        + "SELECT a.id, 'FAILED', 1, :lastError FROM article a WHERE a.id = :articleId "
+                        + "ON CONFLICT (article_id) DO UPDATE SET attempts = article_score.attempts + 1, "
+                        + "last_error = EXCLUDED.last_error, scored_at = NOW() "
+                        + "WHERE article_score.status = 'FAILED'")
+                .param("articleId", articleId)
+                .param("lastError", lastError)
+                .update();
     }
 
+    /**
+     * Marks an article as never to be scored (SCOR-08, e.g. no GUID or no text). SKIPPED is terminal
+     * and the first writer wins; a missing article is a silent no-op.
+     */
     public void writeSkipped(long articleId, String reason) {
+        jdbc.sql("INSERT INTO article_score (article_id, status, last_error) "
+                        + "SELECT a.id, 'SKIPPED', :reason FROM article a WHERE a.id = :articleId "
+                        + "ON CONFLICT (article_id) DO NOTHING")
+                .param("articleId", articleId)
+                .param("reason", reason)
+                .update();
     }
 
+    /**
+     * The subset of {@code ids} that are eligible and need scoring, newest first. This is the
+     * enqueue-time filter for freshly ingested articles, so an old back-catalogue flood never
+     * enters the queue.
+     */
     public List<Long> filterNeedingScoring(Collection<Long> ids, Instant cutoff) {
-        return List.of();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return jdbc.sql("SELECT a.id " + NEEDING_SCORING_FROM + " AND a.id IN (:ids) " + NEWEST_FIRST)
+                .param("cutoff", Timestamp.from(cutoff))
+                .param("ids", ids)
+                .query(Long.class)
+                .list();
     }
 
     private static Article mapArticle(ResultSet rs) throws SQLException {
