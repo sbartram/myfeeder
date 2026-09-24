@@ -14,7 +14,8 @@ spring:
     typesafe:
       api-key: ${MYFEEDER_TYPESAFE_API_KEY:}
       model: jev-1.13.0
-      timeout: 5s
+      # D-05: calibration measured ~2.6s average and >5s cold for a profile plus 7 topics; the rubric can grow to 25 topics.
+      timeout: 30s
       retry:
         max-retries: 0
 
@@ -50,9 +51,11 @@ resilience4j:
         minimum-number-of-calls: 10
         failure-rate-threshold: 50
         wait-duration-in-open-state: 60s
-        slow-call-duration-threshold: 3s
+        slow-call-duration-threshold: 15s
         slow-call-rate-threshold: 50
         permitted-number-of-calls-in-half-open-state: 3
+        # D-17: OPEN moves to HALF_OPEN after wait-duration-in-open-state without needing a call, so a paused sweep resumes.
+        automatic-transition-from-open-to-half-open-enabled: true
         # 401/403 (TypeSafeAuthentication/PermissionDenied) are deliberately absent: a bad key is recorded (D-06)
         ignore-exceptions:
           - org.bartram.myfeeder.integration.JevNotConfiguredException
@@ -60,6 +63,7 @@ resilience4j:
           - org.springaicommunity.typesafe.exception.TypeSafeUnprocessableEntityException
           - org.springaicommunity.typesafe.exception.TypeSafeMissingAnswerException
           - org.springaicommunity.typesafe.exception.TypeSafeAnswerTypeException
+          - java.lang.IllegalArgumentException
   retry:
     retry-aspect-order: 2
     instances:

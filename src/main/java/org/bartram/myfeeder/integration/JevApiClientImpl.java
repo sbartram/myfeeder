@@ -51,6 +51,10 @@ public class JevApiClientImpl implements JevApiClient {
         requireConfigured();
         Assert.notNull(state, "state must not be null");
         Assert.notEmpty(questions, "questions must not be empty");
+        // D-15: only Noul/Score before the HTTP call. A Choice answer would be billed and then dropped by
+        // JevJudgment; the IllegalArgumentException is ignored by the jev breaker (D-14).
+        questions.forEach((name, question) -> Assert.isTrue(question instanceof Noul || question instanceof Score,
+                () -> "Unsupported question type for '" + name + "'"));
 
         // D-04: keep the caller's order, drop nulls, never mutate the caller's map; always a JSON object
         Map<String, Object> cleaned = new LinkedHashMap<>(state);
@@ -70,10 +74,8 @@ public class JevApiClientImpl implements JevApiClient {
         questions.forEach((name, question) -> {
             if (question instanceof Noul) {
                 response.noul(name);
-            } else if (question instanceof Score) {
-                response.score(name);
             } else {
-                response.answer(name);
+                response.score(name);
             }
         });
 

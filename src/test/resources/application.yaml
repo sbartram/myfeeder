@@ -7,7 +7,7 @@ spring:
     typesafe:
       base-url: http://127.0.0.1:9
       model: jev-1.13.0
-      timeout: 5s
+      timeout: 30s
       retry:
         max-retries: 0
   datasource:
@@ -48,9 +48,10 @@ resilience4j:
         minimum-number-of-calls: 10
         failure-rate-threshold: 50
         wait-duration-in-open-state: 60s
-        slow-call-duration-threshold: 3s
+        slow-call-duration-threshold: 15s
         slow-call-rate-threshold: 50
         permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
         # 401/403 (TypeSafeAuthentication/PermissionDenied) are deliberately absent: a bad key is recorded (D-06)
         ignore-exceptions:
           - org.bartram.myfeeder.integration.JevNotConfiguredException
@@ -58,6 +59,7 @@ resilience4j:
           - org.springaicommunity.typesafe.exception.TypeSafeUnprocessableEntityException
           - org.springaicommunity.typesafe.exception.TypeSafeMissingAnswerException
           - org.springaicommunity.typesafe.exception.TypeSafeAnswerTypeException
+          - java.lang.IllegalArgumentException
   retry:
     retry-aspect-order: 2
     instances:
