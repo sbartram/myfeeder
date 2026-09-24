@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -137,6 +138,16 @@ public class ArticleScoreStore {
                     .update();
         }
         return true;
+    }
+
+    public void writeFailed(long articleId, String lastError) {
+    }
+
+    public void writeSkipped(long articleId, String reason) {
+    }
+
+    public List<Long> filterNeedingScoring(Collection<Long> ids, Instant cutoff) {
+        return List.of();
     }
 
     private static Article mapArticle(ResultSet rs) throws SQLException {

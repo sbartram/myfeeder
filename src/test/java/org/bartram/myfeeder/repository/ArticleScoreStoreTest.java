@@ -137,6 +137,142 @@ class ArticleScoreStoreTest {
         assertThat(store.loadCandidate(readId, cutoff)).isEmpty();
     }
 
+    @Test
+    void failedAttemptsCountUpToExhaustion() {
+        long articleId = insertArticle("g-failing", now.minus(Duration.ofHours(1)));
+
+        store.writeFailed(articleId, "HTTP 503");
+        assertThat(scoreRowFor(articleId)).containsEntry("status", "FAILED")
+                .containsEntry("attempts", 1).containsEntry("last_error", "HTTP 503");
+        assertThat(store.findNeedingScoring(cutoff, 10)).containsExactly(articleId);
+
+        store.writeFailed(articleId, "HTTP 429");
+        assertThat(scoreRowFor(articleId)).containsEntry("attempts", 2).containsEntry("last_error", "HTTP 429");
+        assertThat(store.findNeedingScoring(cutoff, 10)).containsExactly(articleId);
+
+        store.writeFailed(articleId, "timeout");
+        assertThat(scoreRowFor(articleId)).containsEntry("attempts", 3).containsEntry("last_error", "timeout");
+        assertThat(store.findNeedingScoring(cutoff, 10)).isEmpty();
+        assertThat(store.loadCandidate(articleId, cutoff)).isEmpty();
+    }
+
+    @Test
+    void scoredReplacesFailedOnceAndKeepsAttempts() {
+        long articleId = insertArticle("g-retry", now.minus(Duration.ofHours(1)));
+        long topic = insertTopic("Java");
+
+        store.writeFailed(articleId, "HTTP 503");
+        assertThat(scoreRowFor(articleId)).containsEntry("status", "FAILED");
+
+        assertThat(store.writeScored(articleId, scoreRow(topic))).isTrue();
+
+        assertThat(scoreRowFor(articleId)).containsEntry("status", "SCORED")
+                .containsEntry("attempts", 1).containsEntry("last_error", null)
+                .containsEntry("profile_score", 3.0);
+        assertThat(topicRowCount(articleId)).isEqualTo(1);
+    }
+
+    @Test
+    void scoredIsWriteOnce() {
+        long articleId = insertArticle("g-once", now.minus(Duration.ofHours(1)));
+        long topicA = insertTopic("Java");
+        long topicB = insertTopic("Postgres");
+        assertThat(store.writeScored(articleId, scoreRow(topicA))).isTrue();
+
+        ScoredRow second = new ScoredRow(1.0, 2, 0.1, 9, "other-model", "req-2",
+                List.of(new TopicNoul(topicA, 0.1, 5), new TopicNoul(topicB, 0.2, 5)));
+        assertThat(store.writeScored(articleId, second)).isFalse();
+
+        assertThat(scoreRowFor(articleId)).containsEntry("profile_score", 3.0)
+                .containsEntry("profile_version", 2).containsEntry("model", "jev-1.13.0")
+                .containsEntry("request_id", "req-1");
+        List<Map<String, Object>> topics = jdbc.queryForList(
+                "SELECT topic_id, noul, topic_version FROM article_topic_score WHERE article_id = ?", articleId);
+        assertThat(topics).hasSize(1);
+        assertThat(((Number) topics.get(0).get("topic_id")).longValue()).isEqualTo(topicA);
+        assertThat(topics.get(0)).containsEntry("noul", 0.9).containsEntry("topic_version", 1);
+    }
+
+    @Test
+    void failedNeverOverwritesScoredOrSkipped() {
+        long scored = insertArticle("g-scored", now.minus(Duration.ofHours(1)));
+        long skipped = insertArticle("g-skipped", now.minus(Duration.ofHours(2)));
+        store.writeScored(scored, scoreRow());
+        store.writeSkipped(skipped, "no guid");
+
+        store.writeFailed(scored, "HTTP 503");
+        store.writeFailed(skipped, "HTTP 503");
+
+        assertThat(scoreRowFor(scored)).containsEntry("status", "SCORED")
+                .containsEntry("attempts", 1).containsEntry("last_error", null)
+                .containsEntry("profile_score", 3.0);
+        assertThat(scoreRowFor(skipped)).containsEntry("status", "SKIPPED")
+                .containsEntry("attempts", 1).containsEntry("last_error", "no guid");
+    }
+
+    @Test
+    void skippedIsTerminalAndFirstReasonWins() {
+        long articleId = insertArticle("g-skip", now.minus(Duration.ofHours(1)));
+
+        store.writeSkipped(articleId, "no guid");
+        store.writeSkipped(articleId, "no text");
+
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM article_score WHERE article_id = ?",
+                Integer.class, articleId)).isEqualTo(1);
+        assertThat(scoreRowFor(articleId)).containsEntry("status", "SKIPPED").containsEntry("last_error", "no guid");
+        assertThat(store.findNeedingScoring(cutoff, 10)).doesNotContain(articleId);
+        assertThat(store.writeScored(articleId, scoreRow())).isFalse();
+        assertThat(scoreRowFor(articleId)).containsEntry("status", "SKIPPED");
+    }
+
+    @Test
+    void writesForMissingArticleAreNoOps() {
+        long missing = 999_999L;
+
+        assertThat(store.writeScored(missing, scoreRow())).isFalse();
+        store.writeFailed(missing, "HTTP 503");
+        store.writeSkipped(missing, "no guid");
+
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM article_score", Integer.class)).isZero();
+    }
+
+    @Test
+    void topicDeletedMidCallIsLeftOut() {
+        long articleId = insertArticle("g-topic-gone", now.minus(Duration.ofHours(1)));
+        long liveTopic = insertTopic("Java");
+        long deletedTopic = 999_999L;
+
+        assertThat(store.writeScored(articleId, scoreRow(liveTopic, deletedTopic))).isTrue();
+
+        assertThat(scoreRowFor(articleId)).containsEntry("status", "SCORED");
+        assertThat(jdbc.queryForList("SELECT topic_id FROM article_topic_score WHERE article_id = ?",
+                Long.class, articleId)).containsExactly(liveTopic);
+    }
+
+    @Test
+    void filterKeepsOnlyIdsThatNeedScoringNewestFirst() {
+        long scored = insertArticle("g-scored", now.minus(Duration.ofHours(2)));
+        insertScore(scored, "SCORED", 1);
+        long read = insertArticle("g-read", true, now.minus(Duration.ofHours(1)), now);
+        long eligibleOlder = insertArticle("g-older", now.minus(Duration.ofHours(5)));
+        long eligibleNewer = insertArticle("g-newer", now.minus(Duration.ofHours(1)));
+        long exhausted = insertArticle("g-exhausted", now.minus(Duration.ofHours(2)));
+        insertScore(exhausted, "FAILED", ArticleScoreStore.MAX_ATTEMPTS);
+        long retrying = insertArticle("g-retrying", now.minus(Duration.ofHours(3)));
+        insertScore(retrying, "FAILED", 1);
+
+        List<Long> ids = List.of(scored, read, eligibleOlder, eligibleNewer, exhausted, retrying);
+
+        assertThat(store.filterNeedingScoring(ids, cutoff))
+                .containsExactly(eligibleNewer, retrying, eligibleOlder);
+    }
+
+    @Test
+    void filterOfNoIdsRunsNoQuery() {
+        // An empty IN () list is invalid SQL, so an empty result without an exception proves no query ran.
+        assertThat(store.filterNeedingScoring(List.of(), cutoff)).isEmpty();
+    }
+
     private long insertArticle(String guid, Instant publishedAt) {
         return insertArticle(guid, false, publishedAt, now);
     }
@@ -161,7 +297,20 @@ class ArticleScoreStoreTest {
         return new ScoredRow(3.0, 4, 0.8, 2, "jev-1.13.0", "req-1", topics);
     }
 
+    private void insertScore(long articleId, String status, int attempts) {
+        jdbc.update("INSERT INTO article_score (article_id, status, attempts) VALUES (?, ?, ?)",
+                articleId, status, attempts);
+    }
+
+    private int topicRowCount(long articleId) {
+        return jdbc.queryForObject(
+                "SELECT count(*) FROM article_topic_score WHERE article_id = ?", Integer.class, articleId);
+    }
+
     private Map<String, Object> scoreRowFor(long articleId) {
-        return jdbc.queryForMap("SELECT * FROM article_score WHERE article_id = ?", articleId);
+        List<Map<String, Object>> rows =
+                jdbc.queryForList("SELECT * FROM article_score WHERE article_id = ?", articleId);
+        assertThat(rows).as("article_score row for article %d", articleId).hasSize(1);
+        return rows.get(0);
     }
 }
