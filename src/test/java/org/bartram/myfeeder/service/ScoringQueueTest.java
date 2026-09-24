@@ -95,6 +95,7 @@ class ScoringQueueTest {
         ScoringQueue queue = queue(pool(3));
 
         queue.submit(List.of(1L, 2L, 3L)); // 1 runs, 2 and 3 wait
+        verify(scorer, timeout(5000)).score(1L); // the worker is holding 1
 
         assertThat(queue.remainingCapacity()).isEqualTo(1);
     }
