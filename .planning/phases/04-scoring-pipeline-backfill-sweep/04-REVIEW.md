@@ -1,223 +1,136 @@
 ---
 phase: 04-scoring-pipeline-backfill-sweep
-reviewed: 2026-09-24T02:29:01Z
+reviewed: 2026-09-24T22:00:17Z
 depth: standard
-files_reviewed: 41
+files_reviewed: 14
 files_reviewed_list:
   - CLAUDE.md
   - src/main/frontend/src/api/interest.ts
-  - src/main/frontend/src/App.css
   - src/main/frontend/src/components/InterestsDialog.test.tsx
-  - src/main/frontend/src/components/InterestsDialog.tsx
   - src/main/frontend/src/hooks/useInterest.ts
-  - src/main/java/org/bartram/myfeeder/config/InterestScoringConfig.java
-  - src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java
   - src/main/java/org/bartram/myfeeder/controller/InterestRescoreController.java
-  - src/main/java/org/bartram/myfeeder/event/ArticlesIngestedEvent.java
-  - src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java
-  - src/main/java/org/bartram/myfeeder/repository/ArticleScoreStore.java
-  - src/main/java/org/bartram/myfeeder/scheduler/InterestScoringSweep.java
+  - src/main/java/org/bartram/myfeeder/controller/RescoreRequest.java
   - src/main/java/org/bartram/myfeeder/service/ArticleScoringService.java
-  - src/main/java/org/bartram/myfeeder/service/ArticleStateBuilder.java
-  - src/main/java/org/bartram/myfeeder/service/FeedPollingService.java
-  - src/main/java/org/bartram/myfeeder/service/InterestRescoreService.java
-  - src/main/java/org/bartram/myfeeder/service/InterestScoringListener.java
-  - src/main/java/org/bartram/myfeeder/service/InterestStatus.java
-  - src/main/java/org/bartram/myfeeder/service/InterestStatusService.java
-  - src/main/java/org/bartram/myfeeder/service/RescoreCount.java
-  - src/main/java/org/bartram/myfeeder/service/ScoringFailure.java
-  - src/main/java/org/bartram/myfeeder/service/ScoringQueue.java
-  - src/main/resources/application.yaml
-  - src/test/java/org/bartram/myfeeder/config/TypeSafeConfigTest.java
-  - src/test/java/org/bartram/myfeeder/controller/InterestApiIntegrationTest.java
+  - src/test/java/org/bartram/myfeeder/DevProfileConfigTest.java
+  - src/test/java/org/bartram/myfeeder/MyfeederApplicationTests.java
+  - src/test/java/org/bartram/myfeeder/TestMyfeederApplication.java
   - src/test/java/org/bartram/myfeeder/controller/InterestRescoreApiIntegrationTest.java
   - src/test/java/org/bartram/myfeeder/controller/InterestRescoreControllerTest.java
-  - src/test/java/org/bartram/myfeeder/integration/JevResilienceTest.java
-  - src/test/java/org/bartram/myfeeder/MyfeederApplicationTests.java
-  - src/test/java/org/bartram/myfeeder/repository/ArticleScoreStoreTest.java
-  - src/test/java/org/bartram/myfeeder/scheduler/InterestScoringSweepTest.java
-  - src/test/java/org/bartram/myfeeder/service/ArticleScoringFlowTest.java
   - src/test/java/org/bartram/myfeeder/service/ArticleScoringServiceTest.java
-  - src/test/java/org/bartram/myfeeder/service/ArticleStateBuilderTest.java
-  - src/test/java/org/bartram/myfeeder/service/FeedPollingServiceTest.java
-  - src/test/java/org/bartram/myfeeder/service/InterestRescoreServiceTest.java
-  - src/test/java/org/bartram/myfeeder/service/InterestStatusServiceTest.java
-  - src/test/java/org/bartram/myfeeder/service/ScoringIsolationTest.java
-  - src/test/java/org/bartram/myfeeder/service/ScoringQueueTest.java
-  - src/test/resources/application.yaml
+  - src/test/resources/application-dev.yaml
 findings:
   critical: 0
-  warning: 3
-  info: 9
-  total: 12
+  warning: 2
+  info: 4
+  total: 6
 status: issues_found
 ---
 
-# Phase 4: Code Review Report
+# Phase 04: Code Review Report
 
-**Reviewed:** 2026-09-24T02:29:01Z
+**Reviewed:** 2026-09-24T22:00:17Z
 **Depth:** standard
-**Files Reviewed:** 41
+**Files Reviewed:** 14
 **Status:** issues_found
 
 ## Summary
 
-I reviewed the Phase 4 scoring pipeline end to end: the ingest event, the listener, the queue and executor, the scorer, the store SQL, the sweep, Re-score, the status counts, the Jev client changes (D-14/D-15), the Resilience4j aspect order and YAML (D-05..D-07, D-17), the truncate fix (D-13), and the Interests dialog footer.
+This is an incremental review of the changes since `648c7a4`: the 04-REVIEW-FIX fixes (WR-01 rubric-change discard, WR-02 JSON confirm body on `POST /api/interest/rescore`, WR-03 status-poll gate) and gap-closure plan 04-09 (a `dev` profile overlay for `bootTestRun`, plus drift and offline guards). For `CLAUDE.md`, only the two committed hunks were reviewed. The working-tree edits are out of scope.
 
-The core design holds up:
-- One `ELIGIBLE` / `NEEDS_SCORING` predicate is shared by every query.
-- `SCORED` is write-once and enforced in SQL (`ON CONFLICT ... WHERE status = 'FAILED'`).
-- Transient vs permanent classification matches D-19. I checked it against the SDK's real exception hierarchy: `TypeSafeApiTimeoutException` extends `TypeSafeApiConnectionException`, and `TypeSafeOverloadedException` extends `TypeSafeInternalServerException`.
-- The listener and publisher cannot reach the poll's `errorCount` bookkeeping.
-- The aspect orders really put the breaker outside the retry. `JevResilienceTest` asserts this against the shipped YAML.
+What I checked and found correct:
+- **Rubric check (`ArticleScoringService`)**: the versions are primitive `int`, so `==` is correct. Topic-version maps are compared by id. Name- and weight-only edits do not bump versions, so they are correctly ignored. An exception thrown during the re-read goes to `ScoringQueue.run`, which logs it and releases the in-flight id.
+- **Rescore endpoint**: with `consumes = application/json`, a body-less, form or text POST gets 415 before `service.rescore()` runs. A JSON `null` body or a missing `confirm` gets 400, either through `HttpMessageNotReadableException` or through the `IllegalArgumentException` handler. The app has no CORS configuration, so the preflight claim in `RescoreRequest` holds. `apiPost` sets `Content-Type: application/json` when a body is passed.
+- **Poll gate**: `useInterestStatus` uses exactly the same condition as the "N waiting" line in `InterestsDialog.tsx:205-206`.
+- **Dev overlay**: `application-dev.yaml` plus the test yaml resolve every main key to main's value (checked by hand against both files). The `CLAUDE.md` gotcha text matches the files.
 
-I found no blockers. There are three warnings:
-1. A Re-score race can leave an article permanently scored against the rubric the user just replaced.
-2. The new destructive, billed `POST /api/interest/rescore` takes no body, so any web page can trigger it with a CORS "simple" request.
-3. The status poll runs indefinitely in exactly the states where nothing can drain.
-
-The info items cover dead config defaults, operational side effects of the locked D-05/D-07/D-19 decisions (reported as consequences, not as bugs in the decisions), and small robustness gaps.
+No blockers. The two warnings are both about the billed-API safety net and the config-drift guard that 04-09 added. Each protects only against the exact failure it was written for, not the wider class it is meant to stop.
 
 ## Narrative Findings (AI reviewer)
 
 ## Warnings
 
-### WR-01: Re-score does not re-judge an article that is mid-call; it is stored write-once with the replaced rubric
+### WR-01: Keeping the suite offline relies on shell hygiene, and the activation scan misses ways to load the live overlay directly
 
-**File:** `src/main/java/org/bartram/myfeeder/service/ArticleScoringService.java:65-96` (with `src/main/java/org/bartram/myfeeder/repository/ArticleScoreStore.java:112-147`)
+**File:** `src/test/java/org/bartram/myfeeder/DevProfileConfigTest.java:40-42`, `src/test/java/org/bartram/myfeeder/MyfeederApplicationTests.java:78-87`, `build.gradle.kts:97-102` (the unguarded test task)
+**Issue:** The documented dev workflow (the new `CLAUDE.md` line 83) is to export `MYFEEDER_TYPESAFE_API_KEY` in the shell. The uncommitted `.envrc` now does this. The Gradle `Test` task passes the developer's whole environment to the test JVM. So the only things that keep `./gradlew test` from making billed Jev calls are:
+1. A source-token scan (`ACTIVATION_TOKENS`) that only looks for ways to *activate a profile*. It does not catch a test that loads the overlay file directly, for example `@TestPropertySource(locations = "classpath:application-dev.yaml")`, `spring.config.import=classpath:application-dev.yaml` or `spring.config.additional-location`. Any of these binds `${MYFEEDER_TYPESAFE_API_KEY:}` and the real base-url without activating `dev`. (`"spring.config."` is not in the token list. `"spring.profiles."` does not match it.)
+2. A rule in `CLAUDE.md` saying never to export `SPRING_PROFILES_ACTIVE=dev` or `SPRING_AI_TYPESAFE_*`.
+3. `suiteContextStaysOffline`, which only fires after contexts have started. It only inspects its own context, and it only runs when JUnit reaches that test. Before that, other `@SpringBootTest` contexts may already have started with a live key. `FeedPollingScheduler` polls feeds at `ApplicationReadyEvent`, and `submitIngested` then scores the new articles right away, whatever the PT1H sweep delay is.
 
-**Issue:** The scorer snapshots the profile and topics (lines 66-67) before a `judge()` call. With the 30s timeout and 3 retry attempts, that call can take up to about 93s. It then writes unconditionally (line 96). The failing sequence, which D-04 encourages (save first, then Re-score):
-1. Article X has no row, or a FAILED row, and is in flight with profile v1 / old topic set.
-2. The user saves profile v2 (or edits or deletes topics).
-3. The user confirms Re-score, and `deleteRescoreScope` runs.
-4. X's call returns, and `writeScored` INSERTs a SCORED row stamped v1.
-
-X had no SCORED row at delete time, so Re-score never touched it. SCORED is write-once, so X now keeps the replaced rubric's score indefinitely. The only fix is another Re-score, and the same race can recur. INT-05 promises that after Re-score, in-window unread articles are re-judged against the current rubric; that promise does not hold for in-flight articles. The stored `profile_version` shows the mismatch, but nothing acts on it.
-
-**Fix:** After `judge()` returns, discard the result if the rubric changed during the call. Write no row and use no attempt, so the sweep re-picks the article with the current rubric:
-```java
-// after the judge() try/catch, before isValid/write
-InterestProfile nowProfile = interestService.getProfile();
-List<InterestTopic> nowTopics = interestService.listTopics();
-if (!sameRubric(profile, topics, nowProfile, nowTopics)) { // profile version + topic {id -> version} sets
-    log.debug("Rubric changed while scoring article {}; leaving it for the sweep", articleId);
-    return;
+The test JVM does not need any of these variables, so the barrier can be enforced rather than advised.
+**Fix:** Strip the variables at the test-task boundary and widen the scan:
+```kotlin
+// build.gradle.kts
+tasks.withType<Test> {
+    useJUnitPlatform()
+    // The suite is offline by design: never inherit a live Jev key or an active profile from the shell
+    environment.keys.removeAll { it == "MYFEEDER_TYPESAFE_API_KEY" || it == "SPRING_PROFILES_ACTIVE"
+        || it.startsWith("SPRING_AI_TYPESAFE_") || it.startsWith("SPRING_CONFIG_") }
+    ...
 }
 ```
-An equivalent option is to guard the SQL: add `AND (SELECT version FROM interest_profile WHERE id = 1) IS NOT DISTINCT FROM :profileVersion` to the `INSERT ... SELECT` in `writeScored`. Topic versions would also need checking.
-
-### WR-02: `POST /api/interest/rescore` is a bodyless destructive POST, so any website can trigger it cross-site and cause re-billing
-
-**File:** `src/main/java/org/bartram/myfeeder/controller/InterestRescoreController.java:23-26`; `src/main/frontend/src/api/interest.ts:63`
-
-**Issue:** The endpoint takes no body, and the frontend sends it with no `Content-Type` (`apiPost` omits the header when `body` is undefined, per `client.ts:47`). A body-less POST is a CORS "simple request": browsers send it cross-origin without a preflight. The app has no authentication, so any page the user visits can fire it, for example with an auto-submitting `<form method="post" action="http://<myfeeder-host>/api/interest/rescore">`. Each hit deletes every in-window SCORED and FAILED row, and the sweep then re-bills one Jev call per article. Repeated hits keep the billing going.
-
-The other interest mutations (`PUT /profile`, `POST /topics`, `POST /preview`) require a JSON `@RequestBody`. A cross-site form cannot send `application/json`, so those endpoints are not exposed this way. This is the first endpoint where a simple cross-site request has a direct cost consequence.
-
-**Fix:** Require a JSON body. That forces a CORS preflight for cross-origin callers, which the server does not approve:
 ```java
-public record RescoreRequest(boolean confirm) {}
+// DevProfileConfigTest
+private static final List<String> ACTIVATION_TOKENS = List.of("withAdditionalProfiles",
+        "setAdditionalProfiles", "@ActiveProfiles", "setActiveProfiles", "addActiveProfile",
+        "setDefaultProfiles", "spring.profiles.", "SPRING_PROFILES",
+        "application-dev", "spring.config.", "SPRING_CONFIG_");
+```
 
-@PostMapping(value = "/rescore", consumes = MediaType.APPLICATION_JSON_VALUE)
-public RescoreCount rescore(@RequestBody RescoreRequest request) {
-    if (!request.confirm()) throw new IllegalArgumentException("confirm must be true");
-    return service.rescore();
+### WR-02: The drift guard only checks one direction, so settings that exist only in the test yaml still reach `bootTestRun`
+
+**File:** `src/test/java/org/bartram/myfeeder/DevProfileConfigTest.java:78-96`
+**Issue:** `devOverlayResolvesEveryMainKeyToMainsValue` checks that every key in *main* resolves to main's value. For extra keys, it only checks the ones that exist only in the *dev overlay*. It never looks at keys that exist only in the *test* yaml. Those are loaded by `bootTestRun` too, and nothing overrides them. There are already four: `spring.ai.anthropic.api-key: test-dummy-key`, `spring.datasource.hikari.*`, `spring.flyway.connect-retries*`, and `spring.ai.typesafe.base-url`, which the overlay happens to override. They are harmless today. But G-04-1 was exactly this class of bug: `bootTestRun` silently running with suite-only offline settings. If someone later adds an offline-only knob to `src/test/resources/application.yaml` that is not in main, `bootTestRun` inherits it and this test still passes.
+**Fix:** Make every test-only key an explicit, reviewed decision:
+```java
+// Test-only keys that are allowed to leak into bootTestRun; anything else must be overridden by the dev overlay.
+private static final Set<String> SUITE_ONLY_KEYS_ALLOWED_IN_DEV = Set.of(
+        "spring.ai.anthropic.api-key",
+        "spring.datasource.hikari.connection-timeout", "spring.datasource.hikari.initialization-fail-timeout",
+        "spring.flyway.connect-retries", "spring.flyway.connect-retries-interval");
+...
+EnumerablePropertySource<?> test = (EnumerablePropertySource<?>) loadYaml("src/test/resources/application.yaml");
+for (String name : test.getPropertyNames()) {
+    if (!main.containsProperty(name) && !dev.containsProperty(name)) {
+        assertThat(SUITE_ONLY_KEYS_ALLOWED_IN_DEV).as(name).contains(name);
+    }
 }
 ```
-```ts
-rescore: () => apiPost<RescoreCount>('/interest/rescore', { confirm: true }),
-```
-Alternatively, reject requests whose `Sec-Fetch-Site` is `cross-site`.
-
-### WR-03: The status poll never stops when nothing can drain (unconfigured, cold start, breaker open)
-
-**File:** `src/main/frontend/src/hooks/useInterest.ts:20`; `src/main/frontend/src/components/InterestsDialog.tsx:205-206`
-
-**Issue:** `refetchInterval` polls every 15s whenever `eligibleUnscored > 0`. The server counts `eligibleUnscored` over eligible articles regardless of configuration or cold start (`ArticleScoreStore.counts`). With no TypeSafe key, or in cold start, that count is every unread in-window article, and it never drains because the sweep and scorer are gated off. So the dialog re-runs `/status`, including the full `COUNT ... FILTER` over unread articles, every 15s for as long as it stays open.
-
-The dialog itself hides the "N waiting" line in exactly those states (line 205-206: `configured === true && coldStart === false`). The two gates disagree, and the hook's docstring ("polls every 15s only while articles are waiting to be scored") does not hold. The same happens while the breaker is OPEN. The existing test `statusPollsOnlyWhileArticlesAreWaiting` only covers the configured, warm case.
-
-**Fix:** Poll only when the waiting line is shown and something can drain:
-```ts
-refetchInterval: (query) => {
-  const s = query.state.data
-  return s && s.configured && !s.coldStart && s.eligibleUnscored > 0 ? 15_000 : false
-},
-```
-Add test cases for `{configured: false, eligibleUnscored: 5}` and `{coldStart: true, eligibleUnscored: 5}` that assert a single fetch after advancing 15s.
 
 ## Info
 
-### IN-01: `sweepDelay` / `sweepInitialDelay` Java defaults are dead; the `@Scheduled` placeholders have no fallback
+### IN-01: A small check-then-write window remains between the rubric re-read and `writeScored`
 
-**File:** `src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java:43-44`; `src/main/java/org/bartram/myfeeder/scheduler/InterestScoringSweep.java:41-42`
+**File:** `src/main/java/org/bartram/myfeeder/service/ArticleScoringService.java:92-105`
+**Issue:** The re-read (line 92) and the write (line 105) are separate, non-atomic steps. A rubric save that commits between them still writes a SCORED row stamped with the old versions. In practice this is negligible. The window is milliseconds, and the scenario the fix targets (save, then Re-score, while a ~90s call is in flight) is stopped by human latency: Re-score needs a confirmation dialog. It is noted only so that the `CLAUDE.md` rule ("if any changed, it stores nothing") is not read as an atomic guarantee.
+**Fix:** If an atomic guarantee is ever needed, make the parent insert in `ArticleScoreStore.writeScored` conditional, for example `... FROM article a WHERE a.id = :articleId AND EXISTS (SELECT 1 FROM interest_profile p WHERE p.id = 1 AND p.version = :profileVersion)`, and check the topic versions inside the same transaction.
 
-**Issue:** Nothing reads `Interest.sweepDelay` or `Interest.sweepInitialDelay`. The sweep resolves `${myfeeder.interest.sweep-delay}` and `${myfeeder.interest.sweep-initial-delay}` directly, with no default. The `Duration.ofMinutes(2)` / `ofMinutes(1)` defaults look authoritative but have no effect. Startup fails with an unresolvable placeholder if a config source omits the keys (for example a profile-specific YAML that redefines `myfeeder.interest`).
+### IN-02: Adding or deleting a topic mid-call throws away a valid, billed judgment
 
-**Fix:** Either delete the two fields, or add defaults to the placeholders that match them: `${myfeeder.interest.sweep-delay:PT2M}` and `${myfeeder.interest.sweep-initial-delay:PT1M}`.
+**File:** `src/main/java/org/bartram/myfeeder/service/ArticleScoringService.java:144-156`
+**Issue:** `sameRubric` compares the full id→version *set*. If a topic is deleted mid-call, the result is discarded and the article is re-judged, which is one more billed call. Yet the profile score and the remaining topics' nouls are still valid, and `ArticleScoreStore.writeScored` (lines 136-144, Javadoc lines 107-108) already drops deleted topics on purpose. That tolerance is now effectively dead code. An added topic is similar: every article scored before the addition also lacks that topic's noul until Re-score, so discarding only the in-flight article buys no consistency. The behaviour is tested and intentional (`topicEditedAddedOrDeletedMidCallDiscardsTheResultForTheSweep`), so this is a cost note, not a defect.
+**Fix:** Optional: compare only the topics that were sent. Discard when a sent topic's version changed, or when the profile version changed. Otherwise store the row, which already skips deleted topics. Alternatively, update the `writeScored` Javadoc to say the scorer no longer relies on the deleted-topic tolerance.
 
-### IN-02: `ScoringQueue.submit` releases the id only on `TaskRejectedException`
+### IN-03: `DevProfileConfigTest` boots a full `SpringApplication` inside the shared test JVM
 
-**File:** `src/main/java/org/bartram/myfeeder/service/ScoringQueue.java:60-66`
+**File:** `src/test/java/org/bartram/myfeeder/DevProfileConfigTest.java:330-347`
+**Issue:** `resolve()` runs the whole application lifecycle. That includes `LoggingApplicationListener`, which re-initializes the logging system and sets `PID`/`LOG_*` system properties. It does this in the same JVM that holds cached `@SpringBootTest` contexts. It also runs every `EnvironmentPostProcessor` and `ApplicationListener` on the test classpath. The test only needs the ConfigData result.
+**Fix:** Resolve the environment directly, without starting an application:
+```java
+StandardEnvironment env = new StandardEnvironment();
+// ...remove system env, add probe source as today...
+ConfigDataEnvironmentPostProcessor.applyTo(env, new DefaultResourceLoader(), null, List.of(profiles));
+return env;
+```
 
-**Issue:** If `executor.execute` throws any other `RuntimeException` (for example `IllegalStateException` from an uninitialized executor), two things go wrong. The id stays in `inFlight` until restart, so the sweep can never re-enqueue it. The loop also aborts, so the remaining ids in the batch are silently skipped.
+### IN-04: The drift check reads only the first YAML document
 
-**Fix:** Catch `RuntimeException`, remove the id, and count it as dropped. The javadoc already promises "never blocks or throws".
-
-### IN-03: Consequence of D-05 + D-07: slow-call detection and preview latency now span the whole retry chain
-
-**File:** `src/main/resources/application.yaml` (jev `slow-call-duration-threshold: 15s`, `timeout: 30s`, `circuit-breaker-aspect-order: 1`)
-
-**Issue:** With the breaker outside the retry, one breaker outcome covers up to 3 × 30s attempts plus 1s + 2s of backoff, or Retry-After waits of up to 10s each. Two effects follow:
-- A timed-out attempt followed by a successful retry is now recorded as a successful slow call, not a failure.
-- Two capped 429 waits alone push a call past the 15s slow threshold.
-
-D-06's rationale ("must stay below the timeout") was written for per-attempt timing. The user-facing `POST /api/interest/preview` can also block the request thread for about 93s before returning 503. These results follow from locked decisions and are not defects in them. Record them in the Phase 7 tuning notes, and consider a shorter per-call budget for the preview if the UI wait proves painful.
-
-### IN-04: Consequence of D-19: an article that consistently times out is retried every sweep with no bound
-
-**File:** `src/main/java/org/bartram/myfeeder/service/ScoringFailure.java:30-38`; `src/main/java/org/bartram/myfeeder/service/ArticleScoringService.java:76-86`
-
-**Issue:** A timeout is transient: no row, no attempt. A request that deterministically hangs for one specific article is therefore retried 3 times on every 2-minute sweep, indefinitely. Newest-first ordering keeps selecting it while it stays in the window. If timed-out requests are billed server-side, this costs about 2,000 calls per day per poison article. The breaker only pauses this when such articles make up a large share of calls. This is documented behavior. Consider a Phase 7 safeguard, such as a separate transient counter or a per-article cooldown.
-
-### IN-05: The Re-score confirmation gates on `isFetching`, so a background refetch hides it
-
-**File:** `src/main/frontend/src/components/InterestsDialog.tsx:258-260`
-
-**Issue:** `useRescoreCount` has `staleTime: 0`, and the QueryClient keeps `refetchOnWindowFocus` enabled. Returning to the tab while the confirmation is open therefore swaps it for "Counting articles…". That includes the in-flight "Re-scoring…" state and any mutation error. Nothing is double-posted, but the pending and error state disappears temporarily.
-
-**Fix:** Use `count.isPending` (first load) for the placeholder, or set `refetchOnWindowFocus: false` on this query. Remounting already guarantees a fresh count (D-02).
-
-### IN-06: The scoring executor interrupts an in-flight, possibly billed Jev call on shutdown
-
-**File:** `src/main/java/org/bartram/myfeeder/config/InterestScoringConfig.java:30-39`
-
-**Issue:** By default `waitForTasksToCompleteOnShutdown` is false, so every deploy or restart interrupts the running call. That article is judged again after startup. Consider `setWaitForTasksToCompleteOnShutdown(true)` with `setAwaitTerminationSeconds(35)` (about one attempt timeout), or accept the cost and document it.
-
-### IN-07: `truncate` throws for `max == 1`, and the `cut <= 0` guard is misleading
-
-**File:** `src/main/java/org/bartram/myfeeder/service/ArticleStateBuilder.java:69-73`
-
-**Issue:** When `max == 1`, `cut` becomes 0 and `text.charAt(cut - 1)` throws `StringIndexOutOfBoundsException`. The only caller passes 1500, so this is latent. After the D-13 change `cut` is either -1 or at least `max / 2`, so `cut <= 0` really means `cut < 0`.
-
-**Fix:** Use `if (cut < 0)`, and guard `cut > 0` before calling `charAt(cut - 1)`, or assert `max >= 2`.
-
-### IN-08: `ArticlesIngestedEvent.feedId` is never read
-
-**File:** `src/main/java/org/bartram/myfeeder/event/ArticlesIngestedEvent.java:6`
-
-**Issue:** The listener only uses `articleIds()`. This is harmless but unused. Keep it if Phase 5/7 logging will use it; otherwise drop it.
-
-### IN-09: The project docs don't mention the new components; the dialog help text still says "primarily about"
-
-**File:** `CLAUDE.md` (Package Structure / Key Behaviors); `src/main/frontend/src/components/InterestsDialog.tsx:32-33`
-
-**Issue:**
-- CLAUDE.md's package map and Key Behaviors don't list `ArticlesIngestedEvent`, `InterestScoringListener`, `ScoringQueue`, `ArticleScoringService`, `ArticleScoreStore`, `InterestScoringSweep`, `InterestScoringConfig` or `InterestRescoreController`, nor the rule that polling only publishes the event. OPS-03 is Phase 7, but the event-driven scoring hand-off is exactly the kind of "never call X directly" rule the file records for feed scheduling.
-- `TOPICS_HELP` tells users to describe what an article is "primarily about", while the scorer sends the v2 "substantially about" wording. This is the deferred 03 copy fix, still open in a file this phase edited.
+**File:** `src/test/java/org/bartram/myfeeder/DevProfileConfigTest.java:326-328`
+**Issue:** `loadYaml(...).getFirst()` ignores any later `---` documents. If main `application.yaml` later adds a profile-activated document (`spring.config.activate.on-profile`), the drift and "no `spring.profiles.*`" checks skip it without any warning.
+**Fix:** Assert that each file has exactly one document (`assertThat(loader.load(path, resource)).hasSize(1)`), or iterate over all returned sources.
 
 ---
 
-_Reviewed: 2026-09-24T02:29:01Z_
+_Reviewed: 2026-09-24T22:00:17Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
