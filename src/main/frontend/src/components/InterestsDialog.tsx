@@ -92,7 +92,7 @@ function InterestsDialogBody({ onClose }: { onClose: () => void }) {
           statusFailed={status.isError}
           onDirtyCountChange={setDirtyTopics}
         />
-        <RescoreFooter />
+        <RescoreFooter status={status.data} dirty={profileDirty || dirtyTopics > 0} />
       </>
     )
   }
@@ -178,12 +178,32 @@ function articles(count: number): string {
 }
 
 /**
- * The dialog footer: the note about newly arriving articles and the "Re-score unread" action
- * (D-01). The confirmation mounts only while confirming, so it always counts afresh (D-02).
+ * Why "Re-score unread" is disabled, or undefined. First match wins: not configured, unsaved
+ * edits (D-04), cold start. A missing or failed status never disables it; the server's 409 shows.
  */
-function RescoreFooter() {
+function rescoreBlockedReason(status: InterestStatus | undefined, dirty: boolean): string | undefined {
+  if (status?.configured === false) return "Scoring isn't set up yet: no TypeSafe API key is configured."
+  if (dirty) return 'Save your changes first'
+  if (status?.coldStart === true) return 'Write a profile or add a topic first'
+  return undefined
+}
+
+interface RescoreFooterProps {
+  status: InterestStatus | undefined
+  dirty: boolean
+}
+
+/**
+ * The dialog footer: the note about newly arriving articles, the "Re-score unread" action (D-01)
+ * and the "N waiting to be scored" line (JEV-05). The confirmation mounts only while confirming,
+ * so it always counts afresh (D-02).
+ */
+function RescoreFooter({ status, dirty }: RescoreFooterProps) {
   const [confirming, setConfirming] = useState(false)
   const [started, setStarted] = useState<number | null>(null)
+  const blocked = rescoreBlockedReason(status, dirty)
+  const waiting =
+    status?.configured === true && status.coldStart === false ? (status.eligibleUnscored ?? 0) : 0
 
   const openConfirm = () => {
     setStarted(null)
@@ -195,7 +215,12 @@ function RescoreFooter() {
       <div className="interests-rescore">
         <span className="interests-note">Profile and topic changes apply to newly arriving articles.</span>
         {!confirming && (
-          <button className="btn-secondary" onClick={openConfirm}>
+          <button
+            className="btn-secondary"
+            onClick={openConfirm}
+            disabled={blocked !== undefined}
+            title={blocked}
+          >
             Re-score unread
           </button>
         )}
@@ -212,6 +237,7 @@ function RescoreFooter() {
       {started !== null && (
         <p className="interests-waiting">Re-scoring started for {articles(started)}.</p>
       )}
+      {waiting > 0 && <p className="interests-waiting">{articles(waiting)} waiting to be scored</p>}
     </>
   )
 }

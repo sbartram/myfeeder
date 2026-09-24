@@ -494,6 +494,21 @@ html, body, #root {
 
 .interests-note { font-size: 13px; color: var(--text-muted); margin-top: 16px; }
 
+.interests-rescore {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.interests-rescore .interests-note { margin-top: 0; }
+
+.interests-waiting { font-size: 13px; color: var(--text-muted); margin: 4px 0 0; }
+
 .interests-confirm {
   justify-content: space-between;
   align-items: center;
