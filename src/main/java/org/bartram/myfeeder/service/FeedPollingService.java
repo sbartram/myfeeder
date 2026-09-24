@@ -9,6 +9,7 @@ import org.bartram.myfeeder.parser.ParsedArticle;
 import org.bartram.myfeeder.parser.ParsedFeed;
 import org.bartram.myfeeder.repository.ArticleRepository;
 import org.bartram.myfeeder.repository.FeedRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -22,6 +23,7 @@ public class FeedPollingService {
     private final ArticleRepository articleRepository;
     private final FeedParser feedParser;
     private final FeedFetcher feedFetcher;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void pollFeed(Long feedId) {
         Feed feed = feedRepository.findById(feedId)
