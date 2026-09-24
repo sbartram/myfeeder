@@ -2,6 +2,7 @@ package org.bartram.myfeeder.repository;
 
 import org.bartram.myfeeder.TestcontainersConfiguration;
 import org.bartram.myfeeder.repository.ArticleScoreStore.Candidate;
+import org.bartram.myfeeder.repository.ArticleScoreStore.ScoreCounts;
 import org.bartram.myfeeder.repository.ArticleScoreStore.ScoredRow;
 import org.bartram.myfeeder.repository.ArticleScoreStore.TopicNoul;
 import org.junit.jupiter.api.BeforeEach;
@@ -271,6 +272,72 @@ class ArticleScoreStoreTest {
     void filterOfNoIdsRunsNoQuery() {
         // An empty IN () list is invalid SQL, so an empty result without an exception proves no query ran.
         assertThat(store.filterNeedingScoring(List.of(), cutoff)).isEmpty();
+    }
+
+    @Test
+    void countsSplitRetryingFromExhausted() {
+        insertArticle("g-none", now.minus(Duration.ofHours(1)));
+        insertScore(insertArticle("g-failed-1", now.minus(Duration.ofHours(2))), "FAILED", 1);
+        insertScore(insertArticle("g-failed-2", now.minus(Duration.ofHours(3))), "FAILED", 2);
+        insertScore(insertArticle("g-failed-3", now.minus(Duration.ofHours(4))), "FAILED", 3);
+        insertScore(insertArticle("g-scored", now.minus(Duration.ofHours(5))), "SCORED", 1);
+        insertScore(insertArticle("g-skipped", now.minus(Duration.ofHours(6))), "SKIPPED", 1);
+
+        assertThat(store.counts(cutoff)).isEqualTo(new ScoreCounts(3, 1));
+    }
+
+    @Test
+    void countsIgnoreReadAndOutOfWindow() {
+        // Baseline: one eligible unscored and one exhausted article inside the window.
+        insertArticle("g-none", now.minus(Duration.ofHours(1)));
+        insertScore(insertArticle("g-exhausted", now.minus(Duration.ofHours(2))), "FAILED", 3);
+
+        insertArticle("g-read", true, now.minus(Duration.ofHours(1)), now);
+        insertScore(insertArticle("g-old-exhausted", now.minus(Duration.ofDays(20))), "FAILED", 3);
+        insertArticle("g-at-cutoff", cutoff);
+        insertScore(insertArticle("g-at-cutoff-exhausted", cutoff), "FAILED", 3);
+
+        assertThat(store.counts(cutoff)).isEqualTo(new ScoreCounts(1, 1));
+    }
+
+    @Test
+    void rescoreCountEqualsRowsDeleted() {
+        long topic = insertTopic("Java");
+        long scored = insertArticle("g-scored", now.minus(Duration.ofHours(1)));
+        store.writeScored(scored, scoreRow(topic));
+        long retrying = insertArticle("g-retrying", now.minus(Duration.ofHours(2)));
+        insertScore(retrying, "FAILED", 1);
+        long exhausted = insertArticle("g-exhausted", now.minus(Duration.ofHours(3)));
+        insertScore(exhausted, "FAILED", 3);
+
+        long count = store.countRescoreScope(cutoff);
+        int deleted = store.deleteRescoreScope(cutoff);
+
+        assertThat(count).isEqualTo(3);
+        assertThat(deleted).isEqualTo(3);
+        assertThat(topicRowCount(scored)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM article_score", Integer.class)).isZero();
+        assertThat(store.findNeedingScoring(cutoff, 10)).containsExactly(scored, retrying, exhausted);
+    }
+
+    @Test
+    void rescoreLeavesSkippedReadAndOutOfWindowRows() {
+        long inScope = insertArticle("g-in-scope", now.minus(Duration.ofHours(1)));
+        insertScore(inScope, "SCORED", 1);
+        long skipped = insertArticle("g-skipped", now.minus(Duration.ofHours(2)));
+        insertScore(skipped, "SKIPPED", 1);
+        long read = insertArticle("g-read", true, now.minus(Duration.ofHours(3)), now);
+        insertScore(read, "SCORED", 1);
+        long old = insertArticle("g-old", now.minus(Duration.ofDays(20)));
+        insertScore(old, "SCORED", 1);
+
+        assertThat(store.countRescoreScope(cutoff)).isEqualTo(1);
+        assertThat(store.deleteRescoreScope(cutoff)).isEqualTo(1);
+
+        assertThat(jdbc.queryForList("SELECT article_id FROM article_score ORDER BY article_id", Long.class))
+                .containsExactly(skipped, read, old);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM article", Integer.class)).isEqualTo(4);
+        assertThat(jdbc.queryForObject("SELECT \"read\" FROM article WHERE id = ?", Boolean.class, read)).isTrue();
     }
 
     private long insertArticle(String guid, Instant publishedAt) {

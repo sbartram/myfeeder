@@ -188,6 +188,18 @@ public class ArticleScoreStore {
                 .list();
     }
 
+    public ScoreCounts counts(Instant cutoff) {
+        return new ScoreCounts(0, 0);
+    }
+
+    public long countRescoreScope(Instant cutoff) {
+        return 0;
+    }
+
+    public int deleteRescoreScope(Instant cutoff) {
+        return 0;
+    }
+
     private static Article mapArticle(ResultSet rs) throws SQLException {
         Article article = new Article();
         article.setId(rs.getLong("id"));
