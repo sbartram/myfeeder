@@ -1,8 +1,8 @@
 ---
 phase: 04-scoring-pipeline-backfill-sweep
-verified: 2026-09-24T02:40:00Z
+verified: 2026-09-24T22:06:00Z
 status: human_needed
-score: 87/88 must-haves verified (5/5 roadmap success criteria; 82/83 plan truths; 1 backstop truth abstained as insufficient_spec)
+score: 95/96 must-haves verified (5/5 roadmap success criteria; 83/83 plan 04-01..04-08 truths, 1 of them by human acceptance; 7/7 plan 04-09 truths; G-04-1 live-drain truth present, behavior unverified)
 covered_files:
   - .planning/REQUIREMENTS.md
   - .planning/phases/04-scoring-pipeline-backfill-sweep/04-01-PLAN.md
@@ -21,6 +21,9 @@ covered_files:
   - .planning/phases/04-scoring-pipeline-backfill-sweep/04-07-SUMMARY.md
   - .planning/phases/04-scoring-pipeline-backfill-sweep/04-08-PLAN.md
   - .planning/phases/04-scoring-pipeline-backfill-sweep/04-08-SUMMARY.md
+  - .planning/phases/04-scoring-pipeline-backfill-sweep/04-09-PLAN.md
+  - .planning/phases/04-scoring-pipeline-backfill-sweep/04-09-SUMMARY.md
+  - .planning/phases/04-scoring-pipeline-backfill-sweep/04-UAT.md
   - CLAUDE.md
   - src/main/frontend/src/App.css
   - src/main/frontend/src/api/interest.ts
@@ -29,6 +32,7 @@ covered_files:
   - src/main/java/org/bartram/myfeeder/config/InterestScoringConfig.java
   - src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java
   - src/main/java/org/bartram/myfeeder/controller/InterestRescoreController.java
+  - src/main/java/org/bartram/myfeeder/controller/RescoreRequest.java
   - src/main/java/org/bartram/myfeeder/event/ArticlesIngestedEvent.java
   - src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java
   - src/main/java/org/bartram/myfeeder/repository/ArticleScoreStore.java
@@ -44,124 +48,146 @@ covered_files:
   - src/main/java/org/bartram/myfeeder/service/ScoringFailure.java
   - src/main/java/org/bartram/myfeeder/service/ScoringQueue.java
   - src/main/resources/application.yaml
+  - src/test/java/org/bartram/myfeeder/DevProfileConfigTest.java
+  - src/test/java/org/bartram/myfeeder/MyfeederApplicationTests.java
+  - src/test/java/org/bartram/myfeeder/TestMyfeederApplication.java
+  - src/test/resources/application-dev.yaml
   - src/test/resources/application.yaml
-covered_digest: "v1:sha256:06fef466e183c90294fa9ff312de7555fac353de7c205d46e35359c42cf0d700"
-behavior_unverified: 0
-overrides_applied: 0
+covered_digest: "v1:sha256:9caf8c68f02f041427467cb835df18f9ffd7c4d3dba145d0c0b06575ae41e806"
+behavior_unverified: 1
+overrides_applied: 1
+overrides:
+  - must_have: "Two concurrent writes for the same article cannot create two rows or an FK error, because ON CONFLICT on the article_score primary key serializes them"
+    reason: "Backstop truth accepted without a concurrent-writer test: Postgres ON CONFLICT on the PK plus the single jev-score thread and in-flight set (UAT test 4, result pass)"
+    accepted_by: "Scott Bartram"
+    accepted_at: "2026-09-24T21:16:14Z"
+re_verification:
+  previous_status: human_needed
+  previous_score: 87/88
+  gaps_closed:
+    - "G-04-1 (automated side): under ./gradlew bootTestRun the dev profile binds MYFEEDER_TYPESAFE_API_KEY, the real Jev base-url, the PT1M first sweep, the 5s/30s HTTP timeouts and the app name, and Jev reports configured"
+    - "Prior human item 2 (footer layout and theme): UAT test 2 passed"
+    - "Prior human item 3 (flagged prohibition, edits typed after the confirmation opens): UAT test 3 passed, so the partial enforcement was accepted"
+    - "Prior human item 4 (backstop concurrency truth): UAT test 4 passed, now carried as an override"
+  gaps_remaining: []
+  regressions: []
+advisory:
+  - finding: "The suite stays offline only by shell hygiene. The Gradle Test task passes the whole developer environment into the test JVM. The activation scan does not catch a direct load of the overlay (spring.config.import, @TestPropertySource(locations=...application-dev.yaml), spring.config.additional-location). suiteContextStaysOffline only runs after other contexts may already have started (04-REVIEW WR-01)"
+    category: security
+    reason: "Raised by the incremental code review. No test currently loads the overlay directly: a grep of src/test/java for application-dev, spring.config., SPRING_CONFIG_ and TestPropertySource finds nothing outside DevProfileConfigTest. .envrc exports only MYFEEDER_* names. Would be resolved by stripping SPRING_AI_TYPESAFE_*/SPRING_PROFILES_ACTIVE/SPRING_CONFIG_* in tasks.withType<Test> and widening ACTIVATION_TOKENS"
+    evidence_status: "none provided (no reproducing test; current tree is clean)"
+  - finding: "devOverlayResolvesEveryMainKeyToMainsValue checks only one direction. Keys that exist only in the test yaml (spring.ai.anthropic.api-key, spring.datasource.hikari.*, spring.flyway.connect-retries*) reach bootTestRun unreviewed (04-REVIEW WR-02)"
+    category: other
+    reason: "All current test-only keys are harmless for a dev run. A future offline-only test knob would slip into bootTestRun unnoticed. Would be resolved by an allow-list of suite-only keys"
+    evidence_status: "none provided"
+coincidental_reliance_items:
+  - truth: "Without the dev profile (what every @SpringBootTest context sees) nothing changes: no TypeSafe key is bound even when MYFEEDER_TYPESAFE_API_KEY is set"
+    reason: undeclared-precondition
+    harden: "The no-profile probe removes the systemEnvironment source, so it proves the yaml side only. The real suite also depends on the shell not exporting SPRING_AI_TYPESAFE_API_KEY or SPRING_PROFILES_ACTIVE. CLAUDE.md states this but nothing enforces it before contexts start. Strip those variables in the Gradle Test task (see 04-REVIEW WR-01)"
+behavior_unverified_items:
+  - truth: "G-04-1: with MYFEEDER_TYPESAFE_API_KEY exported and ./gradlew bootTestRun (no SPRING_AI_TYPESAFE_* or MYFEEDER_INTEREST_* overrides), Jev is configured and the backlog sweep drains within about 3 minutes of startup"
+    test: "Export the real MYFEEDER_TYPESAFE_API_KEY only, run ./gradlew bootTestRun, save a profile or a topic, then watch /api/interest/status, article_score, a feed refresh, Re-score unread and the poll logs"
+    expected: "The startup log shows 'The following 1 profile is active: \"dev\"' and no 'TypeSafe Jev not configured' line. eligibleUnscored drains to 0 with SCORED rows (model jev-1.13.0, request id). New arrivals are scored without waiting for the sweep. Re-score resets and re-drains. No new feed errors"
+    why_human: "The configured half is proven by the smoke log and DevProfileConfigTest. The drain half needs the billed TypeSafe API. The automated smoke deliberately used a fake key in cold start, so no Jev call was made under the dev profile"
 human_verification:
-  - test: "Live-key end-to-end (plan 04-05 human-check). Set MYFEEDER_TYPESAFE_API_KEY, run ./gradlew bootTestRun, and save a profile or at least one topic. (1) Within about 3 minutes of startup, GET /api/interest/status shows eligibleUnscored falling toward 0, and article_score rows appear with status SCORED, model jev-1.13.0 and a request id. (2) A feed refresh that brings new articles produces rows for them without waiting for the sweep. (3) Interests -> Re-score unread shows a count, confirming resets it, and the 'N waiting to be scored' line drains back to 0. (4) Poll logs show no new feed errors while scoring runs."
+  - test: "Live-key re-run of UAT test 1 under the documented procedure (04-05 human-check, as updated by 04-09). Export the real MYFEEDER_TYPESAFE_API_KEY with no SPRING_AI_TYPESAFE_* or MYFEEDER_INTEREST_* overrides, run ./gradlew bootTestRun, confirm the dev-profile startup line and the absence of the keyless TypeSafe INFO line, then save a profile or at least one topic. (1) Within about 3 minutes GET /api/interest/status shows eligibleUnscored falling to 0, and article_score rows appear with status SCORED, model jev-1.13.0 and a request id. (2) A feed refresh that brings new articles scores them without waiting for the sweep. (3) Interests -> Re-score unread shows a count; confirming resets and re-drains (not separately exercised in the first UAT run). (4) Poll logs show no new feed errors."
     expected: "Backlog drains through the sweep; new arrivals are scored via the ArticlesIngestedEvent hand-off; Re-score resets and re-drains; feeds keep errorCount 0"
-    why_human: "Needs the live TypeSafe API (billed, never called by the verifier) and a running app. The Spring event multicast from pollFeed to InterestScoringListener is only exercised with a hand-wired publisher in ScoringIsolationTest, not inside a running context"
-  - test: "Footer layout and theme (plan 04-07). Open Interests in each of the 6 themes. Check that the note and the 'Re-score unread' button share one row, and that the inline confirmation, the 'Counting articles…' line, the 'Re-scoring started' line, the 'N waiting to be scored' line and the 409 error text are readable, with the disabled-button tooltips showing."
-    expected: "The row does not overlap or clip; text contrast works in all 6 themes; the confirmation looks like the existing close-guard row"
-    why_human: "Visual layout and theme contrast are not asserted by any test. The CSS uses theme variables only, but appearance needs a human look"
-  - test: "Flagged prohibition (04-07, test-tier, partially enforced): 'MUST NOT send a reset ... when the dialog holds unsaved edits'. Open Interests with no unsaved edits and click 'Re-score unread'. While the confirmation is showing, type into the profile textarea or a topic field, then click 'Re-score'."
-    expected: "Decide whether this is acceptable. Currently the POST is sent: RescoreFooter hides the 'Re-score unread' button while confirming, and RescoreConfirm never re-checks `dirty`. So edits typed after the confirmation opens do not block the reset, and the reset re-judges against the saved rubric, not the edited one"
-    why_human: "D-04's literal wording (the button is disabled while dirty) is met and tested by rescoreDisabledWhileEditsAreUnsaved. The broader prohibition is not enforced for edits made after the confirmation opens. A human must decide whether to accept this or close it (for example unmount the confirmation or disable 'Re-score' when dirty becomes true)"
-  - test: "Backstop truth (04-02, verification: backstop): two concurrent writes for the same article cannot create two rows or an FK error, because ON CONFLICT on the article_score primary key serializes them"
-    expected: "Accept on Postgres ON CONFLICT semantics plus the single-thread executor and in-flight set, or request a concurrent-writer test"
-    why_human: "Non-inferable (backstop) truth. No concurrent-writer test exists; only sequential idempotency is tested (scoredIsWriteOnce, skippedIsTerminalAndFirstReasonWins). Presence and wiring never qualify under the backstop rule"
+    why_human: "Needs the live, billed TypeSafe API and a running app. The verifier never calls the billed API and does not start servers"
 ---
 
 # Phase 4: Scoring Pipeline & Backfill Sweep Verification Report
 
 **Phase Goal:** Every eligible article, including the existing unread backlog, is judged once by Jev in the background, and feed polling is never slowed or failed by it.
-**Verified:** 2026-09-24T02:40:00Z
+**Verified:** 2026-09-24T22:06:00Z
 **Status:** human_needed
-**Re-verification:** No. This is the initial verification.
+**Re-verification:** Yes. This follows UAT gap G-04-1 and gap-closure plan 04-09 (commits 28d64fb, 79492fe, 0ecce98, 15a36d2, 394237e). It also covers the review fixes committed after the first verification (00ca174 WR-01 rubric discard, e67b696 WR-02 JSON confirm body, 81dd8c7 WR-03 poll gate).
 
 ## Goal Achievement
 
-### Observable Truths (Roadmap Success Criteria)
+### Plan 04-09 Must-Have Truths (full verification)
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Shortly after a poll brings in new articles, each eligible one (unread, within 14 days, has a GUID) gets exactly one stored judgment: profile score and confidence, a noul per topic, the model id and the profile/topic versions. The newest articles are scored first. | ✓ VERIFIED | The ingest chain works. `FeedPollingService.publishIngested` publishes `ArticlesIngestedEvent` with the inserted ids only, after the success bookkeeping (FeedPollingService.java:62-86). `InterestScoringListener` (`@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)`) calls `ScoringQueue.submitIngested`, which filters through `ArticleScoreStore.filterNeedingScoring` (newest first). The executor then calls `ArticleScoringService.score` on `jev-score-`. The scorer snapshots versions, calls `jevApiClient.judge` once, and `writeScored` inserts the parent row first and then the topic rows in one `@Transactional`. Tests: `ArticleScoringFlowTest.scoresAnEligibleArticleOnceAndStoresRawOutputs` (two `score()` calls give exactly one `judge()`, and the Postgres row has score 3.2/4/0.81, version 2, the model, the request id and per-topic nouls/versions); `ArticleScoreStoreTest.selectsEligibleUnscoredNewestFirst`, `excludesReadAndOutOfWindowArticles` (strict `>` at the cutoff); `ScoringIsolationTest.ingestedEventReachesTheScorerOnTheScoringThread`; `FeedPollingServiceTest` (publishes only the new ids). All pass. |
-| 2 | When Jev is slow (30s), failing or unconfigured, poll duration and feed error counts do not change, and nothing is scored while the profile is empty and there are no topics. | ✓ VERIFIED | `ScoringIsolationTest` uses the real 1-thread executor, queue and listener: `pollFinishesWhileScoringIsBlocked` (scorer blocked 30s, poll returns in under 5s, errorCount 0, lastError null), `scorerFailureNeverReachesTheFeed`, `unconfiguredJevEnqueuesNothing`, `enqueueFailureNeverFailsThePoll`. The listener catches every `RuntimeException`, and `publishIngested` has its own try that sits after the errorCount reset. Cold start: `ArticleScoringFlowTest.coldStartJudgesNothing`, `ArticleScoringServiceTest.coldStartTouchesNothing`, `InterestScoringSweepTest.skipsInColdStart`. All pass. |
-| 3 | The sweep scores the eligible unscored backlog on launch, after a late key, after an outage and after the profile is first written, without re-judging scored articles. Permanent failures stop at 3 attempts; transient failures and an open circuit use no attempt; GUID-less articles are skipped. | ✓ VERIFIED | `InterestScoringSweep.sweep()` is `@Scheduled(fixedDelayString=${myfeeder.interest.sweep-delay}, initialDelayString=...)`. It gates on isConfigured, breaker OPEN/FORCED_OPEN and isColdStart, then calls `findNeedingScoring(cutoff, min(room, 50))` and `scoringQueue.submit`. Late key and profile first written: the gates are re-evaluated on every run. Outage: D-17 `automatic-transition-from-open-to-half-open-enabled: true` in both YAML files (`JevResilienceTest.openBreakerMovesToHalfOpenWithoutACall`), and `runsWhenTheBreakerIsHalfOpen`. No re-judging: NEEDS_SCORING excludes SCORED, SKIPPED and exhausted FAILED, and SCORED is write-once in SQL (`ON CONFLICT ... WHERE article_score.status = 'FAILED'`, tested by `scoredIsWriteOnce`). Attempts: `failedAttemptsCountUpToExhaustion`, `permanentFailuresRecordAFixedTextAttempt`, `transientFailuresWriteNothing`. `ScoringFailure.isTransient` covers 429, 5xx, connection/timeout, CallNotPermitted, NotConfigured and 401/403. GUID: `blankGuidIsSkippedWithoutACall`. The context test `sweepIsScheduledWithConfiguredDelays` proves PT2M binds. All pass. |
-| 4 | `GET /api/interest/status` reports configured, the breaker state, and the eligible-unscored and failed counts. | ✓ VERIFIED | `InterestStatus(boolean configured, String breakerState, boolean coldStart, long eligibleUnscored, long failed)`: the three existing components are unchanged and the counts are appended. `InterestStatusService.status()` reads both counts from one `store.counts(cutoff)` call (a single SQL statement with `COUNT(*) FILTER`). `InterestStatusController` serves `/status`. Tests: `InterestApiIntegrationTest.statusCountsEligibleUnscoredAndExhaustedFailures` (full stack, no key), `ArticleScoreStoreTest.countsSplitRetryingFromExhausted`, `countsIgnoreReadAndOutOfWindow`, `InterestStatusServiceTest`. All pass. |
-| 5 | User can trigger "Re-score unread", sees how many articles will be re-judged before confirming, and the in-window unread articles are then re-scored by the sweep. | ✓ VERIFIED (visual check is a human item) | Backend: `GET/POST /api/interest/rescore` (`InterestRescoreController` calls `InterestRescoreService`). `countRescoreScope` and `deleteRescoreScope` share `RESCORE_SCOPE` (ELIGIBLE, SCORED or FAILED). The D-18 guard throws `IllegalStateException`, which maps to 409. `rescoreCountEqualsRowsDeleted` proves the count equals the rows deleted, and that `findNeedingScoring` then returns the reset articles, so the sweep re-drains them. `InterestRescoreApiIntegrationTest.rescoreCountIsServedAndKeylessResetIs409` passes. Frontend: `RescoreFooter`/`RescoreConfirm` in InterestsDialog.tsx (inline confirmation, server count, zero case, disabled reasons, waiting line). Vitest: `rescoreConfirmShowsTheServerCountAndPosts`, `rescoreDisabledWhileEditsAreUnsaved`, `rescoreDisabledWithReasonWhenNotConfiguredOrColdStart`, `waitingLineShowsEligibleUnscored`, `statusPollsOnlyWhileArticlesAreWaiting`. All 118 frontend tests pass, and `npx tsc -b` exits 0. |
+| 1 | With MYFEEDER_TYPESAFE_API_KEY exported, bootTestRun starts with the dev profile active and Jev configured. The startup log shows the dev profile line, the keyless TypeSafe INFO line is absent, and status reports configured true | ✓ VERIFIED | `TestMyfeederApplication.main` chains `.with(TestcontainersConfiguration.class).withAdditionalProfiles(DEV_PROFILE).run(args)` with `DEV_PROFILE = "dev"`. I read the smoke log on disk (`~/.cache/myfeeder-phase04/boottestrun-dev-smoke.09.log`, 17:50 local). Line 22 is `The following 1 profile is active: "dev"`. The thread prefix is `[myfeeder]`, which proves the overlay's `spring.application.name` loaded, since the test yaml has no app name. Tomcat started on 18089. There is no `TypeSafe Jev not configured` line. `TypeSafeConfig.typeSafeClient` always logs that line when `properties.getApiKey()` is blank, and `JevApiClientImpl.isConfigured()` is `hasText(properties.getApiKey())` on the same properties, so the absent line means configured. The status JSON itself is only in the SUMMARY. I did not re-run the smoke because the verifier does not start servers |
+| 2 | Under the dev profile the environment resolves the key from MYFEEDER_TYPESAFE_API_KEY, base-url to https://api.typesafe.ai, sweep-initial-delay PT1M, http 5s/30s and app name myfeeder | ✓ VERIFIED | `DevProfileConfigTest.devProfileRestoresLiveMainSettings` runs Spring Boot's real ConfigData pipeline with `setAdditionalProfiles("dev")` on the test classpath. It asserts `PROBE_KEY.equals(api-key)` (boolean form), base-url equals `new TypeSafeProperties().getBaseUrl()`, PT1M/PT2M, 5s/30s and myfeeder. My own run passed 4/4 (22:02:35Z) |
+| 3 | The test yaml plus the dev overlay resolve every main key to main's value; the overlay adds nothing beyond main except base-url | ✓ VERIFIED | `devOverlayResolvesEveryMainKeyToMainsValue` passes. I checked it by hand against the three files: main's keys that the test yaml lacks or differs on are exactly app name, http.clients x2, typesafe.api-key, raindrop.api-token and sweep-initial-delay, and the overlay supplies all six with main's raw values. Its only extra key is `spring.ai.typesafe.base-url`. The code logic makes the recorded mutation (dropping raindrop.api-token gives `"null"`, which is not equal to main's placeholder) fail as the SUMMARY states |
+| 4 | Without the dev profile nothing changes: no key bound even with MYFEEDER_TYPESAFE_API_KEY set, base-url 127.0.0.1:9, sweep-initial-delay PT1H | ✓ VERIFIED (coincidental-reliance) | `withoutTheProfileTheSuiteConfigStaysOffline` injects `MYFEEDER_TYPESAFE_API_KEY` and asserts `hasText(api-key)` is false, loopback base-url and PT1H. It passes. The test yaml has no api-key placeholder. Advisory: the probe strips systemEnvironment, so the real suite also relies on the shell not exporting `SPRING_AI_TYPESAFE_*`/`SPRING_PROFILES_ACTIVE`. `.envrc` exports only `MYFEEDER_RAINDROP_API_TOKEN` and `MYFEEDER_TYPESAFE_API_KEY` (names checked, values not read) |
+| 5 | No test source or resource activates the dev profile; the MyfeederApplicationTests context runs without it, isConfigured() false, loopback base-url | ✓ VERIFIED | `noTestActivatesTheDevProfile` passes, with positive controls. My grep of src/test and src/main for `spring.profiles`, `SPRING_PROFILES` and `ActiveProfiles` found only the read call in `suiteContextStaysOffline`. `build.gradle.kts` sets no profile. `application-dev.yaml` exists only in src/test/resources. `MyfeederApplicationTests.suiteContextStaysOffline` passes 3/3 in my full-suite run, and its XML output contains the keyless `TypeSafe Jev not configured` line |
+| 6 | Both application.yaml files are unchanged; TypeSafeConfigTest, JevResilienceTest and HttpClientConfigurationTest mirror guards keep passing | ✓ VERIFIED | `git diff 4a2d5fa HEAD -- src/main/resources/application.yaml src/test/resources/application.yaml` gives 0 lines. In my full run TypeSafeConfigTest was 11/11, JevResilienceTest 16/16 and HttpClientConfigurationTest 2/2 |
+| 7 | CLAUDE.md (Dev workflow line plus a bootTestRun gotcha) and the 04-05 human-check describe the working procedure; the user's uncommitted CLAUDE.md hunks are unchanged | ✓ VERIFIED | `15a36d2` touches only CLAUDE.md with 3 changed lines (the Dev workflow line replaced, the gotcha added). The working tree has both lines. `git diff -U0 -- CLAUDE.md` minus index lines equals `claude-md-user-hunks.09.before.diff`. The 04-05 PLAN has exactly one `<human-check>`, and it names the dev profile line and 04-09. `git log 4a2d5fa..HEAD` touches no `.envrc`, `.claude/CLAUDE.md` or `.planning/config.json`, and all three are still modified and uncommitted |
 
-**Score:** 5/5 roadmap truths verified. Plan must-haves: 82/83 verified. One `verification: backstop` truth (04-02 concurrency) abstains as insufficient_spec and goes to human review. No truth is present-but-behavior-unverified.
+### G-04-1 Gap Truth (from 04-UAT.md)
 
-### Plan Must-Have Truths (summary by plan)
+| Truth | Status | Evidence |
+|-------|--------|----------|
+| With MYFEEDER_TYPESAFE_API_KEY set and `./gradlew bootTestRun`, Jev is configured and the backlog sweep drains within about 3 minutes of startup | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | The config half is closed (truths 1-2 above). The overlay supplies exactly the three overrides that UAT test 1 used to get a live drain (key, base-url, initial delay), plus the timeouts. The drain under the new procedure with a real key has not been run: the smoke used a fake key in cold start by design. Routed to human verification |
 
-| Plan | Truths | Result | Notes |
-|------|--------|--------|-------|
-| 04-01 Jev hardening | 11 | 11 VERIFIED | Aspect orders are 1/2 in both YAML files (`breakerAspectWrapsRetryAspect`). 10 calls give 30 hits, 10 failures and OPEN, and the 11th call throws CallNotPermitted (`breakerOpensAtMinimumCallsAndShortCircuits`). 500,500,200 gives 0 failures and 1 success. Timeout 30s and slow-call 15s in both files. IllegalArgumentException is ignored and Choice is rejected with 0 hits (`callerInputErrorsAreNeitherSentNorRecorded`). `testYamlMirrorsMainJevInstances` passes. Raindrop tests pass. CLAUDE.md HEAD has the aspect-order convention. The todo is narrowed. (The SUMMARY swaps the Raindrop test counts: it says 5+3, but the actual counts are RaindropApiClientImplTest 3 and RaindropServiceTest 5. Info only.) |
-| 04-02 ArticleScoreStore | 14 | 13 VERIFIED, 1 insufficient_spec | A single `ELIGIBLE` constant composes every query. Tiebreak is `id DESC`. The boundary is strict `>`. Missing-article writes are no-ops (`INSERT ... SELECT FROM article`). A deleted topic is left out. Defaults 14/1/1000/50/PT2M/PT1M. The concurrency backstop truth has no concurrent test (see human items). |
-| 04-03 Scorer | 15 | 15 VERIFIED | `scorerHoldsNoTransactionAndNoBreakerHandle`. `isValid` rejects non-finite or out-of-range values. `writeErrorAfterBilledSuccessRecordsAFailedAttempt`. `missingLegendFallsBackToProfileMaxLevel`. The D-13 truncate keeps at least `max / 2` and never splits a surrogate pair (13 `ArticleStateBuilderTest` tests). |
-| 04-04 Hand-off | 10 | 10 VERIFIED | `defaultCandidate = false`, and `applicationTaskExecutor` survives (`contextLoads`). A `TaskRejectedException` releases the in-flight id (`rejectedArticleIsReleasedForTheSweep`). `@Qualifier` is on an explicit constructor. |
-| 04-05 Sweep | 10 | 10 VERIFIED | 8 `InterestScoringSweepTest` tests plus the schedule proof. Main YAML initial delay is PT1M and test YAML is PT1H. `spring.task.scheduling.pool.size` is not set, and virtual threads are not enabled. |
-| 04-06 Status counts | 6 | 6 VERIFIED | No `lastError` field. The counts come from one statement. |
-| 04-07 Dialog | 12 | 12 VERIFIED | The note is kept and the button sits beside it. The confirmation is inline. The zero case shows OK only. "Counting articles…" shows on every open (gcTime 0 plus `isFetching`). Disabled reasons and the waiting line work. Polling is conditional. `tsc -b` is clean. CLAUDE.md routes are updated. |
-| 04-08 Re-score API | 5 | 5 VERIFIED | The GET is unguarded and the POST is guarded (409). The count uses the shared scope. |
+### Roadmap Success Criteria (regression check)
 
-### Prohibitions (all test-tier)
+| # | Truth | Status | Evidence |
+|---|-------|--------|----------|
+| 1 | New eligible articles get exactly one stored judgment, newest first | ✓ VERIFIED | No regression. ArticleScoringFlowTest 3/3, ArticleScoreStoreTest 18/18, ScoringIsolationTest 5/5 and FeedPollingServiceTest 6/6 all pass in my full run. The post-verification WR-01 fix (`sameRubric` re-read after `judge()`, writes nothing when the rubric changed) keeps the one-judgment rule. ArticleScoringServiceTest is 17/17 (up from 14, adding the rubric-change tests) |
+| 2 | Jev slow, failing or unconfigured never changes poll duration or feed errors; cold start scores nothing | ✓ VERIFIED | ScoringIsolationTest 5/5 (30s-blocked scorer, poll under 5s, errorCount 0). Cold-start tests pass. Scoring code is unchanged by 04-09 |
+| 3 | The sweep drains the backlog on launch, late key, outage and first profile; attempt rules; GUID skip | ✓ VERIFIED | InterestScoringSweepTest 8/8, JevResilienceTest 16/16, ArticleScoringServiceTest 17/17, `sweepIsScheduledWithConfiguredDelays` (PT2M/PT1H). The live drain was observed once in UAT test 1 (30 to 0 SCORED rows, jev-1.13.0, 30/30 request ids) |
+| 4 | `/api/interest/status` reports configured, breaker, eligibleUnscored and failed | ✓ VERIFIED | InterestApiIntegrationTest 8/8, InterestStatusServiceTest 5/5 |
+| 5 | Re-score unread shows the count before confirming, then the sweep re-scores | ✓ VERIFIED | The post-verification WR-02 fix makes POST `/rescore` require a JSON body (`consumes = application/json`, `RescoreRequest(boolean confirm)`, false or missing gives 400). The SPA sends `{ confirm: true }` (`api/interest.ts:63`). InterestRescoreControllerTest 5/5, InterestRescoreApiIntegrationTest 1/1, InterestRescoreServiceTest 5/5. WR-03 gates the poll on configured, not cold start and eligibleUnscored > 0. Frontend vitest 119/119 and `npx tsc -b` exit 0 (both my runs). Visual check passed in UAT test 2 |
 
-| Plan | Prohibition | Disposition |
-|------|-------------|-------------|
-| 04-01 / 04-07 | Don't stage the user's uncommitted CLAUDE.md hunks, .envrc, and similar files | Enforced. `git status` still shows CLAUDE.md, .envrc, .claude/CLAUDE.md and .planning/config.json modified and uncommitted. HEAD's CLAUDE.md carries only the plan lines. |
-| 04-02 / 04-08 | No read/starred change and no article delete from scoring SQL or Re-score | Enforced. The store touches only article_score and article_topic_score. `rescoreLeavesSkippedReadAndOutOfWindowRows` asserts the article count and the read flag are unchanged. |
-| 04-03 | No unbounded billed calls | Enforced. MAX_ATTEMPTS 3; the "write failed" path records an attempt. The transient-timeout loop is a documented D-19 consequence (review IN-04). |
-| 04-03 / 04-04 | No message, body, text or key in logs or last_error | Enforced. `ScoringFailure.describe` gives the class name, HTTP status and request id only. Listener and queue logs carry counts, ids and class names. |
-| 04-04 / 04-05 | No Jev call on the poll, scheduler or HTTP thread; no feed errorCount impact | Enforced. `ScoringIsolationTest` asserts `jev-score-` threads; the sweep only selects and submits. |
-| 04-06 | Status components not renamed; no lastError | Enforced. |
-| 04-08 | No delete when unconfigured or in cold start; no delete outside the counted scope | Enforced (tests for the 409 and the shared scope). |
-| 04-07 | MUST NOT send a reset against an unfreshened count or while the dialog holds unsaved edits | **FLAGGED: partially enforced.** The fresh count is enforced. Unsaved edits made *after* the confirmation opens are not guarded: `RescoreConfirm` never sees `dirty`. Listed under human verification. |
+### Plan 04-01..04-08 Truths (regression)
+
+All 83 plan truths from the first verification still hold. There are no regressions in the full suite, and the only production code changed since then is the three review fixes above, each covered by tests. The one backstop truth (04-02 concurrent writes) was accepted in UAT test 4 and is carried as a PASSED (override). The flagged 04-07 prohibition (edits typed after the confirmation opens) was accepted in UAT test 3.
+
+**Score:** 95/96 truths verified (1 via override). 1 is present but behavior-unverified: the G-04-1 live drain under the new procedure.
+
+### Prohibitions (plan 04-09, all test-tier)
+
+| Prohibition | Disposition |
+|-------------|-------------|
+| MUST NOT modify either application.yaml | Enforced. The git diff since 4a2d5fa is empty, and the mirror guards pass |
+| MUST NOT let any test activate the dev profile or bind a real key | Enforced. `noTestActivatesTheDevProfile`, `withoutTheProfileTheSuiteConfigStaysOffline` and `suiteContextStaysOffline` all pass. Scope limits are noted as advisory (review WR-01) |
+| MUST NOT stage or commit .envrc, .claude/CLAUDE.md, .planning/config.json or the user's CLAUDE.md hunks | Enforced. No commit since base touches them, and the user hunks are byte-identical |
+
+### Advisory (New Scope, Unevidenced)
+
+| # | Finding | Category | Why Advisory |
+|---|---------|----------|--------------|
+| 1 | The offline barrier relies on shell hygiene, and the activation scan misses direct overlay loads (04-REVIEW WR-01) | security | New scope with no reproducing test. The current tree has no direct overlay load |
+| 2 | The drift guard is one-directional, so test-only yaml keys reach bootTestRun unreviewed (04-REVIEW WR-02) | other | New scope. The current test-only keys are harmless |
 
 ### Required Artifacts
 
-| Artifact | Status | Details |
-|----------|--------|---------|
-| `repository/ArticleScoreStore.java` | ✓ VERIFIED | ELIGIBLE/NEEDS_SCORING/RESCORE_SCOPE; upserts on `ON CONFLICT (article_id)`; used by the scorer, queue, sweep, status and rescore |
-| `service/ArticleScoringService.java` | ✓ VERIFIED | Uses `InterestQuestions.forRubric` and `ArticleStateBuilder.build`; one `judge()` call; classification |
-| `service/ScoringFailure.java` | ✓ VERIFIED | `isTransient` and `describe` |
-| `service/ArticleStateBuilder.java` | ✓ VERIFIED | `i >= max / 2` loop bound |
-| `event/ArticlesIngestedEvent.java` | ✓ VERIFIED | record(feedId, articleIds) |
-| `service/InterestScoringListener.java` | ✓ VERIFIED | `fallbackExecution = true`; catches everything |
-| `config/InterestScoringConfig.java` | ✓ VERIFIED | `defaultCandidate = false`; core = max = concurrency |
-| `service/ScoringQueue.java` | ✓ VERIFIED | In-flight set, TaskRejectedException handling, `remainingCapacity` |
-| `scheduler/InterestScoringSweep.java` | ✓ VERIFIED | `fixedDelayString`; gates; batch cap |
-| `service/InterestStatus(.java/Service)` | ✓ VERIFIED | `long eligibleUnscored, long failed`; `store.counts(` |
-| `service/InterestRescoreService.java`, `controller/InterestRescoreController.java`, `service/RescoreCount.java` | ✓ VERIFIED | GET and POST `/rescore`; D-18 guard |
-| `integration/JevApiClientImpl.java` | ✓ VERIFIED | "Unsupported question type" check before the HTTP call |
-| `application.yaml` (main + test) | ✓ VERIFIED | Aspect orders, 30s timeout, 15s slow-call, auto half-open, IAE ignored, `myfeeder.interest` block |
-| Frontend `api/interest.ts`, `hooks/useInterest.ts`, `InterestsDialog.tsx`, `App.css` | ✓ VERIFIED | `getRescoreCount`/`rescore`, `useRescoreCount`/`useRescoreUnread`, `RescoreFooter`, `.interests-rescore`/`.interests-waiting` |
+| Artifact | Expected | Status | Details |
+|----------|----------|--------|---------|
+| `src/test/resources/application-dev.yaml` | Dev overlay restoring main's live settings | ✓ VERIFIED | 6 main keys plus base-url; `sweep-initial-delay: PT1M` present; loaded under dev (probe asserts the property source name) |
+| `src/test/java/org/bartram/myfeeder/TestMyfeederApplication.java` | bootTestRun entry that activates dev | ✓ VERIFIED | `withAdditionalProfiles(DEV_PROFILE)`; used by the Spring Boot plugin's bootTestRun and referenced by the tests |
+| `src/test/java/org/bartram/myfeeder/DevProfileConfigTest.java` | Docker-free probes, mirror rule, no-activation scan | ✓ VERIFIED | 4 tests, all passing; no Spring test annotations |
+| `src/test/java/org/bartram/myfeeder/MyfeederApplicationTests.java` | Runtime offline guard | ✓ VERIFIED | `suiteContextStaysOffline` passes; the message avoids the scan tokens |
+| Phase 04 production artifacts (01-08) | Scoring pipeline | ✓ VERIFIED | Unchanged except the review fixes; see regression tables |
 
 ### Key Link Verification
 
 | From | To | Via | Status |
 |------|----|-----|--------|
-| FeedPollingService | InterestScoringListener | `publishEvent(new ArticlesIngestedEvent(...))` then `@TransactionalEventListener(fallbackExecution = true)` | ✓ WIRED (runtime multicast inside a live context is in the E2E human item) |
-| InterestScoringListener | ScoringQueue | `submitIngested` then `filterNeedingScoring` | ✓ WIRED |
-| ScoringQueue | interestScoringExecutor | `@Qualifier(InterestScoringConfig.EXECUTOR)` | ✓ WIRED (context loads) |
-| ScoringQueue | ArticleScoringService | `executor.execute(() -> run(id))` then `scorer.score(id)` | ✓ WIRED |
-| ArticleScoringService | JevApiClient / InterestService / ArticleScoreStore | `jevApiClient.judge`, `interestService.isColdStart()`, `store.loadCandidate/write*` | ✓ WIRED |
-| InterestScoringSweep | ScoringQueue / ArticleScoreStore / YAML | `remainingCapacity`, `submit`, `findNeedingScoring`, `${myfeeder.interest.sweep-delay}` | ✓ WIRED |
-| InterestStatusService | ArticleScoreStore | `store.counts(eligibilityCutoff())` | ✓ WIRED |
-| InterestRescoreService | ArticleScoreStore / GlobalExceptionHandler | `countRescoreScope`/`deleteRescoreScope`; `IllegalStateException` to 409 | ✓ WIRED |
-| InterestsDialog | useInterest hooks | `useRescoreCount()` / `useRescoreUnread()` | ✓ WIRED |
-| useInterest | api/interest.ts, `/status` | `interestApi.getRescoreCount/rescore`; `invalidateQueries(['interest','status'])`; `refetchInterval` | ✓ WIRED |
-| application.yaml | JevApiClientImpl | aspect orders | ✓ WIRED (`breakerAspectWrapsRetryAspect` loads the main YAML) |
+| TestMyfeederApplication | application-dev.yaml | `withAdditionalProfiles(DEV_PROFILE)` loads profile-specific ConfigData | ✓ WIRED (smoke log profile line plus app-name prefix; the probe proves the same mechanism through `setAdditionalProfiles`) |
+| application-dev.yaml | JevApiClientImpl | `${MYFEEDER_TYPESAFE_API_KEY:}` feeds TypeSafeProperties, which `isConfigured()` reads | ✓ WIRED (probe key check; the smoke log has no keyless line) |
+| DevProfileConfigTest | src/main/resources/application.yaml | Loaded from disk; every main key is compared | ✓ WIRED |
+| Earlier phase links (FeedPollingService to listener to queue to scorer to store; sweep; status; rescore; dialog) | - | - | ✓ WIRED (regression: suite green) |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data | Source | Real Data | Status |
 |----------|------|--------|-----------|--------|
-| `/api/interest/status` counts | eligibleUnscored, failed | `ArticleScoreStore.counts` SQL over article LEFT JOIN article_score | Yes (keyless integration test seeds rows and asserts deltas) | ✓ FLOWING |
-| Re-score confirmation | count, windowDays | `GET /rescore` then `countRescoreScope` SQL | Yes | ✓ FLOWING |
-| "N waiting to be scored" | status.eligibleUnscored | `useInterestStatus` then `/status` | Yes | ✓ FLOWING |
-| article_score rows | Jev outputs | `JevJudgment` from the SDK response then `writeScored` | Yes (flow test against Postgres, with the Jev client mocked) | ✓ FLOWING |
+| bootTestRun Jev config | api-key, base-url, initial delay | Shell env var through the dev overlay placeholder | Yes (the probe resolves an injected env value; the smoke is configured with an exported key) | ✓ FLOWING |
+| `/api/interest/status`, Re-score count, waiting line, article_score rows | - | Same as the first verification | Yes | ✓ FLOWING (no change) |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| Full backend suite (run once; live tests gated off; no key in env) | `./gradlew test` | 384 tests, 0 failures, 0 errors, 2 skipped (JevLiveSmokeTest and InterestCalibrationSpikeTest, env-gated). Fresh result files dated 2026-09-24T02:31–02:32Z | ✓ PASS |
-| Phase test classes | results XML | ScoringIsolationTest 5/5, ArticleScoringFlowTest 3/3, ArticleScoringServiceTest 14/14, ArticleScoreStoreTest 18/18, InterestScoringSweepTest 8/8, JevResilienceTest 16/16, ScoringQueueTest 5/5, InterestApiIntegrationTest 8/8, InterestRescoreApiIntegrationTest 1/1, InterestRescoreServiceTest 5/5, InterestRescoreControllerTest 3/3, InterestStatusServiceTest 5/5, ArticleStateBuilderTest 13/13, FeedPollingServiceTest 6/6, MyfeederApplicationTests 2/2, Raindrop 3/3 + 5/5 | ✓ PASS |
-| Frontend suite | `npx vitest run` | 17 files, 118 tests passed | ✓ PASS |
-| Type-check | `npx tsc -b` | exit 0 | ✓ PASS |
+| Dev and no-profile config resolution, mirror rule, activation scan | `./gradlew test -x npmBuild -x npmInstall --tests 'org.bartram.myfeeder.DevProfileConfigTest'` | 4 tests, 0 failures, 0 errors (22:02:35Z) | ✓ PASS |
+| Full backend suite (run once) | `DOCKER_HOST=unix:///Users/scottb/.docker/run/docker.sock ./gradlew test -x npmBuild -x npmInstall` | exit 0; 58 result files, 394 tests, 0 failures, 0 errors, 2 skipped (env-gated live tests). This matches the orchestrator's 17:55 run | ✓ PASS |
+| Frontend suite | `npx vitest run` | 17 files, 119/119 passed | ✓ PASS |
+| Frontend type-check | `npx tsc -b` | exit 0 | ✓ PASS |
+| bootTestRun smoke (dev profile, fake key) | Not re-run (the verifier does not start servers); I inspected the executor's log on disk | Profile line present, `[myfeeder]` app name, port 18089, no keyless TypeSafe line | ✓ PASS (log evidence) |
 
 ### Probe Execution
 
@@ -171,78 +197,51 @@ Step 7c: SKIPPED. The phase declares no `probe-*.sh` scripts, and none exist und
 
 | Requirement | Source Plan(s) | Description | Status | Evidence |
 |-------------|----------------|-------------|--------|----------|
-| SCOR-01 | 04-03, 04-04 | One Jev call per new article; profile Score plus a Noul per topic; feed/title/summary input with content fallback | ✓ SATISFIED | SC1 evidence; `ArticleStateBuilder` content fallback |
-| SCOR-02 | 04-04 | Scoring never blocks or fails polling | ✓ SATISFIED | SC2 evidence |
-| SCOR-03 | 04-02, 04-03 | Raw outputs stored write-once in separate tables | ✓ SATISFIED | `writeScored`, `scoredIsWriteOnce`, flow test |
-| SCOR-04 | 04-02, 04-04, 04-05 | Unread and within 14 days (configurable); newest first | ✓ SATISFIED | ELIGIBLE, NEWEST_FIRST, `window-days` |
-| SCOR-05 | 04-01, 04-05 | Background sweep: backfill, outage, late key, first profile | ✓ SATISFIED | SC3 evidence |
-| SCOR-06 | 04-03, 04-05 | Nothing scored in cold start | ✓ SATISFIED | Gates in the scorer, sweep and rescore |
-| SCOR-07 | 04-01, 04-02, 04-03 | Permanent failures retried at most 3 times; transient failures use no attempt | ✓ SATISFIED | MAX_ATTEMPTS, ScoringFailure, tests |
-| SCOR-08 | 04-02, 04-03 | GUID-less articles skipped | ✓ SATISFIED | `blankGuidIsSkippedWithoutACall`; guid is NOT NULL in the schema (premise correction noted in CONTEXT) |
-| INT-05 | 04-02, 04-07, 04-08 | Re-score unread with count, then re-score | ✓ SATISFIED | SC5 evidence |
-| JEV-05 | 04-02, 04-06, 04-07 | Status reports configured, breaker and counts | ✓ SATISFIED | SC4 evidence |
+| SCOR-01 | 04-03, 04-04, 04-09 | One Jev call per new article; profile score plus a noul per topic | ✓ SATISFIED | SC1. 04-09 makes the local live path usable |
+| SCOR-02 | 04-04 | Scoring never blocks or fails polling | ✓ SATISFIED | SC2 |
+| SCOR-03 | 04-02, 04-03 | Raw outputs stored write-once | ✓ SATISFIED | `writeScored`, `scoredIsWriteOnce`; WR-01 discard keeps write-once |
+| SCOR-04 | 04-02, 04-04, 04-05 | Unread, within 14 days, newest first | ✓ SATISFIED | ELIGIBLE/NEWEST_FIRST |
+| SCOR-05 | 04-01, 04-05, 04-09 | Background sweep: backfill, outage, late key, first profile | ✓ SATISFIED (the live drain under bootTestRun is a human item) | SC3; dev overlay restores PT1M (D-10) under bootTestRun |
+| SCOR-06 | 04-03, 04-05 | Nothing scored in cold start | ✓ SATISFIED | Cold-start gates; smoke started in cold start |
+| SCOR-07 | 04-01, 04-02, 04-03 | Permanent failures at most 3 attempts; transient failures use none | ✓ SATISFIED | MAX_ATTEMPTS, ScoringFailure |
+| SCOR-08 | 04-02, 04-03 | GUID-less articles skipped | ✓ SATISFIED | `blankGuidIsSkippedWithoutACall` |
+| INT-05 | 04-02, 04-07, 04-08 | Re-score unread with count | ✓ SATISFIED | SC5, WR-02 JSON confirm |
+| JEV-05 | 04-02, 04-06, 04-07 | Status reports configured, breaker and counts | ✓ SATISFIED | SC4 |
 
-Every phase ID appears in at least one plan's `requirements`. No orphaned requirements: REQUIREMENTS.md maps exactly SCOR-01..08, INT-05 and JEV-05 to Phase 4.
+All 10 phase IDs appear in at least one plan's `requirements`. REQUIREMENTS.md maps exactly these 10 IDs to Phase 4, so none are orphaned.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| (all 41 phase-modified files) | - | TBD/FIXME/XXX | none found | - |
-| InterestsDialog.tsx | 25 | `PROFILE_PLACEHOLDER` | ℹ️ Info | Textarea placeholder copy, not a stub |
-| InterestsDialog.tsx | 201-243, 254-310 | Confirmation does not re-check `dirty` after it opens | ⚠️ Warning | Flagged prohibition (human item 3) |
-| ArticleScoringService.java | 65-96 | Rubric snapshot before a long call; write-once after (review WR-01) | ⚠️ Warning | An article in flight during a Re-score can keep a score from the replaced rubric. Narrow race; `profile_version` records it |
-| InterestRescoreController.java | 23-26 | Bodyless destructive POST can be sent as a CORS simple request (review WR-02) | ⚠️ Warning | Cross-site trigger could force re-billing on this no-auth app |
-| useInterest.ts | 20 | Status poll runs while unconfigured, in cold start or with the breaker OPEN (review WR-03) | ⚠️ Warning | 15s polling that never drains while the dialog is open. The server cost is one COUNT query |
-| MyfeederProperties.java / InterestScoringSweep.java | 43-44 / 41-42 | Dead Java defaults; placeholders have no fallback (review IN-01) | ℹ️ Info | Startup fails only if the YAML keys are removed |
-
-None of these block a success criterion. The code review (04-REVIEW.md) found 0 critical issues; its 3 warnings and 9 info items are advisory and restated above.
+| 04-09 files and review-fix files | - | TBD/FIXME/XXX/TODO/HACK | none found | - |
+| DevProfileConfigTest.java | 40-42 | Activation scan omits `spring.config.`/`application-dev` load paths (review WR-01) | ⚠️ Warning (advisory) | A future test could load the live overlay without tripping the guard |
+| DevProfileConfigTest.java | 78-96 | One-directional drift check (review WR-02) | ⚠️ Warning (advisory) | Suite-only keys can silently reach bootTestRun |
+| DevProfileConfigTest.java | resolve() | Boots a full SpringApplication in the shared test JVM (review IN-03) | ℹ️ Info | Re-initializes logging; the suite is still green |
+| DevProfileConfigTest.java | loadYaml | Reads only the first YAML document (review IN-04) | ℹ️ Info | A future multi-document main yaml would be partly unchecked |
+| ArticleScoringService.java | 92-105 | Non-atomic re-read then write (review IN-01); topic add or delete discards a billed result (IN-02) | ℹ️ Info | Negligible window; intentional and tested |
 
 ### Human Verification Required
 
-### 1. Live-key end-to-end (04-05)
+### 1. Live-key re-run of UAT test 1 (G-04-1 closure)
 
-**Test:** Set `MYFEEDER_TYPESAFE_API_KEY`, run `./gradlew bootTestRun`, and save a profile or topic. Watch `/api/interest/status` and `article_score`. Refresh a feed, run Re-score unread, and check the poll logs.
-**Expected:** eligibleUnscored drains; SCORED rows carry jev-1.13.0 and a request id; new arrivals are scored without waiting for the sweep; Re-score resets and re-drains; no new feed errors.
-**Why human:** Needs the live, billed API and a running app. This also confirms the in-context event multicast.
-
-### 2. Footer layout and theme (04-07)
-
-**Test:** Open Interests in all 6 themes. Exercise the Re-score button, the confirmation, the zero case, the waiting line, the disabled tooltips and the 409 error.
-**Expected:** One-row footer and readable contrast everywhere.
-**Why human:** Visual only.
-
-### 3. Flagged prohibition: unsaved edits after the confirmation opens (04-07)
-
-**Test:** Open the Re-score confirmation, then edit the profile or a topic without saving, then click Re-score.
-**Expected:** Decide whether this should be blocked. Currently the POST is sent.
-**Why human:** A partially enforced test-tier prohibition needs a human accept or fix decision.
-
-### 4. Backstop concurrency truth (04-02)
-
-**Test:** Decide whether Postgres `ON CONFLICT` on the PK, plus the 1-thread executor and in-flight set, is enough, or whether a concurrent-writer test is needed.
-**Expected:** Accept, or add the test.
-**Why human:** A non-inferable truth with no behavioral test.
+**Test:** Export only the real `MYFEEDER_TYPESAFE_API_KEY`, with no `SPRING_AI_TYPESAFE_*` or `MYFEEDER_INTEREST_*` overrides, and run `./gradlew bootTestRun`. Confirm the startup log shows `The following 1 profile is active: "dev"` and no `TypeSafe Jev not configured` line. Save a profile or a topic. Watch `/api/interest/status` and `article_score`, refresh a feed, run Re-score unread, and check the poll logs.
+**Expected:** Within about 3 minutes eligibleUnscored drains to 0 with SCORED rows (jev-1.13.0, request id). New arrivals are scored without waiting for the sweep. Re-score resets and re-drains (not separately exercised in the first run). There are no new feed errors.
+**Why human:** Needs the billed TypeSafe API and a running app. The automated smoke deliberately made no Jev call.
 
 ### Gaps Summary
 
-No blocking gaps. The phase goal is achieved in code:
-- Ingest publishes the new ids to a never-throwing listener and a dedicated 1-thread bounded executor.
-- The scorer makes one Jev call and writes once to article_score/article_topic_score.
-- A 2-minute sweep drains the backlog behind the configured, cold-start and breaker gates.
-- Status exposes the counts, and Re-score resets the shared scope for the sweep to re-drain.
+There are no blocking gaps. G-04-1 is closed as far as automation can prove:
+- `bootTestRun` now activates a `dev` overlay that binds the key, the real base-url, the PT1M first sweep, the HTTP timeouts and the app name. The executor's smoke log and a real ConfigData probe that I re-ran both confirm it.
+- The suite stays offline. Neither application.yaml changed, `suiteContextStaysOffline` passes, and the no-profile probe binds no key.
+- The documented procedure (CLAUDE.md, the 04-05 human-check) matches the code.
+- The full backend suite (394, 0 failures) and the frontend suite (119) are green in my own runs.
 
-All 5 roadmap success criteria are supported by passing tests: 384 backend and 118 frontend.
+Prior human items 2-4 were resolved in UAT.
 
-The status is `human_needed`, not `passed`, for four reasons:
-1. The planned live-key E2E check is queued for UAT.
-2. The planned footer visual and theme check is queued for UAT.
-3. One test-tier prohibition (no reset with unsaved edits) is only partially enforced.
-4. One backstop truth has no concurrent test.
-
-The three review warnings (WR-01 Re-score race, WR-02 cross-site bodyless POST, WR-03 poll in states that cannot drain) are worth a `/gsd-quick` or `/gsd-code-review 04 --fix` pass. They are not goal blockers.
+The status is `human_needed` because of the one billed live-key re-run of UAT test 1. The two review warnings (WR-01 offline barrier not enforced at the Gradle test-task boundary, WR-02 one-directional drift guard) are advisory hardening. A `/gsd-quick` pass is worth doing, but neither blocks the phase goal.
 
 ---
 
-_Verified: 2026-09-24T02:40:00Z_
+_Verified: 2026-09-24T22:06:00Z_
 _Verifier: Claude (gsd-verifier)_
