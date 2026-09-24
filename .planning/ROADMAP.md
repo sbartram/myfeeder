@@ -135,7 +135,7 @@ Plans:
   4. `GET /api/interest/status` reports whether Jev is configured, the circuit-breaker state, and the eligible-unscored and failed article counts
   5. User can trigger "Re-score unread", sees how many articles will be re-judged before confirming, and the in-window unread articles are then re-scored by the sweep
 
-**Plans**: 5/8 plans executed
+**Plans**: 6/8 plans executed
 
 Plans:
 **Wave 1**
@@ -151,7 +151,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 04-04-PLAN.md — Ingest hand-off: ArticlesIngestedEvent, never-throwing listener, one-thread bounded jev-score executor, ScoringQueue, SC2 isolation proof (wave 3)
+- [x] 04-04-PLAN.md — Ingest hand-off: ArticlesIngestedEvent, never-throwing listener, one-thread bounded jev-score executor, ScoringQueue, SC2 isolation proof (wave 3)
 - [ ] 04-07-PLAN.md — Interests dialog: Re-score unread with inline server-count confirm (D-01, D-02, D-04), disabled reasons, "N waiting to be scored" line; CLAUDE.md status and rescore routes (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
@@ -218,7 +218,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 1. Dependency Upgrade | 4/4 | Complete    | 2026-09-22 |
 | 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
-| 4. Scoring Pipeline & Backfill Sweep | 5/8 | In Progress|  |
+| 4. Scoring Pipeline & Backfill Sweep | 6/8 | In Progress|  |
 | 5. Blend & Priority View | 0/TBD | Not started | - |
 | 6. Thumbs Feedback | 0/TBD | Not started | - |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |
