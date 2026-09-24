@@ -890,4 +890,110 @@ describe('InterestsDialog', () => {
     expect(rescorePosts()).toHaveLength(1)
     expect(useToastStore.getState().toasts).toEqual([])
   })
+
+  it('rescoreDisabledWhileEditsAreUnsaved', async () => {
+    const user = userEvent.setup()
+    rescoreCount(312)
+    route('GET', '/api/interest/topics', () => ({
+      status: 200,
+      body: [topic(3, 'Rust', 'The Rust language')],
+    }))
+    const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    const textarea = await screen.findByRole('textbox', { name: 'Interest profile' })
+    await waitFor(() => expect(statusFetches()).toHaveLength(1))
+    const rescore = () => screen.getByRole('button', { name: 'Re-score unread' })
+    expect(rescore()).toBeEnabled()
+
+    await user.type(textarea, 'Rust')
+    expect(rescore()).toBeDisabled()
+    expect(rescore()).toHaveAttribute('title', 'Save your changes first')
+    fireEvent.click(rescore())
+    expect(rescoreGets()).toEqual([])
+    expect(screen.queryByText('Counting articles…')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Save profile' }))
+    await waitFor(() => expect(screen.getByText('Saved')).toBeInTheDocument())
+    expect(rescore()).toBeEnabled()
+    expect(rescore()).not.toHaveAttribute('title')
+
+    await user.type(
+      within(topicRows(container)[0]).getByRole('textbox', { name: 'Topic name' }),
+      '!',
+    )
+    expect(rescore()).toBeDisabled()
+    expect(rescore()).toHaveAttribute('title', 'Save your changes first')
+    expect(rescoreGets()).toEqual([])
+  })
+
+  it('rescoreDisabledWithReasonWhenNotConfiguredOrColdStart', async () => {
+    const cases: Array<[Partial<{ configured: boolean; coldStart: boolean }>, string]> = [
+      [{ configured: false }, "Scoring isn't set up yet: no TypeSafe API key is configured."],
+      [{ coldStart: true }, 'Write a profile or add a topic first'],
+      [{ configured: false, coldStart: true }, "Scoring isn't set up yet: no TypeSafe API key is configured."],
+    ]
+    for (const [overrides, title] of cases) {
+      status(overrides)
+      const view = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      const button = await screen.findByRole('button', { name: 'Re-score unread' })
+      await waitFor(() => expect(button).toHaveAttribute('title', title))
+      expect(button).toBeDisabled()
+      view.unmount()
+    }
+  })
+
+  it('waitingLineShowsEligibleUnscored', async () => {
+    const shown: Array<[number, string]> = [
+      [312, '312 articles waiting to be scored'],
+      [1, '1 article waiting to be scored'],
+    ]
+    for (const [eligibleUnscored, copy] of shown) {
+      status({ eligibleUnscored })
+      const view = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      expect(await screen.findByText(copy)).toBeInTheDocument()
+      view.unmount()
+    }
+
+    const hidden: Array<[Parameters<typeof status>[0], string | null]> = [
+      [{ configured: false, eligibleUnscored: 5 }, "Scoring isn't set up yet."],
+      [{ coldStart: true, eligibleUnscored: 5 }, 'Start here.'],
+      [{ eligibleUnscored: 0, failed: 2 }, null],
+    ]
+    for (const [overrides, notice] of hidden) {
+      calls = []
+      status(overrides)
+      const view = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByRole('textbox', { name: 'Interest profile' })
+      if (notice) {
+        await screen.findByText(notice)
+      } else {
+        await waitFor(() => expect(statusFetches()).toHaveLength(1))
+        await new Promise((r) => setTimeout(r, 50))
+      }
+      expect(screen.queryByText(/waiting to be scored/)).not.toBeInTheDocument()
+      view.unmount()
+    }
+  })
+
+  it('statusPollsOnlyWhileArticlesAreWaiting', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      status({ eligibleUnscored: 3 })
+      const waiting = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      expect(await screen.findByText('3 articles waiting to be scored')).toBeInTheDocument()
+      expect(statusFetches()).toHaveLength(1)
+      await act(() => vi.advanceTimersByTimeAsync(15_000))
+      await waitFor(() => expect(statusFetches()).toHaveLength(2))
+      waiting.unmount()
+
+      calls = []
+      status({ eligibleUnscored: 0 })
+      renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByRole('textbox', { name: 'Interest profile' })
+      await waitFor(() => expect(statusFetches()).toHaveLength(1))
+      await act(() => vi.advanceTimersByTimeAsync(15_000))
+      expect(statusFetches()).toHaveLength(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
