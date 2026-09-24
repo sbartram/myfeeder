@@ -28,6 +28,15 @@ myfeeder:
     cleanup-cron: "0 0 3 * * *"
   raindrop:
     api-base-url: https://api.raindrop.io/rest/v1
+  # Interest scoring: eligibility window, one scoring thread (D-09), sweep pacing (D-10/D-16).
+  interest:
+    window-days: 14
+    concurrency: 1
+    queue-capacity: 1000
+    sweep-batch-size: 50
+    sweep-delay: PT2M
+    # PT1H keeps @SpringBootTest contexts from sweeping during the suite (research Pitfall 12).
+    sweep-initial-delay: PT1H
 
 resilience4j:
   circuitbreaker:
