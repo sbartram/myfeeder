@@ -8,6 +8,8 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
+import io.github.resilience4j.spring6.circuitbreaker.configure.CircuitBreakerAspect;
+import io.github.resilience4j.spring6.retry.configure.RetryAspect;
 import io.github.resilience4j.springboot3.circuitbreaker.autoconfigure.CircuitBreakerAutoConfiguration;
 import io.github.resilience4j.springboot3.retry.autoconfigure.RetryAutoConfiguration;
 import io.netty.handler.timeout.ReadTimeoutException;
@@ -225,32 +227,58 @@ class JevResilienceTest {
 
     @Test
     void breakerOpensAtMinimumCallsAndShortCircuits() {
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 30; i++) {
             stub.enqueue(500);
         }
         runner.run(ctx -> {
             JevApiClient client = ctx.getBean(JevApiClient.class);
             CircuitBreaker breaker = jevBreaker(ctx);
 
-            // Retry is the outer aspect, so the breaker records every attempt: 3 calls x 3 attempts.
-            for (int call = 1; call <= 3; call++) {
+            // The breaker is the outer aspect, so it records one failure per logical call after the
+            // retry has spent its 3 attempts: 9 calls x 3 attempts, 9 recorded failures.
+            for (int call = 1; call <= 9; call++) {
                 assertThatThrownBy(() -> client.judge(state(), questions()))
                         .isExactlyInstanceOf(TypeSafeInternalServerException.class);
             }
-            assertThat(stub.hits()).isEqualTo(9);
+            assertThat(stub.hits()).isEqualTo(27);
             assertThat(breaker.getMetrics().getNumberOfFailedCalls()).isEqualTo(9);
             assertThat(breaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
 
-            // The 10th recorded failure (minimum-number-of-calls) opens it; the retry then short-circuits.
+            // The 10th failed call (minimum-number-of-calls) opens it.
             assertThatThrownBy(() -> client.judge(state(), questions()))
-                    .isExactlyInstanceOf(CallNotPermittedException.class);
-            assertThat(stub.hits()).isEqualTo(10);
+                    .isExactlyInstanceOf(TypeSafeInternalServerException.class);
+            assertThat(stub.hits()).isEqualTo(30);
+            assertThat(breaker.getMetrics().getNumberOfFailedCalls()).isEqualTo(10);
             assertThat(breaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
 
             // Open: no HTTP request, and CallNotPermittedException is not retried.
             assertThatThrownBy(() -> client.judge(state(), questions()))
                     .isExactlyInstanceOf(CallNotPermittedException.class);
-            assertThat(stub.hits()).isEqualTo(10);
+            assertThat(stub.hits()).isEqualTo(30);
+        });
+    }
+
+    @Test
+    void retriedCallThatSucceedsRecordsOneSuccess() {
+        stub.enqueue(500);
+        stub.enqueue(500);
+        stub.enqueue(200);
+        runner.run(ctx -> {
+            JevJudgment judgment = ctx.getBean(JevApiClient.class).judge(state(), questions());
+            assertThat(judgment.model()).isEqualTo("jev-1.13.0");
+            assertThat(stub.hits()).isEqualTo(3);
+            CircuitBreaker breaker = jevBreaker(ctx);
+            assertThat(breaker.getMetrics().getNumberOfFailedCalls()).isZero();
+            assertThat(breaker.getMetrics().getNumberOfSuccessfulCalls()).isEqualTo(1);
+        });
+    }
+
+    @Test
+    void breakerAspectWrapsRetryAspect() {
+        // The runner loads the main YAML from disk, so this proves the shipped aspect orders (D-07).
+        runner.run(ctx -> {
+            assertThat(ctx.getBean(CircuitBreakerAspect.class).getOrder()).isEqualTo(1);
+            assertThat(ctx.getBean(RetryAspect.class).getOrder()).isEqualTo(2);
         });
     }
 
@@ -397,8 +425,11 @@ class JevResilienceTest {
     private static Map<String, String> jevProperties(PropertySource<?> yaml) {
         Map<String, String> jev = new TreeMap<>();
         for (String name : ((EnumerablePropertySource<?>) yaml).getPropertyNames()) {
+            // The aspect orders sit outside instances.jev but decide how the jev aspects nest (D-07).
             if (name.startsWith("resilience4j.circuitbreaker.instances.jev.")
-                    || name.startsWith("resilience4j.retry.instances.jev.")) {
+                    || name.startsWith("resilience4j.retry.instances.jev.")
+                    || name.equals("resilience4j.circuitbreaker.circuit-breaker-aspect-order")
+                    || name.equals("resilience4j.retry.retry-aspect-order")) {
                 jev.put(name, String.valueOf(yaml.getProperty(name)));
             }
         }

@@ -31,6 +31,7 @@ myfeeder:
 
 resilience4j:
   circuitbreaker:
+    circuit-breaker-aspect-order: 1
     instances:
       raindrop:
         failure-rate-threshold: 50
@@ -58,6 +59,7 @@ resilience4j:
           - org.springaicommunity.typesafe.exception.TypeSafeMissingAnswerException
           - org.springaicommunity.typesafe.exception.TypeSafeAnswerTypeException
   retry:
+    retry-aspect-order: 2
     instances:
       raindrop:
         max-attempts: 3
