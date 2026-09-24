@@ -135,7 +135,7 @@ Plans:
   4. `GET /api/interest/status` reports whether Jev is configured, the circuit-breaker state, and the eligible-unscored and failed article counts
   5. User can trigger "Re-score unread", sees how many articles will be re-judged before confirming, and the in-window unread articles are then re-scored by the sweep
 
-**Plans**: 8/8 plans executed
+**Plans**: 8/9 plans executed
 
 Plans:
 **Wave 1**
@@ -157,6 +157,10 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [x] 04-05-PLAN.md — InterestScoringSweep (2-minute drain, batch cap 50, D-10/D-16), myfeeder.interest YAML, schedule proof, full suite + live end-of-phase check (wave 4)
+
+**Gap closure** *(UAT G-04-1)*
+
+- [ ] 04-09-PLAN.md — bootTestRun dev-profile overlay restores live Jev settings (key, base-url, PT1M sweep, 5s/30s timeouts); drift and offline-suite guards; CLAUDE.md + 04-05 live-key procedure
 
 ### Phase 5: Blend & Priority View
 
