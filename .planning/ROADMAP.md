@@ -135,12 +135,12 @@ Plans:
   4. `GET /api/interest/status` reports whether Jev is configured, the circuit-breaker state, and the eligible-unscored and failed article counts
   5. User can trigger "Re-score unread", sees how many articles will be re-judged before confirming, and the in-window unread articles are then re-scored by the sweep
 
-**Plans**: 8 plans
+**Plans**: 1/8 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Jev client hardening: breaker wraps retry (D-07), 30s timeout (D-05), 15s slow-call (D-06), auto OPEN→HALF_OPEN (D-17), caller errors and Choice kept out of the bill and breaker (D-14, D-15), CLAUDE.md convention + narrowed todo (wave 1)
+- [x] 04-01-PLAN.md — Jev client hardening: breaker wraps retry (D-07), 30s timeout (D-05), 15s slow-call (D-06), auto OPEN→HALF_OPEN (D-17), caller errors and Choice kept out of the bill and breaker (D-14, D-15), CLAUDE.md convention + narrowed todo (wave 1)
 - [ ] 04-02-PLAN.md — ArticleScoreStore: the single eligibility predicate, write-once SCORED/FAILED/SKIPPED upserts, selection, status counts and Re-score scope SQL; MyfeederProperties.Interest (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -218,7 +218,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 1. Dependency Upgrade | 4/4 | Complete    | 2026-09-22 |
 | 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
-| 4. Scoring Pipeline & Backfill Sweep | 0/7 | Planned | - |
+| 4. Scoring Pipeline & Backfill Sweep | 1/8 | In Progress|  |
 | 5. Blend & Priority View | 0/TBD | Not started | - |
 | 6. Thumbs Feedback | 0/TBD | Not started | - |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |
