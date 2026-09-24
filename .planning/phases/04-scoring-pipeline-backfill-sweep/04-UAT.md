@@ -1,24 +1,20 @@
 ---
-status: testing
+status: complete
 phase: 04-scoring-pipeline-backfill-sweep
 source: [04-VERIFICATION.md]
 started: 2026-09-24T02:36:01Z
-updated: 2026-09-24T22:08:00Z
+updated: 2026-09-24T22:30:00Z
 ---
 
 ## Current Test
 
-number: 1
-name: Live-key end-to-end scoring (04-05) — re-run after gap-closure plan 04-09
-expected: |
-  Export only the real MYFEEDER_TYPESAFE_API_KEY (no SPRING_AI_TYPESAFE_* or MYFEEDER_INTEREST_* overrides) and run ./gradlew bootTestRun. The startup log shows `The following 1 profile is active: "dev"` and no keyless TypeSafe INFO line. Save a profile or at least one topic; within ~3 min /api/interest/status eligibleUnscored drains to 0 with SCORED rows (model jev-1.13.0, request id); new arrivals are scored without waiting for the sweep; Re-score unread resets and re-drains; no new feed errors.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
 ### 1. Live-key end-to-end scoring (04-05)
 expected: Backlog drains to 0 with SCORED rows (model + request id); new arrivals scored without waiting for the sweep; Re-score resets and re-drains; no new feed errors in poll logs.
-result: [pending]
+result: pass
 previous_result: issue (before 04-09; see G-04-1)
 previous_reported: "I see this in the local log: `TypeSafeConfig : TypeSafe Jev not configured; interest scoring disabled` ... the UI says \"30 articles waiting to be scored\" but nothing else is happening ... [after restarting with SPRING_AI_TYPESAFE_API_KEY, SPRING_AI_TYPESAFE_BASE_URL and MYFEEDER_INTEREST_SWEEP_INITIAL_DELAY overrides] I saw the unscored number go to 30 and then to 0 with no errors (or any logs at all)"
 severity: major
@@ -39,9 +35,9 @@ result: pass
 ## Summary
 
 total: 4
-passed: 3
+passed: 4
 issues: 0
-pending: 1
+pending: 0
 skipped: 0
 blocked: 0
 
@@ -49,7 +45,9 @@ blocked: 0
 
 - gap_id: G-04-1
   truth: "With MYFEEDER_TYPESAFE_API_KEY set and ./gradlew bootTestRun, Jev is configured and the backlog sweep drains within ~3 min of startup"
-  status: failed
+  status: resolved
+  resolved_by: 04-09-PLAN.md
+  resolved_at: 2026-09-24
   reason: "User reported: TypeSafe Jev not configured under bootTestRun; 30 articles waiting and nothing happening until restarted with SPRING_AI_TYPESAFE_API_KEY / SPRING_AI_TYPESAFE_BASE_URL / MYFEEDER_INTEREST_SWEEP_INITIAL_DELAY overrides, after which it drained 30 -> 0 with no errors"
   severity: major
   test: 1
