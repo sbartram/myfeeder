@@ -44,6 +44,12 @@ public class ArticleScoreStore {
     /** Newest first, with the id as a stable tiebreak for equal timestamps. */
     static final String NEWEST_FIRST = "ORDER BY COALESCE(a.published_at, a.fetched_at) DESC, a.id DESC";
 
+    /**
+     * Re-score scope (INT-05, D-03): eligible articles with a SCORED or FAILED row, exhausted FAILED
+     * included, SKIPPED excluded. Alias {@code s} = article_score.
+     */
+    static final String RESCORE_SCOPE = ELIGIBLE + " AND s.status IN ('SCORED', 'FAILED')";
+
     private static final String NEEDING_SCORING_FROM =
             "FROM article a LEFT JOIN article_score s ON s.article_id = a.id WHERE "
                     + ELIGIBLE + " AND " + NEEDS_SCORING;
@@ -188,16 +194,45 @@ public class ArticleScoreStore {
                 .list();
     }
 
+    /**
+     * Status counts over eligible articles only (JEV-05, D-11, D-12), from one statement so the two
+     * numbers are a consistent snapshot of the same moment.
+     */
     public ScoreCounts counts(Instant cutoff) {
-        return new ScoreCounts(0, 0);
+        return jdbc.sql("SELECT COUNT(*) FILTER (WHERE " + NEEDS_SCORING + ") AS eligible_unscored, "
+                        + "COUNT(*) FILTER (WHERE s.status = 'FAILED' AND s.attempts >= " + MAX_ATTEMPTS
+                        + ") AS failed "
+                        + "FROM article a LEFT JOIN article_score s ON s.article_id = a.id WHERE " + ELIGIBLE)
+                .param("cutoff", Timestamp.from(cutoff))
+                .query((rs, rowNum) -> new ScoreCounts(rs.getLong("eligible_unscored"), rs.getLong("failed")))
+                .single();
     }
 
+    /**
+     * How many score rows Re-score would reset. Shares {@link #RESCORE_SCOPE} with
+     * {@link #deleteRescoreScope(Instant)} by construction, which is what makes the confirmation
+     * count exact (D-02).
+     */
     public long countRescoreScope(Instant cutoff) {
-        return 0;
+        return jdbc.sql("SELECT COUNT(*) FROM article_score s JOIN article a ON a.id = s.article_id WHERE "
+                        + RESCORE_SCOPE)
+                .param("cutoff", Timestamp.from(cutoff))
+                .query(Long.class)
+                .single();
     }
 
+    /**
+     * Resets the Re-score scope in one atomic statement; the V6 cascade removes the topic rows.
+     * Shares {@link #RESCORE_SCOPE} with {@link #countRescoreScope(Instant)} by construction, so the
+     * count shown is exactly the rows deleted (D-02).
+     *
+     * @return the number of score rows deleted
+     */
     public int deleteRescoreScope(Instant cutoff) {
-        return 0;
+        return jdbc.sql("DELETE FROM article_score s USING article a WHERE a.id = s.article_id AND "
+                        + RESCORE_SCOPE)
+                .param("cutoff", Timestamp.from(cutoff))
+                .update();
     }
 
     private static Article mapArticle(ResultSet rs) throws SQLException {
