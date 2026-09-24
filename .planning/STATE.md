@@ -3,17 +3,17 @@ gsd_state_version: "1.0"
 milestone: v0.1.24
 current_phase: 04
 current_phase_name: Scoring Pipeline & Backfill Sweep
-status: verifying
-stopped_at: Completed 04-05-PLAN.md
-last_updated: "2026-09-24T02:21:13.782Z"
-last_activity: 2026-09-23
+status: executing
+stopped_at: Completed 04-09-PLAN.md
+last_updated: "2026-09-24T21:53:49.167Z"
+last_activity: 2026-09-24
 last_activity_desc: Phase 04 execution started
-state_head: 9781369d60444b727477e1ca152627725e5f4d96
+state_head: 15a36d23505b3247feb3f6428aee4aa425a18eef
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 24
-  completed_plans: 24
+  total_plans: 25
+  completed_plans: 25
 ---
 
 # Project State
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-09-23)
 ## Current Position
 
 Phase: 04 (Scoring Pipeline & Backfill Sweep) — EXECUTING
-Plan: 8 of 8
-Status: Phase complete — ready for verification
-Last activity: 2026-09-23 — Phase 04 execution started
+Plan: 2 of 9
+Status: Ready to execute
+Last activity: 2026-09-24 — Phase 04 execution started
 
 Progress: [████░░░░░░] 43%
 
@@ -84,6 +84,7 @@ Progress: [████░░░░░░] 43%
 | Phase 04 P04 | 7 min | 3 tasks | 9 files |
 | Phase 04 P07 | 7 min | 3 tasks | 6 files |
 | Phase 04 P05 | 5 min | 2 tasks | 6 files |
+| Phase 04 P09 | 4 min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -128,6 +129,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-08: Shipped v2 topic wording ('substantially about `topic`'); v1/v2 both pass A6, label agreement 0.859, v2 doubles obvious-match topic nouls
 - [Phase 03]: 03-08: Topic under-firing (no obvious match crosses noul 0.5) deferred to Phase 4/5 OPS-02 tuning
 - [Phase 03]: 03-08: Phase 4 scoring needs a Jev timeout well above 5s (profile+7 topics ~2.6s avg, cold >5s)
+- [Phase 04]: 04-09: bootTestRun activates a dev profile overlay (src/test/resources/application-dev.yaml) only from TestMyfeederApplication; both application.yaml files unchanged, DevProfileConfigTest enforces the main-mirror rule and that no test activates dev
 
 ### Pending Todos
 
@@ -152,6 +154,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-24T02:21:13.742Z
-Stopped at: Completed 04-05-PLAN.md
+Last session: 2026-09-24T21:53:49.128Z
+Stopped at: Completed 04-09-PLAN.md
 Resume file: None

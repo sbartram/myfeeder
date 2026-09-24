@@ -135,7 +135,7 @@ Plans:
   4. `GET /api/interest/status` reports whether Jev is configured, the circuit-breaker state, and the eligible-unscored and failed article counts
   5. User can trigger "Re-score unread", sees how many articles will be re-judged before confirming, and the in-window unread articles are then re-scored by the sweep
 
-**Plans**: 8/9 plans executed
+**Plans**: 9/9 plans executed
 
 Plans:
 **Wave 1**
@@ -160,7 +160,7 @@ Plans:
 
 **Gap closure** *(UAT G-04-1)*
 
-- [ ] 04-09-PLAN.md — bootTestRun dev-profile overlay restores live Jev settings (key, base-url, PT1M sweep, 5s/30s timeouts); drift and offline-suite guards; CLAUDE.md + 04-05 live-key procedure
+- [x] 04-09-PLAN.md — bootTestRun dev-profile overlay restores live Jev settings (key, base-url, PT1M sweep, 5s/30s timeouts); drift and offline-suite guards; CLAUDE.md + 04-05 live-key procedure
 
 ### Phase 5: Blend & Priority View
 
@@ -222,7 +222,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 1. Dependency Upgrade | 4/4 | Complete    | 2026-09-22 |
 | 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
-| 4. Scoring Pipeline & Backfill Sweep | 8/8 | In Progress|  |
+| 4. Scoring Pipeline & Backfill Sweep | 9/9 | In Progress|  |
 | 5. Blend & Priority View | 0/TBD | Not started | - |
 | 6. Thumbs Feedback | 0/TBD | Not started | - |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |
