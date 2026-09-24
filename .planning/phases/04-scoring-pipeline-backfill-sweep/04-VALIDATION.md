@@ -51,7 +51,7 @@ Populated from the plans. The requirement → test map from RESEARCH.md §Valida
 | SCOR-05/06 | Sweep gates and newest-first enqueue; cold start | unit | `./gradlew test --tests "*.InterestScoringSweepTest"` | ❌ W0 | ⬜ pending |
 | SCOR-07/08 | Failure classification; GUID-less SKIPPED | unit | `./gradlew test --tests "*.ArticleScoringServiceTest"` | ❌ W0 | ⬜ pending |
 | JEV-05 | `/status` eligibleUnscored + failed counts | unit + integration | `./gradlew test --tests "*.InterestStatusServiceTest" --tests "*.InterestApiIntegrationTest"` | ✅ extend | ⬜ pending |
-| INT-05 | Re-score count == deleted rows; SKIPPED untouched | controller + integration | `./gradlew test --tests "*.InterestRescoreControllerTest" --tests "*.InterestApiIntegrationTest"` | ❌ W0 / ✅ extend | ⬜ pending |
+| INT-05 | Re-score count == deleted rows; SKIPPED untouched; keyless POST is 409 | controller + integration | `./gradlew test --tests "*.InterestRescoreServiceTest" --tests "*.InterestRescoreControllerTest" --tests "*.InterestRescoreApiIntegrationTest"` | ❌ W0 | ⬜ pending |
 | INT-05 | Dialog Re-score disabled when dirty; confirm shows count | frontend | `cd src/main/frontend && npx vitest run src/components/InterestsDialog.test.tsx` | ✅ extend | ⬜ pending |
 | D-07 | Breaker wraps retry: one recorded outcome per `judge()` | unit | `./gradlew test --tests "*.JevResilienceTest"` | ✅ rewrite | ⬜ pending |
 | D-05/06/14/15 | Timeout/slow-call config; IAE and Choice not counted | unit | `./gradlew test --tests "*.TypeSafeConfigTest" --tests "*.JevResilienceTest"` | ✅ update | ⬜ pending |
@@ -68,6 +68,7 @@ Populated from the plans. The requirement → test map from RESEARCH.md §Valida
 - [ ] `src/test/java/org/bartram/myfeeder/service/ScoringIsolationTest.java` — SCOR-02 / success criterion 2
 - [ ] `src/test/java/org/bartram/myfeeder/scheduler/InterestScoringSweepTest.java` — SCOR-05/06
 - [ ] `src/test/java/org/bartram/myfeeder/controller/InterestRescoreControllerTest.java` — INT-05
+- [ ] `src/test/java/org/bartram/myfeeder/controller/InterestRescoreApiIntegrationTest.java` — INT-05 keyless full stack (plan 04-08)
 - [ ] Test YAML: `myfeeder.interest.*` block, aspect orders, timeout, slow-call, IAE ignore, auto-transition
 
 Framework install: none needed.

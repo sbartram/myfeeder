@@ -665,17 +665,24 @@ Only one constructor call site in `src/main` [VERIFIED: grep `new InterestStatus
 | A6 | A server-side 409 guard on `POST /rescore` when unconfigured/cold start is wanted | Pattern 6 | Low: UI already disables; server guard is extra safety |
 | A7 | Storing fixed-text `last_error` (class + status + requestId) satisfies intent; nothing in Phase 4 reads it | Anti-patterns / Security | Low |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+All five were answered by the user after research and recorded in 04-CONTEXT.md ("Post-research decisions", 2026-09-23).
 
 1. **Classification of exception types CONTEXT doesn't list** (`TypeSafeNotFoundException`, `TypeSafeApiResponseValidationException`, other `TypeSafeApiException` statuses, plain `TypeSafeException`, `IllegalArgumentException`).
    - Known: the locked lists cover 400/422/answer errors (permanent) and 429/5xx/connection/CNP/not-configured/401/403 (transient).
    - Unclear: the rest.
    - Recommendation: **permanent** (bounded 3 attempts, Re-score recovers). The planner can adopt it as Claude's discretion ("classification mechanics") or confirm with the user.
+   - RESOLVED by **D-19**: unlisted exceptions are permanent (FAILED, attempt used). Implemented in plan 04-03 (`ScoringFailure`).
 2. **Per-sweep batch cap vs "fill free capacity" (D-10).**
    - Recommendation: `min(remainingCapacity, sweep-batch-size=50)`. It keeps fresh ingest near the head of the FIFO and costs no throughput at 1 thread. If rejected, implement D-10 literally.
+   - RESOLVED by **D-16**: `min(free queue capacity, batch cap ≈ 50)`, configurable under `myfeeder.interest.*`. Implemented in plan 04-05.
 3. **Server-side guard on `POST /api/interest/rescore`** when not configured or cold start. Recommendation: 409 with fixed text, plus a UI disable with a reason.
+   - RESOLVED by **D-18**: 409 via `IllegalStateException` → `GlobalExceptionHandler` when unconfigured or in cold start. Implemented in plan 04-08; the UI disable is in plan 04-07.
 4. **Enable `automatic-transition-from-open-to-half-open-enabled` on `jev`.** This is not in CONTEXT, but without it D-10's OPEN gate can stall recovery until an unrelated ingest or preview call. Recommendation: enable it (config-only; mirrored and asserted). Alternative: the sweep enqueues one probe ID while OPEN.
+   - RESOLVED by **D-17**: enabled on the `jev` instance in both YAML files. Implemented in plan 04-01.
 5. **SCOR-08 premise correction.** Tell the user that the "re-insert" bug is really a "poll fails on a GUID-less item" bug (Pitfall 6). The scoring guard is still built; the parser fix remains out of scope (QUAL-V2-01).
+   - RESOLVED (informational): recorded in 04-CONTEXT.md as the "SCOR-08 premise correction". The scorer keeps the null/blank-GUID → SKIPPED guard (plan 04-03) and no "GUID-less fixture polled 3 times" test is planned.
 
 ## Environment Availability
 

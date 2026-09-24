@@ -135,7 +135,7 @@ Plans:
   4. `GET /api/interest/status` reports whether Jev is configured, the circuit-breaker state, and the eligible-unscored and failed article counts
   5. User can trigger "Re-score unread", sees how many articles will be re-judged before confirming, and the in-window unread articles are then re-scored by the sweep
 
-**Plans**: 7 plans
+**Plans**: 8 plans
 
 Plans:
 **Wave 1**
@@ -146,12 +146,13 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [ ] 04-03-PLAN.md — ArticleScoringService: gates, dispatch recheck, shared builders, one judge() call, D-19 failure classification, D-13 truncate fix (wave 2)
-- [ ] 04-06-PLAN.md — /api/interest/status eligibleUnscored + failed (JEV-05, D-11/D-12); GET/POST /api/interest/rescore with the D-18 guard; CLAUDE.md routes (wave 2)
+- [ ] 04-06-PLAN.md — /api/interest/status eligibleUnscored + failed (JEV-05, D-08/D-11/D-12) (wave 2)
+- [ ] 04-08-PLAN.md — GET/POST /api/interest/rescore on the shared Re-score scope with the D-18 guard (INT-05, D-02/D-03) (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [ ] 04-04-PLAN.md — Ingest hand-off: ArticlesIngestedEvent, never-throwing listener, one-thread bounded jev-score executor, ScoringQueue, SC2 isolation proof (wave 3)
-- [ ] 04-07-PLAN.md — Interests dialog: Re-score unread with inline server-count confirm (D-01, D-02, D-04), disabled reasons, "N waiting to be scored" line (wave 3)
+- [ ] 04-07-PLAN.md — Interests dialog: Re-score unread with inline server-count confirm (D-01, D-02, D-04), disabled reasons, "N waiting to be scored" line; CLAUDE.md status and rescore routes (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
