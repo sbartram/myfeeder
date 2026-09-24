@@ -256,6 +256,55 @@ class ArticleScoringServiceTest {
     }
 
     @Test
+    void profileSavedMidCallDiscardsTheResultForTheSweep() {
+        when(interestService.getProfile()).thenReturn(profile("Rust and Postgres", 2), profile("Go and SQLite", 3));
+        when(jevApiClient.judge(anyMap(), anyMap())).thenReturn(
+                judgment(Map.of(InterestQuestions.topicKey(TOPIC_ID), 0.5), new JevScore(3.0, 4, 0.8)));
+
+        scorer.score(ID);
+
+        verify(store, never()).writeScored(anyLong(), any());
+        verify(store, never()).writeFailed(anyLong(), anyString());
+        verify(store, never()).writeSkipped(anyLong(), anyString());
+    }
+
+    @Test
+    void topicEditedAddedOrDeletedMidCallDiscardsTheResultForTheSweep() {
+        long otherTopic = 12L;
+        when(interestService.listTopics()).thenReturn(
+                List.of(topic(TOPIC_ID, "The Rust programming language", 1)),
+                List.of(topic(TOPIC_ID, "The Rust compiler", 2)),
+                List.of(topic(TOPIC_ID, "The Rust programming language", 1)),
+                List.of(topic(TOPIC_ID, "The Rust programming language", 1), topic(otherTopic, "Go", 1)),
+                List.of(topic(TOPIC_ID, "The Rust programming language", 1)),
+                List.of());
+        when(jevApiClient.judge(anyMap(), anyMap())).thenReturn(
+                judgment(Map.of(InterestQuestions.topicKey(TOPIC_ID), 0.5), new JevScore(3.0, 4, 0.8)));
+
+        scorer.score(ID);
+        scorer.score(ID);
+        scorer.score(ID);
+
+        verify(jevApiClient, times(3)).judge(anyMap(), anyMap());
+        verify(store, never()).writeScored(anyLong(), any());
+        verify(store, never()).writeFailed(anyLong(), anyString());
+    }
+
+    @Test
+    void weightOnlyTopicEditMidCallStillStoresTheScore() {
+        InterestTopic reweighted = topic(TOPIC_ID, "The Rust programming language", 1);
+        reweighted.setWeight(-40);
+        when(interestService.listTopics()).thenReturn(
+                List.of(topic(TOPIC_ID, "The Rust programming language", 1)), List.of(reweighted));
+        when(jevApiClient.judge(anyMap(), anyMap())).thenReturn(
+                judgment(Map.of(InterestQuestions.topicKey(TOPIC_ID), 0.5), new JevScore(3.0, 4, 0.8)));
+
+        scorer.score(ID);
+
+        verify(store).writeScored(eq(ID), any());
+    }
+
+    @Test
     void writeErrorAfterBilledSuccessRecordsAFailedAttempt() {
         when(jevApiClient.judge(anyMap(), anyMap())).thenReturn(
                 judgment(Map.of(InterestQuestions.topicKey(TOPIC_ID), 0.5), new JevScore(3.0, 4, 0.8)));

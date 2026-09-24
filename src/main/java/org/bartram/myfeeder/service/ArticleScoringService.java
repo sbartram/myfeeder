@@ -18,6 +18,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -85,6 +86,14 @@ public class ArticleScoringService {
             return;
         }
 
+        // The call can take ~90s with retries; if the rubric was saved meanwhile (e.g. just before a
+        // Re-score), a write-once SCORED row would pin the replaced rubric. Write nothing, use no
+        // attempt, and let the sweep re-pick the article against the current rubric.
+        if (!sameRubric(profile, topics, interestService.getProfile(), interestService.listTopics())) {
+            log.debug("Rubric changed while scoring article {}; leaving it for the sweep", articleId);
+            return;
+        }
+
         // Pitfall 11: an answer the schema would reject is a failed attempt, not a write that loops
         if (!isValid(judgment, questions)) {
             store.writeFailed(articleId, "invalid answer");
@@ -126,6 +135,24 @@ public class ArticleScoringService {
             }
         }
         return true;
+    }
+
+    /**
+     * Same profile version and the same topic id -> version set. Versions bump only when judged
+     * text changes, so a name- or weight-only edit keeps the rubric the same.
+     */
+    private static boolean sameRubric(InterestProfile before, List<InterestTopic> topicsBefore,
+                                      InterestProfile after, List<InterestTopic> topicsAfter) {
+        return before.getVersion() == after.getVersion()
+                && topicVersions(topicsBefore).equals(topicVersions(topicsAfter));
+    }
+
+    private static Map<Long, Integer> topicVersions(List<InterestTopic> topics) {
+        Map<Long, Integer> versions = new HashMap<>();
+        for (InterestTopic topic : topics) {
+            versions.put(topic.getId(), topic.getVersion());
+        }
+        return versions;
     }
 
     /** The response's legend max, or the rubric's when the response has no legend (-1). */
