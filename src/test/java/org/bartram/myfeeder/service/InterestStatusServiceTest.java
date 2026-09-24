@@ -2,14 +2,24 @@ package org.bartram.myfeeder.service;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import org.bartram.myfeeder.config.MyfeederProperties;
 import org.bartram.myfeeder.integration.JevApiClient;
+import org.bartram.myfeeder.repository.ArticleScoreStore;
+import org.bartram.myfeeder.repository.ArticleScoreStore.ScoreCounts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +29,7 @@ class InterestStatusServiceTest {
 
     @Mock private JevApiClient jevApiClient;
     @Mock private InterestService interestService;
+    @Mock private ArticleScoreStore store;
 
     private CircuitBreakerRegistry registry;
     private InterestStatusService statusService;
@@ -26,7 +37,9 @@ class InterestStatusServiceTest {
     @BeforeEach
     void setUp() {
         registry = CircuitBreakerRegistry.ofDefaults();
-        statusService = new InterestStatusService(jevApiClient, registry, interestService);
+        statusService = new InterestStatusService(jevApiClient, registry, interestService, store,
+                new MyfeederProperties());
+        lenient().when(store.counts(any())).thenReturn(new ScoreCounts(0, 0));
     }
 
     @Test
@@ -66,5 +79,26 @@ class InterestStatusServiceTest {
 
         statusService.status();
         verify(interestService, times(2)).isColdStart();
+    }
+
+    @Test
+    void reportsEligibleUnscoredAndFailedCounts() {
+        when(store.counts(any())).thenReturn(new ScoreCounts(312, 4));
+
+        InterestStatus status = statusService.status();
+
+        assertThat(status.eligibleUnscored()).isEqualTo(312);
+        assertThat(status.failed()).isEqualTo(4);
+    }
+
+    @Test
+    void countsUseTheEligibilityWindow() {
+        ArgumentCaptor<Instant> cutoff = ArgumentCaptor.forClass(Instant.class);
+
+        statusService.status();
+
+        verify(store).counts(cutoff.capture());
+        Instant expected = Instant.now().minus(Duration.ofDays(14));
+        assertThat(cutoff.getValue()).isCloseTo(expected, within(Duration.ofSeconds(5)));
     }
 }

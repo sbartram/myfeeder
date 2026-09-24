@@ -13,6 +13,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -31,6 +35,7 @@ class InterestApiIntegrationTest {
     @Autowired private JdbcTemplate jdbcTemplate;
 
     private static final String PREVIEW_FEED_URL = "https://example.test/interest-preview-feed.xml";
+    private static final String COUNTS_FEED_URL = "https://example.test/interest-counts-feed.xml";
 
     private MockMvc mockMvc;
 
@@ -40,6 +45,7 @@ class InterestApiIntegrationTest {
         jdbcTemplate.update("DELETE FROM interest_topic");
         jdbcTemplate.update("UPDATE interest_profile SET profile_text = '', version = 1 WHERE id = 1");
         jdbcTemplate.update("DELETE FROM feed WHERE url = ?", PREVIEW_FEED_URL); // the article cascades
+        jdbcTemplate.update("DELETE FROM feed WHERE url = ?", COUNTS_FEED_URL); // articles and scores cascade
     }
 
     @Test
@@ -127,6 +133,49 @@ class InterestApiIntegrationTest {
         mockMvc.perform(get("/api/interest/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.coldStart").value(false));
+    }
+
+    @Test
+    void statusCountsEligibleUnscoredAndExhaustedFailures() throws Exception {
+        // Deltas over a baseline: the Spring context and Postgres are shared with other test classes.
+        String before = mockMvc.perform(get("/api/interest/status"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        long baseUnscored = ((Number) JsonPath.read(before, "$.eligibleUnscored")).longValue();
+        long baseFailed = ((Number) JsonPath.read(before, "$.failed")).longValue();
+
+        Long feedId = jdbcTemplate.queryForObject(
+                "INSERT INTO feed (url, title, feed_type) VALUES (?, ?, ?) RETURNING id",
+                Long.class, COUNTS_FEED_URL, "Counts Feed", "RSS");
+        Instant now = Instant.now();
+        insertArticle(feedId, "a", now.minus(Duration.ofHours(1)), false); // no row: unscored
+        long b = insertArticle(feedId, "b", now.minus(Duration.ofHours(2)), false);
+        long c = insertArticle(feedId, "c", now.minus(Duration.ofHours(3)), false);
+        long d = insertArticle(feedId, "d", now.minus(Duration.ofHours(4)), false);
+        insertArticle(feedId, "e", now.minus(Duration.ofHours(5)), true);
+        insertArticle(feedId, "f", now.minus(Duration.ofDays(20)), false);
+        insertScore(b, "FAILED", 1); // still being retried: counts as unscored (D-11)
+        insertScore(c, "FAILED", 3); // exhausted: counts as failed (D-11)
+        insertScore(d, "SCORED", 1);
+        // e (read) and f (outside the 14-day window) drop out of both counts (D-12)
+
+        mockMvc.perform(get("/api/interest/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.eligibleUnscored").value(baseUnscored + 2))
+                .andExpect(jsonPath("$.failed").value(baseFailed + 1));
+    }
+
+    private long insertArticle(long feedId, String guid, Instant publishedAt, boolean read) {
+        return jdbcTemplate.queryForObject(
+                "INSERT INTO article (feed_id, guid, title, url, summary, published_at, read) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                Long.class, feedId, "counts-" + guid, "Article " + guid, "https://example.test/counts-" + guid,
+                "Summary " + guid, Timestamp.from(publishedAt), read);
+    }
+
+    private void insertScore(long articleId, String status, int attempts) {
+        jdbcTemplate.update("INSERT INTO article_score (article_id, status, attempts) VALUES (?, ?, ?)",
+                articleId, status, attempts);
     }
 
     @Test
