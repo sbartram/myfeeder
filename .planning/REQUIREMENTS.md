@@ -35,9 +35,9 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 - [x] **SCOR-01**: Each newly ingested article is judged once by Jev in a single call (a 5-level profile Score plus one Noul per topic), using feed name, title and summary as input (summary HTML-stripped and truncated; falls back to stripped content when the summary is empty)
 - [x] **SCOR-02**: Scoring never blocks or fails feed polling — it runs on a dedicated bounded executor, and polling time and feed error counts are unaffected when Jev is slow, failing or unconfigured
 - [x] **SCOR-03**: Raw Jev outputs (profile score and confidence, per-topic noul by topic id, model, profile/topic versions) are stored write-once in tables separate from `article`
-- [ ] **SCOR-04**: Only unread articles published within the last 14 days (configurable) are eligible for scoring; newest are scored first
-- [ ] **SCOR-05**: A background sweep scores eligible unscored articles, covering the launch backfill, recovery after outages or a late-added key, and first scoring after the profile is written
-- [ ] **SCOR-06**: Nothing is scored while the profile is empty and there are no topics
+- [x] **SCOR-04**: Only unread articles published within the last 14 days (configurable) are eligible for scoring; newest are scored first
+- [x] **SCOR-05**: A background sweep scores eligible unscored articles, covering the launch backfill, recovery after outages or a late-added key, and first scoring after the profile is written
+- [x] **SCOR-06**: Nothing is scored while the profile is empty and there are no topics
 - [x] **SCOR-07**: Articles that fail permanently (e.g. 400/422) are retried at most 3 times; transient failures (429/5xx/timeout/open circuit) don't consume attempts
 - [x] **SCOR-08**: Articles with no GUID are skipped by the scorer (guards against the known re-insert bug)
 
@@ -125,9 +125,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCOR-01 | Phase 4 | Complete |
 | SCOR-02 | Phase 4 | Complete |
 | SCOR-03 | Phase 4 | Complete |
-| SCOR-04 | Phase 4 | Pending |
-| SCOR-05 | Phase 4 | Pending |
-| SCOR-06 | Phase 4 | Pending |
+| SCOR-04 | Phase 4 | Complete |
+| SCOR-05 | Phase 4 | Complete |
+| SCOR-06 | Phase 4 | Complete |
 | SCOR-07 | Phase 4 | Complete |
 | SCOR-08 | Phase 4 | Complete |
 | PRIO-01 | Phase 5 | Pending |
