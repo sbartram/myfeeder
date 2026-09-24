@@ -235,3 +235,7 @@ None. No external service configuration is required.
 ---
 *Phase: 04-scoring-pipeline-backfill-sweep*
 *Completed: 2026-09-24*
+
+## Self-Check: PASSED
+
+All 6 created files exist; commits ba188d1, b0ccfa6, 3087291, 434e859 and 847f253 are present.
