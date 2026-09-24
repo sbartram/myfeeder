@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 04-scoring-pipeline-backfill-sweep
 source: [04-VERIFICATION.md]
 started: 2026-09-24T02:36:01Z
-updated: 2026-09-24T21:09:41Z
+updated: 2026-09-24T21:16:14Z
 ---
 
 ## Current Test
@@ -48,5 +48,19 @@ blocked: 0
   reason: "User reported: TypeSafe Jev not configured under bootTestRun; 30 articles waiting and nothing happening until restarted with SPRING_AI_TYPESAFE_API_KEY / SPRING_AI_TYPESAFE_BASE_URL / MYFEEDER_INTEREST_SWEEP_INITIAL_DELAY overrides, after which it drained 30 -> 0 with no errors"
   severity: major
   test: 1
-  artifacts: []
-  missing: []
+  root_cause: "Under ./gradlew bootTestRun the classpath is test output first, so src/test/resources/application.yaml shadows the main application.yaml entirely (Spring loads only the first classpath:/application.yaml). The test yaml is deliberately offline: no spring.ai.typesafe.api-key placeholder (MYFEEDER_TYPESAFE_API_KEY binds to nothing), base-url http://127.0.0.1:9, sweep-initial-delay PT1H. Also silently lost: spring.http.clients connect/read timeouts (5s/30s) and spring.application.name. Compounded by the 04-05 human-check (and 03-07/03-VERIFICATION) prescribing bootTestRun for live-key checks."
+  artifacts:
+    - path: "src/test/resources/application.yaml"
+      issue: "Only config loaded by bootTestRun; offline-by-design values (no key, 127.0.0.1:9, PT1H) are wrong for a live dev run"
+    - path: "src/test/java/org/bartram/myfeeder/TestMyfeederApplication.java"
+      issue: "bootTestRun entry point activates no dev-specific config"
+    - path: "src/main/resources/application.yaml"
+      issue: "Live settings (key placeholder, PT1M, http timeouts, app name) never load under bootTestRun; relies on the starter default base-url"
+    - path: ".planning/phases/04-scoring-pipeline-backfill-sweep/04-05-PLAN.md"
+      issue: "Human-check prescribes bootTestRun + MYFEEDER_TYPESAFE_API_KEY, which cannot enable Jev"
+  missing:
+    - "A supported live-Jev local run: bootTestRun (or its documented replacement) binds the TypeSafe key, the real base-url, a PT1M initial sweep delay and the 5s/30s http timeouts"
+    - "Tests stay offline: no @SpringBootTest context can bind a real key, reach the real Jev base-url, or sweep during the suite (TypeSafeConfigTest.testYamlMirrorsMainTypeSafePinsWithoutKey and mirror tests keep passing or are updated to guard the new setup)"
+    - "Live-key check wording updated (04-05 human-check / CLAUDE.md dev workflow) to the working procedure"
+  fix_hint: "NON-BINDING: dev-only profile — src/test/resources/application-dev.yaml activated by TestMyfeederApplication via .withAdditionalProfiles(\"dev\"), plus a guard test that its values match main and no test activates it. Alternatives in the debug session (rename to application-test.yaml; document bootRun)."
+  debug_session: .planning/debug/boottestrun-live-jev-unconfigured.md
