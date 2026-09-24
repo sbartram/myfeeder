@@ -49,16 +49,18 @@ public final class ArticleStateBuilder {
     }
 
     /**
-     * Returns the text unchanged when it fits. Otherwise cuts at the last whitespace within the first
-     * {@code max - 1} characters (or at {@code max - 1}, never splitting a surrogate pair), strips
-     * trailing whitespace and appends an ellipsis, so the result is never longer than {@code max}.
+     * Returns the text unchanged when it fits. Otherwise cuts at the last whitespace at or after
+     * {@code max / 2} within the first {@code max - 1} characters, so a word-boundary cut always keeps
+     * at least half the text (D-13); else hard-cuts at {@code max - 1}, never splitting a surrogate
+     * pair. Strips trailing whitespace and appends an ellipsis, so the result is never longer than
+     * {@code max}.
      */
     static String truncate(String text, int max) {
         if (text.length() <= max) {
             return text;
         }
         int cut = -1;
-        for (int i = max - 2; i > 0; i--) {
+        for (int i = max - 2; i >= max / 2; i--) {
             if (Character.isWhitespace(text.charAt(i))) {
                 cut = i;
                 break;
