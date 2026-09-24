@@ -55,6 +55,13 @@ Not in this phase: the blend CTE, the Priority view, badges, the "Why N?" breakd
 - **D-14:** **02 WR-01:** caller input errors (`IllegalArgumentException` from `Assert` inside the proxied `judge()`) must not count as breaker failures. Either add the type to the `jev` `ignore-exceptions` in **both** main and test `application.yaml`, or validate outside the proxied method. Add a `JevResilienceTest` case asserting `judge(null, …)` leaves the failed-call count at 0.
 - **D-15:** **02 WR-02:** reject unsupported question types (anything other than `Noul`/`Score`, i.e. `Choice`) before the HTTP call, so no billed answer is silently dropped. Keep the check outside the breaker's failure count, consistent with D-14.
 
+### Post-research decisions (2026-09-23, after 04-RESEARCH.md)
+- **D-16:** **Sweep batch cap (refines D-10):** each sweep enqueues `min(free queue capacity, batch cap)` eligible IDs, newest first, with a configurable cap of about **50** under `myfeeder.interest.*`. Throughput is unchanged, and fresh articles don't wait behind a large backlog.
+- **D-17:** **Automatic OPEN→HALF_OPEN on `jev`:** set `automatic-transition-from-open-to-half-open-enabled: true` on the `jev` circuit-breaker instance in **both** main and test `application.yaml`, so a paused sweep resumes without an unrelated call probing the breaker.
+- **D-18:** **`POST /api/interest/rescore` guard:** return **409** (via `IllegalStateException` → `GlobalExceptionHandler`) when Jev is unconfigured or `isColdStart()` is true, so nothing is deleted that can't be re-scored.
+- **D-19:** **Unlisted Jev exceptions are permanent:** 404, response-validation errors, plain `TypeSafeException`, `IllegalArgumentException` and any other non-transient error write FAILED and use an attempt (at most 3 billed tries). Only the D-carried transient list (429, 5xx, timeout/connection, `CallNotPermittedException`, `JevNotConfiguredException`, 401/403 via the breaker) writes no row.
+- **SCOR-08 premise correction [informational]:** `article.guid` is `NOT NULL` (`V1__initial_schema.sql:21`), so a GUID-less item fails the poll insert and never reaches scoring. Keep the cheap null/blank-GUID → SKIPPED guard in the scorer; don't plan a "GUID-less fixture polled 3 times" integration test.
+
 ### Claude's Discretion
 - Event name and shape (e.g. `ArticlesIngestedEvent(feedId, newIds)`), listener placement, and the in-flight dedup mechanics.
 - Class split (e.g. `ArticleScoringService`, `ArticleScoreWriter`, `InterestBackfillJob`) and config property names and defaults under `myfeeder.interest.*` (window days, concurrency, queue capacity, sweep delay).
