@@ -776,7 +776,7 @@ describe('InterestsDialog', () => {
 
     expect(await screen.findByText('Re-scoring started for 312 articles.')).toBeInTheDocument()
     expect(rescorePosts()).toHaveLength(1)
-    expect(rescorePosts()[0].body).toBeUndefined()
+    expect(rescorePosts()[0].body).toBe(JSON.stringify({ confirm: true }))
     expect(screen.queryByText(RESCORE_COPY_312)).not.toBeInTheDocument()
     await waitFor(() => expect(statusFetches()).toHaveLength(2))
   })

@@ -60,5 +60,5 @@ export const interestApi = {
   preview: (request: TopicPreviewRequest) =>
     apiPost<TopicPreview>('/interest/preview', request),
   getRescoreCount: () => apiGet<RescoreCount>('/interest/rescore'),
-  rescore: () => apiPost<RescoreCount>('/interest/rescore'),
+  rescore: () => apiPost<RescoreCount>('/interest/rescore', { confirm: true }),
 }

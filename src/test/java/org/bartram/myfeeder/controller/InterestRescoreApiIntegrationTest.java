@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -83,7 +84,8 @@ class InterestRescoreApiIntegrationTest {
                 .andExpect(jsonPath("$.count").value(baseline + 2))
                 .andExpect(jsonPath("$.windowDays").value(14));
 
-        mockMvc.perform(post("/api/interest/rescore"))
+        mockMvc.perform(post("/api/interest/rescore")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"confirm\":true}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.title").value("Configuration error"))
                 .andExpect(jsonPath("$.detail")
