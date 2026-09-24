@@ -19,7 +19,7 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 - [x] **JEV-02**: Jev calls go through a dedicated client bean with `@CircuitBreaker` + `@Retry` (Resilience4j is the only retry layer; SDK retries disabled; per-article 400/422 errors don't open the breaker)
 - [x] **JEV-03**: Jev model is pinned (`jev-1.13.0`) and the model id is stored with every score
 - [x] **JEV-04**: TypeSafe API key is an optional secret in `deploy.sh` and the Helm chart; changing only the key rolls the pod
-- [ ] **JEV-05**: `GET /api/interest/status` reports whether Jev is configured, circuit-breaker state, and counts of eligible-unscored and failed articles
+- [x] **JEV-05**: `GET /api/interest/status` reports whether Jev is configured, circuit-breaker state, and counts of eligible-unscored and failed articles
 
 ### Interest Model
 
@@ -27,7 +27,7 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 - [x] **INT-02**: User can add, edit and delete topics (≤25), each with a positively-phrased description and a signed weight in −50..+50 (default +20)
 - [x] **INT-03**: Editor warns when a topic description is negated (e.g. "not about crypto") and suggests a negative weight instead
 - [x] **INT-04**: User can preview a topic against the currently open article (one Jev call) before saving it
-- [ ] **INT-05**: User can trigger "Re-score unread", which shows how many articles will be re-judged, then re-scores unread articles within the eligibility window
+- [x] **INT-05**: User can trigger "Re-score unread", which shows how many articles will be re-judged, then re-scores unread articles within the eligibility window
 - [x] **INT-06**: Settings show a "not configured" notice when no API key is set, and a "cold start" prompt when the profile is empty and there are no topics
 
 ### Scoring Pipeline
@@ -115,12 +115,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | JEV-02 | Phase 2 | Complete |
 | JEV-03 | Phase 2 | Complete |
 | JEV-04 | Phase 2 | Complete |
-| JEV-05 | Phase 4 | Pending |
+| JEV-05 | Phase 4 | Complete |
 | INT-01 | Phase 3 | Complete |
 | INT-02 | Phase 3 | Complete |
 | INT-03 | Phase 3 | Complete |
 | INT-04 | Phase 3 | Complete |
-| INT-05 | Phase 4 | Pending |
+| INT-05 | Phase 4 | Complete |
 | INT-06 | Phase 3 | Complete |
 | SCOR-01 | Phase 4 | Complete |
 | SCOR-02 | Phase 4 | Complete |
