@@ -1,48 +1,52 @@
 ---
-status: testing
+status: complete
 phase: 04-scoring-pipeline-backfill-sweep
 source: [04-VERIFICATION.md]
 started: 2026-09-24T02:36:01Z
-updated: 2026-09-24T02:36:01Z
+updated: 2026-09-24T21:09:41Z
 ---
 
 ## Current Test
 
-number: 1
-name: Live-key end-to-end scoring (04-05)
-expected: |
-  With MYFEEDER_TYPESAFE_API_KEY set, ./gradlew bootTestRun, and a profile or at least one topic saved:
-  (1) within ~3 min of startup GET /api/interest/status shows eligibleUnscored falling toward 0 and article_score rows appear with status SCORED, model jev-1.13.0 and a request id;
-  (2) a feed refresh that brings new articles produces rows for them without waiting for the sweep;
-  (3) Interests -> Re-score unread shows a count, confirming resets it, and the "N waiting to be scored" line drains back to 0;
-  (4) poll logs show no new feed errors while scoring runs.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
 ### 1. Live-key end-to-end scoring (04-05)
 expected: Backlog drains to 0 with SCORED rows (model + request id); new arrivals scored without waiting for the sweep; Re-score resets and re-drains; no new feed errors in poll logs.
-result: [pending]
+result: issue
+reported: "I see this in the local log: `TypeSafeConfig : TypeSafe Jev not configured; interest scoring disabled` ... the UI says \"30 articles waiting to be scored\" but nothing else is happening ... [after restarting with SPRING_AI_TYPESAFE_API_KEY, SPRING_AI_TYPESAFE_BASE_URL and MYFEEDER_INTEREST_SWEEP_INITIAL_DELAY overrides] I saw the unscored number go to 30 and then to 0 with no errors (or any logs at all)"
+severity: major
+note: "Live behavior verified once overridden: 30 SCORED rows, model jev-1.13.0, 30/30 with request id, breaker CLOSED, failed 0; new arrivals scored on ingest (30->28 before the sweep ran). The documented setup is what fails: under bootTestRun the test application.yaml shadows the main one, so MYFEEDER_TYPESAFE_API_KEY is never bound, base-url is 127.0.0.1:9 and sweep-initial-delay is PT1H. Re-score reset/drain (part 3) not separately exercised."
 
 ### 2. Re-score footer layout across the 6 themes (04-07)
 expected: Re-score row, inline confirmation ("Counting articles…" then count), "N articles waiting to be scored" line, disabled-reason tooltips and 409 error copy all read correctly and match each theme.
-result: [pending]
+result: pass
 
 ### 3. Re-score with edits typed after the confirmation opens (04-07)
 expected: Decide whether this is acceptable — the button is disabled while edits are unsaved (D-04, tested), but once the confirmation is open, new unsaved edits do not block the POST; the reset re-judges against the saved rubric. Accept, or file a fix.
-result: [pending]
+result: pass
 
 ### 4. Concurrent score writes for one article (04-02)
 expected: Decide whether to accept without a test — the "no duplicate row / no FK error under concurrent writes" claim rests on Postgres ON CONFLICT plus the single jev-score thread; only sequential repeated writes are tested. Accept, or request a concurrent-writer test.
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 4
-passed: 0
-issues: 0
-pending: 4
+passed: 3
+issues: 1
+pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
+
+- gap_id: G-04-1
+  truth: "With MYFEEDER_TYPESAFE_API_KEY set and ./gradlew bootTestRun, Jev is configured and the backlog sweep drains within ~3 min of startup"
+  status: failed
+  reason: "User reported: TypeSafe Jev not configured under bootTestRun; 30 articles waiting and nothing happening until restarted with SPRING_AI_TYPESAFE_API_KEY / SPRING_AI_TYPESAFE_BASE_URL / MYFEEDER_INTEREST_SWEEP_INITIAL_DELAY overrides, after which it drained 30 -> 0 with no errors"
+  severity: major
+  test: 1
+  artifacts: []
+  missing: []
