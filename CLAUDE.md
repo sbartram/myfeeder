@@ -80,7 +80,7 @@ org.bartram.myfeeder
 - **Tech Stack**: React 19, TypeScript, TanStack Query, Zustand, React Router v6, DOMPurify
 - **Layout**: Three-panel (feed tree / article list / reading pane) with resizable dividers
 - **Build**: `npm run build` outputs to `src/main/resources/static/`; Gradle `npmBuild` task wires this into `./gradlew build`
-- **Dev workflow**: `./gradlew bootTestRun` (backend) + `cd src/main/frontend && npm run dev` (Vite on :5173, proxies `/api` to :8080)
+- **Dev workflow**: `./gradlew bootTestRun` (backend) + `cd src/main/frontend && npm run dev` (Vite on :5173, proxies `/api` to :8080). `TestMyfeederApplication` activates the `dev` profile so live settings load (see the `bootTestRun` gotcha); export `MYFEEDER_TYPESAFE_API_KEY` first to enable Jev scoring
 - **Tests**: Vitest + React Testing Library; run with `cd src/main/frontend && npm test`
 - **Type-check**: use `npx tsc -b` from `src/main/frontend/` — plain `tsc --noEmit` returns success even with errors because the root `tsconfig.json` has `files: []` and uses project references
 - **Key conventions**:
@@ -161,6 +161,7 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 ## Gotchas
 
 - **Docker required**: Must be running for both `./gradlew test` (Testcontainers) and `./gradlew bootRun` (Docker Compose)
+- **`bootTestRun` loads the test `application.yaml`, not main**: it runs on the test classpath, where `src/test/resources/application.yaml` shadows `src/main/resources/application.yaml` (Spring Boot loads only the first `classpath:/application.yaml`). The test yaml is offline by design: no TypeSafe key placeholder, Jev base-url `http://127.0.0.1:9`, first sweep after `PT1H`. `TestMyfeederApplication` therefore activates the `dev` profile, and `src/test/resources/application-dev.yaml` restores main's key placeholder, the real Jev base-url, the `PT1M` first sweep, the 5s/30s HTTP timeouts, the app name and the Raindrop token placeholder. The test yaml plus that overlay must resolve every main `application.yaml` key to main's value, and no test may activate `dev`; `DevProfileConfigTest` enforces both. Never export `SPRING_AI_TYPESAFE_*` or `SPRING_PROFILES_ACTIVE=dev` in the shell that runs `./gradlew test` (e.g. via `.envrc`): either would make the suite call the billed Jev API. `./gradlew bootRun` (Docker Compose) loads main `application.yaml` directly.
 - **Zustand persist + new preferences**: Adding a new field to `preferencesStore` with a default value only applies to fresh installs. Existing users with a `myfeeder-prefs` localStorage key get `undefined` for the new field (Zustand merges stored state over defaults). Use a `merge` function or version migration if the default must apply to everyone.
 - **Spring Data JDBC ≠ JPA**: No lazy loading, no derived query methods, no `@Entity` — use `@Id` from `org.springframework.data.annotation`, `@Table` from `org.springframework.data.relational.core.mapping`, and `@Query` for custom queries
 - **Jackson 3.x imports**: Must use `tools.jackson.databind.*`, not `com.fasterxml.jackson.databind.*`
