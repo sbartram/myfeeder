@@ -9,15 +9,19 @@ import {
 
 /**
  * Status is refetched on every dialog open (staleTime 0); the server owns coldStart (D-05).
- * It polls every 15s only while articles are waiting to be scored, so the "N waiting" line
- * drains live; the query is observed only while the dialog is open, so nothing polls otherwise.
+ * It polls every 15s only while articles are waiting and can drain (configured, not cold start:
+ * the same gate as the "N waiting" line), so that line drains live; the query is observed only
+ * while the dialog is open, so nothing polls otherwise.
  */
 export function useInterestStatus() {
   return useQuery({
     queryKey: ['interest', 'status'],
     queryFn: interestApi.getStatus,
     staleTime: 0,
-    refetchInterval: (query) => ((query.state.data?.eligibleUnscored ?? 0) > 0 ? 15_000 : false),
+    refetchInterval: (query) => {
+      const s = query.state.data
+      return s && s.configured && !s.coldStart && s.eligibleUnscored > 0 ? 15_000 : false
+    },
   })
 }
 

@@ -996,4 +996,25 @@ describe('InterestsDialog', () => {
       vi.useRealTimers()
     }
   })
+
+  it('statusDoesNotPollWhenNothingCanDrain', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      for (const overrides of [
+        { configured: false, eligibleUnscored: 5 },
+        { coldStart: true, eligibleUnscored: 5 },
+      ]) {
+        calls = []
+        status(overrides)
+        const view = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+        await screen.findByRole('textbox', { name: 'Interest profile' })
+        await waitFor(() => expect(statusFetches()).toHaveLength(1))
+        await act(() => vi.advanceTimersByTimeAsync(15_000))
+        expect(statusFetches()).toHaveLength(1)
+        view.unmount()
+      }
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
