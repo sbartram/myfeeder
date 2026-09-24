@@ -31,6 +31,7 @@ import org.springaicommunity.typesafe.exception.TypeSafeOverloadedException;
 import org.springaicommunity.typesafe.exception.TypeSafePermissionDeniedException;
 import org.springaicommunity.typesafe.exception.TypeSafeRateLimitException;
 import org.springaicommunity.typesafe.exception.TypeSafeUnprocessableEntityException;
+import org.springaicommunity.typesafe.question.Choice;
 import org.springaicommunity.typesafe.question.Noul;
 import org.springaicommunity.typesafe.question.Question;
 import org.springaicommunity.typesafe.question.Score;
@@ -226,6 +227,45 @@ class JevResilienceTest {
     }
 
     @Test
+    void callerInputErrorsAreNeitherSentNorRecorded() {
+        // D-14/D-15: caller bugs never reach Jev (nothing billed) and never count against the breaker.
+        Map<String, Question> choice = Map.of("c1", Choice.builder()
+                .instructions("Which language is the article about?")
+                .option("Rust")
+                .option("Java")
+                .build());
+        runner.run(ctx -> {
+            JevApiClient client = ctx.getBean(JevApiClient.class);
+            assertThatThrownBy(() -> client.judge(null, questions()))
+                    .isExactlyInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> client.judge(state(), Map.of()))
+                    .isExactlyInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> client.judge(state(), choice))
+                    .isExactlyInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Unsupported question type for 'c1'");
+            assertThat(stub.hits()).isZero();
+            assertNotRecorded(ctx);
+        });
+    }
+
+    @Test
+    void openBreakerMovesToHalfOpenWithoutACall() throws Exception {
+        // D-17: a paused sweep never calls judge(), so the breaker must leave OPEN on its own.
+        runner.withPropertyValues("resilience4j.circuitbreaker.instances.jev.wait-duration-in-open-state=200ms")
+                .run(ctx -> {
+                    CircuitBreaker breaker = jevBreaker(ctx);
+                    breaker.transitionToOpenState();
+                    assertThat(breaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
+                    long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();
+                    while (breaker.getState() == CircuitBreaker.State.OPEN && System.nanoTime() < deadline) {
+                        Thread.sleep(50);
+                    }
+                    assertThat(breaker.getState()).isEqualTo(CircuitBreaker.State.HALF_OPEN);
+                    assertThat(stub.hits()).isZero();
+                });
+    }
+
+    @Test
     void breakerOpensAtMinimumCallsAndShortCircuits() {
         for (int i = 0; i < 30; i++) {
             stub.enqueue(500);
@@ -336,9 +376,10 @@ class JevResilienceTest {
             assertThat(cb.getMinimumNumberOfCalls()).isEqualTo(10);
             assertThat(cb.getFailureRateThreshold()).isEqualTo(50f);
             assertThat(cb.getWaitIntervalFunctionInOpenState().apply(1)).isEqualTo(60_000L);
-            assertThat(cb.getSlowCallDurationThreshold()).isEqualTo(Duration.ofSeconds(3));
+            assertThat(cb.getSlowCallDurationThreshold()).isEqualTo(Duration.ofSeconds(15));
             assertThat(cb.getSlowCallRateThreshold()).isEqualTo(50f);
             assertThat(cb.getPermittedNumberOfCallsInHalfOpenState()).isEqualTo(3);
+            assertThat(cb.isAutomaticTransitionFromOpenToHalfOpenEnabled()).isTrue();
 
             Predicate<Throwable> ignored = cb.getIgnoreExceptionPredicate();
             assertThat(ignored.test(new JevNotConfiguredException())).isTrue();
@@ -349,6 +390,7 @@ class JevResilienceTest {
             assertThat(ignored.test(unauthorized())).isFalse();
             assertThat(ignored.test(forbidden())).isFalse();
             assertThat(ignored.test(serverError())).isFalse();
+            assertThat(ignored.test(new IllegalArgumentException("x"))).isTrue();
 
             RetryConfig retry = ctx.getBean(RetryRegistry.class).retry("jev").getRetryConfig();
             assertThat(retry.getMaxAttempts()).isEqualTo(3);
@@ -365,6 +407,7 @@ class JevResilienceTest {
             assertThat(retried.test(badRequest())).isFalse();
             assertThat(retried.test(unprocessable())).isFalse();
             assertThat(retried.test(new JevNotConfiguredException())).isFalse();
+            assertThat(retried.test(new IllegalArgumentException("x"))).isFalse();
             assertThat(retried.test(CallNotPermittedException.createCallNotPermittedException(breaker))).isFalse();
         });
     }

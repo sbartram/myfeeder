@@ -143,7 +143,7 @@ class TypeSafeConfigTest {
                     assertThat(ctx).hasNotFailed();
                     TypeSafeProperties properties = ctx.getBean(TypeSafeProperties.class);
                     assertThat(properties.getModel()).isEqualTo("jev-1.13.0");
-                    assertThat(properties.getTimeout()).isEqualTo(Duration.ofSeconds(5));
+                    assertThat(properties.getTimeout()).isEqualTo(Duration.ofSeconds(30));
                     assertThat(properties.getRetry().getMaxRetries()).isZero();
                     assertThat(properties.toRetryPolicy().maxRetries()).isZero();
                     assertThat(properties.getBaseUrl()).isEqualTo("https://api.typesafe.ai");
