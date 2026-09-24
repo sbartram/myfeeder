@@ -100,6 +100,40 @@ class ArticleStateBuilderTest {
     }
 
     @Test
+    void cjkTextIsHardCutAtTheLimit() {
+        String summary = summaryOf("标题 " + "字".repeat(2000));
+
+        assertThat(summary).hasSize(ArticleStateBuilder.MAX_SUMMARY_CHARS);
+        assertThat(summary).startsWith("标题");
+        assertThat(summary.charAt(summary.length() - 1)).isEqualTo(ELLIPSIS);
+    }
+
+    @Test
+    void longUrlIsHardCutAtTheLimit() {
+        String summary = summaryOf("Link: https://example.com/" + "a".repeat(2000));
+
+        assertThat(summary).hasSize(ArticleStateBuilder.MAX_SUMMARY_CHARS);
+        assertThat(summary).startsWith("Link: https://example.com/");
+        assertThat(summary.charAt(summary.length() - 1)).isEqualTo(ELLIPSIS);
+    }
+
+    @Test
+    void whitespaceAtHalfIsUsed() {
+        String summary = summaryOf("a".repeat(750) + " " + "b".repeat(1000));
+
+        assertThat(summary).isEqualTo("a".repeat(750) + ELLIPSIS);
+        assertThat(summary).hasSize(751);
+    }
+
+    @Test
+    void whitespaceBelowHalfIsIgnored() {
+        String summary = summaryOf("a".repeat(749) + " " + "b".repeat(1000));
+
+        assertThat(summary).hasSize(ArticleStateBuilder.MAX_SUMMARY_CHARS);
+        assertThat(summary.charAt(summary.length() - 1)).isEqualTo(ELLIPSIS);
+    }
+
+    @Test
     void boundsRawHtmlBeforeParsing() {
         StringBuilder html = new StringBuilder();
         while (html.length() < 1_000_000) {
