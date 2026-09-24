@@ -28,16 +28,14 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Dependencies upgraded (patch/GA line): Spring Boot 4.0.8, Spring AI BOM 2.0.1, Spring Cloud 2025.1.3, frontend in-major bumps; 162 backend + 47 frontend tests green; released and deployed as v0.1.24 — Phase 1
 - ✓ TypeSafe Jev integrated via `spring-ai-starter-typesafe` 0.1.0, optional like Raindrop (keyless startup), `JevApiClient.judge()` behind Resilience4j `jev` breaker/retry, optional Helm secret; live smoke returned `jev-1.13.0` — Phase 2
 - ✓ Interest profile (≤2,000 chars) and topic rubric (≤25 topics, weights −50..+50) editor with negation warning, not-configured/cold-start notices and one-call topic preview against the open article; V6 interest schema; question wording calibrated (v2 "substantially about") — Phase 3
+- ✓ Each newly ingested article judged once by Jev off the polling thread (bounded jev-score queue), raw profile `Score` + per-topic `Noul` stored per article; a 50-per-2-min sweep backfills the unread backlog, retries FAILED rows up to 3 attempts and pauses while the breaker is open; manual "Re-score unread"; `/api/interest/status` counts — Phase 4
 
 ### Active
 
-- [ ] Each newly ingested article is judged once by Jev (title + summary + feed name as state): a profile-interest `Score` plus a `Noul` per topic, in a single `systemOne` call
-- [ ] Raw Jev outputs are stored per article; the blended interest score (profile score blended with Σ topic match × weight) is computed at query time
+- [ ] The blended interest score (profile score blended with Σ topic match × weight) is computed at query time
 - [ ] Thumbs up/down on an article nudges the weights of the topics that article matched; ranking updates immediately with no new Jev calls
 - [ ] "Priority" virtual feed in the feed tree: unread articles ordered by blended score desc (ties by date), unscored articles after, by date
 - [ ] Interest score badge on articles in the article list and reading pane
-- [ ] Graceful degradation: Jev failure/missing key/open circuit never fails ingest; unscored articles are backfilled by a background job
-- [ ] One-time backfill that scores the existing unread backlog when the feature ships
 
 ### Out of Scope
 
@@ -74,16 +72,16 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Judge at ingest (once per new article) | Predictable cost, instant ranking | — Pending |
+| Judge at ingest (once per new article) | Predictable cost, instant ranking | ✓ Good — ArticlesIngestedEvent hand-off scores new arrivals before the sweep (Phase 4 UAT) |
 | Interest signals = written profile + weighted topic rubric + thumbs feedback | User wants explicit control plus lightweight feedback | — Pending |
 | Weighted blend: profile `Score` + Σ(topic `Noul` × weight), single `systemOne` call | One call per article covers all signals; negative weights push articles down | — Pending |
 | Store raw Jev outputs; blend at query time | Thumbs-driven weight nudges re-rank instantly with zero extra Jev calls | — Pending |
 | Thumbs feedback adjusts topic weights (not in-context examples) | Deterministic and explainable | — Pending |
 | Jev input = title + summary + feed name | Cheap, always available at ingest, no extra fetches | — Pending |
-| Optional integration, degrade gracefully + background backfill | Ingest must never fail because of Jev | — Pending |
-| Profile/topic edits apply to new articles, plus a manual "Re-score unread" button | Research: ~$0.10/1k articles; only way edits reach existing unread | — Pending |
+| Optional integration, degrade gracefully + background backfill | Ingest must never fail because of Jev | ✓ Good — ScoringIsolationTest; live 30-article backlog drained with 0 feed errors (Phase 4) |
+| Profile/topic edits apply to new articles, plus a manual "Re-score unread" button | Research: ~$0.10/1k articles; only way edits reach existing unread | ✓ Good — count and delete share one scope; scores discarded if the rubric changes mid-call (Phase 4) |
 | Score in points on a 0–100 scale: 100×profile + Σ hinge(noul)×weight; weights −50..+50; learned ±20 derived from stored votes, no sign flip | One coherent, explainable model (research R1/R2/R6) | — Pending |
-| Eligibility window: unread, published within 14 days, newest first | Prevents subscribe/OPML/startup floods | — Pending |
+| Eligibility window: unread, published within 14 days, newest first | Prevents subscribe/OPML/startup floods | ✓ Good — one ELIGIBLE predicate drives sweep, status and Re-score (Phase 4) |
 | Summary falls back to stripped/truncated content | Many Atom feeds have content but no summary | — Pending |
 | NULL-GUID articles skipped by scorer; parser fix is a separate task | Existing re-insert bug would cause re-scoring | — Pending |
 | App-owned TypeSafeClient bean; Resilience4j as the single retry layer | Starter crashes on a blank key; avoid 9× stacked retries | ✓ Good — keyless startup + SDK max-retries 0 tested (Phase 2) |
@@ -93,6 +91,8 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | Pin RestClient transport to Reactor Netty via explicit `reactor-netty-http` (D-01) | Spring AI 2.0.1 dropped it transitively; Boot would silently fall back to the JDK client | ✓ Good — guarded by HttpClientConfigurationTest |
 | Bind outbound timeouts under `spring.http.clients.*` (D-02) | Old singular keys were silently unbound, so the 5s/30s timeouts never applied | ✓ Good — stalled feeds now time out (Phase 1) |
 | Topic question wording v2 ("substantially about `topic`") (Phase 3 calibration) | v1 "primarily about" under-fired: obvious matches stayed far below noul 0.5 | ✓ Good — v2 doubles obvious-match nouls; under-firing threshold tuning deferred to Phase 4/5 |
+| Jev breaker wraps retry (aspect orders 1/2), 30s shared timeout, auto OPEN→HALF_OPEN (Phase 4) | Breaker must count articles, not attempts; profile+topics calls exceed 5s | ✓ Good — closes 02-REVIEW WR-01..03 |
+| bootTestRun activates a `dev` profile overlay for live settings; suite stays offline (Phase 4, G-04-1) | Test application.yaml shadows main under bootTestRun | ✓ Good — live-key UAT re-run passed; DevProfileConfigTest guards drift and activation |
 | Accept react-router v6 advisories (GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg) | Fix needs v7 major; no SSR, internal-only navigation targets | ⚠️ Revisit — when a v7 migration is scheduled |
 
 ## Evolution
@@ -113,4 +113,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-23 after Phase 3*
+*Last updated: 2026-09-24 after Phase 4*

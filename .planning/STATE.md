@@ -1,44 +1,45 @@
 ---
 gsd_state_version: "1.0"
 milestone: v0.1.24
-current_phase: 04
-current_phase_name: Scoring Pipeline & Backfill Sweep
-status: executing
-stopped_at: Completed 04-09-PLAN.md
-last_updated: "2026-09-24T21:53:49.167Z"
+current_phase: 5
+current_phase_name: Blend & Priority View
+status: planning
+stopped_at: Phase 04 complete, ready to plan Phase 5
+last_updated: "2026-09-24T22:37:36.072Z"
 last_activity: 2026-09-24
-last_activity_desc: Phase 04 execution started
-state_head: 15a36d23505b3247feb3f6428aee4aa425a18eef
+last_activity_desc: Phase 04 complete, transitioned to Phase 5
+state_head: c1d009938dfe8260f2a076610bd8152c9b8ab81d
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 25
   completed_plans: 25
+  percent: 57
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-23)
+See: .planning/PROJECT.md (updated 2026-09-24)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 04 — Scoring Pipeline & Backfill Sweep
+**Current focus:** Phase 5 — Blend & Priority View
 
 ## Current Position
 
-Phase: 04 (Scoring Pipeline & Backfill Sweep) — EXECUTING
-Plan: 2 of 9
-Status: Ready to execute
-Last activity: 2026-09-24 — Phase 04 execution started
+Phase: 5 — Blend & Priority View
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-24 — Phase 04 complete, transitioned to Phase 5
 
-Progress: [████░░░░░░] 43%
+Progress: [██████░░░░] 57%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 16
+- Total plans completed: 25
 - Average duration: -
 - Total execution time: 0.0 hours
 
@@ -49,6 +50,7 @@ Progress: [████░░░░░░] 43%
 | 01 | 4 | - | - |
 | 2 | 4 | - | - |
 | 03 | 8 | - | - |
+| 04 | 9 | - | - |
 
 **Recent Trend:**
 
@@ -129,6 +131,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-08: Shipped v2 topic wording ('substantially about `topic`'); v1/v2 both pass A6, label agreement 0.859, v2 doubles obvious-match topic nouls
 - [Phase 03]: 03-08: Topic under-firing (no obvious match crosses noul 0.5) deferred to Phase 4/5 OPS-02 tuning
 - [Phase 03]: 03-08: Phase 4 scoring needs a Jev timeout well above 5s (profile+7 topics ~2.6s avg, cold >5s)
+- [Phase 04]: Scoring runs on a dedicated jev-score executor (queue 1000, non-default candidate); sweep enqueues ≤50 per 2 min on the scheduler thread and pauses while the breaker is OPEN
+- [Phase 04]: UAT accepted: Re-score confirm doesn't block on edits typed after it opens; concurrent-write truth rests on ON CONFLICT + single thread (override)
 - [Phase 04]: 04-09: bootTestRun activates a dev profile overlay (src/test/resources/application-dev.yaml) only from TestMyfeederApplication; both application.yaml files unchanged, DevProfileConfigTest enforces the main-mirror rule and that no test activates dev
 
 ### Pending Todos
@@ -137,11 +141,10 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-- [Phase 2] Code review 02-REVIEW.md: 5 warnings open (Retry-outer breaker counting, Raindrop POST retries, caller bugs recorded as breaker failures, choice answers dropped, untrimmed key) — address before/within Phase 4
-- [Phase 3] CR-01 `ArticleStateBuilder.truncate` shrinks whitespace-sparse (CJK / long-URL) summaries to a few chars — deferred at UAT, fix before/within Phase 4 (see 03 deferred-items.md)
-- [Phase 3] Scorer needs a Jev timeout well above the 5s production setting (profile + 7 topics, cold call >5s)
+- [Phase 2] 02-REVIEW WR-04 (Raindrop createBookmark POST retried) and WR-05 (helm --set secret mangling) still deferred; WR-01..03 closed in Phase 4
 - [Phase 3] 03-REVIEW.md WR-01..WR-05 (dialog save race, keyboard shortcuts behind modal, error copy, failed article load) still open
-- Phase 4: verify jsoup is on the classpath via Readability4J (or add it explicitly)
+- [Phase 4] 04-VERIFICATION advisories: suite offline-ness relies on shell hygiene (strip SPRING_AI_TYPESAFE_*/SPRING_PROFILES_ACTIVE in the Gradle Test task); dev-overlay drift check is one-directional
+- [Phase 4] Preview spinner can run ~93s worst case (3×30s + backoff); consider a UI ceiling
 - Phase 7: 429 behavior during launch backfill is unobserved; fallback is concurrency 1 or the SDK retry layer (keep exactly one)
 
 ## Deferred Items
@@ -154,6 +157,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-24T21:53:49.128Z
-Stopped at: Completed 04-09-PLAN.md
+Last session: 2026-09-24T22:40:00Z
+Stopped at: Phase 04 complete, ready to plan Phase 5
 Resume file: None

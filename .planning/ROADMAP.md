@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Dependency Upgrade** - Move to Boot 4.0.8 / Spring AI 2.0.1 / Spring Cloud 2025.1.3 and frontend minor/patch versions, then deploy (completed 2026-09-22)
 - [x] **Phase 2: Jev Client Foundation** - Optional, pinned-model Jev client with a single Resilience4j retry layer and deploy-time secret (completed 2026-09-23)
 - [x] **Phase 3: Interest Model, Schema & Rubric Editor** - Profile and weighted topic editor, topic preview, and the full V6 interest schema (completed 2026-09-23)
-- [ ] **Phase 4: Scoring Pipeline & Backfill Sweep** - Background, never-blocking scoring of new articles plus the sweep that backfills, recovers and re-scores
+- [x] **Phase 4: Scoring Pipeline & Backfill Sweep** - Background, never-blocking scoring of new articles plus the sweep that backfills, recovers and re-scores (completed 2026-09-24)
 - [ ] **Phase 5: Blend & Priority View** - Query-time blend, Priority route with stable keyset pagination, score badges and "Why N?" breakdown
 - [ ] **Phase 6: Thumbs Feedback** - Reversible, bounded thumbs up/down that re-weights matched topics instantly
 - [ ] **Phase 7: Rollout & Calibration** - Production release with a live key, launch backfill observed, blend constants tuned, docs updated
@@ -222,7 +222,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 1. Dependency Upgrade | 4/4 | Complete    | 2026-09-22 |
 | 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
-| 4. Scoring Pipeline & Backfill Sweep | 9/9 | In Progress|  |
+| 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
 | 5. Blend & Priority View | 0/TBD | Not started | - |
 | 6. Thumbs Feedback | 0/TBD | Not started | - |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |
