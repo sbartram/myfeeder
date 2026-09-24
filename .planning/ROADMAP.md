@@ -135,7 +135,7 @@ Plans:
   4. `GET /api/interest/status` reports whether Jev is configured, the circuit-breaker state, and the eligible-unscored and failed article counts
   5. User can trigger "Re-score unread", sees how many articles will be re-judged before confirming, and the in-window unread articles are then re-scored by the sweep
 
-**Plans**: 2/8 plans executed
+**Plans**: 3/8 plans executed
 
 Plans:
 **Wave 1**
@@ -145,7 +145,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-03-PLAN.md — ArticleScoringService: gates, dispatch recheck, shared builders, one judge() call, D-19 failure classification, D-13 truncate fix (wave 2)
+- [x] 04-03-PLAN.md — ArticleScoringService: gates, dispatch recheck, shared builders, one judge() call, D-19 failure classification, D-13 truncate fix (wave 2)
 - [ ] 04-06-PLAN.md — /api/interest/status eligibleUnscored + failed (JEV-05, D-08/D-11/D-12) (wave 2)
 - [ ] 04-08-PLAN.md — GET/POST /api/interest/rescore on the shared Re-score scope with the D-18 guard (INT-05, D-02/D-03) (wave 2)
 
@@ -218,7 +218,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 1. Dependency Upgrade | 4/4 | Complete    | 2026-09-22 |
 | 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
-| 4. Scoring Pipeline & Backfill Sweep | 2/8 | In Progress|  |
+| 4. Scoring Pipeline & Backfill Sweep | 3/8 | In Progress|  |
 | 5. Blend & Priority View | 0/TBD | Not started | - |
 | 6. Thumbs Feedback | 0/TBD | Not started | - |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |
