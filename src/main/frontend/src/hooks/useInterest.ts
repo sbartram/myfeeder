@@ -93,3 +93,31 @@ export function useDeleteInterestTopic() {
     },
   })
 }
+
+/**
+ * The server's count of what a re-score would reset. Never cached (gcTime 0, staleTime 0), so
+ * each confirmation fetches a fresh number and shows exactly what is reset (D-02).
+ */
+export function useRescoreCount() {
+  return useQuery({
+    queryKey: ['interest', 'rescore-count'],
+    queryFn: interestApi.getRescoreCount,
+    staleTime: 0,
+    gcTime: 0,
+  })
+}
+
+/**
+ * Resets the in-window unread scores so the sweep re-judges them. Destructive and billed
+ * downstream, so it is never retried (TanStack's mutation default); refreshes the status counts.
+ */
+export function useRescoreUnread() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => interestApi.rescore(),
+    meta: { inlineError: true },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+    },
+  })
+}

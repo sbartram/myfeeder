@@ -74,16 +74,46 @@ function route(method: string, url: string, handler: Handler) {
   routes[`${method} ${url}`] = handler
 }
 
-function status(overrides: Partial<{ configured: boolean; breakerState: string; coldStart: boolean }>) {
+function status(
+  overrides: Partial<{
+    configured: boolean
+    breakerState: string
+    coldStart: boolean
+    eligibleUnscored: number
+    failed: number
+  }>,
+) {
   route('GET', '/api/interest/status', () => ({
     status: 200,
-    body: { configured: true, breakerState: 'CLOSED', coldStart: false, ...overrides },
+    body: {
+      configured: true,
+      breakerState: 'CLOSED',
+      coldStart: false,
+      eligibleUnscored: 0,
+      failed: 0,
+      ...overrides,
+    },
   }))
 }
 
 function profilePuts() {
   return calls.filter((c) => c.method === 'PUT' && c.url === '/api/interest/profile')
 }
+
+function rescorePosts() {
+  return calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/rescore')
+}
+
+function rescoreGets() {
+  return calls.filter((c) => c.method === 'GET' && c.url === '/api/interest/rescore')
+}
+
+function rescoreCount(count: number, windowDays = 14) {
+  route('GET', '/api/interest/rescore', () => ({ status: 200, body: { count, windowDays } }))
+}
+
+const RESCORE_COPY_312 =
+  "Re-judge 312 unread articles from the last 14 days? Existing scores are replaced as they're re-scored."
 
 const CONFIRM_COPY = 'Discard unsaved changes? You have unsaved edits to the profile.'
 
@@ -100,7 +130,7 @@ describe('InterestsDialog', () => {
     routes = {}
     route('GET', '/api/interest/status', () => ({
       status: 200,
-      body: { configured: true, breakerState: 'CLOSED', coldStart: false },
+      body: { configured: true, breakerState: 'CLOSED', coldStart: false, eligibleUnscored: 0, failed: 0 },
     }))
     route('GET', '/api/interest/profile', () => ({ status: 200, body: profile('') }))
     route('GET', '/api/interest/topics', () => ({ status: 200, body: [] }))
@@ -730,5 +760,134 @@ describe('InterestsDialog', () => {
 
     expect(calls.slice(before).map((c) => `${c.method} ${c.url}`)).toEqual(['POST /api/interest/preview'])
     expect(useUIStore.getState().selectedArticleId).toBe(1)
+  })
+
+  it('rescoreConfirmShowsTheServerCountAndPosts', async () => {
+    const user = userEvent.setup()
+    rescoreCount(312)
+    route('POST', '/api/interest/rescore', () => ({ status: 200, body: { count: 312, windowDays: 14 } }))
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await screen.findByRole('textbox', { name: 'Interest profile' })
+    await waitFor(() => expect(statusFetches()).toHaveLength(1))
+
+    await user.click(screen.getByRole('button', { name: 'Re-score unread' }))
+    expect(await screen.findByText(RESCORE_COPY_312)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Re-score' }))
+
+    expect(await screen.findByText('Re-scoring started for 312 articles.')).toBeInTheDocument()
+    expect(rescorePosts()).toHaveLength(1)
+    expect(rescorePosts()[0].body).toBeUndefined()
+    expect(screen.queryByText(RESCORE_COPY_312)).not.toBeInTheDocument()
+    await waitFor(() => expect(statusFetches()).toHaveLength(2))
+  })
+
+  it('cancelSendsNoReset', async () => {
+    const user = userEvent.setup()
+    rescoreCount(312)
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await screen.findByRole('textbox', { name: 'Interest profile' })
+
+    await user.click(screen.getByRole('button', { name: 'Re-score unread' }))
+    expect(await screen.findByText(RESCORE_COPY_312)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByText(RESCORE_COPY_312)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Re-score unread' })).toBeInTheDocument()
+    expect(rescorePosts()).toEqual([])
+  })
+
+  it('singleArticleCopyIsSingular', async () => {
+    const user = userEvent.setup()
+    rescoreCount(1)
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await screen.findByRole('textbox', { name: 'Interest profile' })
+
+    await user.click(screen.getByRole('button', { name: 'Re-score unread' }))
+    expect(
+      await screen.findByText(
+        "Re-judge 1 unread article from the last 14 days? Existing scores are replaced as they're re-scored.",
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('zeroCountOffersNothingToReset', async () => {
+    const user = userEvent.setup()
+    rescoreCount(0)
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await screen.findByRole('textbox', { name: 'Interest profile' })
+
+    await user.click(screen.getByRole('button', { name: 'Re-score unread' }))
+    expect(
+      await screen.findByText('Nothing to re-judge: no scored unread articles from the last 14 days.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'OK' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Re-score' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'OK' }))
+    expect(screen.getByRole('button', { name: 'Re-score unread' })).toBeInTheDocument()
+    expect(rescorePosts()).toEqual([])
+  })
+
+  it('reopeningFetchesAFreshCount', async () => {
+    const user = userEvent.setup()
+    let count = 312
+    let releaseSecond: () => void = () => {}
+    const secondGate = new Promise<void>((resolve) => {
+      releaseSecond = resolve
+    })
+    route('GET', '/api/interest/rescore', async () => {
+      if (rescoreGets().length > 1) await secondGate
+      return { status: 200, body: { count, windowDays: 14 } }
+    })
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+    await screen.findByRole('textbox', { name: 'Interest profile' })
+
+    await user.click(screen.getByRole('button', { name: 'Re-score unread' }))
+    expect(await screen.findByText(RESCORE_COPY_312)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    count = 5
+    await user.click(screen.getByRole('button', { name: 'Re-score unread' }))
+    expect(screen.getByText('Counting articles…')).toBeInTheDocument()
+    expect(screen.queryByText(RESCORE_COPY_312)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Re-score' })).not.toBeInTheDocument()
+
+    await waitFor(() => expect(rescoreGets()).toHaveLength(2))
+    act(() => releaseSecond())
+    expect(
+      await screen.findByText(
+        "Re-judge 5 unread articles from the last 14 days? Existing scores are replaced as they're re-scored.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Counting articles…')).not.toBeInTheDocument()
+    expect(rescoreGets()).toHaveLength(2)
+  })
+
+  it('resetFailureShowsInlineErrorNotToast', async () => {
+    const user = userEvent.setup()
+    useToastStore.setState({ toasts: [] })
+    rescoreCount(312)
+    route('POST', '/api/interest/rescore', () => ({
+      status: 409,
+      body: {
+        title: 'Configuration error',
+        detail: 'Re-score needs a TypeSafe API key and a profile or at least one topic',
+      },
+    }))
+    renderDialog(<InterestsDialog open={true} onClose={() => {}} />, createQueryClient())
+    await screen.findByRole('textbox', { name: 'Interest profile' })
+
+    await user.click(screen.getByRole('button', { name: 'Re-score unread' }))
+    await screen.findByText(RESCORE_COPY_312)
+    await user.click(screen.getByRole('button', { name: 'Re-score' }))
+
+    expect(
+      await screen.findByText(
+        "Couldn't start the re-score: Re-score needs a TypeSafe API key and a profile or at least one topic",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText(RESCORE_COPY_312)).toBeInTheDocument()
+    expect(rescorePosts()).toHaveLength(1)
+    expect(useToastStore.getState().toasts).toEqual([])
   })
 })

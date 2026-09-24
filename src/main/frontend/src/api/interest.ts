@@ -21,6 +21,13 @@ export interface InterestStatus {
   configured: boolean
   breakerState: string
   coldStart: boolean
+  eligibleUnscored: number
+  failed: number
+}
+
+export interface RescoreCount {
+  count: number
+  windowDays: number
 }
 
 export interface TopicInput {
@@ -52,4 +59,6 @@ export const interestApi = {
   deleteTopic: (id: number) => apiDelete(`/interest/topics/${id}`),
   preview: (request: TopicPreviewRequest) =>
     apiPost<TopicPreview>('/interest/preview', request),
+  getRescoreCount: () => apiGet<RescoreCount>('/interest/rescore'),
+  rescore: () => apiPost<RescoreCount>('/interest/rescore'),
 }

@@ -4,6 +4,8 @@ import {
   useInterestProfile,
   useInterestStatus,
   useInterestTopics,
+  useRescoreCount,
+  useRescoreUnread,
   useSaveInterestProfile,
 } from '../hooks/useInterest'
 import { useArticle } from '../hooks/useArticles'
@@ -90,7 +92,7 @@ function InterestsDialogBody({ onClose }: { onClose: () => void }) {
           statusFailed={status.isError}
           onDirtyCountChange={setDirtyTopics}
         />
-        <p className="interests-note">Profile and topic changes apply to newly arriving articles.</p>
+        <RescoreFooter />
       </>
     )
   }
@@ -167,6 +169,117 @@ function InterestNotices({ status }: { status: InterestStatus | undefined }) {
         </div>
       )}
     </div>
+  )
+}
+
+/** "1 article" or "N articles". */
+function articles(count: number): string {
+  return count === 1 ? '1 article' : `${count} articles`
+}
+
+/**
+ * The dialog footer: the note about newly arriving articles and the "Re-score unread" action
+ * (D-01). The confirmation mounts only while confirming, so it always counts afresh (D-02).
+ */
+function RescoreFooter() {
+  const [confirming, setConfirming] = useState(false)
+  const [started, setStarted] = useState<number | null>(null)
+
+  const openConfirm = () => {
+    setStarted(null)
+    setConfirming(true)
+  }
+
+  return (
+    <>
+      <div className="interests-rescore">
+        <span className="interests-note">Profile and topic changes apply to newly arriving articles.</span>
+        {!confirming && (
+          <button className="btn-secondary" onClick={openConfirm}>
+            Re-score unread
+          </button>
+        )}
+      </div>
+      {confirming && (
+        <RescoreConfirm
+          onCancel={() => setConfirming(false)}
+          onDone={(count) => {
+            setConfirming(false)
+            setStarted(count)
+          }}
+        />
+      )}
+      {started !== null && (
+        <p className="interests-waiting">Re-scoring started for {articles(started)}.</p>
+      )}
+    </>
+  )
+}
+
+interface RescoreConfirmProps {
+  onCancel: () => void
+  onDone: (count: number) => void
+}
+
+/**
+ * Inline, themed confirmation (D-02). "Counting articles…" shows while the count is fetching,
+ * including the refetch on every mount, so a cached number is never shown or confirmed.
+ */
+function RescoreConfirm({ onCancel, onDone }: RescoreConfirmProps) {
+  const count = useRescoreCount()
+  const rescore = useRescoreUnread()
+
+  if (count.isFetching || count.isPending) {
+    return <p className="interests-waiting">Counting articles…</p>
+  }
+  if (count.isError) {
+    return (
+      <div className="dialog-actions interests-confirm">
+        <span className="dialog-error">Couldn't count the articles to re-judge: {count.error.message}.</span>
+        <span className="interests-confirm-actions">
+          <button className="btn-secondary" onClick={onCancel}>
+            Cancel
+          </button>
+        </span>
+      </div>
+    )
+  }
+
+  const { count: n, windowDays } = count.data
+  if (n === 0) {
+    return (
+      <div className="dialog-actions interests-confirm">
+        <span>Nothing to re-judge: no scored unread articles from the last {windowDays} days.</span>
+        <span className="interests-confirm-actions">
+          <button className="btn-secondary" onClick={onCancel}>
+            OK
+          </button>
+        </span>
+      </div>
+    )
+  }
+
+  const confirm = () => rescore.mutate(undefined, { onSuccess: (result) => onDone(result.count) })
+
+  return (
+    <>
+      <div className="dialog-actions interests-confirm">
+        <span>
+          Re-judge {n} unread {n === 1 ? 'article' : 'articles'} from the last {windowDays} days? Existing scores are replaced as they're re-scored.
+        </span>
+        <span className="interests-confirm-actions">
+          <button className="btn-secondary" onClick={onCancel} disabled={rescore.isPending}>
+            Cancel
+          </button>
+          <button className="btn-primary" onClick={confirm} disabled={rescore.isPending}>
+            {rescore.isPending ? 'Re-scoring…' : 'Re-score'}
+          </button>
+        </span>
+      </div>
+      {rescore.isError && (
+        <div className="dialog-error">Couldn't start the re-score: {rescore.error.message}</div>
+      )}
+    </>
   )
 }
 
