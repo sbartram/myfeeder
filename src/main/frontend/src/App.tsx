@@ -5,6 +5,7 @@ import { AppShell } from './components/AppShell'
 import { FeedPanel } from './components/FeedPanel'
 import { ArticleList } from './components/ArticleList'
 import { BoardArticleList } from './components/BoardArticleList'
+import { PriorityList } from './components/PriorityList'
 import { ReadingPane } from './components/ReadingPane'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useArticles } from './hooks/useArticles'
@@ -100,6 +101,7 @@ function MainLayout() {
             <Route path="/starred" element={<StarredArticles />} />
             <Route path="/boards" element={<AllArticles />} />
             <Route path="/board/:boardId" element={<BoardArticles />} />
+            <Route path="/priority" element={<PriorityList />} />
             <Route path="*" element={<AllArticles />} />
           </Routes>
         }

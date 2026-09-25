@@ -12,6 +12,12 @@ export const articlesApi = {
     if (filters.sort) params.set('sort', filters.sort)
     return apiGet<PaginatedArticles>(`/articles?${params}`)
   },
+  priority: (limit = 50, before?: number) => {
+    const params = new URLSearchParams()
+    params.set('limit', String(limit))
+    if (before != null) params.set('before', String(before))
+    return apiGet<PaginatedArticles>(`/articles/priority?${params}`)
+  },
   getById: (id: number) => apiGet<Article>(`/articles/${id}`),
   getExtractedContent: (id: number) =>
     apiGet<ExtractedContent>(`/articles/${id}/extracted-content`),

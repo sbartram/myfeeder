@@ -30,6 +30,11 @@ export interface Article {
   fetchedAt: string
   read: boolean
   starred: boolean
+  /**
+   * 0-100 display score from the server blend (D-18); null or absent when unscored.
+   * Optional so existing fixtures still type-check; callers treat undefined like null.
+   */
+  interestScore?: number | null
 }
 
 export interface Folder {
