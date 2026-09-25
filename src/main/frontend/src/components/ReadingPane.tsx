@@ -11,6 +11,7 @@ import {
 import { usePreferences, READING_FONT_PX } from '../stores/preferencesStore'
 import { useReadLater, useRemoveArticleFromBoard } from '../hooks/useBoards'
 import { BoardManager } from './BoardManager'
+import { ScoreRow } from './ScoreRow'
 import { formatPublishedDate } from '../utils/dates'
 
 interface ReadingPaneProps {
@@ -182,6 +183,7 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
         style={{ fontSize: `${READING_FONT_PX[readingFontSize]}px`, outline: 'none' }}
       >
         <h1 className="article-title">{article.title}</h1>
+        <ScoreRow article={article} />
         <div className="article-meta">
           {article.author && <span>{article.author} &middot; </span>}
           {article.url && <span>{new URL(article.url).hostname}</span>}

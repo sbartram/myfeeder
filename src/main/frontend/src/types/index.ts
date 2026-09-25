@@ -35,6 +35,48 @@ export interface Article {
    * Optional so existing fixtures still type-check; callers treat undefined like null.
    */
   interestScore?: number | null
+  /** The exact score explanation; only GET /api/articles/{id} sends it, and only for a scored article. */
+  interestBreakdown?: InterestBreakdown
+}
+
+/** The profile's contribution; levelIndex 0-4 indexes PROFILE_LEVEL_LABELS. */
+export interface ProfileBreakdownRow {
+  kind: 'PROFILE'
+  levelIndex: number
+  exact: number
+  points: number
+}
+
+/** A matched topic's contribution: noul is the match, hinge the part that counts. */
+export interface TopicBreakdownRow {
+  kind: 'TOPIC'
+  topicId: number
+  name: string
+  noul: number
+  hinge: number
+  weight: number
+  exact: number
+  points: number
+}
+
+export type BreakdownRow = ProfileBreakdownRow | TopicBreakdownRow
+
+export interface NonMatchingTopic {
+  topicId: number
+  name: string
+  noul: number
+}
+
+/**
+ * Server-computed score explanation (plan 05-03). rows arrive in display order and their integer
+ * points sum exactly to total; display equals the badge. The client renders, never recomputes.
+ */
+export interface InterestBreakdown {
+  raw: number
+  total: number
+  display: number
+  rows: BreakdownRow[]
+  nonMatching: NonMatchingTopic[]
 }
 
 export interface Folder {

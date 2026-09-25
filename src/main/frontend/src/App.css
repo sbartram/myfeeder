@@ -407,6 +407,31 @@ html, body, #root {
   margin-bottom: 20px;
 }
 
+/* Reading-pane score row under the title (05-07): em sizes follow the reading font. */
+.score-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8em;
+  margin-bottom: 8px;
+}
+
+.topic-chip {
+  display: inline-block;
+  max-width: 16em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.chip-sep { color: var(--text-muted); }
+
+.why-toggle { font-size: inherit; color: var(--text-secondary); }
+
+.why-toggle:hover { color: var(--text-primary); }
+
 .article-lead-image {
   display: block;
   max-width: 100%;
