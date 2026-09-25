@@ -12,7 +12,7 @@ const shortcuts = [
   { key: 's', action: 'Toggle star' },
   { key: 'b', action: 'Add to board' },
   { key: 'v', action: 'Save to Raindrop' },
-  { key: 'r', action: 'Refresh current feed' },
+  { key: 'r', action: 'Refresh current feed / ranking' },
   { key: 'Shift+A', action: 'Mark all read in feed' },
   { key: '/', action: 'Focus search' },
   { key: 'Escape', action: 'Clear selection / close' },

@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
-import { QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
+import { BrowserRouter, Routes, Route, useMatch, useParams } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { FeedPanel } from './components/FeedPanel'
 import { ArticleList } from './components/ArticleList'
@@ -9,6 +9,7 @@ import { PriorityList } from './components/PriorityList'
 import { ReadingPane } from './components/ReadingPane'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useArticles } from './hooks/useArticles'
+import { usePriorityArticles, PRIORITY_KEY, refreshPriority } from './hooks/usePriorityArticles'
 import { useFeeds } from './hooks/useFeeds'
 import { useUIStore } from './stores/uiStore'
 import { usePreferences } from './stores/preferencesStore'
@@ -84,10 +85,25 @@ function MainLayout() {
   const readFilter = hideReadArticles ? { read: false as const } : {}
   const { data } = useArticles(selectedFeedId ? { feedId: selectedFeedId, sort, ...readFilter } : { sort, ...readFilter })
   const articles = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
+  const qc = useQueryClient()
+  const isPriority = useMatch('/priority') !== null
+  const priority = usePriorityArticles(isPriority)
 
-  useKeyboardShortcuts(articles, {
+  // Leaving /priority drops the frozen ranking so re-entry fetches page 1 fresh (D-08).
+  // Under StrictMode, development may fetch page 1 twice on first mount (research A7).
+  useEffect(() => {
+    if (!isPriority) return
+    return () => {
+      qc.removeQueries({ queryKey: PRIORITY_KEY })
+    }
+  }, [isPriority, qc])
+
+  useKeyboardShortcuts(isPriority ? priority.rows : articles, {
     onOpenBoard: () => setBoardOpen(true),
     onShowShortcuts: () => setShortcutsOpen(true),
+    isPriority,
+    onPriorityNextPage: priority.fetchNextNewId,
+    onPriorityRefresh: () => void refreshPriority(qc),
   })
 
   return (

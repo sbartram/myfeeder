@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query'
 import { articlesApi } from '../api/articles'
 import type { Article, PaginatedArticles } from '../types'
@@ -47,7 +47,20 @@ export function usePriorityArticles(enabled = true) {
     refetchOnReconnect: false,
   })
   const rows = useMemo(() => dedupeById(query.data?.pages), [query.data])
-  return { ...query, rows }
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query
+
+  /**
+   * Loads the next page and returns the first row that was not loaded before (D-11),
+   * or undefined when there is no next page (or one is already loading).
+   */
+  const fetchNextNewId = useCallback(async (): Promise<number | undefined> => {
+    if (!hasNextPage || isFetchingNextPage) return undefined
+    const seen = new Set(rows.map((a) => a.id))
+    const result = await fetchNextPage()
+    return dedupeById(result.data?.pages).find((a) => !seen.has(a.id))?.id
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, rows])
+
+  return { ...query, rows, fetchNextNewId }
 }
 
 /**

@@ -227,4 +227,68 @@ describe('usePriorityArticles cache policy', () => {
     await waitFor(() => expect(result.current.priority.rows.map((a) => a.id)).toEqual([1, 2, 3, 4]))
     expect(result.current.priority.rows[2].read).toBe(true)
   })
+
+  it('fetchNextNewIdSelectsTheFirstUnseenRow', async () => {
+    vi.mocked(articlesApi.priority).mockImplementation(async (_limit, before) =>
+      before === 3 ? page([article(3), article(4)]) : page([article(1), article(2), article(3)], 3),
+    )
+    const { wrapper } = createWrapper()
+    const { result } = renderPriority(wrapper)
+    await waitFor(() => expect(result.current.priority.rows).toHaveLength(3))
+
+    let next: number | undefined
+    await act(async () => {
+      next = await result.current.priority.fetchNextNewId()
+    })
+
+    expect(next).toBe(4)
+    expect(articlesApi.priority).toHaveBeenLastCalledWith(50, 3)
+  })
+
+  it('fetchNextNewIdWithoutANextPageReturnsUndefined', async () => {
+    vi.mocked(articlesApi.priority).mockResolvedValue(page([article(1), article(2)], null))
+    const { wrapper } = createWrapper()
+    const { result } = renderPriority(wrapper)
+    await waitFor(() => expect(result.current.priority.rows).toHaveLength(2))
+
+    let next: number | undefined = -1
+    await act(async () => {
+      next = await result.current.priority.fetchNextNewId()
+    })
+
+    expect(next).toBeUndefined()
+    expect(articlesApi.priority).toHaveBeenCalledTimes(1)
+  })
+
+  it('leavingAndReenteringFetchesPageOneFresh', async () => {
+    let firstLoad = true
+    vi.mocked(articlesApi.priority).mockImplementation(async (_limit, before) => {
+      if (before === 2) return page([article(3)])
+      if (firstLoad) {
+        firstLoad = false
+        return page([article(1), article(2)], 2)
+      }
+      return page([article(9), article(8)])
+    })
+    const { qc, wrapper } = createWrapper()
+    const { result, rerender } = renderHook(
+      ({ enabled }: { enabled: boolean }) => usePriorityArticles(enabled),
+      { wrapper, initialProps: { enabled: true } },
+    )
+    await waitFor(() => expect(result.current.rows).toHaveLength(2))
+    await act(async () => {
+      await result.current.fetchNextPage()
+    })
+    await waitFor(() => expect(result.current.rows.map((a) => a.id)).toEqual([1, 2, 3]))
+
+    rerender({ enabled: false })
+    act(() => {
+      qc.removeQueries({ queryKey: PRIORITY_KEY })
+    })
+    rerender({ enabled: true })
+
+    await waitFor(() => expect(result.current.rows.map((a) => a.id)).toEqual([9, 8]))
+    expect(articlesApi.priority).toHaveBeenLastCalledWith(50, undefined)
+    expect(articlesApi.priority).toHaveBeenCalledTimes(3)
+  })
 })

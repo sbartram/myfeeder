@@ -11,6 +11,12 @@ import type { Article } from '../types'
 interface KeyboardShortcutCallbacks {
   onOpenBoard?: () => void
   onShowShortcuts?: () => void
+  /** True on /priority: j pages past the last row, r re-ranks, Shift+A is disabled. */
+  isPriority?: boolean
+  /** Loads the next Priority page; resolves to its first new row id, or undefined. */
+  onPriorityNextPage?: () => Promise<number | undefined>
+  /** Re-ranks the Priority list from page 1. */
+  onPriorityRefresh?: () => void
 }
 
 export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardShortcutCallbacks = {}) {
@@ -89,6 +95,17 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
             setSelectedArticle(articles[currentIndex + 1].id)
           } else if (articles.length > 0 && currentIndex === -1) {
             setSelectedArticle(articles[0].id)
+          } else if (
+            callbacks.isPriority &&
+            articles.length > 0 &&
+            currentIndex === articles.length - 1 &&
+            callbacks.onPriorityNextPage
+          ) {
+            // Priority only (D-11): past the last loaded row, load the next page and
+            // select its first new row. Other lists stay put.
+            void callbacks.onPriorityNextPage().then((id) => {
+              if (id !== undefined) setSelectedArticle(id)
+            })
           }
           break
         case 'k':
@@ -148,10 +165,12 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           }
           break
         case 'r':
-          if (selectedFeedId) pollFeed.mutate(selectedFeedId)
+          if (callbacks.isPriority) callbacks.onPriorityRefresh?.()
+          else if (selectedFeedId) pollFeed.mutate(selectedFeedId)
           break
         case 'A':
-          if (e.shiftKey && selectedFeedId) {
+          // Explicit route guard: no bulk mark-read from Priority (PRIO-07).
+          if (e.shiftKey && selectedFeedId && !callbacks.isPriority) {
             markAllReadInFeed(selectedFeedId)
           }
           break
