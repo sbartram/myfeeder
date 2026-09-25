@@ -95,6 +95,14 @@ function sequenceOf(...replies: (() => Reply | Promise<Reply>)[]): Handler {
   return () => replies[Math.min(n++, replies.length - 1)]()
 }
 
+const STATUS_ALL_SCORED = {
+  configured: true,
+  breakerState: 'CLOSED',
+  coldStart: false,
+  eligibleUnscored: 0,
+  failed: 0,
+}
+
 const REFRESH = '↻ Refresh ranking'
 const REFRESHING = '↻ Refreshing…'
 const FIRST_PAGE_ERROR = "Couldn't load the Priority list. Press ↻ Refresh ranking to try again."
@@ -119,6 +127,7 @@ describe('PriorityList', () => {
     routes = {}
     unknownRoutes = []
     useUIStore.setState({ searchQuery: '', selectedArticleId: null })
+    route('GET', '/api/interest/status', () => ({ status: 200, body: STATUS_ALL_SCORED }))
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
       const url = String(input)
       const method = init?.method ?? 'GET'
@@ -387,5 +396,28 @@ describe('PriorityList', () => {
     await waitFor(() => expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(2), PAGE_1]))
     await waitFor(() => expect(titles(container)).toEqual(['Article 1', 'Article 2']))
     await screen.findByRole('button', { name: 'Load more' })
+  })
+
+  it('bannerSitsAboveTheListAndNeverReplacesIt', async () => {
+    route('GET', '/api/interest/status', () => ({
+      status: 200,
+      body: { ...STATUS_ALL_SCORED, breakerState: 'OPEN', eligibleUnscored: 4 },
+    }))
+    route('GET', PAGE_1, () => page(scored(80, 50)))
+    const { container } = renderPriority()
+
+    const bannerEl = await screen.findByRole('status')
+    expect(bannerEl).toHaveTextContent('⏸ Scoring paused — 4 articles waiting. It resumes automatically.')
+    await waitFor(() => expect(titles(container)).toEqual(['Article 1', 'Article 2']))
+
+    const panel = container.querySelector('.article-list')!
+    const children = Array.from(panel.children)
+    const toolbarAt = children.findIndex((e) => e.classList.contains('article-list-toolbar'))
+    const bannerAt = children.indexOf(bannerEl)
+    const filterAt = children.findIndex((e) => e.classList.contains('search-input'))
+    expect(toolbarAt).toBe(0)
+    expect(bannerAt).toBe(toolbarAt + 1)
+    expect(filterAt).toBe(bannerAt + 1)
+    expect(bannerEl.contains(container.querySelector('.article-items'))).toBe(false)
   })
 })
