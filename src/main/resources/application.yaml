@@ -38,6 +38,9 @@ myfeeder:
     sweep-batch-size: 50
     sweep-delay: PT2M
     sweep-initial-delay: PT1M
+    # Blend constants (R1); the profile contributes profile_score / max level x profile-points. Phase 7 tunes these.
+    blend:
+      profile-points: 100
 
 resilience4j:
   circuitbreaker:

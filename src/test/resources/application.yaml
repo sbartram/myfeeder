@@ -37,6 +37,9 @@ myfeeder:
     sweep-delay: PT2M
     # PT1H keeps @SpringBootTest contexts from sweeping during the suite (research Pitfall 12).
     sweep-initial-delay: PT1H
+    # Blend constants (R1); the profile contributes profile_score / max level x profile-points. Phase 7 tunes these.
+    blend:
+      profile-points: 100
 
 resilience4j:
   circuitbreaker:
