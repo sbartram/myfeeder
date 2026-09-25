@@ -323,6 +323,11 @@ html, body, #root {
   font-size: 14px;
 }
 
+/* The detail line sits under the heading; empty states without one keep their row layout. */
+.empty-state:has(.empty-state-detail) { flex-direction: column; }
+
+.empty-state-detail { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
 .load-more {
   display: block;
   width: 100%;
