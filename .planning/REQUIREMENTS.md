@@ -47,8 +47,8 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 - [x] **PRIO-02**: Unscored articles appear after scored ones, by date, below a "Not yet scored" separator
 - [ ] **PRIO-03**: Articles show a 0–100 interest badge (tier-colored via theme variables) in the article list and reading pane; unscored articles show no badge
 - [ ] **PRIO-04**: User can see an exact "Why N?" breakdown for an article: profile contribution plus each matched topic's match × weight, with matched-topic chips
-- [ ] **PRIO-05**: Priority list order stays stable while triaging — marking read, starring or voting doesn't reorder or drop rows until the user refreshes or re-enters the view
-- [ ] **PRIO-06**: Priority view pages with cursor pagination (`PaginatedResponse`), including across the scored/unscored boundary
+- [x] **PRIO-05**: Priority list order stays stable while triaging — marking read, starring or voting doesn't reorder or drop rows until the user refreshes or re-enters the view
+- [x] **PRIO-06**: Priority view pages with cursor pagination (`PaginatedResponse`), including across the scored/unscored boundary
 - [ ] **PRIO-07**: Keyboard: `g p` opens Priority, `j`/`k` walk the ranked order, `i` toggles the breakdown; `Shift+A` (mark all read) is disabled in Priority
 - [x] **PRIO-08**: Priority view shows "not configured", "cold start", "scoring paused" and "N articles waiting to be scored" states
 
@@ -134,8 +134,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRIO-02 | Phase 5 | Complete |
 | PRIO-03 | Phase 5 | Pending |
 | PRIO-04 | Phase 5 | Pending |
-| PRIO-05 | Phase 5 | Pending |
-| PRIO-06 | Phase 5 | Pending |
+| PRIO-05 | Phase 5 | Complete |
+| PRIO-06 | Phase 5 | Complete |
 | PRIO-07 | Phase 5 | Pending |
 | PRIO-08 | Phase 5 | Complete |
 | FDBK-01 | Phase 6 | Pending |
