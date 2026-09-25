@@ -46,6 +46,12 @@ public class InterestScoreQueries {
     /** Badge enrichment: exactly the given article ids, read or unread (D-18). */
     static final String IDS_SCOPE = "a.id IN (:ids)";
 
+    /** One article's breakdown (PRIO-04). */
+    static final String ARTICLE_SCOPE = "a.id = :articleId";
+
+    /** The unclamped integer total, SQL {@code ROUND} of the numeric raw (half away from zero). */
+    static final String TOTAL = "CASE WHEN b.raw_n IS NULL THEN NULL ELSE ROUND(b.raw_n)::int END";
+
     /**
      * The 0..100 badge, null for an unscored article. GREATEST/LEAST ignore NULL, so the CASE guard is
      * what keeps an unscored row null rather than 0 (Pitfall 1). Alias {@code b} = blended.
@@ -128,9 +134,50 @@ public class InterestScoreQueries {
         return scores;
     }
 
-    /** RED placeholder. */
+    /**
+     * The raw inputs of one article's "Why N?" breakdown, from the same blend CTE as the badge and the
+     * Priority sort: the numeric raw, the SQL total ({@code ROUND(raw)}, unclamped), the clamped badge,
+     * the profile inputs and every judged topic with its effective weight, hinge and exact points (6
+     * decimals). Empty when the article has no SCORED row. Topics created after scoring have no stored
+     * noul and are not listed (R5).
+     */
     public Optional<BreakdownInputs> breakdownInputs(long articleId) {
-        return Optional.empty();
+        int profilePoints = properties.getInterest().getBlend().getProfilePoints();
+        Optional<BreakdownInputs> header = jdbc.sql(blendCte(ARTICLE_SCOPE) + " SELECT b.raw_n, " + TOTAL + " AS total, "
+                        + INTEREST_SCORE + " AS interest_score, s.profile_score, s.profile_max_level, "
+                        + "CASE WHEN s.profile_score IS NULL THEN NULL ELSE ROUND((:profilePoints * "
+                        + "COALESCE(s.profile_score / NULLIF(s.profile_max_level, 0), 0))::numeric, 6) END AS profile_exact "
+                        + "FROM blended b JOIN article_score s ON s.article_id = b.article_id")
+                .param("profilePoints", profilePoints)
+                .param("articleId", articleId)
+                .query((rs, rowNum) -> new BreakdownInputs(
+                        rs.getBigDecimal("raw_n"),
+                        rs.getInt("total"),
+                        rs.getInt("interest_score"),
+                        rs.getObject("profile_score", Double.class),
+                        rs.getObject("profile_max_level", Integer.class),
+                        rs.getBigDecimal("profile_exact"),
+                        List.of()))
+                .optional();
+        if (header.isEmpty()) {
+            return Optional.empty();
+        }
+        List<TopicContribution> topics = jdbc.sql(blendCte(ARTICLE_SCOPE) + " SELECT c.topic_id, t.name, c.noul, c.hinge, c.w, "
+                        + "ROUND(c.points::numeric, 6) AS exact "
+                        + "FROM contrib c JOIN interest_topic t ON t.id = c.topic_id WHERE c.article_id = :articleId")
+                .param("profilePoints", profilePoints)
+                .param("articleId", articleId)
+                .query((rs, rowNum) -> new TopicContribution(
+                        rs.getLong("topic_id"),
+                        rs.getString("name"),
+                        rs.getDouble("noul"),
+                        rs.getDouble("hinge"),
+                        rs.getDouble("w"),
+                        rs.getBigDecimal("exact")))
+                .list();
+        BreakdownInputs h = header.get();
+        return Optional.of(new BreakdownInputs(h.raw(), h.total(), h.display(), h.profileScore(),
+                h.profileMaxLevel(), h.profileExact(), topics));
     }
 
     /**

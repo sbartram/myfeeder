@@ -24,9 +24,22 @@ public class ArticleService {
         return articleRepository.findById(id);
     }
 
-    /** RED placeholder. */
+    /**
+     * The article with its badge and exact "Why N?" breakdown (PRIO-04), both from the blend CTE; an
+     * unscored article gets a null badge and no breakdown. Only GET /api/articles/{id} uses this; the
+     * Raindrop path keeps {@link #findById(Long)}.
+     */
     public Optional<Article> findByIdWithBreakdown(Long id) {
-        return Optional.empty();
+        return articleRepository.findById(id).map(article -> {
+            interestScoreQueries.breakdownInputs(id).ifPresentOrElse(inputs -> {
+                article.setInterestScore(inputs.display());
+                article.setInterestBreakdown(ScoreBreakdowns.build(inputs));
+            }, () -> {
+                article.setInterestScore(null);
+                article.setInterestBreakdown(null);
+            });
+            return article;
+        });
     }
 
     public Article updateState(Long id, Boolean read, Boolean starred) {
