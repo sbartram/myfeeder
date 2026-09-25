@@ -260,6 +260,60 @@ html, body, #root {
 
 .article-item-meta { font-size: 0.85em; color: var(--text-muted); margin-top: 3px; }
 
+/* Interest badge and its reserved slot (Priority rows) */
+.article-item-head { display: flex; align-items: baseline; gap: 8px; }
+
+.article-item-head .article-item-title { min-width: 0; }
+
+.interest-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.75em;
+  height: 1.5em;
+  border-radius: 0.75em;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.interest-badge-slot { width: 2.75em; flex: none; }
+
+.article-item .interest-badge,
+.article-item .interest-badge-slot { font-size: 0.85em; }
+
+.interest-badge.tier-high {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.interest-badge.tier-neutral {
+  background: transparent;
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
+}
+
+.interest-badge.tier-low {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.article-item.read .interest-badge { opacity: 0.6; }
+
+.priority-separator {
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .empty-state {
   display: flex;
   align-items: center;

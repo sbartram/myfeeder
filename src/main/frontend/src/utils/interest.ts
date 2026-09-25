@@ -8,6 +8,15 @@ export function formatSigned(n: number, digits = 0): string {
   return s
 }
 
+export type Tier = 'high' | 'neutral' | 'low'
+
+/** Badge tier of a server display score, inclusive at the low end (carried-forward tiers): 70+ high, 40+ neutral, else low. */
+export function tierOf(score: number): Tier {
+  if (score >= 70) return 'high'
+  if (score >= 40) return 'neutral'
+  return 'low'
+}
+
 const NEGATION =
   /\b(not about|nothing about|anything but|not|no|except|without|isn't|aren't|excluding)\b/i
 
