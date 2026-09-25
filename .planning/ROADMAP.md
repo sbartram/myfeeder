@@ -175,7 +175,28 @@ Plans:
   4. The Priority view shows a "not configured", "cold start", "scoring paused" or "N articles waiting to be scored" state when each applies
   5. Changing a topic's weight in settings changes badges and the Priority order on the next refresh, with no new Jev calls (the blend is computed at query time from stored raw outputs)
 
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — Backend Priority endpoint: the single blend CTE, keyset pages across the scored/unscored boundary, 404 on a missing cursor, /priority SPA forward, blend constant (wave 1)
+- [ ] 05-02-PLAN.md — Frontend Priority list at /priority: frozen-cache infinite query, tier badges, "Not yet scored" separator, list states, ↻ Refresh ranking (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-03-PLAN.md — interestScore on every article response (D-18) and the exact "Why N?" breakdown on GET /api/articles/{id} (largest remainder against the SQL total) (wave 2)
+- [ ] 05-04-PLAN.md — Feed-tree Priority entry, `g p`, one status banner with D-14 precedence, cold-start Set up interests (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-05-PLAN.md — Interest badges in All/Feed/Folder/Starred and Board lists with the slot rule (wave 3)
+- [ ] 05-06-PLAN.md — Triage stability (in-place read/star patch, no refetch), ranked `j`/`k` with `j` paging, `Shift+A` disabled, `r` refresh, "Ranking changed" hint, re-entry refetch (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 05-07-PLAN.md — Reading-pane score row with matched-topic chips, "Why N?" breakdown, `i` shortcut (wave 4)
+
 **UI hint**: yes
 **Notes**:
 
