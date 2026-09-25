@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 05
 current_phase_name: Blend & Priority View
 status: executing
-stopped_at: Completed 05-04-PLAN.md
-last_updated: "2026-09-25T20:07:09.467Z"
+stopped_at: Completed 05-05-PLAN.md
+last_updated: "2026-09-25T20:12:35.424Z"
 last_activity: 2026-09-25
 last_activity_desc: Phase 05 execution started
-state_head: 959d54fdf0c7caf28b53f521efadf2d5244135c5
+state_head: ffbfdb713ac62a647a264f4c79e29984e8428f58
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 32
-  completed_plans: 29
+  completed_plans: 30
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-24)
 ## Current Position
 
 Phase: 05 (Blend & Priority View) — EXECUTING
-Plan: 5 of 7
+Plan: 6 of 7
 Status: Ready to execute
 Last activity: 2026-09-25 — Phase 05 execution started
 
@@ -90,6 +90,7 @@ Progress: [██████░░░░] 57%
 | Phase 05 P02 | 6 min | 3 tasks | 11 files |
 | Phase 05 P03 | 8 min | 3 tasks | 13 files |
 | Phase 05 P04 | 5 min | 3 tasks | 13 files |
+| Phase 05 P05 | 3 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -145,6 +146,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-03: only GET /api/articles/{id} carries interestBreakdown {raw,total,display,rows,nonMatching}; total = SQL ROUND(raw) unclamped, rows apportioned by largest remainder to sum exactly to it (ScoreBreakdowns); Raindrop keeps findById
 - [Phase 05]: 05-04: Priority smart view is route-driven (useMatch('/priority')); All Articles is inactive on /priority; g then p = setSelectedFeed(null) + navigate('/priority')
 - [Phase 05]: 05-04: PriorityBanner shows one status by D-14 precedence (not configured > cold start > paused OPEN/FORCED_OPEN > N waiting), between toolbar and filter, reusing useInterestStatus polling; OPEN_BREAKER_STATES and articles() (en-US thousands separators) live only in utils/interest.ts
+- [Phase 05]: 05-05: Outside Priority the empty badge slot is reserved only when at least one loaded row is scored (reserveSlot over allArticles); lists render the badge only (no chips, no Why) and never reorder by score
 
 ### Pending Todos
 
@@ -168,6 +170,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-25T20:07:01.717Z
-Stopped at: Completed 05-04-PLAN.md
+Last session: 2026-09-25T20:12:35.376Z
+Stopped at: Completed 05-05-PLAN.md
 Resume file: None
