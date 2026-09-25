@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../stores/uiStore'
+import { usePriorityStore } from '../stores/priorityStore'
 import { usePreferences, FONT_SIZE_STEPS } from '../stores/preferencesStore'
 import { useArticle, useUpdateArticleState, useSaveToRaindrop } from './useArticles'
 import { usePollFeed } from './useFeeds'
@@ -163,6 +164,10 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           if (currentArticle) {
             saveToRaindrop.mutate(currentArticle.id)
           }
+          break
+        case 'i':
+          // Toggle the reading pane's Why breakdown (D-01); the same state as the Why button.
+          if (currentArticle?.interestScore != null) usePriorityStore.getState().toggleWhy()
           break
         case 'r':
           if (callbacks.isPriority) callbacks.onPriorityRefresh?.()
