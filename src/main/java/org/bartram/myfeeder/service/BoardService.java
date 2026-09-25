@@ -5,9 +5,11 @@ import org.bartram.myfeeder.model.Board;
 import org.bartram.myfeeder.model.BoardArticle;
 import org.bartram.myfeeder.repository.BoardArticleRepository;
 import org.bartram.myfeeder.repository.BoardRepository;
+import org.bartram.myfeeder.repository.InterestScoreQueries;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -15,6 +17,7 @@ import java.util.Optional;
 public class BoardService {
     private final BoardRepository boardRepository;
     private final BoardArticleRepository boardArticleRepository;
+    private final InterestScoreQueries interestScoreQueries;
 
     public List<Board> findAll() { return boardRepository.findAll(); }
     public Optional<Board> findById(Long id) { return boardRepository.findById(id); }
@@ -43,8 +46,17 @@ public class BoardService {
     public void delete(Long id) { boardRepository.deleteById(id); }
 
     public List<Article> findArticles(Long boardId, Long before, int limit) {
-        if (before != null) return boardArticleRepository.findArticlesByBoardIdBefore(boardId, before, limit);
-        return boardArticleRepository.findArticlesByBoardId(boardId, limit);
+        if (before != null) return withScores(boardArticleRepository.findArticlesByBoardIdBefore(boardId, before, limit));
+        return withScores(boardArticleRepository.findArticlesByBoardId(boardId, limit));
+    }
+
+    /** Sets each article's interest badge (D-18); same list, same order; an empty list runs no query. */
+    private List<Article> withScores(List<Article> articles) {
+        if (articles.isEmpty()) return articles;
+        Map<Long, Integer> scores = interestScoreQueries.displayScores(
+                articles.stream().map(Article::getId).toList());
+        articles.forEach(a -> a.setInterestScore(scores.get(a.getId())));
+        return articles;
     }
 
     public void addArticle(Long boardId, Long articleId) {

@@ -10,7 +10,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The single source of truth for the Priority sort and the interest badge (and, from plan 05-03,
@@ -37,6 +40,9 @@ public class InterestScoreQueries {
 
     /** Priority page after a cursor: unread articles plus the cursor article, read or not (R4). */
     static final String UNREAD_OR_CURSOR_SCOPE = "a.\"read\" = false OR a.id = :cursorId";
+
+    /** Badge enrichment: exactly the given article ids, read or unread (D-18). */
+    static final String IDS_SCOPE = "a.id IN (:ids)";
 
     /**
      * The 0..100 badge, null for an unscored article. GREATEST/LEAST ignore NULL, so the CASE guard is
@@ -87,6 +93,25 @@ public class InterestScoreQueries {
                 .param("limit", limit)
                 .query((rs, rowNum) -> mapArticle(rs))
                 .list();
+    }
+
+    /**
+     * The badge for each of {@code ids}, from the same blend as the Priority sort. Id-scoped, not
+     * unread-scoped (D-18): a read article keeps its badge. Only SCORED ids appear in the map; an empty
+     * collection returns an empty map without running SQL.
+     */
+    public Map<Long, Integer> displayScores(Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Integer> scores = new HashMap<>();
+        jdbc.sql(blendCte(IDS_SCOPE) + " SELECT b.article_id, " + INTEREST_SCORE + " AS interest_score FROM blended b")
+                .param("profilePoints", properties.getInterest().getBlend().getProfilePoints())
+                .param("ids", ids)
+                .query(rs -> {
+                    scores.put(rs.getLong("article_id"), rs.getObject("interest_score", Integer.class));
+                });
+        return scores;
     }
 
     /**

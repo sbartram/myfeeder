@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.UnreadCount;
 import org.bartram.myfeeder.repository.ArticleRepository;
+import org.bartram.myfeeder.repository.InterestScoreQueries;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -17,6 +18,7 @@ import java.util.Optional;
 public class ArticleService {
 
     private final ArticleRepository articleRepository;
+    private final InterestScoreQueries interestScoreQueries;
 
     public Optional<Article> findById(Long id) {
         return articleRepository.findById(id);
@@ -33,7 +35,9 @@ public class ArticleService {
             article.setStarred(starred);
         }
 
-        return articleRepository.save(article);
+        Article saved = articleRepository.save(article);
+        withScores(List.of(saved));
+        return saved;
     }
 
     public void markRead(List<Long> articleIds, Long feedId, Integer olderThanDays) {
@@ -59,14 +63,28 @@ public class ArticleService {
             Instant cursorDate = cursorArticle.getPublishedAt() != null
                     ? cursorArticle.getPublishedAt() : cursorArticle.getFetchedAt();
             if (ascending) {
-                return articleRepository.findFilteredAfter(feedId, read, starred, cursorDate, cursor, limit);
+                return withScores(articleRepository.findFilteredAfter(feedId, read, starred, cursorDate, cursor, limit));
             }
-            return articleRepository.findFilteredBefore(feedId, read, starred, cursorDate, cursor, limit);
+            return withScores(articleRepository.findFilteredBefore(feedId, read, starred, cursorDate, cursor, limit));
         }
         if (ascending) {
-            return articleRepository.findFilteredAsc(feedId, read, starred, limit);
+            return withScores(articleRepository.findFilteredAsc(feedId, read, starred, limit));
         }
-        return articleRepository.findFiltered(feedId, read, starred, limit);
+        return withScores(articleRepository.findFiltered(feedId, read, starred, limit));
+    }
+
+    /**
+     * Sets each article's interest badge from the blend CTE (D-18: read articles included, null when
+     * unscored). Returns the same list in the same order; an empty list runs no query.
+     */
+    private List<Article> withScores(List<Article> articles) {
+        if (articles.isEmpty()) {
+            return articles;
+        }
+        Map<Long, Integer> scores = interestScoreQueries.displayScores(
+                articles.stream().map(Article::getId).toList());
+        articles.forEach(a -> a.setInterestScore(scores.get(a.getId())));
+        return articles;
     }
 
     public Map<Long, Long> countUnreadByFeed() {

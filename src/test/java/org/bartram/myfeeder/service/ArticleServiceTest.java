@@ -3,6 +3,7 @@ package org.bartram.myfeeder.service;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.UnreadCount;
 import org.bartram.myfeeder.repository.ArticleRepository;
+import org.bartram.myfeeder.repository.InterestScoreQueries;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +22,7 @@ import static org.mockito.Mockito.*;
 class ArticleServiceTest {
 
     @Mock private ArticleRepository articleRepository;
+    @Mock private InterestScoreQueries interestScoreQueries;
     @InjectMocks private ArticleService articleService;
 
     @Test
@@ -57,6 +59,38 @@ class ArticleServiceTest {
 
         var result = articleService.updateState(1L, null, true);
         assertThat(result.isStarred()).isTrue();
+    }
+
+    @Test
+    void findFilteredSetsInterestScoreWithoutReordering() {
+        var a1 = new Article();
+        a1.setId(1L);
+        var a2 = new Article();
+        a2.setId(2L);
+        var a3 = new Article();
+        a3.setId(3L);
+        when(articleRepository.findFiltered(null, null, null, 10)).thenReturn(List.of(a1, a2, a3));
+        when(interestScoreQueries.displayScores(List.of(1L, 2L, 3L))).thenReturn(Map.of(1L, 82, 3L, 0));
+
+        var result = articleService.findFiltered(null, null, null, null, 10, false);
+
+        assertThat(result).extracting(Article::getId).containsExactly(1L, 2L, 3L);
+        assertThat(result).extracting(Article::getInterestScore).containsExactly(82, null, 0);
+    }
+
+    @Test
+    void updateStateReturnsTheSavedArticleWithItsScore() {
+        var article = new Article();
+        article.setId(7L);
+        when(articleRepository.findById(7L)).thenReturn(Optional.of(article));
+        when(articleRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(interestScoreQueries.displayScores(List.of(7L))).thenReturn(Map.of(7L, 50));
+
+        var result = articleService.updateState(7L, null, true);
+
+        assertThat(result.isStarred()).isTrue();
+        assertThat(result.getInterestScore()).isEqualTo(50);
+        verify(articleRepository, times(1)).save(any());
     }
 
     @Test

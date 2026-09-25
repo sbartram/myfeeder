@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -25,6 +26,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -38,6 +41,7 @@ class PriorityApiIntegrationTest {
 
     private static final String PRIORITY_FEED_URL = "https://example.test/priority-it-feed.xml";
     private static final String PRIORITY_TOPIC_NAME = "priority-it-topic";
+    private static final String PRIORITY_BOARD_NAME = "priority-it-board";
 
     @Autowired private WebApplicationContext wac;
     @Autowired private JdbcTemplate jdbcTemplate;
@@ -50,13 +54,64 @@ class PriorityApiIntegrationTest {
         // Articles, score rows and topic-score rows cascade from the feed
         jdbcTemplate.update("DELETE FROM feed WHERE url = ?", PRIORITY_FEED_URL);
         jdbcTemplate.update("DELETE FROM interest_topic WHERE name = ?", PRIORITY_TOPIC_NAME);
+        // board_article rows cascade from the board
+        jdbcTemplate.update("DELETE FROM board WHERE name = ?", PRIORITY_BOARD_NAME);
+    }
+
+    @Test
+    void everyArticleResponseCarriesInterestScore() throws Exception {
+        long feedId = insertFeed();
+        Instant now = Instant.now();
+        long scoredUnread = insertArticle(feedId, "scored-unread", now.minus(Duration.ofHours(1)), false);
+        long scoredRead = insertArticle(feedId, "scored-read", now.minus(Duration.ofHours(2)), true);
+        long unscored = insertArticle(feedId, "unscored", now.minus(Duration.ofHours(3)), false);
+        insertScored(scoredUnread, 2.0, 4);
+        insertScored(scoredRead, 4.0, 4);
+
+        // Date order is kept; the read article keeps its badge
+        String list = mockMvc.perform(get("/api/articles?feedId=" + feedId + "&limit=50"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        List<Map<String, Object>> items = JsonPath.read(list, "$.items");
+        assertThat(items).extracting(i -> ((Number) i.get("id")).longValue())
+                .containsExactly(scoredUnread, scoredRead, unscored);
+        assertThat(items).extracting(i -> i.get("interestScore")).containsExactly(50, 100, null);
+        assertThat(items.get(2)).containsKey("interestScore");
+
+        String board = mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"" + PRIORITY_BOARD_NAME + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long boardId = ((Number) JsonPath.read(board, "$.id")).longValue();
+        for (long articleId : List.of(scoredRead, unscored)) {
+            mockMvc.perform(post("/api/boards/" + boardId + "/articles")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"articleId\": " + articleId + "}"))
+                    .andExpect(status().isCreated());
+        }
+        String boardArticles = mockMvc.perform(get("/api/boards/" + boardId + "/articles"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        Map<Long, Object> boardScores = new LinkedHashMap<>();
+        List<Map<String, Object>> boardItems = JsonPath.read(boardArticles, "$.items");
+        boardItems.forEach(i -> boardScores.put(((Number) i.get("id")).longValue(), i.get("interestScore")));
+        assertThat(boardScores).containsOnlyKeys(scoredRead, unscored);
+        assertThat(boardScores.get(scoredRead)).isEqualTo(100);
+        assertThat(boardScores.get(unscored)).isNull();
+
+        String patched = mockMvc.perform(patch("/api/articles/" + scoredUnread)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"starred\": true}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat((Boolean) JsonPath.read(patched, "$.starred")).isTrue();
+        assertThat((Integer) JsonPath.read(patched, "$.interestScore")).isEqualTo(50);
     }
 
     @Test
     void rankedWalkCrossesIntoUnscoredWithNoDuplicates() throws Exception {
-        Long feedId = jdbcTemplate.queryForObject(
-                "INSERT INTO feed (url, title, feed_type) VALUES (?, ?, ?) RETURNING id",
-                Long.class, PRIORITY_FEED_URL, "Priority Feed", "RSS");
+        long feedId = insertFeed();
         Instant now = Instant.now();
         long top = insertArticle(feedId, "top", now.minus(Duration.ofHours(3)), false);
         long mid = insertArticle(feedId, "mid", now.minus(Duration.ofHours(1)), false);
@@ -119,6 +174,12 @@ class PriorityApiIntegrationTest {
 
         mockMvc.perform(get("/api/articles/priority?before=" + (maxId + 1000)))
                 .andExpect(status().isNotFound());
+    }
+
+    private long insertFeed() {
+        return jdbcTemplate.queryForObject(
+                "INSERT INTO feed (url, title, feed_type) VALUES (?, ?, ?) RETURNING id",
+                Long.class, PRIORITY_FEED_URL, "Priority Feed", "RSS");
     }
 
     private long insertArticle(long feedId, String guid, Instant publishedAt, boolean read) {
