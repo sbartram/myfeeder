@@ -6,12 +6,14 @@ import {
   type TopicInput,
   type TopicPreviewRequest,
 } from '../api/interest'
+import { usePriorityStore } from '../stores/priorityStore'
 
 /**
  * Status is refetched on every dialog open (staleTime 0); the server owns coldStart (D-05).
  * It polls every 15s only while articles are waiting and can drain (configured, not cold start:
- * the same gate as the "N waiting" line), so that line drains live; the query is observed only
- * while the dialog is open, so nothing polls otherwise.
+ * the same gate as the "N waiting" line), so that line drains live. It is observed by the
+ * Interests dialog and, while /priority is open, by the Priority banner and the refresh
+ * button's "Ranking changed" hint, so nothing polls otherwise.
  */
 export function useInterestStatus() {
   return useQuery({
@@ -38,6 +40,7 @@ export function useSaveInterestProfile() {
     onSuccess: (profile: InterestProfile) => {
       qc.setQueryData(['interest', 'profile'], profile)
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+      usePriorityStore.getState().setRankingChanged(true)
     },
   })
 }
@@ -57,6 +60,7 @@ export function useCreateInterestTopic() {
     onSuccess: (topic: InterestTopic) => {
       qc.setQueryData<InterestTopic[]>(TOPICS_KEY, (old) => (old ? [...old, topic] : [topic]))
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+      usePriorityStore.getState().setRankingChanged(true)
     },
   })
 }
@@ -75,6 +79,7 @@ export function useUpdateInterestTopic() {
       qc.setQueryData<InterestTopic[]>(TOPICS_KEY, (old) =>
         old?.map((t) => (t.id === topic.id ? topic : t)),
       )
+      usePriorityStore.getState().setRankingChanged(true)
     },
   })
 }
@@ -99,6 +104,7 @@ export function useDeleteInterestTopic() {
     onSuccess: (_result: void, id: number) => {
       qc.setQueryData<InterestTopic[]>(TOPICS_KEY, (old) => old?.filter((t) => t.id !== id))
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+      usePriorityStore.getState().setRankingChanged(true)
     },
   })
 }
@@ -127,6 +133,7 @@ export function useRescoreUnread() {
     meta: { inlineError: true },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+      usePriorityStore.getState().setRankingChanged(true)
     },
   })
 }

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query'
 import { articlesApi } from '../api/articles'
+import { usePriorityStore } from '../stores/priorityStore'
 import type { Article, PaginatedArticles } from '../types'
 
 /**
@@ -64,12 +65,14 @@ export function usePriorityArticles(enabled = true) {
 }
 
 /**
- * Re-ranks the Priority list (D-08): scrolls it to the top, resets the query to its
- * initial state so only page 1 is fetched (a plain refetch would reload every loaded
+ * Re-ranks the Priority list (D-08): clears the "Ranking changed" hint (its baseline is
+ * recaptured once the new page 1 loads), scrolls the list to the top, resets the query to
+ * its initial state so only page 1 is fetched (a plain refetch would reload every loaded
  * page, research Pattern 5), then refreshes the reading pane's by-id article so its
  * badge matches the new ranking.
  */
 export async function refreshPriority(qc: QueryClient): Promise<void> {
+  usePriorityStore.getState().resetHint()
   const list = document.querySelector<HTMLElement>('.article-list .article-items')
   if (list) list.scrollTop = 0
   await qc.resetQueries({ queryKey: PRIORITY_KEY })

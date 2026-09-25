@@ -1,11 +1,13 @@
 import { Fragment, useEffect, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { refreshPriority, usePriorityArticles } from '../hooks/usePriorityArticles'
+import { useInterestStatus } from '../hooks/useInterest'
 import { ApiError } from '../api/client'
 import { InterestBadge } from './InterestBadge'
 import { EmptyState } from './EmptyState'
 import { PriorityBanner } from './PriorityBanner'
 import { useUIStore } from '../stores/uiStore'
+import { usePriorityStore } from '../stores/priorityStore'
 import { usePreferences, ARTICLE_LIST_FONT_PX } from '../stores/preferencesStore'
 import type { Article } from '../types'
 
@@ -39,6 +41,26 @@ export function PriorityList({ onSetUpInterests }: { onSetUpInterests?: () => vo
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
   const articleListFontSize = usePreferences((s) => s.articleListFontSize)
   const articleItemsStyle = { fontSize: `${ARTICLE_LIST_FONT_PX[articleListFontSize]}px` }
+  const rankingChanged = usePriorityStore((s) => s.rankingChanged)
+  const baselineUnscored = usePriorityStore((s) => s.baselineUnscored)
+  const eligibleUnscored = useInterestStatus().data?.eligibleUnscored
+  const loaded = data !== undefined
+
+  // Re-entering /priority clears the hint (D-08).
+  useEffect(() => {
+    usePriorityStore.getState().resetHint()
+  }, [])
+
+  // D-08 trigger (b): once page 1 is loaded, capture the waiting count as the baseline;
+  // a lower count later means more articles were scored, so a refresh would re-rank.
+  // A soft signal: reading or aging out an unscored article also lowers the count
+  // (research Open Question 1). The hint never fetches anything.
+  useEffect(() => {
+    if (!loaded || eligibleUnscored === undefined) return
+    const store = usePriorityStore.getState()
+    if (store.baselineUnscored === null) store.setBaselineUnscored(eligibleUnscored)
+    else if (eligibleUnscored < store.baselineUnscored) store.setRankingChanged(true)
+  }, [loaded, eligibleUnscored, baselineUnscored])
 
   // The cursor article is gone (R4): restart the list from page 1.
   useEffect(() => {
@@ -61,6 +83,7 @@ export function PriorityList({ onSetUpInterests }: { onSetUpInterests?: () => vo
   const firstUnscored = filtered.findIndex((a) => a.interestScore == null)
 
   const refreshing = isFetching && !isFetchingNextPage
+  const hintLit = rankingChanged && !refreshing
 
   let slot
   if (isPending) {
@@ -125,11 +148,12 @@ export function PriorityList({ onSetUpInterests }: { onSetUpInterests?: () => vo
         <span className="toolbar-title">Priority</span>
         <div className="toolbar-actions">
           <button
-            className="toolbar-btn priority-refresh"
+            className={`toolbar-btn priority-refresh${hintLit ? ' hint' : ''}`}
             onClick={() => void refreshPriority(qc)}
             disabled={refreshing}
+            aria-label={hintLit ? 'Ranking changed. Refresh ranking' : undefined}
           >
-            {refreshing ? '↻ Refreshing…' : '↻ Refresh ranking'}
+            {refreshing ? '↻ Refreshing…' : hintLit ? '↻ Ranking changed — refresh' : '↻ Refresh ranking'}
           </button>
         </div>
       </div>

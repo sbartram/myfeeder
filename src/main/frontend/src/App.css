@@ -305,6 +305,8 @@ html, body, #root {
 
 .article-item.read .interest-badge { opacity: 0.6; }
 
+.priority-refresh.hint { color: var(--accent); }
+
 .priority-separator {
   padding: 8px 12px;
   background: var(--bg-secondary);
