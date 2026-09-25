@@ -8,6 +8,14 @@ export function formatSigned(n: number, digits = 0): string {
   return s
 }
 
+/** Circuit-breaker states in which scoring is paused. */
+export const OPEN_BREAKER_STATES: readonly string[] = ['OPEN', 'FORCED_OPEN']
+
+/** "1 article" or "N articles", with thousands separators ("1,204 articles"). */
+export function articles(count: number): string {
+  return count === 1 ? '1 article' : `${count.toLocaleString('en-US')} articles`
+}
+
 export type Tier = 'high' | 'neutral' | 'low'
 
 /** Badge tier of a server display score, inclusive at the low end (carried-forward tiers): 70+ high, 40+ neutral, else low. */

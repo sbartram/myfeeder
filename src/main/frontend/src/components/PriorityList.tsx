@@ -4,6 +4,7 @@ import { refreshPriority, usePriorityArticles } from '../hooks/usePriorityArticl
 import { ApiError } from '../api/client'
 import { InterestBadge } from './InterestBadge'
 import { EmptyState } from './EmptyState'
+import { PriorityBanner } from './PriorityBanner'
 import { useUIStore } from '../stores/uiStore'
 import { usePreferences, ARTICLE_LIST_FONT_PX } from '../stores/preferencesStore'
 import type { Article } from '../types'
@@ -132,6 +133,8 @@ export function PriorityList() {
           </button>
         </div>
       </div>
+
+      <PriorityBanner />
 
       <input
         className="search-input"

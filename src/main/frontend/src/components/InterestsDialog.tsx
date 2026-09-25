@@ -10,7 +10,7 @@ import {
 } from '../hooks/useInterest'
 import { useArticle } from '../hooks/useArticles'
 import { useUIStore } from '../stores/uiStore'
-import { isTopicDirty } from '../utils/interest'
+import { articles, isTopicDirty, OPEN_BREAKER_STATES } from '../utils/interest'
 import { TopicRow, type PreviewBlock, type TopicRowState } from './TopicRow'
 
 const PROFILE_MAX = 2000
@@ -24,8 +24,6 @@ const PROFILE_TIPS = [
 
 const PROFILE_PLACEHOLDER =
   "I'm a backend engineer. I want in-depth articles about Java, Spring Boot and PostgreSQL performance, running Kubernetes at home, and practical uses of LLMs in developer tools. I like release notes for tools I use and post-mortems of real outages."
-
-const OPEN_BREAKER_STATES = ['OPEN', 'FORCED_OPEN']
 
 const TOPICS_MAX = 25
 
@@ -170,11 +168,6 @@ function InterestNotices({ status }: { status: InterestStatus | undefined }) {
       )}
     </div>
   )
-}
-
-/** "1 article" or "N articles". */
-function articles(count: number): string {
-  return count === 1 ? '1 article' : `${count} articles`
 }
 
 /**
