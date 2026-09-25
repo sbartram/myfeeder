@@ -107,13 +107,13 @@ const REFRESH = '↻ Refresh ranking'
 const REFRESHING = '↻ Refreshing…'
 const FIRST_PAGE_ERROR = "Couldn't load the Priority list. Press ↻ Refresh ranking to try again."
 
-function renderPriority() {
+function renderPriority(props: { onSetUpInterests?: () => void } = {}) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const utils = render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={['/priority']}>
         <Routes>
-          <Route path="/priority" element={<PriorityList />} />
+          <Route path="/priority" element={<PriorityList {...props} />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -419,5 +419,18 @@ describe('PriorityList', () => {
     expect(bannerAt).toBe(toolbarAt + 1)
     expect(filterAt).toBe(bannerAt + 1)
     expect(bannerEl.contains(container.querySelector('.article-items'))).toBe(false)
+  })
+
+  it('coldStartButtonCallsOnSetUpInterests', async () => {
+    route('GET', '/api/interest/status', () => ({
+      status: 200,
+      body: { ...STATUS_ALL_SCORED, coldStart: true },
+    }))
+    route('GET', PAGE_1, () => page(scored(null, null)))
+    const onSetUpInterests = vi.fn()
+    renderPriority({ onSetUpInterests })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Set up interests' }))
+    expect(onSetUpInterests).toHaveBeenCalledTimes(1)
   })
 })
