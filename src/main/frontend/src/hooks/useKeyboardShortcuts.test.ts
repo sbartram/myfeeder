@@ -29,6 +29,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import { createElement } from 'react'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts'
 import { useUIStore } from '../stores/uiStore'
+import { usePriorityStore } from '../stores/priorityStore'
 import { articlesApi } from '../api/articles'
 import { feedsApi } from '../api/feeds'
 import { foldersApi } from '../api/folders'
@@ -102,6 +103,7 @@ describe('useKeyboardShortcuts', () => {
     vi.mocked(foldersApi.getAll).mockResolvedValue([])
     // Reset the selection/focus slice of the UI store between tests.
     useUIStore.setState({ selectedArticleId: null, selectedFeedId: null, keyboardFocus: 'articles' })
+    usePriorityStore.setState({ whyOpen: false })
   })
 
   it("'o' opens the selected article's URL even when it is not in the passed list", async () => {
@@ -399,6 +401,52 @@ describe('useKeyboardShortcuts', () => {
       press('r')
       await waitFor(() => expect(feedsApi.poll).toHaveBeenCalledWith(4))
       expect(onPriorityRefresh).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('i (score breakdown)', () => {
+    it('iTogglesTheBreakdownForAScoredArticle', () => {
+      const { wrapper } = createWrapper()
+      useUIStore.setState({ selectedArticleId: 1 })
+      renderHook(() => useKeyboardShortcuts([article(1, { interestScore: 82 })]), { wrapper })
+
+      press('i')
+      expect(usePriorityStore.getState().whyOpen).toBe(true)
+      press('i')
+      expect(usePriorityStore.getState().whyOpen).toBe(false)
+    })
+
+    it('iDoesNothingForAnUnscoredArticle', () => {
+      const { wrapper } = createWrapper()
+      useUIStore.setState({ selectedArticleId: 1 })
+      renderHook(() => useKeyboardShortcuts([article(1, { interestScore: null })]), { wrapper })
+
+      press('i')
+      expect(usePriorityStore.getState().whyOpen).toBe(false)
+    })
+
+    it('iDoesNothingWithNothingSelected', () => {
+      const { wrapper } = createWrapper()
+      renderHook(() => useKeyboardShortcuts([article(1, { interestScore: 82 })]), { wrapper })
+
+      press('i')
+      expect(usePriorityStore.getState().whyOpen).toBe(false)
+    })
+
+    it('iIsIgnoredWhileTyping', () => {
+      const { wrapper } = createWrapper()
+      useUIStore.setState({ selectedArticleId: 1 })
+      renderHook(() => useKeyboardShortcuts([article(1, { interestScore: 82 })]), { wrapper })
+      const input = document.createElement('input')
+      document.body.appendChild(input)
+      input.focus()
+
+      act(() => {
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', bubbles: true }))
+      })
+
+      expect(usePriorityStore.getState().whyOpen).toBe(false)
+      input.remove()
     })
   })
 })
