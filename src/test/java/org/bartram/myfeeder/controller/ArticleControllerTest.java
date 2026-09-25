@@ -219,4 +219,65 @@ class ArticleControllerTest {
 
         verify(articleService, never()).findById(any());
     }
+
+    @Test
+    void priorityClampsLimit() throws Exception {
+        when(priorityService.page(any(), anyInt())).thenReturn(List.of());
+
+        for (String limit : List.of("0", "-5", "1")) {
+            mockMvc.perform(get("/api/articles/priority?limit=" + limit)).andExpect(status().isOk());
+        }
+        // clamped to 1, then +1 for the pagination look-ahead row
+        verify(priorityService, times(3)).page(null, 2);
+
+        for (String limit : List.of("100", "101")) {
+            mockMvc.perform(get("/api/articles/priority?limit=" + limit)).andExpect(status().isOk());
+        }
+        verify(priorityService, times(2)).page(null, 101);
+    }
+
+    @Test
+    void priorityPassesCursor() throws Exception {
+        when(priorityService.page(any(), anyInt())).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/articles/priority?before=7"))
+                .andExpect(status().isOk());
+
+        verify(priorityService).page(7L, 51);
+    }
+
+    @Test
+    void priorityMissingCursorIs404() throws Exception {
+        when(priorityService.page(eq(9L), anyInt()))
+                .thenThrow(new NotFoundException("Article not found: 9"));
+
+        mockMvc.perform(get("/api/articles/priority?before=9"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void priorityTrimsLookAheadRowAndSetsNextCursor() throws Exception {
+        when(priorityService.page(null, 3))
+                .thenReturn(List.of(articleWithId(10L), articleWithId(11L), articleWithId(12L)));
+
+        mockMvc.perform(get("/api/articles/priority?limit=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[1].id").value(11))
+                .andExpect(jsonPath("$.nextCursor").value(11));
+
+        when(priorityService.page(null, 3))
+                .thenReturn(List.of(articleWithId(10L), articleWithId(11L)));
+
+        mockMvc.perform(get("/api/articles/priority?limit=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.nextCursor").value(nullValue()));
+    }
+
+    private static Article articleWithId(long id) {
+        var article = new Article();
+        article.setId(id);
+        return article;
+    }
 }
