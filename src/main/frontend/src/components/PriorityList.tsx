@@ -19,7 +19,7 @@ function formatTime(dateStr: string | null) {
 }
 
 /** The /priority panel: unread articles in the server's ranked order, never re-sorted here. */
-export function PriorityList() {
+export function PriorityList({ onSetUpInterests }: { onSetUpInterests?: () => void } = {}) {
   const {
     rows,
     data,
@@ -134,7 +134,7 @@ export function PriorityList() {
         </div>
       </div>
 
-      <PriorityBanner />
+      <PriorityBanner onSetUpInterests={onSetUpInterests} />
 
       <input
         className="search-input"

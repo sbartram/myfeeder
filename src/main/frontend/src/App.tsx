@@ -101,7 +101,7 @@ function MainLayout() {
             <Route path="/starred" element={<StarredArticles />} />
             <Route path="/boards" element={<AllArticles />} />
             <Route path="/board/:boardId" element={<BoardArticles />} />
-            <Route path="/priority" element={<PriorityList />} />
+            <Route path="/priority" element={<PriorityList onSetUpInterests={() => setInterestsOpen(true)} />} />
             <Route path="*" element={<AllArticles />} />
           </Routes>
         }

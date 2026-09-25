@@ -328,6 +328,28 @@ html, body, #root {
 
 .empty-state-detail { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
+/* Priority status banner: one full-width strip under the toolbar (D-14) */
+.priority-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: var(--hover-bg);
+  border-left: 3px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.priority-banner.cold-start { border-left-color: var(--accent); }
+
+.priority-banner strong { color: var(--text-primary); font-weight: 600; }
+
 .load-more {
   display: block;
   width: 100%;
