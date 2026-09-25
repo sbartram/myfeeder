@@ -175,7 +175,7 @@ Plans:
   4. The Priority view shows a "not configured", "cold start", "scoring paused" or "N articles waiting to be scored" state when each applies
   5. Changing a topic's weight in settings changes badges and the Priority order on the next refresh, with no new Jev calls (the blend is computed at query time from stored raw outputs)
 
-**Plans**: 3/7 plans executed
+**Plans**: 4/7 plans executed
 
 Plans:
 **Wave 1**
@@ -186,7 +186,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 05-03-PLAN.md — interestScore on every article response (D-18) and the exact "Why N?" breakdown on GET /api/articles/{id} (largest remainder against the SQL total) (wave 2)
-- [ ] 05-04-PLAN.md — Feed-tree Priority entry, `g p`, one status banner with D-14 precedence, cold-start Set up interests (wave 2)
+- [x] 05-04-PLAN.md — Feed-tree Priority entry, `g p`, one status banner with D-14 precedence, cold-start Set up interests (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -244,6 +244,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
-| 5. Blend & Priority View | 3/7 | In Progress|  |
+| 5. Blend & Priority View | 4/7 | In Progress|  |
 | 6. Thumbs Feedback | 0/TBD | Not started | - |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |
