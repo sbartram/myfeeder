@@ -432,6 +432,39 @@ html, body, #root {
 
 .why-toggle:hover { color: var(--text-primary); }
 
+/* "Why N?" breakdown: label column wraps, points column stays right-aligned. */
+.why-breakdown {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 16px;
+  row-gap: 4px;
+  font-size: 0.87em;
+  line-height: 1.5;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  max-width: 400px;
+  font-variant-numeric: tabular-nums;
+}
+
+.why-label { color: var(--text-secondary); min-width: 0; overflow-wrap: anywhere; }
+
+.why-points { color: var(--text-primary); text-align: right; }
+
+.why-total {
+  font-weight: 600;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
+}
+
+.why-muted { color: var(--text-muted); }
+
+.why-empty { grid-column: 1 / -1; color: var(--text-muted); }
+
+.why-more { grid-column: 1 / -1; justify-self: start; font-size: inherit; }
+
 .article-lead-image {
   display: block;
   max-width: 100%;

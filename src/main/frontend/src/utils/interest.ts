@@ -8,8 +8,12 @@ export function formatSigned(n: number, digits = 0): string {
   return s
 }
 
-// RED placeholder: compiles so the level-label test fails on its assertion.
-export const PROFILE_LEVEL_LABELS: readonly string[] = []
+/**
+ * Breakdown labels for the profile match level (D-04): index i names the server's
+ * InterestQuestions.PROFILE_LEVELS[i] (0 nothing to do with the profile ... 4 squarely about a
+ * core interest); the server sends that index as levelIndex.
+ */
+export const PROFILE_LEVEL_LABELS = ['None', 'In passing', 'Partly', 'Mainly', 'Core interest'] as const
 
 /** Circuit-breaker states in which scoring is paused. */
 export const OPEN_BREAKER_STATES: readonly string[] = ['OPEN', 'FORCED_OPEN']

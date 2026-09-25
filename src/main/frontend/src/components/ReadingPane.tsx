@@ -12,6 +12,8 @@ import { usePreferences, READING_FONT_PX } from '../stores/preferencesStore'
 import { useReadLater, useRemoveArticleFromBoard } from '../hooks/useBoards'
 import { BoardManager } from './BoardManager'
 import { ScoreRow } from './ScoreRow'
+import { WhyBreakdown } from './WhyBreakdown'
+import { usePriorityStore } from '../stores/priorityStore'
 import { formatPublishedDate } from '../utils/dates'
 
 interface ReadingPaneProps {
@@ -23,6 +25,7 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
   const setSelectedArticle = useUIStore((s) => s.setSelectedArticle)
   const keyboardFocus = useUIStore((s) => s.keyboardFocus)
+  const whyOpen = usePriorityStore((s) => s.whyOpen)
   const { data: article } = useArticle(selectedArticleId)
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -184,6 +187,9 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
       >
         <h1 className="article-title">{article.title}</h1>
         <ScoreRow article={article} />
+        {article.interestScore != null && whyOpen && article.interestBreakdown && (
+          <WhyBreakdown breakdown={article.interestBreakdown} articleId={article.id} />
+        )}
         <div className="article-meta">
           {article.author && <span>{article.author} &middot; </span>}
           {article.url && <span>{new URL(article.url).hostname}</span>}
