@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { PriorityList } from './PriorityList'
 import { useUpdateArticleState } from '../hooks/useArticles'
+import { useSaveInterestProfile } from '../hooks/useInterest'
 import { useUIStore } from '../stores/uiStore'
+import { usePriorityStore } from '../stores/priorityStore'
 import type { Article } from '../types'
 
 type Reply = { status: number; body?: unknown }
@@ -105,6 +107,8 @@ const STATUS_ALL_SCORED = {
 }
 
 const REFRESH = '↻ Refresh ranking'
+const HINT_LABEL = 'Ranking changed. Refresh ranking'
+const HINT_TEXT = '↻ Ranking changed — refresh'
 const REFRESHING = '↻ Refreshing…'
 const FIRST_PAGE_ERROR = "Couldn't load the Priority list. Press ↻ Refresh ranking to try again."
 
@@ -113,6 +117,17 @@ function MarkReadHarness({ id }: { id: number }) {
   const update = useUpdateArticleState()
   return <button onClick={() => update.mutate({ id, state: { read: true } })}>harness mark read</button>
 }
+
+/** A button that saves the interest profile through the app's mutation. */
+function SaveProfileHarness() {
+  const save = useSaveInterestProfile()
+  return <button onClick={() => save.mutate('I like compilers')}>harness save profile</button>
+}
+
+const waiting = (eligibleUnscored: number) => () => ({
+  status: 200,
+  body: { ...STATUS_ALL_SCORED, eligibleUnscored },
+})
 
 function renderPriority(props: { onSetUpInterests?: () => void } = {}, extra?: React.ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -135,6 +150,7 @@ describe('PriorityList', () => {
     routes = {}
     unknownRoutes = []
     useUIStore.setState({ searchQuery: '', selectedArticleId: null })
+    usePriorityStore.setState({ rankingChanged: false, baselineUnscored: null })
     route('GET', '/api/interest/status', () => ({ status: 200, body: STATUS_ALL_SCORED }))
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
       const url = String(input)
@@ -460,5 +476,92 @@ describe('PriorityList', () => {
     expect(rows[2]).not.toHaveClass('read')
     expect(rows[1].querySelector('.interest-badge')).toHaveTextContent('82')
     expect(priorityGets()).toHaveLength(1)
+  })
+
+  it('hintLightsWhenFewerArticlesAreWaiting', async () => {
+    route('GET', '/api/interest/status', sequenceOf(waiting(10), waiting(8)))
+    route('GET', PAGE_1, () => page(scored(90, 82)))
+
+    const { container, qc } = renderPriority()
+    await screen.findByText('Article 2')
+    await waitFor(() => expect(usePriorityStore.getState().baselineUnscored).toBe(10))
+    expect(screen.getByRole('button', { name: REFRESH })).toBeInTheDocument()
+
+    await act(async () => {
+      await qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+    })
+
+    const hint = await screen.findByRole('button', { name: HINT_LABEL })
+    expect(hint).toHaveTextContent(HINT_TEXT)
+    expect(hint).toHaveClass('toolbar-btn', 'priority-refresh', 'hint')
+    expect(titles(container)).toEqual(['Article 1', 'Article 2'])
+    expect(priorityGets()).toHaveLength(1)
+  })
+
+  it('noHintWhenMoreArticlesAreWaiting', async () => {
+    route('GET', '/api/interest/status', sequenceOf(waiting(10), waiting(12)))
+    route('GET', PAGE_1, () => page(scored(90, 82)))
+
+    const { qc } = renderPriority()
+    await screen.findByText('Article 2')
+    await waitFor(() => expect(usePriorityStore.getState().baselineUnscored).toBe(10))
+
+    await act(async () => {
+      await qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+    })
+    await waitFor(() => expect(calls.filter((c) => c.url === '/api/interest/status')).toHaveLength(2))
+
+    expect(screen.getByRole('button', { name: REFRESH })).not.toHaveClass('hint')
+    expect(usePriorityStore.getState().rankingChanged).toBe(false)
+  })
+
+  it('interestSaveLightsTheHint', async () => {
+    route('GET', PAGE_1, () => page(scored(90, 82)))
+    route('PUT', '/api/interest/profile', () => ({
+      status: 200,
+      body: { id: 1, profileText: 'I like compilers', version: 2, updatedAt: '2026-09-25T00:00:00Z' },
+    }))
+
+    const { container } = renderPriority({}, <SaveProfileHarness />)
+    await screen.findByText('Article 2')
+    fireEvent.click(screen.getByRole('button', { name: 'harness save profile' }))
+
+    await waitFor(() => expect(usePriorityStore.getState().rankingChanged).toBe(true))
+    const hint = await screen.findByRole('button', { name: HINT_LABEL })
+    expect(hint).toHaveTextContent(HINT_TEXT)
+    expect(titles(container)).toEqual(['Article 1', 'Article 2'])
+    expect(priorityGets()).toHaveLength(1)
+  })
+
+  it('refreshClearsTheHint', async () => {
+    route('GET', PAGE_1, () => page(scored(90, 82)))
+
+    renderPriority()
+    await screen.findByText('Article 2')
+    act(() => {
+      usePriorityStore.getState().setRankingChanged(true)
+    })
+
+    fireEvent.click(await screen.findByRole('button', { name: HINT_LABEL }))
+
+    expect(await screen.findByRole('button', { name: REFRESH })).toBeInTheDocument()
+    await waitFor(() => expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, PAGE_1]))
+    expect(usePriorityStore.getState().rankingChanged).toBe(false)
+  })
+
+  it('reenteringClearsTheHint', async () => {
+    route('GET', PAGE_1, () => page(scored(90, 82)))
+
+    const first = renderPriority()
+    await screen.findByText('Article 2')
+    act(() => {
+      usePriorityStore.getState().setRankingChanged(true)
+    })
+    expect(await screen.findByRole('button', { name: HINT_LABEL })).toBeInTheDocument()
+    first.unmount()
+
+    renderPriority()
+    expect(await screen.findByRole('button', { name: REFRESH })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: HINT_LABEL })).not.toBeInTheDocument()
   })
 })
