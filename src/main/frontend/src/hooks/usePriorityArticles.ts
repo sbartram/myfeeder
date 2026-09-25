@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useInfiniteQuery, type QueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query'
 import { articlesApi } from '../api/articles'
 import type { Article, PaginatedArticles } from '../types'
 
@@ -62,5 +62,32 @@ export async function refreshPriority(qc: QueryClient): Promise<void> {
   await qc.resetQueries({ queryKey: PRIORITY_KEY })
   await qc.invalidateQueries({
     predicate: (q) => q.queryKey[0] === 'article' && q.queryKey.length === 2,
+  })
+}
+
+/**
+ * Patches one row of the loaded Priority pages in place (D-07): the row keeps its index
+ * and its listed interestScore; only the request's read / starred values are copied.
+ * Used by the state mutation (and by the Phase 6 thumbs). The Priority query is
+ * patched, never invalidated: any refetch would reload every page and re-rank.
+ * Only an existing Priority query is updated, so this never creates a cache entry.
+ */
+export function patchPriorityArticle(
+  qc: QueryClient,
+  id: number,
+  patch: { read?: boolean; starred?: boolean },
+): void {
+  const fields: { read?: boolean; starred?: boolean } = {}
+  if (patch.read !== undefined) fields.read = patch.read
+  if (patch.starred !== undefined) fields.starred = patch.starred
+  qc.setQueriesData<InfiniteData<PaginatedArticles>>({ queryKey: PRIORITY_KEY }, (old) => {
+    if (!old) return old
+    return {
+      ...old,
+      pages: old.pages.map((p) => ({
+        ...p,
+        items: p.items.map((a) => (a.id === id ? { ...a, ...fields } : a)),
+      })),
+    }
   })
 }

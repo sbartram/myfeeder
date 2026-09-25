@@ -3,6 +3,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { PriorityList } from './PriorityList'
+import { useUpdateArticleState } from '../hooks/useArticles'
 import { useUIStore } from '../stores/uiStore'
 import type { Article } from '../types'
 
@@ -107,7 +108,13 @@ const REFRESH = '↻ Refresh ranking'
 const REFRESHING = '↻ Refreshing…'
 const FIRST_PAGE_ERROR = "Couldn't load the Priority list. Press ↻ Refresh ranking to try again."
 
-function renderPriority(props: { onSetUpInterests?: () => void } = {}) {
+/** A button that marks one article read through the app's shared state mutation. */
+function MarkReadHarness({ id }: { id: number }) {
+  const update = useUpdateArticleState()
+  return <button onClick={() => update.mutate({ id, state: { read: true } })}>harness mark read</button>
+}
+
+function renderPriority(props: { onSetUpInterests?: () => void } = {}, extra?: React.ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const utils = render(
     <QueryClientProvider client={qc}>
@@ -115,6 +122,7 @@ function renderPriority(props: { onSetUpInterests?: () => void } = {}) {
         <Routes>
           <Route path="/priority" element={<PriorityList {...props} />} />
         </Routes>
+        {extra}
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -432,5 +440,25 @@ describe('PriorityList', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Set up interests' }))
     expect(onSetUpInterests).toHaveBeenCalledTimes(1)
+  })
+
+  it('markReadKeepsTheRowInPlaceDimmed', async () => {
+    route('GET', PAGE_1, () => page(scored(90, 82, 70)))
+    route('PATCH', '/api/articles/2', () => ({
+      status: 200,
+      body: article(2, { read: true, interestScore: 5 }),
+    }))
+
+    const { container } = renderPriority({}, <MarkReadHarness id={2} />)
+    await screen.findByText('Article 3')
+    fireEvent.click(screen.getByRole('button', { name: 'harness mark read' }))
+
+    await waitFor(() => expect(container.querySelectorAll('.article-item')[1]).toHaveClass('read'))
+    expect(titles(container)).toEqual(['Article 1', 'Article 2', 'Article 3'])
+    const rows = container.querySelectorAll('.article-item')
+    expect(rows[0]).not.toHaveClass('read')
+    expect(rows[2]).not.toHaveClass('read')
+    expect(rows[1].querySelector('.interest-badge')).toHaveTextContent('82')
+    expect(priorityGets()).toHaveLength(1)
   })
 })

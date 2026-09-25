@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { articlesApi } from '../api/articles'
 import { useToastStore } from '../components/Toast'
+import { patchPriorityArticle } from './usePriorityArticles'
 import type { ArticleFilters } from '../types'
 
 export function useArticles(filters: ArticleFilters = {}) {
@@ -53,6 +54,8 @@ export function useUpdateArticleState() {
       qc.invalidateQueries({ queryKey: ['articles'] })
       qc.invalidateQueries({ queryKey: ['article', variables.id] })
       qc.invalidateQueries({ queryKey: ['unreadCounts'] })
+      // Priority rows change in place and never refetch (D-07); request values only.
+      patchPriorityArticle(qc, variables.id, variables.state)
     },
   })
 }
