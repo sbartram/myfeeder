@@ -175,12 +175,12 @@ Plans:
   4. The Priority view shows a "not configured", "cold start", "scoring paused" or "N articles waiting to be scored" state when each applies
   5. Changing a topic's weight in settings changes badges and the Priority order on the next refresh, with no new Jev calls (the blend is computed at query time from stored raw outputs)
 
-**Plans**: 7 plans
+**Plans**: 1/7 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Backend Priority endpoint: the single blend CTE, keyset pages across the scored/unscored boundary, 404 on a missing cursor, /priority SPA forward, blend constant (wave 1)
+- [x] 05-01-PLAN.md — Backend Priority endpoint: the single blend CTE, keyset pages across the scored/unscored boundary, 404 on a missing cursor, /priority SPA forward, blend constant (wave 1)
 - [ ] 05-02-PLAN.md — Frontend Priority list at /priority: frozen-cache infinite query, tier badges, "Not yet scored" separator, list states, ↻ Refresh ranking (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -244,6 +244,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
-| 5. Blend & Priority View | 0/TBD | Not started | - |
+| 5. Blend & Priority View | 1/7 | In Progress|  |
 | 6. Thumbs Feedback | 0/TBD | Not started | - |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |

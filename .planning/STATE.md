@@ -1,19 +1,19 @@
 ---
 gsd_state_version: "1.0"
 milestone: v0.1.24
-current_phase: 5
+current_phase: 05
 current_phase_name: Blend & Priority View
 status: executing
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-09-25T19:24:17.629Z"
-last_activity: 2026-09-24
-last_activity_desc: Phase 04 complete, transitioned to Phase 5
-state_head: f53515e60c3a002a6e47ed63d1de3c23cca17f4e
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-09-25T19:39:20.297Z"
+last_activity: 2026-09-25
+last_activity_desc: Phase 05 execution started
+state_head: 104d81e86079818feabc1a815288a1484529a20b
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 32
-  completed_plans: 25
+  completed_plans: 26
 ---
 
 # Project State
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-24)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 5 — Blend & Priority View
+**Current focus:** Phase 05 — Blend & Priority View
 
 ## Current Position
 
-Phase: 5 (Blend & Priority View) — READY TO EXECUTE
-Plan: Not started
+Phase: 05 (Blend & Priority View) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
-Last activity: 2026-09-24 — Phase 04 complete, transitioned to Phase 5
+Last activity: 2026-09-25 — Phase 05 execution started
 
 Progress: [██████░░░░] 57%
 
@@ -86,6 +86,7 @@ Progress: [██████░░░░] 57%
 | Phase 04 P07 | 7 min | 3 tasks | 6 files |
 | Phase 04 P05 | 5 min | 2 tasks | 6 files |
 | Phase 04 P09 | 4 min | 3 tasks | 6 files |
+| Phase 05 P01 | 6 min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -133,6 +134,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Scoring runs on a dedicated jev-score executor (queue 1000, non-default candidate); sweep enqueues ≤50 per 2 min on the scheduler thread and pauses while the breaker is OPEN
 - [Phase 04]: UAT accepted: Re-score confirm doesn't block on edits typed after it opens; concurrent-write truth rests on ON CONFLICT + single thread (override)
 - [Phase 04]: 04-09: bootTestRun activates a dev profile overlay (src/test/resources/application-dev.yaml) only from TestMyfeederApplication; both application.yaml files unchanged, DevProfileConfigTest enforces the main-mirror rule and that no test activates dev
+- [Phase 05]: 05-01: InterestScoreQueries is the single source of truth for Priority sort and badge: numeric raw_n ROUND(...,6), CASE-guarded 0..100 badge (null when unscored), float8 sort key with '-Infinity' for unscored rows
+- [Phase 05]: 05-01: GET /api/articles/priority returns {items,nextCursor}; a cursor naming no article is 404 (restart from page 1), not 400; no index and no V7 migration
 
 ### Pending Todos
 
@@ -156,6 +159,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-25T17:56:08.669Z
-Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-blend-priority-view/05-UI-SPEC.md
+Last session: 2026-09-25T19:39:20.254Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
