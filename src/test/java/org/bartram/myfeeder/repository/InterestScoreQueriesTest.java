@@ -3,6 +3,8 @@ package org.bartram.myfeeder.repository;
 import org.bartram.myfeeder.TestcontainersConfiguration;
 import org.bartram.myfeeder.config.MyfeederProperties;
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.repository.InterestScoreQueries.BreakdownInputs;
+import org.bartram.myfeeder.repository.InterestScoreQueries.TopicContribution;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +21,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * Proves the blend CTE and the Priority keyset pages against real Postgres on a fixed fixture.
@@ -149,6 +153,104 @@ class InterestScoreQueriesTest {
         jdbc.update("UPDATE article SET \"read\" = true");
 
         assertThat(queries.priorityFirstPage(100)).isEmpty();
+    }
+
+    @Test
+    void displayScoresAreIdScopedIncludingReadArticles() {
+        Map<Long, Integer> scores = queries.displayScores(List.of(a1, a4, a5, r1, u1, u2, u3));
+
+        assertThat(scores).isEqualTo(Map.of(a1, 82, a4, 100, a5, 0, r1, 100));
+    }
+
+    @Test
+    void displayScoresOfNoIdsIsEmpty() {
+        assertThat(queries.displayScores(List.of())).isEmpty();
+    }
+
+    @Test
+    void breakdownInputsMatchTheBadge() {
+        BreakdownInputs in = queries.breakdownInputs(a1).orElseThrow();
+
+        assertThat(in.raw()).isEqualByComparingTo("82.200000");
+        assertThat(in.raw().scale()).isEqualTo(6);
+        assertThat(in.total()).isEqualTo(82);
+        assertThat(in.display()).isEqualTo(82);
+        assertThat(in.profileScore()).isEqualTo(2.56);
+        assertThat(in.profileMaxLevel()).isEqualTo(4);
+        assertThat(in.profileExact()).isEqualByComparingTo("64.000000");
+
+        Map<String, TopicContribution> topics = new HashMap<>();
+        in.topics().forEach(t -> topics.put(t.name(), t));
+        assertThat(topics).containsOnlyKeys("Rust", "WebAssembly", "Politics", "Gardening");
+
+        TopicContribution rustRow = topics.get("Rust");
+        assertThat(rustRow.topicId()).isEqualTo(rust);
+        assertThat(rustRow.noul()).isEqualTo(0.93);
+        assertThat(rustRow.hinge()).isCloseTo(0.86, within(1e-9));
+        assertThat(rustRow.weight()).isEqualTo(20.0);
+        assertThat(rustRow.exact()).isEqualByComparingTo("17.200000");
+        assertThat(topics.get("WebAssembly").exact()).isEqualByComparingTo("7.000000");
+        assertThat(topics.get("Politics").exact()).isEqualByComparingTo("-6.000000");
+        assertThat(topics.get("Politics").weight()).isEqualTo(-30.0);
+        assertThat(topics.get("Gardening").hinge()).isZero();
+        assertThat(topics.get("Gardening").exact()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void breakdownInputsForCappedAndFlooredArticles() {
+        BreakdownInputs capped = queries.breakdownInputs(a4).orElseThrow();
+        assertThat(capped.total()).isEqualTo(133);
+        assertThat(capped.display()).isEqualTo(100);
+
+        BreakdownInputs floored = queries.breakdownInputs(a5).orElseThrow();
+        assertThat(floored.total()).isEqualTo(-30);
+        assertThat(floored.display()).isEqualTo(0);
+
+        BreakdownInputs halfUp = queries.breakdownInputs(a6).orElseThrow();
+        assertThat(halfUp.total()).isEqualTo(29);
+        assertThat(halfUp.display()).isEqualTo(29);
+    }
+
+    @Test
+    void breakdownInputsForNoProfileQuestion() {
+        BreakdownInputs in = queries.breakdownInputs(a7).orElseThrow();
+
+        assertThat(in.profileScore()).isNull();
+        assertThat(in.profileMaxLevel()).isNull();
+        assertThat(in.profileExact()).isNull();
+        assertThat(in.total()).isEqualTo(10);
+    }
+
+    @Test
+    void breakdownInputsEmptyForUnscored() {
+        assertThat(queries.breakdownInputs(u1)).isEmpty();
+        assertThat(queries.breakdownInputs(u2)).isEmpty();
+        assertThat(queries.breakdownInputs(u3)).isEmpty();
+    }
+
+    @Test
+    void topicAddedAfterScoringIsNotListed() {
+        insertTopic("Later", 50);
+
+        assertThat(queries.breakdownInputs(a1).orElseThrow().topics())
+                .extracting(TopicContribution::name)
+                .containsExactlyInAnyOrder("Rust", "WebAssembly", "Politics", "Gardening");
+    }
+
+    @Test
+    void oneNumberEverywhere() {
+        List<Long> scored = List.of(a1, a2, a3, a4, a5, a6, a7, a8, r1);
+        Map<Long, Integer> display = queries.displayScores(scored);
+        Map<Long, Integer> priority = scores(queries.priorityFirstPage(100));
+
+        for (long id : scored) {
+            Optional<BreakdownInputs> in = queries.breakdownInputs(id);
+            assertThat(in).as("breakdown of %d", id).isPresent();
+            assertThat(in.get().display()).as("breakdown vs badge of %d", id).isEqualTo(display.get(id));
+            if (id != r1) {
+                assertThat(priority.get(id)).as("Priority vs badge of %d", id).isEqualTo(display.get(id));
+            }
+        }
     }
 
     private void seedFixture() {

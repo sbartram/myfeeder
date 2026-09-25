@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The single source of truth for the Priority sort and the interest badge (and, from plan 05-03,
@@ -125,6 +126,11 @@ public class InterestScoreQueries {
                     scores.put(rs.getLong("article_id"), rs.getObject("interest_score", Integer.class));
                 });
         return scores;
+    }
+
+    /** RED placeholder. */
+    public Optional<BreakdownInputs> breakdownInputs(long articleId) {
+        return Optional.empty();
     }
 
     /**

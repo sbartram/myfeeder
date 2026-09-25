@@ -2,6 +2,9 @@ package org.bartram.myfeeder.controller;
 
 import org.bartram.myfeeder.integration.RaindropService;
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.model.InterestBreakdown;
+import org.bartram.myfeeder.model.InterestBreakdown.NonMatchingTopic;
+import org.bartram.myfeeder.model.InterestBreakdown.Row;
 import org.bartram.myfeeder.service.ArticleExtractionService;
 import org.bartram.myfeeder.service.ArticleService;
 import org.bartram.myfeeder.service.ExtractedContent;
@@ -15,6 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -127,11 +131,56 @@ class ArticleControllerTest {
         article.setId(1L);
         article.setTitle("Test");
         article.setContent("<p>Full content</p>");
-        when(articleService.findById(1L)).thenReturn(Optional.of(article));
+        when(articleService.findByIdWithBreakdown(1L)).thenReturn(Optional.of(article));
 
         mockMvc.perform(get("/api/articles/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").value("<p>Full content</p>"));
+    }
+
+    @Test
+    void getArticleSerializesTheBreakdown() throws Exception {
+        var article = new Article();
+        article.setId(1L);
+        article.setTitle("Scored");
+        article.setInterestScore(82);
+        article.setInterestBreakdown(new InterestBreakdown(new BigDecimal("82.200000"), 82, 82,
+                List.of(Row.profile(3, new BigDecimal("64.000000"), 64),
+                        Row.topic(10L, "Rust", 0.93, 0.86, 20, new BigDecimal("17.200000"), 17),
+                        Row.topic(11L, "WebAssembly", 0.75, 0.5, 14, new BigDecimal("7.000000"), 7),
+                        Row.topic(12L, "Politics", 0.6, 0.2, -30, new BigDecimal("-6.000000"), -6)),
+                List.of(new NonMatchingTopic(13L, "Gardening", 0.2))));
+        when(articleService.findByIdWithBreakdown(1L)).thenReturn(Optional.of(article));
+
+        mockMvc.perform(get("/api/articles/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.interestScore").value(82))
+                .andExpect(jsonPath("$.interestBreakdown.total").value(82))
+                .andExpect(jsonPath("$.interestBreakdown.display").value(82))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].kind").value("PROFILE"))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].levelIndex").value(3))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].points").value(64))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].topicId").doesNotExist())
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].kind").value("TOPIC"))
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].name").value("Rust"))
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].levelIndex").doesNotExist())
+                .andExpect(jsonPath("$.interestBreakdown.nonMatching[0].name").value("Gardening"));
+        verify(articleService, never()).findById(1L);
+    }
+
+    @Test
+    void listItemsOmitTheBreakdown() throws Exception {
+        var article = new Article();
+        article.setId(1L);
+        article.setTitle("Listed");
+        article.setFetchedAt(Instant.now());
+        article.setInterestScore(50);
+        when(articleService.findFiltered(null, null, null, null, 51, false)).thenReturn(List.of(article));
+
+        mockMvc.perform(get("/api/articles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].interestScore").value(50))
+                .andExpect(jsonPath("$.items[0].interestBreakdown").doesNotExist());
     }
 
     @Test

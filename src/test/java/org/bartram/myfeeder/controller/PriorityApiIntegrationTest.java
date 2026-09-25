@@ -53,7 +53,7 @@ class PriorityApiIntegrationTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
         // Articles, score rows and topic-score rows cascade from the feed
         jdbcTemplate.update("DELETE FROM feed WHERE url = ?", PRIORITY_FEED_URL);
-        jdbcTemplate.update("DELETE FROM interest_topic WHERE name = ?", PRIORITY_TOPIC_NAME);
+        jdbcTemplate.update("DELETE FROM interest_topic WHERE name LIKE ?", PRIORITY_TOPIC_NAME + "%");
         // board_article rows cascade from the board
         jdbcTemplate.update("DELETE FROM board WHERE name = ?", PRIORITY_BOARD_NAME);
     }
@@ -169,6 +169,44 @@ class PriorityApiIntegrationTest {
     }
 
     @Test
+    void articleByIdCarriesAnExactBreakdown() throws Exception {
+        long feedId = insertFeed();
+        Instant now = Instant.now();
+        long scored = insertArticle(feedId, "breakdown", now.minus(Duration.ofHours(1)), false);
+        long unscored = insertArticle(feedId, "no-breakdown", now.minus(Duration.ofHours(2)), false);
+        insertScored(scored, 2.56, 4);
+        long a = insertTopic(PRIORITY_TOPIC_NAME + "-a", 20);
+        long b = insertTopic(PRIORITY_TOPIC_NAME + "-b", -30);
+        long c = insertTopic(PRIORITY_TOPIC_NAME + "-c", 10);
+        insertTopicScore(scored, a, 0.93);
+        insertTopicScore(scored, b, 0.60);
+        insertTopicScore(scored, c, 0.20);
+
+        String body = mockMvc.perform(get("/api/articles/" + scored))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat((Integer) JsonPath.read(body, "$.interestScore")).isEqualTo(75);
+        assertThat((Integer) JsonPath.read(body, "$.interestBreakdown.total")).isEqualTo(75);
+        assertThat((Integer) JsonPath.read(body, "$.interestBreakdown.display")).isEqualTo(75);
+        List<Map<String, Object>> rows = JsonPath.read(body, "$.interestBreakdown.rows");
+        assertThat(rows).extracting(r -> r.get("kind")).containsExactly("PROFILE", "TOPIC", "TOPIC");
+        assertThat(rows).extracting(r -> r.get("name"))
+                .containsExactly(null, PRIORITY_TOPIC_NAME + "-a", PRIORITY_TOPIC_NAME + "-b");
+        List<Long> points = rows.stream().map(r -> ((Number) r.get("points")).longValue()).toList();
+        assertThat(points).containsExactly(64L, 17L, -6L);
+        assertThat(points.stream().mapToLong(Long::longValue).sum()).isEqualTo(75);
+        List<Map<String, Object>> nonMatching = JsonPath.read(body, "$.interestBreakdown.nonMatching");
+        assertThat(nonMatching).extracting(t -> t.get("name")).containsExactly(PRIORITY_TOPIC_NAME + "-c");
+
+        String plain = mockMvc.perform(get("/api/articles/" + unscored))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        Map<String, Object> json = JsonPath.read(plain, "$");
+        assertThat(json).containsKey("interestScore").doesNotContainKey("interestBreakdown");
+        assertThat(json.get("interestScore")).isNull();
+    }
+
+    @Test
     void missingCursorIs404() throws Exception {
         Long maxId = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id), 0) FROM article", Long.class);
 
@@ -188,6 +226,18 @@ class PriorityApiIntegrationTest {
                         + "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
                 Long.class, feedId, "priority-" + guid, "Article " + guid, "https://example.test/priority-" + guid,
                 "Summary " + guid, Timestamp.from(publishedAt), read);
+    }
+
+    private long insertTopic(String name, int weight) {
+        return jdbcTemplate.queryForObject(
+                "INSERT INTO interest_topic (name, description, weight) VALUES (?, ?, ?) RETURNING id",
+                Long.class, name, "Priority test", weight);
+    }
+
+    private void insertTopicScore(long articleId, long topicId, double noul) {
+        jdbcTemplate.update(
+                "INSERT INTO article_topic_score (article_id, topic_id, noul, topic_version) VALUES (?, ?, ?, 1)",
+                articleId, topicId, noul);
     }
 
     private void insertScored(long articleId, double profileScore, int profileMaxLevel) {

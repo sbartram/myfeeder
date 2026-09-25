@@ -24,6 +24,11 @@ public class ArticleService {
         return articleRepository.findById(id);
     }
 
+    /** RED placeholder. */
+    public Optional<Article> findByIdWithBreakdown(Long id) {
+        return Optional.empty();
+    }
+
     public Article updateState(Long id, Boolean read, Boolean starred) {
         Article article = articleRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Article not found: " + id));
