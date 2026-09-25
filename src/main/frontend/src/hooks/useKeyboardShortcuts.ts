@@ -60,6 +60,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
         chordRef.current = null
         if (chordTimerRef.current) clearTimeout(chordTimerRef.current)
         switch (e.key) {
+          case 'p': setSelectedFeed(null); navigate('/priority'); return
           case 'a': navigate('/'); return
           case 's': navigate('/starred'); return
           case 'b': navigate('/boards'); return

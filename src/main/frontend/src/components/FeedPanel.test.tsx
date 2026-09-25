@@ -1,9 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { FeedPanel } from './FeedPanel'
 
 const createFolderMutate = vi.fn()
+const { setSelectedFeed, setSelectedFolder } = vi.hoisted(() => ({
+  setSelectedFeed: vi.fn(),
+  setSelectedFolder: vi.fn(),
+}))
 
 vi.mock('../hooks/useFeeds', () => ({
   useFeeds: () => ({ data: [{ id: 1, title: 'Feed A', folderId: null, errorCount: 0 }] }),
@@ -42,8 +46,8 @@ vi.mock('../stores/uiStore', () => ({
       selectedFolderId: null,
       expandedFolders: new Set<number>(),
       toggleFolder: vi.fn(),
-      setSelectedFeed: vi.fn(),
-      setSelectedFolder: vi.fn(),
+      setSelectedFeed,
+      setSelectedFolder,
     }
     return selector(state)
   },
@@ -60,6 +64,53 @@ const renderPanel = () =>
       <FeedPanel />
     </MemoryRouter>
   )
+
+function LocationProbe() {
+  return <div data-testid="location">{useLocation().pathname}</div>
+}
+
+const renderPanelAt = (path: string) =>
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <FeedPanel />
+      <LocationProbe />
+    </MemoryRouter>
+  )
+
+const smartView = (label: string) => screen.getByText(label, { selector: '.smart-view > span' }).parentElement!
+
+describe('FeedPanel Priority smart view', () => {
+  beforeEach(() => {
+    setSelectedFeed.mockClear()
+    setSelectedFolder.mockClear()
+  })
+
+  it('priorityIsTheFirstSmartViewWithoutACount', () => {
+    const { container } = renderPanelAt('/')
+    const first = container.querySelector('.smart-views .smart-view')!
+    expect(first.textContent).toBe('Priority')
+    expect(first.querySelector('.count')).toBeNull()
+  })
+
+  it('priorityIsActiveOnlyOnItsRoute', () => {
+    const { unmount } = renderPanelAt('/priority')
+    expect(smartView('Priority')).toHaveClass('active')
+    expect(smartView('All Articles')).not.toHaveClass('active')
+    unmount()
+
+    renderPanelAt('/')
+    expect(smartView('Priority')).not.toHaveClass('active')
+    expect(smartView('All Articles')).toHaveClass('active')
+  })
+
+  it('clickingPriorityNavigates', () => {
+    renderPanelAt('/')
+    fireEvent.click(smartView('Priority'))
+    expect(screen.getByTestId('location')).toHaveTextContent('/priority')
+    expect(setSelectedFeed).toHaveBeenCalledWith(null)
+    expect(setSelectedFolder).toHaveBeenCalledWith(null)
+  })
+})
 
 describe('FeedPanel new folder button', () => {
   beforeEach(() => {

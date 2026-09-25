@@ -16,6 +16,7 @@ const shortcuts = [
   { key: 'Shift+A', action: 'Mark all read in feed' },
   { key: '/', action: 'Focus search' },
   { key: 'Escape', action: 'Clear selection / close' },
+  { key: 'g then p', action: 'Go to Priority' },
   { key: 'g then a', action: 'Go to All Articles' },
   { key: 'g then s', action: 'Go to Starred' },
   { key: 'g then b', action: 'Go to Boards' },

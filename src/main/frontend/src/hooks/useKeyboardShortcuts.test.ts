@@ -8,6 +8,7 @@ vi.mock('../api/articles', () => ({
     markRead: vi.fn(),
     counts: vi.fn(),
     saveToRaindrop: vi.fn(),
+    priority: vi.fn(),
   },
 }))
 vi.mock('../api/feeds', () => ({
@@ -24,7 +25,7 @@ vi.mock('../api/folders', () => ({
 
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { createElement } from 'react'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts'
 import { useUIStore } from '../stores/uiStore'
@@ -217,5 +218,61 @@ describe('useKeyboardShortcuts', () => {
     press('n')
     // Current feed is the only one with unread → no-op.
     expect(useUIStore.getState().selectedFeedId).toBe(1)
+  })
+
+  it('gThenPOpensPriority', () => {
+    const { wrapper } = createWrapper()
+    useUIStore.setState({ selectedFeedId: 2 })
+
+    const { result } = renderHook(
+      () => {
+        useKeyboardShortcuts([])
+        return useLocation()
+      },
+      { wrapper },
+    )
+
+    press('g')
+    press('p')
+    expect(result.current.pathname).toBe('/priority')
+    expect(useUIStore.getState().selectedFeedId).toBeNull()
+  })
+
+  it('gThenPDoesNotJumpToThePreviousUnreadFeed', () => {
+    const { qc, wrapper } = createWrapper()
+    seedFeeds(qc, [feed(1), feed(2), feed(3)], { '1': 4, '2': 5, '3': 0 })
+    useUIStore.setState({ selectedFeedId: 3 })
+
+    const { result } = renderHook(
+      () => {
+        useKeyboardShortcuts([])
+        return useLocation()
+      },
+      { wrapper },
+    )
+
+    press('g')
+    press('p')
+    expect(result.current.pathname).toBe('/priority')
+    expect(result.current.pathname).not.toMatch(/^\/feed\//)
+    expect(useUIStore.getState().selectedFeedId).toBeNull()
+  })
+
+  it('plainPStillJumpsToThePreviousUnreadFeed', () => {
+    const { qc, wrapper } = createWrapper()
+    seedFeeds(qc, [feed(1), feed(2), feed(3)], { '1': 4, '2': 5, '3': 0 })
+    useUIStore.setState({ selectedFeedId: 3 })
+
+    const { result } = renderHook(
+      () => {
+        useKeyboardShortcuts([])
+        return useLocation()
+      },
+      { wrapper },
+    )
+
+    press('p')
+    expect(useUIStore.getState().selectedFeedId).toBe(2)
+    expect(result.current.pathname).toBe('/feed/2')
   })
 })

@@ -6,7 +6,7 @@ import { useUnreadCounts } from '../hooks/useArticles'
 import { useBoards } from '../hooks/useBoards'
 import { useVersion } from '../hooks/useVersion'
 import { useUIStore } from '../stores/uiStore'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useMatch } from 'react-router-dom'
 import { useImportOpml, exportOpml } from '../hooks/useOpml'
 import { usePreferences } from '../stores/preferencesStore'
 import type { Feed, Folder } from '../types'
@@ -95,6 +95,7 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
   const { data: counts = {} } = useUnreadCounts()
   const navigate = useNavigate()
   const location = useLocation()
+  const priorityMatch = useMatch('/priority')
   const activeBoardMatch = location.pathname.match(/^\/board\/(\d+)$/)
   const activeBoardId = activeBoardMatch ? Number(activeBoardMatch[1]) : null
   const importMutation = useImportOpml()
@@ -202,6 +203,12 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
     navigate('/')
   }
 
+  const handlePriorityClick = () => {
+    setSelectedFeed(null)
+    setSelectedFolder(null)
+    navigate('/priority')
+  }
+
   const handleStarredClick = () => {
     setSelectedFeed(null)
     setSelectedFolder(null)
@@ -227,7 +234,11 @@ export function FeedPanel({ onAddFeed, onSettings, onHelp }: FeedPanelProps) {
   return (
     <div className="feed-panel">
       <div className="smart-views">
-        <div className={`smart-view ${!selectedFeedId && !selectedFolderId ? 'active' : ''}`}
+        <div className={`smart-view ${priorityMatch ? 'active' : ''}`}
+             onClick={handlePriorityClick}>
+          <span>Priority</span>
+        </div>
+        <div className={`smart-view ${!selectedFeedId && !selectedFolderId && !priorityMatch ? 'active' : ''}`}
              onClick={handleAllClick}>
           <span>All Articles</span>
           {totalUnread > 0 && <span className="count">{totalUnread}</span>}
