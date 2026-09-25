@@ -65,6 +65,22 @@ function titles(container: HTMLElement): string[] {
   return Array.from(container.querySelectorAll('.article-item-title')).map((e) => e.textContent ?? '')
 }
 
+/** The list's direct children, as 'row' / 'separator' / 'load-more'. */
+function sequence(container: HTMLElement): string[] {
+  const items = container.querySelector('.article-items')
+  if (!items) return []
+  return Array.from(items.children).map((e) => {
+    if (e.classList.contains('article-item')) return 'row'
+    if (e.classList.contains('priority-separator')) return 'separator'
+    if (e.classList.contains('load-more')) return 'load-more'
+    return e.className
+  })
+}
+
+function scored(...scores: (number | null)[]): Article[] {
+  return scores.map((s, i) => article(i + 1, { interestScore: s }))
+}
+
 function renderPriority() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const utils = render(
@@ -139,5 +155,86 @@ describe('PriorityList', () => {
     const rows = container.querySelectorAll('.article-item')
     expect(rows[1]).toHaveClass('selected')
     expect(rows[0]).not.toHaveClass('selected')
+  })
+
+  it('separatorPrecedesTheFirstUnscoredRow', async () => {
+    route('GET', PAGE_1, () => page(scored(90, 82, null, null)))
+
+    const { container } = renderPriority()
+    await screen.findByText('Article 4')
+    expect(sequence(container)).toEqual(['row', 'row', 'separator', 'row', 'row'])
+    expect(screen.getAllByRole('separator', { name: 'Not yet scored' })).toHaveLength(1)
+  })
+
+  it('separatorFirstWhenNothingIsScored', async () => {
+    route('GET', PAGE_1, () => page(scored(null, null)))
+
+    const { container } = renderPriority()
+    await screen.findByText('Article 2')
+    expect(sequence(container)).toEqual(['separator', 'row', 'row'])
+  })
+
+  it('noSeparatorWhenEverythingIsScored', async () => {
+    route('GET', PAGE_1, () => page(scored(90, 45)))
+
+    const { container } = renderPriority()
+    await screen.findByText('Article 2')
+    expect(sequence(container)).toEqual(['row', 'row'])
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument()
+  })
+
+  it('separatorAppearsOnceTheFirstUnscoredRowLoads', async () => {
+    route('GET', PAGE_1, () => page(scored(90, 82), 2))
+    route('GET', pageAfter(2), () => page([article(3, { interestScore: null })]))
+
+    const { container } = renderPriority()
+    await screen.findByText('Article 2')
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Load more' }))
+    await screen.findByText('Article 3')
+    await waitFor(() => expect(sequence(container)).toEqual(['row', 'row', 'separator', 'row']))
+    expect(screen.getAllByRole('separator', { name: 'Not yet scored' })).toHaveLength(1)
+  })
+
+  it('filterHidesTheSeparatorWithoutUnscoredMatches', async () => {
+    route('GET', PAGE_1, () =>
+      page([
+        article(1, { interestScore: 90, title: 'Rust compiler news', summary: null }),
+        article(2, { interestScore: null, title: 'Gardening tips', summary: null }),
+      ]),
+    )
+
+    const { container } = renderPriority()
+    await screen.findByText('Gardening tips')
+    expect(screen.getByRole('separator', { name: 'Not yet scored' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByPlaceholderText('Filter articles...'), { target: { value: 'rust' } })
+    expect(sequence(container)).toEqual(['row'])
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument()
+  })
+
+  it('unscoredRowsKeepAnEmptySlot', async () => {
+    route('GET', PAGE_1, () => page(scored(90, null)))
+
+    const { container } = renderPriority()
+    await screen.findByText('Article 2')
+    const [scoredRow, unscoredRow] = Array.from(container.querySelectorAll('.article-item'))
+    expect(scoredRow.querySelector('.interest-badge')).toHaveTextContent('90')
+    expect(scoredRow.querySelector('.interest-badge-slot')).toBeNull()
+    const slot = unscoredRow.querySelector('.interest-badge-slot')
+    expect(slot).not.toBeNull()
+    expect(slot).toHaveAttribute('aria-hidden', 'true')
+    expect(unscoredRow.querySelector('.interest-badge')).toBeNull()
+  })
+
+  it('readRowKeepsItsBadge', async () => {
+    route('GET', PAGE_1, () => page([article(1, { interestScore: 55, read: true })]))
+
+    const { container } = renderPriority()
+    await screen.findByText('Article 1')
+    const row = container.querySelector('.article-item')
+    expect(row).toHaveClass('read')
+    expect(row?.querySelector('.interest-badge')).toHaveTextContent('55')
   })
 })
