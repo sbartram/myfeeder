@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 05
 current_phase_name: Blend & Priority View
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-09-25T19:39:20.297Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-09-25T19:47:43.136Z"
 last_activity: 2026-09-25
 last_activity_desc: Phase 05 execution started
-state_head: 104d81e86079818feabc1a815288a1484529a20b
+state_head: f42f7c393533809783f282ae7d82307c4911d0c1
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 32
-  completed_plans: 26
+  completed_plans: 27
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-24)
 ## Current Position
 
 Phase: 05 (Blend & Priority View) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-09-25 — Phase 05 execution started
 
@@ -87,6 +87,7 @@ Progress: [██████░░░░] 57%
 | Phase 04 P05 | 5 min | 2 tasks | 6 files |
 | Phase 04 P09 | 4 min | 3 tasks | 6 files |
 | Phase 05 P01 | 6 min | 3 tasks | 13 files |
+| Phase 05 P02 | 6 min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -136,6 +137,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-09: bootTestRun activates a dev profile overlay (src/test/resources/application-dev.yaml) only from TestMyfeederApplication; both application.yaml files unchanged, DevProfileConfigTest enforces the main-mirror rule and that no test activates dev
 - [Phase 05]: 05-01: InterestScoreQueries is the single source of truth for Priority sort and badge: numeric raw_n ROUND(...,6), CASE-guarded 0..100 badge (null when unscored), float8 sort key with '-Infinity' for unscored rows
 - [Phase 05]: 05-01: GET /api/articles/priority returns {items,nextCursor}; a cursor naming no article is 404 (restart from page 1), not 400; no index and no V7 migration
+- [Phase 05]: 05-02: Priority frontend: ['priority'] infinite query with infinite staleTime and no focus/reconnect refetch; re-rank only via refreshPriority(qc) (resetQueries, page 1 only); nothing invalidates PRIORITY_KEY
+- [Phase 05]: 05-02: Priority state copy renders in a slot under the filter so the toolbar always shows; a 404 on Load more restarts from page 1; EmptyState detail uses a column layout via .empty-state:has(.empty-state-detail)
 
 ### Pending Todos
 
@@ -159,6 +162,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-25T19:39:20.254Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-09-25T19:47:36.087Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None

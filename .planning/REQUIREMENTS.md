@@ -44,7 +44,7 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 ### Priority View
 
 - [ ] **PRIO-01**: User can open a "Priority" view from the feed tree (route `/priority`) showing unread articles ordered by score (highest first; ties by date)
-- [ ] **PRIO-02**: Unscored articles appear after scored ones, by date, below a "Not yet scored" separator
+- [x] **PRIO-02**: Unscored articles appear after scored ones, by date, below a "Not yet scored" separator
 - [ ] **PRIO-03**: Articles show a 0–100 interest badge (tier-colored via theme variables) in the article list and reading pane; unscored articles show no badge
 - [ ] **PRIO-04**: User can see an exact "Why N?" breakdown for an article: profile contribution plus each matched topic's match × weight, with matched-topic chips
 - [ ] **PRIO-05**: Priority list order stays stable while triaging — marking read, starring or voting doesn't reorder or drop rows until the user refreshes or re-enters the view
@@ -131,7 +131,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCOR-07 | Phase 4 | Complete |
 | SCOR-08 | Phase 4 | Complete |
 | PRIO-01 | Phase 5 | Pending |
-| PRIO-02 | Phase 5 | Pending |
+| PRIO-02 | Phase 5 | Complete |
 | PRIO-03 | Phase 5 | Pending |
 | PRIO-04 | Phase 5 | Pending |
 | PRIO-05 | Phase 5 | Pending |
