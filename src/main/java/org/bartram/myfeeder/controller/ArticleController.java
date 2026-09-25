@@ -7,6 +7,7 @@ import org.bartram.myfeeder.service.ArticleExtractionService;
 import org.bartram.myfeeder.service.ArticleService;
 import org.bartram.myfeeder.service.ExtractedContent;
 import org.bartram.myfeeder.service.NotFoundException;
+import org.bartram.myfeeder.service.PriorityService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,7 @@ public class ArticleController {
     private final ArticleService articleService;
     private final RaindropService raindropService;
     private final ArticleExtractionService articleExtractionService;
+    private final PriorityService priorityService;
 
     @GetMapping
     public PaginatedResponse<Article> listArticles(
@@ -39,6 +41,16 @@ public class ArticleController {
         // and so limit + 1 (the pagination look-ahead) can never overflow.
         int safeLimit = Math.max(1, Math.min(limit, MAX_LIMIT));
         List<Article> fetched = articleService.findFiltered(feedId, read, starred, before, safeLimit + 1, ascending);
+        return PaginatedResponse.of(fetched, safeLimit, Article::getId);
+    }
+
+    /** Unread articles ranked by the blended interest score, then unscored ones by date. */
+    @GetMapping("/priority")
+    public PaginatedResponse<Article> priority(
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(required = false) Long before) {
+        int safeLimit = Math.max(1, Math.min(limit, MAX_LIMIT));
+        List<Article> fetched = priorityService.page(before, safeLimit + 1);
         return PaginatedResponse.of(fetched, safeLimit, Article::getId);
     }
 

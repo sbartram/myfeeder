@@ -7,6 +7,7 @@ import org.bartram.myfeeder.service.ArticleService;
 import org.bartram.myfeeder.service.ExtractedContent;
 import org.bartram.myfeeder.service.FeedFetchException;
 import org.bartram.myfeeder.service.NotFoundException;
+import org.bartram.myfeeder.service.PriorityService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -30,6 +32,7 @@ class ArticleControllerTest {
     @MockitoBean private ArticleService articleService;
     @MockitoBean private RaindropService raindropService;
     @MockitoBean private ArticleExtractionService articleExtractionService;
+    @MockitoBean private PriorityService priorityService;
 
     @Test
     void shouldReturnExtractedContent() throws Exception {
@@ -199,5 +202,21 @@ class ArticleControllerTest {
                 .andExpect(status().isOk());
 
         verify(raindropService).saveToRaindrop(article);
+    }
+
+    @Test
+    void priorityRouteIsNotTheIdRoute() throws Exception {
+        var article = new Article();
+        article.setId(3L);
+        article.setInterestScore(82);
+        when(priorityService.page(null, 51)).thenReturn(List.of(article));
+
+        mockMvc.perform(get("/api/articles/priority"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].id").value(3))
+                .andExpect(jsonPath("$.items[0].interestScore").value(82))
+                .andExpect(jsonPath("$.nextCursor").value(nullValue()));
+
+        verify(articleService, never()).findById(any());
     }
 }
