@@ -81,6 +81,24 @@ function scored(...scores: (number | null)[]): Article[] {
   return scores.map((s, i) => article(i + 1, { interestScore: s }))
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((r) => {
+    resolve = r
+  })
+  return { promise, resolve }
+}
+
+/** Answers each call to a route with the next reply in turn; the last reply repeats. */
+function sequenceOf(...replies: (() => Reply | Promise<Reply>)[]): Handler {
+  let n = 0
+  return () => replies[Math.min(n++, replies.length - 1)]()
+}
+
+const REFRESH = '↻ Refresh ranking'
+const REFRESHING = '↻ Refreshing…'
+const FIRST_PAGE_ERROR = "Couldn't load the Priority list. Press ↻ Refresh ranking to try again."
+
 function renderPriority() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const utils = render(
@@ -236,5 +254,138 @@ describe('PriorityList', () => {
     const row = container.querySelector('.article-item')
     expect(row).toHaveClass('read')
     expect(row?.querySelector('.interest-badge')).toHaveTextContent('55')
+  })
+
+  it('showsLoadingCopyWhileTheFirstPageIsPending', async () => {
+    route('GET', PAGE_1, () => new Promise<Reply>(() => {}))
+
+    renderPriority()
+    expect(await screen.findByText('Loading articles…')).toBeInTheDocument()
+    expect(screen.queryByText('All caught up!')).not.toBeInTheDocument()
+  })
+
+  it('showsCaughtUpWithDetailWhenEmpty', async () => {
+    route('GET', PAGE_1, () => page([]))
+
+    renderPriority()
+    expect(await screen.findByText('All caught up!')).toBeInTheDocument()
+    expect(screen.getByText('New unread articles are ranked here as your feeds update.')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: REFRESH })).toBeInTheDocument()
+  })
+
+  it('showsErrorCopyWhenTheFirstPageFails', async () => {
+    route('GET', PAGE_1, () => ({ status: 500, body: { title: 'Internal Server Error', detail: 'boom' } }))
+
+    renderPriority()
+    expect(await screen.findByText(FIRST_PAGE_ERROR)).toBeInTheDocument()
+    expect(screen.getByText('Priority')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: REFRESH })).toBeInTheDocument()
+    expect(screen.queryByText('boom')).not.toBeInTheDocument()
+  })
+
+  it('showsNoMatchesForTheFilter', async () => {
+    route('GET', PAGE_1, () => page(scored(90, null)))
+
+    renderPriority()
+    await screen.findByText('Article 1')
+    fireEvent.change(screen.getByPlaceholderText('Filter articles...'), { target: { value: 'zzz' } })
+    expect(screen.getByText('No matches for "zzz"')).toBeInTheDocument()
+  })
+
+  it('refreshFetchesOnlyPageOne', async () => {
+    route('GET', PAGE_1, () => page(scored(90, 82), 2))
+    route('GET', pageAfter(2), () => page([article(3, { interestScore: 50 })]))
+
+    const { container } = renderPriority()
+    await screen.findByText('Article 2')
+    fireEvent.click(screen.getByRole('button', { name: 'Load more' }))
+    await screen.findByText('Article 3')
+    expect(priorityGets()).toHaveLength(2)
+
+    fireEvent.click(await screen.findByRole('button', { name: REFRESH }))
+    await waitFor(() => expect(titles(container)).toEqual(['Article 1', 'Article 2']))
+    expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(2), PAGE_1])
+  })
+
+  it('refreshKeepsTheSelection', async () => {
+    route(
+      'GET',
+      PAGE_1,
+      sequenceOf(
+        () => page(scored(90, 82)),
+        () => page([article(1, { interestScore: 90 }), article(3, { interestScore: 70 })]),
+      ),
+    )
+
+    const { container } = renderPriority()
+    await screen.findByText('Article 2')
+    fireEvent.click(screen.getByText('Article 2'))
+    expect(useUIStore.getState().selectedArticleId).toBe(2)
+
+    fireEvent.click(screen.getByRole('button', { name: REFRESH }))
+    await waitFor(() => expect(titles(container)).toEqual(['Article 1', 'Article 3']))
+    expect(useUIStore.getState().selectedArticleId).toBe(2)
+  })
+
+  it('refreshButtonShowsRefreshingWhileInFlight', async () => {
+    const refresh = deferred<Reply>()
+    route('GET', PAGE_1, sequenceOf(() => page(scored(90)), () => refresh.promise))
+
+    renderPriority()
+    await screen.findByText('Article 1')
+    fireEvent.click(await screen.findByRole('button', { name: REFRESH }))
+
+    const busy = await screen.findByRole('button', { name: REFRESHING })
+    expect(busy).toBeDisabled()
+
+    refresh.resolve(page(scored(80)))
+    const idle = await screen.findByRole('button', { name: REFRESH })
+    expect(idle).toBeEnabled()
+  })
+
+  it('failedRefreshReturnsTheButtonToIdle', async () => {
+    route('GET', PAGE_1, sequenceOf(() => page(scored(90)), () => ({ status: 500 })))
+
+    renderPriority()
+    await screen.findByText('Article 1')
+    fireEvent.click(await screen.findByRole('button', { name: REFRESH }))
+
+    expect(await screen.findByText(FIRST_PAGE_ERROR)).toBeInTheDocument()
+    const idle = await screen.findByRole('button', { name: REFRESH })
+    expect(idle).toBeEnabled()
+  })
+
+  it('loadMoreFailureRelabelsAndRetries', async () => {
+    route('GET', PAGE_1, () => page(scored(90, 82), 2))
+    route(
+      'GET',
+      pageAfter(2),
+      sequenceOf(() => ({ status: 500 }), () => page([article(3, { interestScore: 40 })])),
+    )
+
+    const { container } = renderPriority()
+    await screen.findByText('Article 2')
+    fireEvent.click(screen.getByRole('button', { name: 'Load more' }))
+
+    const retry = await screen.findByRole('button', { name: "Couldn't load more. Try again" })
+    expect(retry).toBeEnabled()
+    expect(titles(container)).toEqual(['Article 1', 'Article 2'])
+
+    fireEvent.click(retry)
+    await screen.findByText('Article 3')
+    expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(2), pageAfter(2)])
+  })
+
+  it('missingCursorRestartsFromPageOne', async () => {
+    route('GET', PAGE_1, () => page(scored(90, 82), 2))
+    route('GET', pageAfter(2), () => ({ status: 404, body: { title: 'Not Found' } }))
+
+    const { container } = renderPriority()
+    await screen.findByText('Article 2')
+    fireEvent.click(screen.getByRole('button', { name: 'Load more' }))
+
+    await waitFor(() => expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(2), PAGE_1]))
+    await waitFor(() => expect(titles(container)).toEqual(['Article 1', 'Article 2']))
+    await screen.findByRole('button', { name: 'Load more' })
   })
 })
