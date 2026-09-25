@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useBoardArticles } from '../hooks/useBoards'
 import { useUIStore } from '../stores/uiStore'
+import { InterestBadge } from './InterestBadge'
 import type { Article } from '../types'
 
 interface BoardArticleListProps {
@@ -18,6 +19,9 @@ export function BoardArticleList({ boardId }: BoardArticleListProps) {
     () => data?.pages.flatMap((p) => p.items) ?? [],
     [data]
   )
+
+  // Same slot rule as ArticleList: reserve the empty badge slot only when some loaded row is scored
+  const reserveSlot = useMemo(() => allArticles.some((a) => a.interestScore != null), [allArticles])
 
   const filtered = useMemo(() => {
     if (!searchQuery) return allArticles
@@ -76,7 +80,14 @@ export function BoardArticleList({ boardId }: BoardArticleListProps) {
             className={`article-item ${selectedArticleId === article.id ? 'selected' : ''} ${article.read ? 'read' : ''}`}
             onClick={() => handleArticleClick(article)}
           >
-            <div className="article-item-title">{article.title}</div>
+            <div className="article-item-head">
+              {article.interestScore != null ? (
+                <InterestBadge score={article.interestScore} />
+              ) : (
+                reserveSlot && <span className="interest-badge-slot" aria-hidden="true" />
+              )}
+              <div className="article-item-title">{article.title}</div>
+            </div>
             <div className="article-item-meta">
               {formatTime(article.publishedAt)}
               {article.starred && ' starred'}
