@@ -1,5 +1,6 @@
 package org.bartram.myfeeder.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -27,4 +28,8 @@ public class Article {
     // 0-100 display score from the blend CTE (InterestScoreQueries); null when the article is unscored
     @Transient
     private Integer interestScore;
+    // The "Why N?" breakdown; only set on GET /api/articles/{id}, omitted from JSON elsewhere
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private InterestBreakdown interestBreakdown;
 }

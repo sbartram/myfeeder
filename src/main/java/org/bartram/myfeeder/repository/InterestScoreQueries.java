@@ -6,6 +6,7 @@ import org.bartram.myfeeder.model.Article;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -63,6 +64,18 @@ public class InterestScoreQueries {
 
     /** Score, then date, then id, all descending. Alias {@code k} = keyed. */
     static final String KEYED_ORDER = "ORDER BY k.sort_score DESC, k.sort_date DESC, k.id DESC";
+
+    /**
+     * Raw breakdown inputs for one SCORED article, read from the blend CTE; the profile fields are null
+     * when no profile question was asked.
+     */
+    public record BreakdownInputs(BigDecimal raw, int total, int display, Double profileScore,
+                                  Integer profileMaxLevel, BigDecimal profileExact,
+                                  List<TopicContribution> topics) {}
+
+    /** One judged topic of an article as the blend CTE saw it: effective weight, hinge and exact points. */
+    public record TopicContribution(long topicId, String name, double noul, double hinge, double weight,
+                                    BigDecimal exact) {}
 
     private final JdbcClient jdbc;
     private final MyfeederProperties properties;
