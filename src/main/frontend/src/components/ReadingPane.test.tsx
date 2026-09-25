@@ -261,3 +261,21 @@ describe('ReadingPane score row', () => {
     expect(chips.map((c) => c.getAttribute('title'))).toEqual([long, 'Rust'])
   })
 })
+
+describe('ReadingPane Why breakdown', () => {
+  it('whyOpenShowsTheBreakdown', () => {
+    mockArticle = article({ interestScore: 82, interestBreakdown: breakdown(mockRows(), 82) })
+    usePriorityStore.setState({ whyOpen: true })
+    const open = renderPane()
+
+    const order = Array.from(
+      open.container.querySelectorAll('.score-row, #why-breakdown, .article-meta')
+    ).map((el) => el.id || el.className)
+    expect(order).toEqual(['score-row', 'why-breakdown', 'article-meta'])
+    open.unmount()
+
+    usePriorityStore.setState({ whyOpen: false })
+    const closed = renderPane()
+    expect(closed.container.querySelector('#why-breakdown')).toBeNull()
+  })
+})

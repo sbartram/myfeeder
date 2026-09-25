@@ -8,6 +8,9 @@ export function formatSigned(n: number, digits = 0): string {
   return s
 }
 
+// RED placeholder: compiles so the level-label test fails on its assertion.
+export const PROFILE_LEVEL_LABELS: readonly string[] = []
+
 /** Circuit-breaker states in which scoring is paused. */
 export const OPEN_BREAKER_STATES: readonly string[] = ['OPEN', 'FORCED_OPEN']
 

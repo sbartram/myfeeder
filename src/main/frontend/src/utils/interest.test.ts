@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatPreviewText, formatSigned, hinge, isNegated } from './interest'
+import { PROFILE_LEVEL_LABELS, formatPreviewText, formatSigned, hinge, isNegated } from './interest'
 
 describe('isNegated', () => {
   it('isNegatedMatchesTheWordList', () => {
@@ -54,5 +54,11 @@ describe('formatPreviewText', () => {
     expect(formatPreviewText(0.31, 20)).toBe('Match 31% · No match (contributes 0)')
     expect(formatPreviewText(0.5, 20)).toBe('Match 50% · No match (contributes 0)')
     expect(formatPreviewText(1, 50)).toBe('Match 100% → counts 100% × +50 = +50.0 pts')
+  })
+})
+
+describe('PROFILE_LEVEL_LABELS', () => {
+  it('levelLabels', () => {
+    expect([...PROFILE_LEVEL_LABELS]).toEqual(['None', 'In passing', 'Partly', 'Mainly', 'Core interest'])
   })
 })
