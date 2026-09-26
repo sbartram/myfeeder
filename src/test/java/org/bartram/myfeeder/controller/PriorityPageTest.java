@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.List;
 
@@ -50,7 +51,8 @@ class PriorityPageTest {
     @Test
     void unreadableCursorIsNotFound() {
         List<String> inputs = List.of("not-a-cursor", "12345", "", "%%%",
-                b64("1|2"), b64("NaN|0|1"), b64("x|0|1"), b64("1|0|y"), b64("1|0|1|2"));
+                b64("1|2"), b64("NaN|0|1"), b64("x|0|1"), b64("1|0|y"), b64("1|0|1|2"),
+                b64("1|" + Long.MIN_VALUE + "|1"), b64("1|" + Long.MAX_VALUE + "|1"));
         for (String input : inputs) {
             NotFoundException e = catchThrowableOfType(NotFoundException.class, () -> PriorityPage.decodeCursor(input));
             assertThat(e).as("cursor '%s'", input).isNotNull();
@@ -58,6 +60,30 @@ class PriorityPageTest {
             if (!input.isEmpty()) {
                 assertThat(e.getMessage()).doesNotContain(input);
             }
+        }
+    }
+
+    @Test
+    void cursorDateOneMicrosecondOutsideTheBoundsIsNotFound() {
+        List<SortKey> outside = List.of(
+                new SortKey(1.0, Instant.parse("0001-01-01T00:00:00Z").minus(1, ChronoUnit.MICROS), 1),
+                new SortKey(1.0, Instant.parse("9999-12-31T23:59:59.999999Z").plus(1, ChronoUnit.MICROS), 1));
+        for (SortKey key : outside) {
+            String cursor = PriorityPage.encodeCursor(key);
+            NotFoundException e = catchThrowableOfType(NotFoundException.class, () -> PriorityPage.decodeCursor(cursor));
+            assertThat(e).as("cursor dated %s", key.date()).isNotNull();
+            assertThat(e.getMessage()).isEqualTo(PriorityPage.UNREADABLE_CURSOR);
+        }
+    }
+
+    @Test
+    void cursorDateBoundsAreInclusive() {
+        List<SortKey> edges = List.of(
+                new SortKey(1.0, Instant.parse("0001-01-01T00:00:00Z"), 1),
+                new SortKey(1.0, Instant.parse("9999-12-31T23:59:59.999999Z"), 1));
+        for (SortKey key : edges) {
+            assertThat(PriorityPage.decodeCursor(PriorityPage.encodeCursor(key))).as("round trip of %s", key)
+                    .isEqualTo(key);
         }
     }
 

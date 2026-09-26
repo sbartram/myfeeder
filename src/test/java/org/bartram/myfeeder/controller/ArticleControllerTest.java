@@ -21,7 +21,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -310,6 +312,18 @@ class ArticleControllerTest {
     @Test
     void priorityUnreadableCursorIs404WithoutCallingTheService() throws Exception {
         mockMvc.perform(get("/api/articles/priority?before=12345"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Priority cursor not recognized"));
+
+        verify(priorityService, never()).page(any(), anyInt());
+    }
+
+    @Test
+    void priorityOutOfRangeCursorDateIs404WithoutCallingTheService() throws Exception {
+        String before = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(("1.0|" + Long.MIN_VALUE + "|7").getBytes(StandardCharsets.UTF_8));
+
+        mockMvc.perform(get("/api/articles/priority").param("before", before))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Priority cursor not recognized"));
 

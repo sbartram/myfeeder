@@ -14,10 +14,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,6 +31,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -277,6 +280,19 @@ class PriorityApiIntegrationTest {
 
         mockMvc.perform(get("/api/articles/priority").param("before", gone))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void outOfRangeCursorDateIs404() throws Exception {
+        long feedId = insertFeed();
+        long articleId = insertArticle(feedId, "wr04", Instant.now(), false);
+
+        String before = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(("1.0|" + Long.MIN_VALUE + "|" + articleId).getBytes(StandardCharsets.UTF_8));
+
+        mockMvc.perform(get("/api/articles/priority").param("before", before))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Priority cursor not recognized"));
     }
 
     private long insertFeed() {
