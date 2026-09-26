@@ -25,6 +25,9 @@ public record PriorityPage(List<Article> items, String nextCursor) {
 
     static final String UNREADABLE_CURSOR = "Priority cursor not recognized";
 
+    private static final Instant MIN_DATE = Instant.parse("0001-01-01T00:00:00Z");
+    private static final Instant MAX_DATE = Instant.parse("9999-12-31T23:59:59.999999Z");
+
     /**
      * Builds a page from rows fetched with limit + 1: the extra row, if present, signals another page and
      * is trimmed; nextCursor encodes the last kept row's served key.
@@ -51,6 +54,12 @@ public record PriorityPage(List<Article> items, String nextCursor) {
      * <p>404 rather than 400 because 404 is the existing "restart from page 1" signal that
      * {@code PriorityList} handles (R4): a tab loaded before this format still sends a numeric id, and it
      * should restart instead of failing "Load more" forever.
+     *
+     * <p>The decoded date must lie in {@code 0001-01-01T00:00:00Z..9999-12-31T23:59:59.999999Z} inclusive;
+     * anything outside is unreadable (WR-04). Postgres {@code timestamptz} cannot hold the far ends of the
+     * long-micros range ({@code Long.MIN_VALUE} is about 290308 BC), and the JDBC driver silently binds
+     * such a date as {@code -infinity}/{@code infinity}, so the page would compare against a tuple the
+     * server never served.
      */
     public static SortKey decodeCursor(String cursor) {
         try {
@@ -65,7 +74,11 @@ public record PriorityPage(List<Article> items, String nextCursor) {
             }
             long micros = Long.parseLong(parts[1]);
             long id = Long.parseLong(parts[2]);
-            return new SortKey(score, Instant.EPOCH.plus(micros, ChronoUnit.MICROS), id);
+            Instant date = Instant.EPOCH.plus(micros, ChronoUnit.MICROS);
+            if (date.isBefore(MIN_DATE) || date.isAfter(MAX_DATE)) {
+                throw new NotFoundException(UNREADABLE_CURSOR);
+            }
+            return new SortKey(score, date, id);
         } catch (IllegalArgumentException | ArithmeticException | DateTimeException e) {
             throw new NotFoundException(UNREADABLE_CURSOR);
         }
