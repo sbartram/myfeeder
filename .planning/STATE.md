@@ -21,10 +21,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-24)
+See: .planning/PROJECT.md (updated 2026-09-26)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 05 — Blend & Priority View
+**Current focus:** Phase 6 — Thumbs Feedback
 
 ## Current Position
 
@@ -158,6 +158,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-06: On /priority j past the last row pages via fetchNextNewId, r re-ranks, Shift+A guarded by !isPriority; leaving /priority removes the cache
 - [Phase 05]: 05-07: The reading pane explains a score only from GET /api/articles/{id}: ScoreRow chips are TOPIC rows with weight != 0 in server order; WhyBreakdown prints server points and a total line always equal to the badge (capped/floored wording); the client never recomputes points
 - [Phase 05]: 05-07: whyOpen/toggleWhy live in usePriorityStore (session-only), shared by the Why button and i (every view, scored articles only); the non-matching footer is local state that collapses on article change
+- [Phase 05]: 05-08: Priority cursor is an opaque base64url encoding of the served (sort_score, sort_date, id) tuple via the sibling PriorityPage record (same {items,nextCursor} JSON); the next page compares literal cursor values (date bound as UTC), undecodable cursors are a fixed-text 404; PaginatedResponse and other endpoints keep Long cursors (closes G-05-7/WR-02)
 
 ### Pending Todos
 
@@ -166,6 +167,7 @@ Recent decisions affecting current work:
 ### Blockers/Concerns
 
 - [Phase 2] 02-REVIEW WR-04 (Raindrop createBookmark POST retried) and WR-05 (helm --set secret mangling) still deferred; WR-01..03 closed in Phase 4
+- [Phase 5] 05-REVIEW.md WR-04 (crafted cursor with out-of-range date → 500, not 404; bound the decoded date), WR-05 (an unserved row whose score rises past the fixed cursor boundary is skipped — Phase 6 votes should set the Ranking-changed hint); WR-01/WR-03 user-deferred
 - [Phase 3] 03-REVIEW.md WR-01..WR-05 (dialog save race, keyboard shortcuts behind modal, error copy, failed article load) still open
 - [Phase 4] 04-VERIFICATION advisories: suite offline-ness relies on shell hygiene (strip SPRING_AI_TYPESAFE_*/SPRING_PROFILES_ACTIVE in the Gradle Test task); dev-overlay drift check is one-directional
 - [Phase 4] Preview spinner can run ~93s worst case (3×30s + backoff); consider a UI ceiling
