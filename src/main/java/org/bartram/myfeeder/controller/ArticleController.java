@@ -3,6 +3,7 @@ package org.bartram.myfeeder.controller;
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.integration.RaindropService;
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.repository.InterestScoreQueries.SortKey;
 import org.bartram.myfeeder.service.ArticleExtractionService;
 import org.bartram.myfeeder.service.ArticleService;
 import org.bartram.myfeeder.service.ExtractedContent;
@@ -46,12 +47,12 @@ public class ArticleController {
 
     /** Unread articles ranked by the blended interest score, then unscored ones by date. */
     @GetMapping("/priority")
-    public PaginatedResponse<Article> priority(
+    public PriorityPage priority(
             @RequestParam(defaultValue = "50") int limit,
-            @RequestParam(required = false) Long before) {
+            @RequestParam(required = false) String before) {
         int safeLimit = Math.max(1, Math.min(limit, MAX_LIMIT));
-        List<Article> fetched = priorityService.page(before, safeLimit + 1);
-        return PaginatedResponse.of(fetched, safeLimit, Article::getId);
+        SortKey after = before != null ? PriorityPage.decodeCursor(before) : null;
+        return PriorityPage.of(priorityService.page(after, safeLimit + 1), safeLimit);
     }
 
     @GetMapping("/counts")

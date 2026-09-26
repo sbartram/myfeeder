@@ -84,34 +84,41 @@ public class InterestScoreQueries {
     public record TopicContribution(long topicId, String name, double noul, double hinge, double weight,
                                     BigDecimal exact) {}
 
+    /** The Priority sort tuple of one row as served; {@code score} is {@code -Infinity} when unscored. */
+    public record SortKey(double score, Instant date, long id) {}
+
+    /** One Priority row: the article and the sort tuple it was served with. */
+    public record PriorityRow(Article article, SortKey key) {}
+
     private final JdbcClient jdbc;
     private final MyfeederProperties properties;
 
     /** First Priority page: scored articles by blended score, then unscored ones by date. */
-    public List<Article> priorityFirstPage(int limit) {
+    public List<PriorityRow> priorityFirstPage(int limit) {
         return jdbc.sql(blendCte(UNREAD_SCOPE) + keyed(UNREAD_SCOPE)
                         + " SELECT k.* FROM keyed k " + KEYED_ORDER + " LIMIT :limit")
                 .param("profilePoints", properties.getInterest().getBlend().getProfilePoints())
                 .param("limit", limit)
-                .query((rs, rowNum) -> mapArticle(rs))
+                .query((rs, rowNum) -> mapPriorityRow(rs))
                 .list();
     }
 
     /**
-     * The Priority page after {@code cursorId}. The cursor row is resolved in the same statement and is
-     * not unread-scoped, so a cursor article marked read between pages still continues exactly (R4).
-     * A cursor id that matches no article returns an empty list; the caller checks existence first.
+     * The Priority page after the row served with {@code after}. The cursor row is resolved in the same
+     * statement and is not unread-scoped, so a cursor article marked read between pages still continues
+     * exactly (R4). A cursor id that matches no article returns an empty list; the caller checks
+     * existence first.
      */
-    public List<Article> priorityPageAfter(long cursorId, int limit) {
+    public List<PriorityRow> priorityPageAfter(SortKey after, int limit) {
         return jdbc.sql(blendCte(UNREAD_OR_CURSOR_SCOPE) + keyed(UNREAD_OR_CURSOR_SCOPE)
                         + " SELECT k.* FROM keyed k WHERE k.\"read\" = false"
                         + " AND (k.sort_score, k.sort_date, k.id)"
                         + " < (SELECT c.sort_score, c.sort_date, c.id FROM keyed c WHERE c.id = :cursorId) "
                         + KEYED_ORDER + " LIMIT :limit")
                 .param("profilePoints", properties.getInterest().getBlend().getProfilePoints())
-                .param("cursorId", cursorId)
+                .param("cursorId", after.id())
                 .param("limit", limit)
-                .query((rs, rowNum) -> mapArticle(rs))
+                .query((rs, rowNum) -> mapPriorityRow(rs))
                 .list();
     }
 
@@ -209,6 +216,11 @@ public class InterestScoreQueries {
                 + SORT_DATE + " AS sort_date, "
                 + INTEREST_SCORE + " AS interest_score "
                 + "FROM article a LEFT JOIN blended b ON b.article_id = a.id WHERE " + scope + ")";
+    }
+
+    private static PriorityRow mapPriorityRow(ResultSet rs) throws SQLException {
+        return new PriorityRow(mapArticle(rs), new SortKey(
+                rs.getDouble("sort_score"), rs.getTimestamp("sort_date").toInstant(), rs.getLong("id")));
     }
 
     private static Article mapArticle(ResultSet rs) throws SQLException {

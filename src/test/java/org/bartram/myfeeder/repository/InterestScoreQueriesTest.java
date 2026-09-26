@@ -2,8 +2,8 @@ package org.bartram.myfeeder.repository;
 
 import org.bartram.myfeeder.TestcontainersConfiguration;
 import org.bartram.myfeeder.config.MyfeederProperties;
-import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.repository.InterestScoreQueries.BreakdownInputs;
+import org.bartram.myfeeder.repository.InterestScoreQueries.PriorityRow;
 import org.bartram.myfeeder.repository.InterestScoreQueries.TopicContribution;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,16 +77,16 @@ class InterestScoreQueriesTest {
 
     @Test
     void cursorReadBetweenPagesStillContinues() {
-        List<Article> page1 = queries.priorityFirstPage(3);
-        List<Article> page2 = queries.priorityPageAfter(page1.getLast().getId(), 3);
+        List<PriorityRow> page1 = queries.priorityFirstPage(3);
+        List<PriorityRow> page2 = queries.priorityPageAfter(page1.getLast().key(), 3);
         assertThat(ids(page2)).containsExactly(a2, a8, a6);
 
         markRead(a6); // scored cursor
-        List<Article> page3 = queries.priorityPageAfter(a6, 3);
+        List<PriorityRow> page3 = queries.priorityPageAfter(page2.getLast().key(), 3);
         assertThat(ids(page3)).containsExactly(a7, a5, u1);
 
         markRead(u1); // unscored cursor
-        assertThat(ids(queries.priorityPageAfter(u1, 3))).containsExactly(u3, u5, u2);
+        assertThat(ids(queries.priorityPageAfter(page3.getLast().key(), 3))).containsExactly(u3, u5, u2);
     }
 
     @Test
@@ -112,14 +112,15 @@ class InterestScoreQueriesTest {
     @Test
     void readArticlesAreExcluded() {
         assertThat(ids(queries.priorityFirstPage(100))).doesNotContain(r1, r2);
-        assertThat(ids(queries.priorityPageAfter(a4, 100))).doesNotContain(r1, r2);
+        assertThat(ids(queries.priorityPageAfter(queries.priorityFirstPage(1).getFirst().key(), 100)))
+                .doesNotContain(r1, r2);
     }
 
     @Test
     void weightChangeReordersWithoutRescoring() {
         jdbc.update("UPDATE interest_topic SET weight = 30 WHERE name = 'Politics'");
 
-        List<Article> page = queries.priorityFirstPage(100);
+        List<PriorityRow> page = queries.priorityFirstPage(100);
         Map<Long, Integer> scores = scores(page);
         assertThat(scores.get(a1)).isEqualTo(94);
         assertThat(scores.get(a2)).isEqualTo(94);
@@ -133,7 +134,7 @@ class InterestScoreQueriesTest {
         List<Long> before = ids(queries.priorityFirstPage(100));
         insertTopic("Later", 50);
 
-        List<Article> page = queries.priorityFirstPage(100);
+        List<PriorityRow> page = queries.priorityFirstPage(100);
         assertThat(scores(page).get(a1)).isEqualTo(82);
         assertThat(ids(page)).containsExactlyElementsOf(before);
     }
@@ -305,13 +306,13 @@ class InterestScoreQueriesTest {
 
     private List<Long> walk(int n) {
         List<Long> walked = new ArrayList<>();
-        List<Article> page = queries.priorityFirstPage(n);
+        List<PriorityRow> page = queries.priorityFirstPage(n);
         while (true) {
             walked.addAll(ids(page));
             if (page.size() < n) {
                 return walked;
             }
-            page = queries.priorityPageAfter(page.getLast().getId(), n);
+            page = queries.priorityPageAfter(page.getLast().key(), n);
         }
     }
 
@@ -348,14 +349,14 @@ class InterestScoreQueriesTest {
                 articleId, topicId, noul);
     }
 
-    private static List<Long> ids(List<Article> articles) {
-        return articles.stream().map(Article::getId).toList();
+    private static List<Long> ids(List<PriorityRow> rows) {
+        return rows.stream().map(row -> row.article().getId()).toList();
     }
 
     /** id to interestScore; a HashMap because unscored rows carry null values. */
-    private static Map<Long, Integer> scores(List<Article> articles) {
+    private static Map<Long, Integer> scores(List<PriorityRow> rows) {
         Map<Long, Integer> scores = new HashMap<>();
-        articles.forEach(a -> scores.put(a.getId(), a.getInterestScore()));
+        rows.forEach(row -> scores.put(row.article().getId(), row.article().getInterestScore()));
         return scores;
     }
 }

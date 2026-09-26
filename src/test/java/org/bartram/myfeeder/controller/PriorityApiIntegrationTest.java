@@ -133,22 +133,25 @@ class PriorityApiIntegrationTest {
                 top, topicId, 1.0, 1);
 
         List<Map<String, Object>> items = new ArrayList<>();
-        String url = "/api/articles/priority?limit=2";
+        String cursor = null;
         int pages = 0;
         while (true) {
             if (++pages > 1000) {
                 fail("Priority walk did not terminate after 1000 pages");
             }
-            String body = mockMvc.perform(get(url))
+            var request = get("/api/articles/priority").param("limit", "2");
+            if (cursor != null) {
+                request.param("before", cursor);
+            }
+            String body = mockMvc.perform(request)
                     .andExpect(status().isOk())
                     .andReturn().getResponse().getContentAsString();
             List<Map<String, Object>> page = JsonPath.read(body, "$.items");
             items.addAll(page);
-            Object next = JsonPath.read(body, "$.nextCursor");
-            if (next == null) {
+            cursor = JsonPath.read(body, "$.nextCursor");
+            if (cursor == null) {
                 break;
             }
-            url = "/api/articles/priority?limit=2&before=" + ((Number) next).longValue();
         }
 
         List<Long> ids = items.stream().map(i -> ((Number) i.get("id")).longValue()).toList();

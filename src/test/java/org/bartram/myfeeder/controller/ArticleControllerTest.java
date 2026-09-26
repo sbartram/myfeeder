@@ -5,6 +5,8 @@ import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.InterestBreakdown;
 import org.bartram.myfeeder.model.InterestBreakdown.NonMatchingTopic;
 import org.bartram.myfeeder.model.InterestBreakdown.Row;
+import org.bartram.myfeeder.repository.InterestScoreQueries.PriorityRow;
+import org.bartram.myfeeder.repository.InterestScoreQueries.SortKey;
 import org.bartram.myfeeder.service.ArticleExtractionService;
 import org.bartram.myfeeder.service.ArticleService;
 import org.bartram.myfeeder.service.ExtractedContent;
@@ -255,10 +257,9 @@ class ArticleControllerTest {
 
     @Test
     void priorityRouteIsNotTheIdRoute() throws Exception {
-        var article = new Article();
-        article.setId(3L);
-        article.setInterestScore(82);
-        when(priorityService.page(null, 51)).thenReturn(List.of(article));
+        var row = priorityRow(3L);
+        row.article().setInterestScore(82);
+        when(priorityService.page(null, 51)).thenReturn(List.of(row));
 
         mockMvc.perform(get("/api/articles/priority"))
                 .andExpect(status().isOk())
@@ -287,41 +288,51 @@ class ArticleControllerTest {
 
     @Test
     void priorityPassesCursor() throws Exception {
+        SortKey key = new SortKey(82.2, Instant.parse("2026-09-25T12:34:56.123456Z"), 7L);
         when(priorityService.page(any(), anyInt())).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/articles/priority?before=7"))
+        mockMvc.perform(get("/api/articles/priority").param("before", PriorityPage.encodeCursor(key)))
                 .andExpect(status().isOk());
 
-        verify(priorityService).page(7L, 51);
+        verify(priorityService).page(key, 51);
     }
 
     @Test
     void priorityMissingCursorIs404() throws Exception {
-        when(priorityService.page(eq(9L), anyInt()))
+        SortKey key = new SortKey(50.0, Instant.parse("2026-09-25T12:34:56Z"), 9L);
+        when(priorityService.page(eq(key), anyInt()))
                 .thenThrow(new NotFoundException("Article not found: 9"));
 
-        mockMvc.perform(get("/api/articles/priority?before=9"))
+        mockMvc.perform(get("/api/articles/priority").param("before", PriorityPage.encodeCursor(key)))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void priorityTrimsLookAheadRowAndSetsNextCursor() throws Exception {
         when(priorityService.page(null, 3))
-                .thenReturn(List.of(articleWithId(10L), articleWithId(11L), articleWithId(12L)));
+                .thenReturn(List.of(priorityRow(10L), priorityRow(11L), priorityRow(12L)));
 
         mockMvc.perform(get("/api/articles/priority?limit=2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items.length()").value(2))
                 .andExpect(jsonPath("$.items[1].id").value(11))
-                .andExpect(jsonPath("$.nextCursor").value(11));
+                .andExpect(jsonPath("$.nextCursor").value(PriorityPage.encodeCursor(keyFor(11L))));
 
         when(priorityService.page(null, 3))
-                .thenReturn(List.of(articleWithId(10L), articleWithId(11L)));
+                .thenReturn(List.of(priorityRow(10L), priorityRow(11L)));
 
         mockMvc.perform(get("/api/articles/priority?limit=2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items.length()").value(2))
                 .andExpect(jsonPath("$.nextCursor").value(nullValue()));
+    }
+
+    private static PriorityRow priorityRow(long id) {
+        return new PriorityRow(articleWithId(id), keyFor(id));
+    }
+
+    private static SortKey keyFor(long id) {
+        return new SortKey(82.2, Instant.parse("2026-09-25T12:00:00.123456Z"), id);
     }
 
     private static Article articleWithId(long id) {
