@@ -2,6 +2,7 @@ package org.bartram.myfeeder.controller;
 
 import com.jayway.jsonpath.JsonPath;
 import org.bartram.myfeeder.TestcontainersConfiguration;
+import org.bartram.myfeeder.repository.InterestScoreQueries.SortKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -272,7 +273,9 @@ class PriorityApiIntegrationTest {
     void missingCursorIs404() throws Exception {
         Long maxId = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id), 0) FROM article", Long.class);
 
-        mockMvc.perform(get("/api/articles/priority?before=" + (maxId + 1000)))
+        String gone = PriorityPage.encodeCursor(new SortKey(50.0, Instant.now(), maxId + 1000));
+
+        mockMvc.perform(get("/api/articles/priority").param("before", gone))
                 .andExpect(status().isNotFound());
     }
 

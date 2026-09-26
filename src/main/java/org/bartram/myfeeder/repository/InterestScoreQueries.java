@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.Optional;
  * badge can never disagree.
  *
  * <p>Scope fragments are compile-time constants chosen in this class; every request value (limit,
- * cursor id, blend constants) is a named parameter. This class only reads: it never changes read or
+ * cursor tuple, blend constants) is a named parameter. This class only reads: it never changes read or
  * starred state and never writes a row. It reads stored Jev outputs only and never calls Jev.
  *
  * <p>The blended raw score is {@code numeric} rounded to 6 decimals, so {@code ROUND} breaks ties away
@@ -37,11 +38,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class InterestScoreQueries {
 
-    /** Priority first page: unread articles. Alias {@code a} = article. */
+    /** Priority pages: unread articles. Alias {@code a} = article. */
     static final String UNREAD_SCOPE = "a.\"read\" = false";
-
-    /** Priority page after a cursor: unread articles plus the cursor article, read or not (R4). */
-    static final String UNREAD_OR_CURSOR_SCOPE = "a.\"read\" = false OR a.id = :cursorId";
 
     /** Badge enrichment: exactly the given article ids, read or unread (D-18). */
     static final String IDS_SCOPE = "a.id IN (:ids)";
@@ -104,18 +102,23 @@ public class InterestScoreQueries {
     }
 
     /**
-     * The Priority page after the row served with {@code after}. The cursor row is resolved in the same
-     * statement and is not unread-scoped, so a cursor article marked read between pages still continues
-     * exactly (R4). A cursor id that matches no article returns an empty list; the caller checks
-     * existence first.
+     * The Priority page after the row served with {@code after}. It compares against the literal tuple
+     * the client got back and never reads the cursor article's live score, so a score change between
+     * pages cannot skip rows (WR-02). A row whose own score changed may cross the boundary and be listed
+     * twice; the client dedupes it by id. The statement does not read the cursor article, so a cursor
+     * that was marked read still continues exactly (R4); the caller checks that it still exists.
+     *
+     * <p>The date is bound as an {@link java.time.OffsetDateTime} in UTC, which PgJDBC sends as a
+     * timestamptz with an explicit offset, so it cannot shift with the JVM or session time zone.
      */
     public List<PriorityRow> priorityPageAfter(SortKey after, int limit) {
-        return jdbc.sql(blendCte(UNREAD_OR_CURSOR_SCOPE) + keyed(UNREAD_OR_CURSOR_SCOPE)
-                        + " SELECT k.* FROM keyed k WHERE k.\"read\" = false"
-                        + " AND (k.sort_score, k.sort_date, k.id)"
-                        + " < (SELECT c.sort_score, c.sort_date, c.id FROM keyed c WHERE c.id = :cursorId) "
+        return jdbc.sql(blendCte(UNREAD_SCOPE) + keyed(UNREAD_SCOPE)
+                        + " SELECT k.* FROM keyed k WHERE (k.sort_score, k.sort_date, k.id)"
+                        + " < (CAST(:cursorScore AS float8), CAST(:cursorDate AS timestamptz), CAST(:cursorId AS bigint)) "
                         + KEYED_ORDER + " LIMIT :limit")
                 .param("profilePoints", properties.getInterest().getBlend().getProfilePoints())
+                .param("cursorScore", after.score())
+                .param("cursorDate", after.date().atOffset(ZoneOffset.UTC))
                 .param("cursorId", after.id())
                 .param("limit", limit)
                 .query((rs, rowNum) -> mapPriorityRow(rs))

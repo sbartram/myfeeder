@@ -308,6 +308,15 @@ class ArticleControllerTest {
     }
 
     @Test
+    void priorityUnreadableCursorIs404WithoutCallingTheService() throws Exception {
+        mockMvc.perform(get("/api/articles/priority?before=12345"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Priority cursor not recognized"));
+
+        verify(priorityService, never()).page(any(), anyInt());
+    }
+
+    @Test
     void priorityTrimsLookAheadRowAndSetsNextCursor() throws Exception {
         when(priorityService.page(null, 3))
                 .thenReturn(List.of(priorityRow(10L), priorityRow(11L), priorityRow(12L)));

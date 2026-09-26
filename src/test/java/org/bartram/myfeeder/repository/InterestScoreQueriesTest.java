@@ -4,6 +4,7 @@ import org.bartram.myfeeder.TestcontainersConfiguration;
 import org.bartram.myfeeder.config.MyfeederProperties;
 import org.bartram.myfeeder.repository.InterestScoreQueries.BreakdownInputs;
 import org.bartram.myfeeder.repository.InterestScoreQueries.PriorityRow;
+import org.bartram.myfeeder.repository.InterestScoreQueries.SortKey;
 import org.bartram.myfeeder.repository.InterestScoreQueries.TopicContribution;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TimeZone;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -110,6 +112,38 @@ class InterestScoreQueriesTest {
         jdbc.update("UPDATE article_score SET profile_score = 4.0 WHERE article_id = ?", a1);
 
         assertThat(ids(queries.priorityPageAfter(page1.getLast().key(), 3))).containsExactly(a2, a8, a6);
+    }
+
+    @Test
+    void servedKeysCarryTheSortTuple() {
+        Map<Long, SortKey> keys = new HashMap<>();
+        for (PriorityRow row : queries.priorityFirstPage(100)) {
+            assertThat(row.key().id()).isEqualTo(row.article().getId());
+            keys.put(row.article().getId(), row.key());
+        }
+        assertThat(keys.get(a1).score()).isEqualTo(82.2);
+        assertThat(keys.get(a4).score()).isEqualTo(133.32);
+        for (long unscored : List.of(u1, u2, u3, u4, u5)) {
+            assertThat(keys.get(unscored).score()).as("sort score of %d", unscored)
+                    .isEqualTo(Double.NEGATIVE_INFINITY);
+        }
+        // u5 has no published date, so its date key is fetched_at
+        assertThat(keys.get(u5).date()).isEqualTo(now.minus(Duration.ofHours(3)));
+    }
+
+    @Test
+    void cursorWalkIsZoneIndependent() {
+        List<Long> full = ids(queries.priorityFirstPage(100));
+        TimeZone saved = TimeZone.getDefault();
+        try {
+            // +05:30 differs from the zone the pooled session started with; a shifted cursor date
+            // would break the a3/a1 tie at the first page boundary
+            TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));
+            assertThat(walk(3)).as("walk in pages of 3").containsExactlyElementsOf(full);
+            assertThat(walk(5)).as("walk in pages of 5").containsExactlyElementsOf(full);
+        } finally {
+            TimeZone.setDefault(saved);
+        }
     }
 
     @Test
