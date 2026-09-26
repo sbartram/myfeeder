@@ -1,181 +1,158 @@
 ---
 phase: 05-blend-priority-view
-reviewed: 2026-09-25T00:00:00Z
+reviewed: 2026-09-26T00:00:00Z
 depth: standard
-files_reviewed: 53
+files_reviewed: 14
 files_reviewed_list:
-  - src/main/frontend/src/App.css
-  - src/main/frontend/src/App.tsx
   - src/main/frontend/src/api/articles.ts
-  - src/main/frontend/src/components/ArticleList.test.tsx
-  - src/main/frontend/src/components/ArticleList.tsx
-  - src/main/frontend/src/components/BoardArticleList.test.tsx
-  - src/main/frontend/src/components/BoardArticleList.tsx
-  - src/main/frontend/src/components/EmptyState.tsx
-  - src/main/frontend/src/components/FeedPanel.test.tsx
-  - src/main/frontend/src/components/FeedPanel.tsx
-  - src/main/frontend/src/components/InterestBadge.test.tsx
-  - src/main/frontend/src/components/InterestBadge.tsx
-  - src/main/frontend/src/components/InterestsDialog.tsx
-  - src/main/frontend/src/components/PriorityBanner.test.tsx
-  - src/main/frontend/src/components/PriorityBanner.tsx
   - src/main/frontend/src/components/PriorityList.test.tsx
-  - src/main/frontend/src/components/PriorityList.tsx
-  - src/main/frontend/src/components/ReadingPane.test.tsx
-  - src/main/frontend/src/components/ReadingPane.tsx
-  - src/main/frontend/src/components/ScoreRow.tsx
-  - src/main/frontend/src/components/ShortcutOverlay.tsx
-  - src/main/frontend/src/components/WhyBreakdown.test.tsx
-  - src/main/frontend/src/components/WhyBreakdown.tsx
-  - src/main/frontend/src/hooks/useArticles.ts
-  - src/main/frontend/src/hooks/useInterest.ts
-  - src/main/frontend/src/hooks/useKeyboardShortcuts.test.ts
-  - src/main/frontend/src/hooks/useKeyboardShortcuts.ts
   - src/main/frontend/src/hooks/usePriorityArticles.test.ts
   - src/main/frontend/src/hooks/usePriorityArticles.ts
-  - src/main/frontend/src/stores/priorityStore.ts
   - src/main/frontend/src/types/index.ts
-  - src/main/frontend/src/utils/interest.test.ts
-  - src/main/frontend/src/utils/interest.ts
-  - src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java
-  - src/main/java/org/bartram/myfeeder/config/SpaForwardController.java
   - src/main/java/org/bartram/myfeeder/controller/ArticleController.java
-  - src/main/java/org/bartram/myfeeder/model/Article.java
-  - src/main/java/org/bartram/myfeeder/model/InterestBreakdown.java
+  - src/main/java/org/bartram/myfeeder/controller/PriorityPage.java
   - src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java
-  - src/main/java/org/bartram/myfeeder/service/ArticleService.java
-  - src/main/java/org/bartram/myfeeder/service/BoardService.java
   - src/main/java/org/bartram/myfeeder/service/PriorityService.java
-  - src/main/java/org/bartram/myfeeder/service/ScoreBreakdowns.java
-  - src/main/resources/application.yaml
-  - src/test/java/org/bartram/myfeeder/config/SpaForwardControllerTest.java
   - src/test/java/org/bartram/myfeeder/controller/ArticleControllerTest.java
   - src/test/java/org/bartram/myfeeder/controller/PriorityApiIntegrationTest.java
+  - src/test/java/org/bartram/myfeeder/controller/PriorityPageTest.java
   - src/test/java/org/bartram/myfeeder/repository/InterestScoreQueriesTest.java
-  - src/test/java/org/bartram/myfeeder/service/ArticleServiceTest.java
-  - src/test/java/org/bartram/myfeeder/service/BoardServiceTest.java
   - src/test/java/org/bartram/myfeeder/service/PriorityServiceTest.java
-  - src/test/java/org/bartram/myfeeder/service/ScoreBreakdownsTest.java
-  - src/test/resources/application.yaml
 findings:
   critical: 0
-  warning: 3
-  info: 7
-  total: 10
+  warning: 2
+  info: 2
+  total: 4
 status: issues_found
 ---
 
-# Phase 5: Code Review Report
+# Phase 5: Code Review Report (incremental, plan 05-08)
 
-**Reviewed:** 2026-09-25T00:00:00Z
+**Reviewed:** 2026-09-26T00:00:00Z
 **Depth:** standard
-**Files Reviewed:** 53
+**Files Reviewed:** 14
 **Status:** issues_found
 
 ## Summary
 
-I reviewed the phase diff (`9903ead..HEAD`) across the blend CTE (`InterestScoreQueries`), the Priority endpoint and service, the score enrichment in `ArticleService` and `BoardService`, the breakdown apportionment (`ScoreBreakdowns`), and the frontend Priority view (list, banner, infinite query, keyboard wiring, reading-pane score row and Why panel).
+This is an incremental review of gap-closure plan 05-08 (`59e4d3c..HEAD`). The plan replaces the Priority id-only cursor with an opaque base64url cursor that encodes the served `(sort_score, sort_date, id)` tuple.
 
-The SQL is safe. Every scope fragment is a compile-time constant, and every request value is a bound parameter. The unscored guard (`CASE WHEN b.raw_n IS NULL`) is correct. The `'-Infinity'` sort key and the row-value keyset comparison are internally consistent. I traced the largest-remainder apportionment through positive, negative and half-boundary values. It sums to `total` whenever its inputs come from a single consistent snapshot. On the client, the Priority query key sits outside the `['articles']` prefix, and I found no broad `invalidateQueries()` anywhere that could re-rank it by accident. `Shift+A` is guarded on the route.
+**WR-02 (previous review) is resolved for the mechanism it reported.** `priorityPageAfter` no longer reads the cursor article's live score. It compares against the literal tuple that was served. So when the cursor article's score drops, the rows it drops past are no longer skipped. `cursorScoreDropBetweenPagesSkipsNothing` and `cursorScoreDropMidWalkSkipsNoRow` cover this. One skip class remains, as WR-02's own fix text predicted: an unserved row whose own score rises above the frozen boundary is skipped. The new Javadoc says this cannot happen (WR-05).
 
-I found no blockers. The three warnings are about consistency under concurrent change:
-- The breakdown is read in two separate statements, so a concurrent write can produce rows that don't sum to the total.
-- The Priority cursor is an id whose sort key is recomputed live on every page, so a score change mid-walk can silently skip rows. Phase 6's learned weights will make this routine.
-- Interest-rubric mutations don't invalidate the cached article or list queries, so badges and "Why N?" breakdowns go stale.
+**What I checked and found correct:**
+
+- **Codec round-trip:**
+  - `Double.toString`/`parseDouble` is exact for float8, and `-Infinity` round-trips.
+  - NaN is rejected.
+  - The micros encoding is correct for pre-epoch instants, because `Instant` nanos are always non-negative.
+  - Legacy numeric ids (`"7"`, `"42"`, `"12345"`) and malformed base64 map to the fixed-text 404.
+- **Timezone:** `published_at` and `fetched_at` are `TIMESTAMPTZ` (V1). The read uses `getTimestamp().toInstant()` and the bind uses an `OffsetDateTime` at UTC with an explicit `timestamptz` cast. Neither depends on the zone.
+- **SQL:**
+  - The row-value `<` matches `ORDER BY ... DESC` on all three keys.
+  - `sort_date` is never NULL, because `fetched_at` is NOT NULL.
+  - Every cursor value is a bound parameter.
+  - I confirmed in Postgres that `-Infinity` works in a row comparison.
+- **Frontend:**
+  - The string cursor passes through `URLSearchParams` unchanged, since base64url characters are URL-safe.
+  - `getNextPageParam` and `dedupeById` are typed correctly.
+  - The 404 restart path in `PriorityList` is unchanged and still fires for an unreadable cursor.
+
+**New defects:**
+
+- A crafted cursor can produce a 500 instead of the documented 404 (WR-04).
+- The Javadoc overstates the no-skip guarantee (WR-05).
 
 ## Narrative Findings (AI reviewer)
 
 ## Warnings
 
-### WR-01: Breakdown header and topic rows are read in two unsynchronized statements, so rows may not sum to `total`
+### WR-04: A cursor date outside Postgres' timestamp range passes decoding and returns a 500, not the documented 404
 
-**File:** `src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java:144-181` (called from `src/main/java/org/bartram/myfeeder/service/ArticleService.java:32-43`)
-**Issue:** `breakdownInputs` runs the blend CTE twice. The first statement gets `raw`, `total`, `display` and the profile inputs. The second gets the per-topic contributions. There is no transaction, and Postgres READ COMMITTED gives each statement its own snapshot. Several writes can land between the two statements:
-- a topic weight edit or topic delete (cascades `article_topic_score`)
-- "Re-score unread" (deletes the `article_score` row and cascades the topic rows)
-- a Phase 6 learned-weight change
+**File:** `src/main/java/org/bartram/myfeeder/controller/PriorityPage.java:57-68`, `src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java:121`
+**Issue:** `decodeCursor` accepts any `long` micros. `Instant.EPOCH.plus(micros, MICROS)` throws nothing across the whole `long` range, because `Instant` reaches ±1e9 years. So the value passes the decode step and reaches SQL. Postgres `timestamptz` only covers 4713 BC to 294276 AD. `Long.MIN_VALUE` micros is about 290308 BC.
 
-When that happens, `ScoreBreakdowns.apportion` gets `exact` values that no longer add up to `total`. Its clamp `k = max(0, min(n, target - floorSum))` then quietly returns points that don't sum to the displayed total, which breaks the D-02 contract ("the rows' points sum exactly to total") that `WhyBreakdown` relies on. In the delete case, the header shows a score of N while the rows list no topics at all. `findByIdWithBreakdown` also reads the article itself in a third statement.
-**Fix:** Read all three in one snapshot. Either annotate the service method:
+I checked this against `postgres:latest`:
+
+```
+select '290308-12-22 19:59:05.224192+00 BC'::timestamptz;
+ERROR:  timestamp out of range
+```
+
+A request whose cursor is `base64url("1.0|-9223372036854775808|<any existing article id>")` passes `existsById`. It then fails inside `priorityPageAfter` with a `DataAccessException`. `GlobalExceptionHandler` has no mapping for that, so the client gets a 500 and the server logs an ERROR stack trace.
+
+This breaks the class contract: "Anything it cannot read is a 404 with fixed text". It also defeats the R4 restart signal for such input, since `PriorityList` only restarts on 404. The app has no auth, so any client can trigger this. `PriorityPageTest.unreadableCursorIsNotFound` has no out-of-range case.
+**Fix:** Bound the decoded instant to a range the server can actually have served, then add the case to `unreadableCursorIsNotFound`:
 ```java
-@Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-public Optional<Article> findByIdWithBreakdown(Long id) { ... }
+private static final Instant MIN_DATE = Instant.parse("0001-01-01T00:00:00Z");
+private static final Instant MAX_DATE = Instant.parse("9999-12-31T23:59:59.999999Z");
+...
+Instant date = Instant.EPOCH.plus(micros, ChronoUnit.MICROS);
+if (date.isBefore(MIN_DATE) || date.isAfter(MAX_DATE)) {
+    throw new NotFoundException(UNREADABLE_CURSOR);
+}
+return new SortKey(score, date, id);
 ```
-or fold the topic rows into the header query (for example with `json_agg` over `contrib` in the same statement). Also consider logging when `target - floorSum` falls outside `[0, n]` rather than clamping silently.
-
-### WR-02: The id-only keyset cursor is re-scored live on every page, so a score change mid-walk skips rows
-
-**File:** `src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java:105-116` (and `src/main/frontend/src/hooks/usePriorityArticles.ts:13-29`)
-**Issue:** `priorityPageAfter` recomputes the cursor article's `sort_score` from the current blend (`SELECT c.sort_score ... FROM keyed c WHERE c.id = :cursorId`). The client deliberately freezes the loaded pages (D-07/D-09), but the page boundary is not frozen. Several events change the cursor's live score between pages:
-- a topic weight lowered or made negative, or a topic deleted (these take effect in the blend immediately)
-- the cursor article being re-scored
-- from Phase 6, every thumbs vote that moves a `learned` delta
-
-If the cursor's score drops, the next page starts below the cursor's new position, and every article between its old and new position is never shown in that walk. `dedupeById` only handles the opposite case, where the cursor's score rises and rows come back as duplicates. Skips are silent: the list just looks complete. PRIO-05 lets the user vote and triage inside Priority, so once Phase 6 lands, a vote followed by `j` past the last row or "Load more" will routinely produce this.
-**Fix:** Make the cursor carry the sort tuple as it was when the page was served, instead of re-deriving it. One option is to return an opaque cursor `(sort_score, sort_date, id)`, for example base64 of `raw_n|epochMicros|id`, and compare against those literal values:
-```sql
-... AND (k.sort_score, k.sort_date, k.id) < (:cursorScore, :cursorDate, :cursorId)
+```java
+// PriorityPageTest.unreadableCursorIsNotFound inputs
+b64("1|" + Long.MIN_VALUE + "|1"), b64("1|" + Long.MAX_VALUE + "|1")
 ```
-This keeps the walk monotone in the ranking the user is looking at. Rows whose score changes can still move across the boundary, but the rest of the list is no longer skipped. If the id-only cursor stays, document the skip behavior in R4 and make the "Ranking changed" hint fire on the Phase 6 vote path.
 
-### WR-03: Rubric mutations don't invalidate the reading pane's by-id article or the list badges
+### WR-05: Javadoc claims "a score change between pages cannot skip rows"; unserved rows whose score rises past the frozen boundary are still skipped
 
-**File:** `src/main/frontend/src/hooks/useInterest.ts:78-83, 104-108, 134-137`
-**Issue:** Topic weight and name edits and topic deletes change the live blend right away. "Re-score unread" deletes score rows. `useUpdateInterestTopic`, `useDeleteInterestTopic` and `useRescoreUnread` only light the Priority hint. They don't invalidate `['article', id]` or `['articles']`. After the Interests dialog closes, the open reading pane keeps showing the old badge, old chips and old "Why N?" rows (including a deleted topic's name) until the 30s staleTime expires and something triggers a refetch. The same applies to badges in All/Feed/Starred/Board lists. Only the Priority refresh path (`refreshPriority`) invalidates by-id articles.
-**Fix:** In those `onSuccess` handlers, add:
-```ts
-void qc.invalidateQueries({ queryKey: ['articles'] })
-void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === 'article' && q.queryKey.length === 2 })
-void qc.invalidateQueries({ queryKey: ['boards'] }) // board article pages carry badges too
-```
-Leave `PRIORITY_KEY` alone so D-07 still holds.
+**File:** `src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java:104-110`; `src/main/frontend/src/hooks/usePriorityArticles.ts:13-17`
+**Issue:** The boundary is now frozen at the served tuple. Suppose a row that has not been served yet has its own score raised above the cursor score between pages, for example:
+- its topic's weight is raised
+- it is re-scored higher
+- from Phase 6, a thumbs-up raises a topic's `learned` delta
+
+That row then satisfies `tuple >= cursor` and never appears in the walk. This is inherent to keyset pagination, and the previous WR-02 fix text accepted it. Two things make it worth fixing the wording now:
+
+1. The Javadoc states the opposite ("cannot skip rows"), and the `dedupeById` comment only describes the drop and duplicate direction. Phase 6 will replace the `learned` CTE and will rely on this documented invariant.
+2. The risk has moved rather than disappeared. With the old live cursor, a uniform upward shift that also applied to the cursor article moved the boundary with it. With the frozen cursor, every unserved row that crosses the boundary is skipped silently. A Phase 6 positive vote on a common topic is exactly this case.
+
+No test covers the rise-of-an-unserved-row direction. `cursorScoreRiseBetweenPagesRepeatsNothing` only raises the cursor row itself.
+**Fix:**
+- Correct the Javadoc to say what is actually guaranteed: "the cursor article's own score change no longer skips rows; rows whose score rises across the served boundary between pages are not shown in this walk, and the 'Ranking changed' hint is the recovery path."
+- Mirror that in the `dedupeById` comment.
+- Add a repository test that raises an unserved row above the boundary and asserts the documented behavior.
+- In Phase 6, make sure the vote and learned-weight path sets `usePriorityStore.setRankingChanged(true)`, as the rubric mutations already do.
 
 ## Info
 
-### IN-01: `withScores` is duplicated verbatim in two services
+### IN-08: The cursor-existence 404 is now vestigial and forces an unnecessary restart
 
-**File:** `src/main/java/org/bartram/myfeeder/service/ArticleService.java:98-106`, `src/main/java/org/bartram/myfeeder/service/BoardService.java:54-60`
-**Issue:** The same enrichment appears twice. D-18 says every article response must be enriched, so a third caller could easily drift from these two.
-**Fix:** Move it to one method, e.g. `InterestScoreQueries.enrich(List<Article>)`, and call that from both services.
+**File:** `src/main/java/org/bartram/myfeeder/service/PriorityService.java:27-34`
+**Issue:** With the tuple cursor, `priorityPageAfter` never reads the cursor article, so continuing after a deleted article is exact. The `existsById` check still returns 404 when the cursor article is gone, which only happens when its feed is unsubscribed (cascade). That makes `PriorityList` reset the whole frozen list to page 1 and throw away the user's walk for no correctness reason. It also costs an extra query on every page.
+**Fix:** Drop the existence check and let the tuple continue. The unreadable-cursor 404 already covers legacy tabs. Alternatively, keep the check but update the Javadoc to give the actual reason for the restart.
 
-### IN-02: `PriorityList` copies `formatTime` and the row markup from `ArticleList`
+### IN-09: The existence-check 404 echoes the decoded id, unlike the codec's fixed-text 404
 
-**File:** `src/main/frontend/src/components/PriorityList.tsx:14-21, 112-128`
-**Issue:** A duplicated helper and row JSX. Changes to row rendering (meta line, starred marker, badge slot) now have to be made in three list components.
-**Fix:** Extract a shared `ArticleRow` component and a shared `formatTime` utility.
+**File:** `src/main/java/org/bartram/myfeeder/service/PriorityService.java:32`
+**Issue:** `"Article not found: " + after.id()` ends up in the ProblemDetail `detail`. The value is a parsed `long` re-rendered by `Long.toString`, so it cannot carry an injection payload. But it comes from the opaque client token, and it is inconsistent with `PriorityPage`'s "never echoes the input" contract.
+**Fix:** Use a fixed detail, for example `"Priority cursor article not found"`, or remove the check as described in IN-08.
 
-### IN-03: `"Not yet scored"` also covers articles that will never be scored
+## Resolved Since Previous Review
 
-**File:** `src/main/frontend/src/components/PriorityList.tsx:83, 107-111`; `src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java:63`
-**Issue:** Anything without a SCORED row sorts to `-Infinity` under the "Not yet scored" separator. That includes SKIPPED (terminal) rows, FAILED rows with all attempts used, and unread articles outside the eligibility window. It also applies to every row when Jev is not configured, so the separator appears at the very top right under the "listed by date" banner. The label suggests the articles are waiting to be scored when many never will be.
-**Fix:** Consider hiding the separator when `status.configured === false` and when every row is unscored, or use a neutral label such as "Unscored".
+- **WR-02 (id-only cursor re-scored live, cursor-drift skips): RESOLVED** by 05-08. The next page compares against the served tuple (`InterestScoreQueries.java:114-126`). The residual skip in the opposite direction is tracked as WR-05.
 
-### IN-04: Asynchronous `j` selection can override a later user selection
+## Previously reported, deferred
 
-**File:** `src/main/frontend/src/hooks/useKeyboardShortcuts.ts:107-109`
-**Issue:** `onPriorityNextPage().then(id => setSelectedArticle(id))` runs after the network round trip. If the user presses `k`, clicks another row or leaves `/priority` in the meantime, their selection is replaced.
-**Fix:** Capture `selectedArticleId` before the fetch and only apply the new id if the selection hasn't changed, e.g. `if (id !== undefined && useUIStore.getState().selectedArticleId === startId) setSelectedArticle(id)`.
+These findings come from the 2026-09-25 phase-05 review. They are still open and deferred by the user, and are outside 05-08's scope. They are not counted in the frontmatter totals above.
 
-### IN-05: `aria-controls="why-breakdown"` points at an element that isn't rendered
+### WR-01 (deferred): Breakdown header and topic rows are read in two unsynchronized statements, so the rows may not sum to `total`
 
-**File:** `src/main/frontend/src/components/ScoreRow.tsx:37-38`
-**Issue:** When `whyOpen` is false, or the breakdown is missing, no element has `id="why-breakdown"`, so the ARIA reference dangles.
-**Fix:** Render `aria-controls` only when the panel is mounted, or keep the panel mounted with `hidden`.
+**File:** `src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java:154-191` (called from `ArticleService.findByIdWithBreakdown`)
+**Issue:** `breakdownInputs` runs the blend CTE twice, and `findByIdWithBreakdown` reads the article a third time, with no shared snapshot. A topic weight edit or delete, a "Re-score unread", or a Phase 6 learned-weight change between those statements hands `ScoreBreakdowns.apportion` exact values that don't add up to `total`. The clamp then quietly breaks the D-02 "rows sum exactly to total" contract.
+**Fix:** Use `@Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)` on `findByIdWithBreakdown`, or fold the topic rows into the header statement (for example with `json_agg`). Log when `target - floorSum` falls outside `[0, n]`.
 
-### IN-06: Tooltip can show `−0.0 pts`
+### WR-03 (deferred): Rubric mutations don't invalidate the reading pane's by-id article or the list badges
 
-**File:** `src/main/frontend/src/components/WhyBreakdown.tsx:41`
-**Issue:** `formatSigned(row.exact, 1)` picks the sign from the unrounded value, so an exact of -0.04 renders as "−0.0".
-**Fix:** Round first, then format: `formatSigned(Math.round(row.exact * 10) / 10, 1)`.
-
-### IN-07: `myfeeder.interest.blend.profile-points` is not validated
-
-**File:** `src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java:52-56`
-**Issue:** Zero or negative values are accepted silently. That would invert or remove the profile's contribution to every badge and to the Priority order. Phase 7 is expected to tune this value.
-**Fix:** Add `@Validated` to the properties class and `@PositiveOrZero` (or `@Min(1)`) to `profilePoints`, or reject bad values at startup.
+**File:** `src/main/frontend/src/hooks/useInterest.ts` (`useUpdateInterestTopic`, `useDeleteInterestTopic`, `useRescoreUnread` `onSuccess` handlers)
+**Issue:** These handlers only light the Priority hint. After a topic is edited or deleted, or scores are reset, the open reading pane and the All/Feed/Starred/Board badges keep showing stale scores and "Why N?" rows until the 30s staleTime expires. That includes a deleted topic's name.
+**Fix:** In those `onSuccess` handlers, invalidate `['articles']`, `['boards']`, and every by-id `['article', id]` query. Leave `PRIORITY_KEY` alone so D-07 still holds.
 
 ---
 
-_Reviewed: 2026-09-25T00:00:00Z_
+_Reviewed: 2026-09-26T00:00:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
