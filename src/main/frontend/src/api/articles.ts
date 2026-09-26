@@ -1,5 +1,5 @@
 import { apiGet, apiPost, apiPatch } from './client'
-import type { Article, ArticleFilters, ExtractedContent, PaginatedArticles } from '../types'
+import type { Article, ArticleFilters, ExtractedContent, PaginatedArticles, PriorityPage } from '../types'
 
 export const articlesApi = {
   list: (filters: ArticleFilters = {}, limit = 50, before?: number) => {
@@ -12,11 +12,11 @@ export const articlesApi = {
     if (filters.sort) params.set('sort', filters.sort)
     return apiGet<PaginatedArticles>(`/articles?${params}`)
   },
-  priority: (limit = 50, before?: number) => {
+  priority: (limit = 50, before?: string) => {
     const params = new URLSearchParams()
     params.set('limit', String(limit))
-    if (before != null) params.set('before', String(before))
-    return apiGet<PaginatedArticles>(`/articles/priority?${params}`)
+    if (before != null) params.set('before', before)
+    return apiGet<PriorityPage>(`/articles/priority?${params}`)
   },
   getById: (id: number) => apiGet<Article>(`/articles/${id}`),
   getExtractedContent: (id: number) =>

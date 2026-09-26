@@ -98,6 +98,12 @@ export interface PaginatedArticles {
   nextCursor: number | null
 }
 
+// The Priority cursor is an opaque string (the served sort tuple), passed back verbatim as `before`.
+export interface PriorityPage {
+  items: Article[]
+  nextCursor: string | null
+}
+
 export interface ExtractedContent {
   title: string
   contentHtml: string

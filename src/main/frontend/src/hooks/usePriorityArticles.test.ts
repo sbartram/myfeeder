@@ -19,7 +19,7 @@ import { createElement } from 'react'
 import { usePriorityArticles, patchPriorityArticle, PRIORITY_KEY } from './usePriorityArticles'
 import { useUpdateArticleState } from './useArticles'
 import { articlesApi } from '../api/articles'
-import type { Article, PaginatedArticles } from '../types'
+import type { Article, PriorityPage } from '../types'
 
 function article(id: number, overrides: Partial<Article> = {}): Article {
   return {
@@ -41,7 +41,7 @@ function article(id: number, overrides: Partial<Article> = {}): Article {
   }
 }
 
-function page(items: Article[], nextCursor: number | null = null): PaginatedArticles {
+function page(items: Article[], nextCursor: string | null = null): PriorityPage {
   return { items, nextCursor }
 }
 
@@ -208,7 +208,7 @@ describe('usePriorityArticles cache policy', () => {
 
   it('cursorRowReadBeforeLoadMoreContinues', async () => {
     vi.mocked(articlesApi.priority).mockImplementation(async (_limit, before) =>
-      before === 3 ? page([article(3), article(4)]) : page([article(1), article(2), article(3)], 3),
+      before === 'c3' ? page([article(3), article(4)]) : page([article(1), article(2), article(3)], 'c3'),
     )
     const { wrapper } = createWrapper()
     const { result } = renderPriority(wrapper)
@@ -223,14 +223,14 @@ describe('usePriorityArticles cache policy', () => {
       await result.current.priority.fetchNextPage()
     })
 
-    expect(articlesApi.priority).toHaveBeenLastCalledWith(50, 3)
+    expect(articlesApi.priority).toHaveBeenLastCalledWith(50, 'c3')
     await waitFor(() => expect(result.current.priority.rows.map((a) => a.id)).toEqual([1, 2, 3, 4]))
     expect(result.current.priority.rows[2].read).toBe(true)
   })
 
   it('fetchNextNewIdSelectsTheFirstUnseenRow', async () => {
     vi.mocked(articlesApi.priority).mockImplementation(async (_limit, before) =>
-      before === 3 ? page([article(3), article(4)]) : page([article(1), article(2), article(3)], 3),
+      before === 'c3' ? page([article(3), article(4)]) : page([article(1), article(2), article(3)], 'c3'),
     )
     const { wrapper } = createWrapper()
     const { result } = renderPriority(wrapper)
@@ -242,7 +242,7 @@ describe('usePriorityArticles cache policy', () => {
     })
 
     expect(next).toBe(4)
-    expect(articlesApi.priority).toHaveBeenLastCalledWith(50, 3)
+    expect(articlesApi.priority).toHaveBeenLastCalledWith(50, 'c3')
   })
 
   it('fetchNextNewIdWithoutANextPageReturnsUndefined', async () => {
@@ -263,10 +263,10 @@ describe('usePriorityArticles cache policy', () => {
   it('leavingAndReenteringFetchesPageOneFresh', async () => {
     let firstLoad = true
     vi.mocked(articlesApi.priority).mockImplementation(async (_limit, before) => {
-      if (before === 2) return page([article(3)])
+      if (before === 'c2') return page([article(3)])
       if (firstLoad) {
         firstLoad = false
-        return page([article(1), article(2)], 2)
+        return page([article(1), article(2)], 'c2')
       }
       return page([article(9), article(8)])
     })

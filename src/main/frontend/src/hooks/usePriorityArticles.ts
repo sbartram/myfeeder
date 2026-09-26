@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query'
 import { articlesApi } from '../api/articles'
 import { usePriorityStore } from '../stores/priorityStore'
-import type { Article, PaginatedArticles } from '../types'
+import type { Article, PriorityPage } from '../types'
 
 /**
  * The Priority list's query key. It sits outside the ['articles'] prefix so the
@@ -11,10 +11,11 @@ import type { Article, PaginatedArticles } from '../types'
 export const PRIORITY_KEY = ['priority'] as const
 
 /**
- * Flattens the loaded pages and keeps the first occurrence of each id: the cursor
- * tuple can shift between pages, so a row may come back on the next page.
+ * Flattens the loaded pages and keeps the first occurrence of each id: the page
+ * boundary is the tuple the server served, so a row whose own score changed between
+ * pages can come back on a later page.
  */
-export function dedupeById(pages: PaginatedArticles[] | undefined): Article[] {
+export function dedupeById(pages: PriorityPage[] | undefined): Article[] {
   if (!pages) return []
   const seen = new Set<number>()
   const rows: Article[] = []
@@ -40,7 +41,7 @@ export function usePriorityArticles(enabled = true) {
   const query = useInfiniteQuery({
     queryKey: PRIORITY_KEY,
     queryFn: ({ pageParam }) => articlesApi.priority(50, pageParam),
-    initialPageParam: undefined as number | undefined,
+    initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => (last.nextCursor !== null ? last.nextCursor : undefined),
     enabled,
     staleTime: Infinity,
@@ -96,7 +97,7 @@ export function patchPriorityArticle(
   const fields: { read?: boolean; starred?: boolean } = {}
   if (patch.read !== undefined) fields.read = patch.read
   if (patch.starred !== undefined) fields.starred = patch.starred
-  qc.setQueriesData<InfiniteData<PaginatedArticles>>({ queryKey: PRIORITY_KEY }, (old) => {
+  qc.setQueriesData<InfiniteData<PriorityPage>>({ queryKey: PRIORITY_KEY }, (old) => {
     if (!old) return old
     return {
       ...old,

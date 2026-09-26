@@ -34,9 +34,11 @@ function route(method: string, url: string, handler: Handler) {
 }
 
 const PAGE_1 = '/api/articles/priority?limit=50'
-const pageAfter = (id: number) => `/api/articles/priority?limit=50&before=${id}`
+// A real served-tuple cursor, the literal PriorityPageTest pins on the server
+const CURSOR = 'LUluZmluaXR5fDE3NTg4MDAwMDAxMjM0NTZ8NDI'
+const pageAfter = (cursor: string) => `/api/articles/priority?limit=50&before=${cursor}`
 
-function page(items: Article[], nextCursor: number | null = null): Reply {
+function page(items: Article[], nextCursor: string | null = null): Reply {
   return { status: 200, body: { items, nextCursor } }
 }
 
@@ -178,10 +180,10 @@ describe('PriorityList', () => {
           article(1, { interestScore: 82 }),
           article(2, { interestScore: null }),
         ],
-        2,
+        CURSOR,
       ),
     )
-    route('GET', pageAfter(2), () => page([article(2), article(5), article(4)], null))
+    route('GET', pageAfter(CURSOR), () => page([article(2), article(5), article(4)], null))
 
     const { container } = renderPriority()
     await screen.findByText('Article 3')
@@ -192,7 +194,7 @@ describe('PriorityList', () => {
     expect(titles(container)).toEqual(['Article 3', 'Article 1', 'Article 2', 'Article 5', 'Article 4'])
     expect(screen.getAllByText('Article 2')).toHaveLength(1)
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument())
-    expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(2)])
+    expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(CURSOR)])
   })
 
   it('clickingARowSelectsIt', async () => {
@@ -235,8 +237,8 @@ describe('PriorityList', () => {
   })
 
   it('separatorAppearsOnceTheFirstUnscoredRowLoads', async () => {
-    route('GET', PAGE_1, () => page(scored(90, 82), 2))
-    route('GET', pageAfter(2), () => page([article(3, { interestScore: null })]))
+    route('GET', PAGE_1, () => page(scored(90, 82), CURSOR))
+    route('GET', pageAfter(CURSOR), () => page([article(3, { interestScore: null })]))
 
     const { container } = renderPriority()
     await screen.findByText('Article 2')
@@ -326,8 +328,8 @@ describe('PriorityList', () => {
   })
 
   it('refreshFetchesOnlyPageOne', async () => {
-    route('GET', PAGE_1, () => page(scored(90, 82), 2))
-    route('GET', pageAfter(2), () => page([article(3, { interestScore: 50 })]))
+    route('GET', PAGE_1, () => page(scored(90, 82), CURSOR))
+    route('GET', pageAfter(CURSOR), () => page([article(3, { interestScore: 50 })]))
 
     const { container } = renderPriority()
     await screen.findByText('Article 2')
@@ -337,7 +339,7 @@ describe('PriorityList', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: REFRESH }))
     await waitFor(() => expect(titles(container)).toEqual(['Article 1', 'Article 2']))
-    expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(2), PAGE_1])
+    expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(CURSOR), PAGE_1])
   })
 
   it('refreshKeepsTheSelection', async () => {
@@ -389,10 +391,10 @@ describe('PriorityList', () => {
   })
 
   it('loadMoreFailureRelabelsAndRetries', async () => {
-    route('GET', PAGE_1, () => page(scored(90, 82), 2))
+    route('GET', PAGE_1, () => page(scored(90, 82), CURSOR))
     route(
       'GET',
-      pageAfter(2),
+      pageAfter(CURSOR),
       sequenceOf(() => ({ status: 500 }), () => page([article(3, { interestScore: 40 })])),
     )
 
@@ -406,18 +408,18 @@ describe('PriorityList', () => {
 
     fireEvent.click(retry)
     await screen.findByText('Article 3')
-    expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(2), pageAfter(2)])
+    expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(CURSOR), pageAfter(CURSOR)])
   })
 
   it('missingCursorRestartsFromPageOne', async () => {
-    route('GET', PAGE_1, () => page(scored(90, 82), 2))
-    route('GET', pageAfter(2), () => ({ status: 404, body: { title: 'Not Found' } }))
+    route('GET', PAGE_1, () => page(scored(90, 82), CURSOR))
+    route('GET', pageAfter(CURSOR), () => ({ status: 404, body: { title: 'Not Found' } }))
 
     const { container } = renderPriority()
     await screen.findByText('Article 2')
     fireEvent.click(screen.getByRole('button', { name: 'Load more' }))
 
-    await waitFor(() => expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(2), PAGE_1]))
+    await waitFor(() => expect(priorityGets().map((c) => c.url)).toEqual([PAGE_1, pageAfter(CURSOR), PAGE_1]))
     await waitFor(() => expect(titles(container)).toEqual(['Article 1', 'Article 2']))
     await screen.findByRole('button', { name: 'Load more' })
   })
