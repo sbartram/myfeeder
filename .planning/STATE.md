@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-26)
 Phase: 6 — Thumbs Feedback
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-09-26 — Phase 05 complete, transitioned to Phase 6
+Last activity: 2026-09-26 - Completed quick task 260926-hhz: fix WR-04 bound the decoded cursor date
 
 Progress: [███████░░░] 71%
 
@@ -167,11 +167,17 @@ Recent decisions affecting current work:
 ### Blockers/Concerns
 
 - [Phase 2] 02-REVIEW WR-04 (Raindrop createBookmark POST retried) and WR-05 (helm --set secret mangling) still deferred; WR-01..03 closed in Phase 4
-- [Phase 5] 05-REVIEW.md WR-04 (crafted cursor with out-of-range date → 500, not 404; bound the decoded date), WR-05 (an unserved row whose score rises past the fixed cursor boundary is skipped — Phase 6 votes should set the Ranking-changed hint); WR-01/WR-03 user-deferred
+- [Phase 5] 05-REVIEW.md WR-04 closed by quick 260926-hhz (decoded cursor date bounded to years 1..9999 → 404); WR-05 (an unserved row whose score rises past the fixed cursor boundary is skipped — Phase 6 votes should set the Ranking-changed hint); WR-01/WR-03 user-deferred
 - [Phase 3] 03-REVIEW.md WR-01..WR-05 (dialog save race, keyboard shortcuts behind modal, error copy, failed article load) still open
 - [Phase 4] 04-VERIFICATION advisories: suite offline-ness relies on shell hygiene (strip SPRING_AI_TYPESAFE_*/SPRING_PROFILES_ACTIVE in the Gradle Test task); dev-overlay drift check is one-directional
 - [Phase 4] Preview spinner can run ~93s worst case (3×30s + backoff); consider a UI ceiling
 - Phase 7: 429 behavior during launch backfill is unobserved; fallback is concurrency 1 or the SDK retry layer (keep exactly one)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260926-hhz | fix WR-04 bound the decoded cursor date | 2026-09-26 | 5c6c642 | [260926-hhz-fix-wr-04-bound-the-decoded-cursor-date](./quick/260926-hhz-fix-wr-04-bound-the-decoded-cursor-date/) |
 
 ## Deferred Items
 
