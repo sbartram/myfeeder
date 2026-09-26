@@ -175,7 +175,7 @@ Plans:
   4. The Priority view shows a "not configured", "cold start", "scoring paused" or "N articles waiting to be scored" state when each applies
   5. Changing a topic's weight in settings changes badges and the Priority order on the next refresh, with no new Jev calls (the blend is computed at query time from stored raw outputs)
 
-**Plans**: 7/7 plans executed
+**Plans**: 7/8 plans executed
 
 Plans:
 **Wave 1**
@@ -196,6 +196,10 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [x] 05-07-PLAN.md — Reading-pane score row with matched-topic chips, "Why N?" breakdown, `i` shortcut (wave 4)
+
+**Gap closure** *(UAT G-05-7)*
+
+- [ ] 05-08-PLAN.md — Priority cursor carries the served sort tuple as an opaque string, so a cursor score drop between pages skips no row (WR-02); SPA types follow
 
 **UI hint**: yes
 **Notes**:
@@ -244,6 +248,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
-| 5. Blend & Priority View | 7/7 | In Progress|  |
+| 5. Blend & Priority View | 7/8 | In Progress|  |
 | 6. Thumbs Feedback | 0/TBD | Not started | - |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |
