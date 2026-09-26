@@ -90,6 +90,29 @@ class InterestScoreQueriesTest {
     }
 
     @Test
+    void cursorScoreDropBetweenPagesSkipsNothing() {
+        List<PriorityRow> page1 = queries.priorityFirstPage(3);
+        assertThat(ids(page1)).containsExactly(a4, a3, a1);
+
+        // a1 drops from 82.2 to 18.2 (its topics only) after page 1 was served
+        jdbc.update("UPDATE article_score SET profile_score = 0 WHERE article_id = ?", a1);
+
+        assertThat(walkFrom(page1, 3))
+                .containsExactly(a4, a3, a1, a2, a8, a6, a1, a7, a5, u1, u3, u5, u2, u4);
+    }
+
+    @Test
+    void cursorScoreRiseBetweenPagesRepeatsNothing() {
+        List<PriorityRow> page1 = queries.priorityFirstPage(3);
+        assertThat(ids(page1)).containsExactly(a4, a3, a1);
+
+        // a1 rises from 82.2 to 118.2 after page 1 was served
+        jdbc.update("UPDATE article_score SET profile_score = 4.0 WHERE article_id = ?", a1);
+
+        assertThat(ids(queries.priorityPageAfter(page1.getLast().key(), 3))).containsExactly(a2, a8, a6);
+    }
+
+    @Test
     void unscoredRowsHaveNullInterestScore() {
         Map<Long, Integer> scores = scores(queries.priorityFirstPage(100));
         for (long unscored : List.of(u1, u2, u3, u4, u5)) {
@@ -305,8 +328,13 @@ class InterestScoreQueriesTest {
     }
 
     private List<Long> walk(int n) {
+        return walkFrom(queries.priorityFirstPage(n), n);
+    }
+
+    /** Continues a walk in pages of {@code n} from an already served first page. */
+    private List<Long> walkFrom(List<PriorityRow> first, int n) {
         List<Long> walked = new ArrayList<>();
-        List<PriorityRow> page = queries.priorityFirstPage(n);
+        List<PriorityRow> page = first;
         while (true) {
             walked.addAll(ids(page));
             if (page.size() < n) {

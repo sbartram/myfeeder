@@ -171,6 +171,65 @@ class PriorityApiIntegrationTest {
         assertThat(byId.get(unscoredFailed).get("interestScore")).isNull();
     }
 
+    /**
+     * G-05-7 / WR-02: the next page compares against the tuple the cursor row was served with. Lowering
+     * the cursor article's score between page fetches must not skip the rows it dropped past.
+     */
+    @Test
+    void cursorScoreDropMidWalkSkipsNoRow() throws Exception {
+        long feedId = insertFeed();
+        Instant now = Instant.now();
+        long top = insertArticle(feedId, "drop-top", now.minus(Duration.ofHours(3)), false);
+        long mid = insertArticle(feedId, "drop-mid", now.minus(Duration.ofHours(1)), false);
+        long unscoredNew = insertArticle(feedId, "drop-unscored-new", now.minus(Duration.ofMinutes(30)), false);
+        long unscoredFailed = insertArticle(feedId, "drop-unscored-failed", now.minus(Duration.ofHours(2)), false);
+
+        // Every article_score row before any article_topic_score row (FK)
+        insertScored(top, 4.0, 4);
+        insertScored(mid, 2.0, 4);
+        jdbcTemplate.update("INSERT INTO article_score (article_id, status, attempts) VALUES (?, 'FAILED', 1)",
+                unscoredFailed);
+        long topicId = insertTopic(PRIORITY_TOPIC_NAME, 50);
+        insertTopicScore(top, topicId, 1.0); // top raw 150, mid raw 50
+
+        List<Long> walked = new ArrayList<>();
+        String cursor = null;
+        String limit = "1";
+        boolean dropped = false;
+        int pages = 0;
+        while (true) {
+            if (++pages > 1000) {
+                fail("Priority walk did not terminate after 1000 requests");
+            }
+            var request = get("/api/articles/priority").param("limit", limit);
+            if (cursor != null) {
+                request.param("before", cursor);
+            }
+            String body = mockMvc.perform(request)
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            List<Map<String, Object>> page = JsonPath.read(body, "$.items");
+            page.forEach(i -> walked.add(((Number) i.get("id")).longValue()));
+            cursor = JsonPath.read(body, "$.nextCursor");
+            if (!dropped && walked.contains(top)) {
+                // This response's cursor is top's served tuple; top's live raw now drops to 50, tied
+                // with mid but older, so it ranks below mid.
+                jdbcTemplate.update("UPDATE interest_topic SET weight = -50 WHERE id = ?", topicId);
+                dropped = true;
+                limit = "50";
+            }
+            if (cursor == null) {
+                break;
+            }
+        }
+
+        List<Long> seeded = List.of(top, mid, unscoredNew, unscoredFailed);
+        List<Long> ours = walked.stream().filter(seeded::contains).toList();
+        assertThat(ours).as("mid must not be skipped when the cursor article's score drops").contains(mid);
+        assertThat(ours.stream().distinct().toList()).containsExactly(top, mid, unscoredNew, unscoredFailed);
+        assertThat(ours.stream().filter(id -> id == top).count()).isEqualTo(2);
+    }
+
     @Test
     void articleByIdCarriesAnExactBreakdown() throws Exception {
         long feedId = insertFeed();
