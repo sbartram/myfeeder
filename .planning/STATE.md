@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 06
 current_phase_name: Thumbs Feedback
 status: executing
-stopped_at: Completed 06-06-PLAN.md
-last_updated: "2026-09-27T03:53:53.666Z"
+stopped_at: Completed 06-05-PLAN.md
+last_updated: "2026-09-27T04:03:30.063Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 06 execution started
-state_head: d03fe68ee0fe2f267fa39e3b9b7eaa7def2d7218
+state_head: f64ea05895c092057284a0b04d840451b15b2b04
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 40
-  completed_plans: 38
+  completed_plans: 39
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-26)
 ## Current Position
 
 Phase: 06 (Thumbs Feedback) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-09-26 — Phase 06 execution started
 
@@ -100,6 +100,7 @@ Progress: [███████░░░] 71%
 | Phase 06 P02 | 5 min | 2 tasks | 12 files |
 | Phase 06 P04 | 7 min | 3 tasks | 10 files |
 | Phase 06 P06 | 3 min | 2 tasks | 7 files |
+| Phase 06 P05 | 7 min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -172,6 +173,8 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-04: Enter on a focused Cancel/Apply button in the narrow picker keeps its native click; only Enter elsewhere applies, and every picker Enter stops propagation
 - [Phase 06]: 06-04: Shift+D, like u and d, ignores Cmd/Ctrl/Alt; it opens the picker only when canNarrow and never votes
 - [Phase 06]: 06-06: GET /api/interest/topics/learned serves [{topicId, baseWeight, learned, effectiveWeight, limit}] from the eff2 CTE via ArticleFeedbackService.learnedTopics; topicWeights and allTopicWeights share one select fragment
+- [Phase 06]: 06-05: The Create topic from article draft is one-shot, held in MainLayout state and seeded once as row d-1 in the TopicsSection useState initializer; at 25 topics the at-max notice replaces it
+- [Phase 06]: 06-05: useLearnedTopics lives on its own ['interest','learned'] key, invalidated by votes and topic create/update/delete, never the topics list, so unsaved row edits survive
 
 ### Pending Todos
 
@@ -202,6 +205,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-27T03:53:53.613Z
-Stopped at: Completed 06-06-PLAN.md
+Last session: 2026-09-27T04:03:30.009Z
+Stopped at: Completed 06-05-PLAN.md
 Resume file: None

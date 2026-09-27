@@ -221,7 +221,7 @@ Plans:
   4. A vote on an article that matched no topics tells the user so and offers to create a topic from the article
   5. A thumbs-down on an article that matched several topics lets the user choose which topic(s) to penalize
 
-**Plans**: 5/7 plans executed
+**Plans**: 6/7 plans executed
 
 Plans:
 **Wave 1**
@@ -236,7 +236,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 06-05-PLAN.md — "No topics matched" line with Create topic from article draft, learned line in the topic editor, learned part in Why rows (wave 3)
+- [x] 06-05-PLAN.md — "No topics matched" line with Create topic from article draft, learned line in the topic editor, learned part in Why rows (wave 3)
 - [x] 06-06-PLAN.md — GET /api/interest/topics/learned (base/learned/effective/limit per topic), CLAUDE.md feedback note (wave 3)
 - [ ] 06-07-PLAN.md — Effect toast by every remaining UI-SPEC rule: unscored/no-match copy, top 3 + "+N more", limit notes, role status (wave 3)
 
@@ -267,5 +267,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
 | 5. Blend & Priority View | 8/8 | Complete    | 2026-09-26 |
-| 6. Thumbs Feedback | 5/7 | In Progress|  |
+| 6. Thumbs Feedback | 6/7 | In Progress|  |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |
