@@ -32,4 +32,8 @@ public class Article {
     @Transient
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private InterestBreakdown interestBreakdown;
+    // The stored thumbs vote; only set on GET /api/articles/{id} and the feedback responses, omitted from JSON elsewhere
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private ArticleFeedback feedback;
 }

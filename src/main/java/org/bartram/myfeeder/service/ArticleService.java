@@ -3,6 +3,7 @@ package org.bartram.myfeeder.service;
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.UnreadCount;
+import org.bartram.myfeeder.repository.ArticleFeedbackStore;
 import org.bartram.myfeeder.repository.ArticleRepository;
 import org.bartram.myfeeder.repository.InterestScoreQueries;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ public class ArticleService {
 
     private final ArticleRepository articleRepository;
     private final InterestScoreQueries interestScoreQueries;
+    private final ArticleFeedbackStore articleFeedbackStore;
 
     public Optional<Article> findById(Long id) {
         return articleRepository.findById(id);
@@ -26,8 +28,9 @@ public class ArticleService {
 
     /**
      * The article with its badge and exact "Why N?" breakdown (PRIO-04), both from the blend CTE; an
-     * unscored article gets a null badge and no breakdown. Only GET /api/articles/{id} uses this; the
-     * Raindrop path keeps {@link #findById(Long)}.
+     * unscored article gets a null badge and no breakdown. The stored thumbs vote rides along (FDBK-01),
+     * null when there is none, scored or not. Only GET /api/articles/{id} and the feedback responses use
+     * this, so lists never carry the vote (D-02); the Raindrop path keeps {@link #findById(Long)}.
      */
     public Optional<Article> findByIdWithBreakdown(Long id) {
         return articleRepository.findById(id).map(article -> {
@@ -38,6 +41,7 @@ public class ArticleService {
                 article.setInterestScore(null);
                 article.setInterestBreakdown(null);
             });
+            article.setFeedback(articleFeedbackStore.find(id).orElse(null));
             return article;
         });
     }

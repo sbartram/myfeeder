@@ -1,7 +1,9 @@
 package org.bartram.myfeeder.service;
 
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.model.ArticleFeedback;
 import org.bartram.myfeeder.model.UnreadCount;
+import org.bartram.myfeeder.repository.ArticleFeedbackStore;
 import org.bartram.myfeeder.repository.ArticleRepository;
 import org.bartram.myfeeder.repository.InterestScoreQueries;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ class ArticleServiceTest {
 
     @Mock private ArticleRepository articleRepository;
     @Mock private InterestScoreQueries interestScoreQueries;
+    @Mock private ArticleFeedbackStore articleFeedbackStore;
     @InjectMocks private ArticleService articleService;
 
     @Test
@@ -91,6 +94,35 @@ class ArticleServiceTest {
         assertThat(result.isStarred()).isTrue();
         assertThat(result.getInterestScore()).isEqualTo(50);
         verify(articleRepository, times(1)).save(any());
+    }
+
+    @Test
+    void findByIdWithBreakdownCarriesTheVote() {
+        var article = new Article();
+        article.setId(1L);
+        var feedback = new ArticleFeedback(1, false, List.of());
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(interestScoreQueries.breakdownInputs(1L)).thenReturn(Optional.empty());
+        when(articleFeedbackStore.find(1L)).thenReturn(Optional.of(feedback));
+
+        var result = articleService.findByIdWithBreakdown(1L);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getFeedback()).isEqualTo(feedback);
+    }
+
+    @Test
+    void findByIdWithBreakdownWithoutAVoteHasNoFeedback() {
+        var article = new Article();
+        article.setId(1L);
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(interestScoreQueries.breakdownInputs(1L)).thenReturn(Optional.empty());
+        when(articleFeedbackStore.find(1L)).thenReturn(Optional.empty());
+
+        var result = articleService.findByIdWithBreakdown(1L);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getFeedback()).isNull();
     }
 
     @Test

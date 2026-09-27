@@ -259,6 +259,74 @@ class FeedbackApiIntegrationTest {
         assertThat((String) JsonPath.read(body, "$.effects[0].limit")).isEqualTo("NONE");
     }
 
+    @Test
+    void getArticleCarriesTheVoteState() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long politics = insertTopic(FEEDBACK_TOPIC_PREFIX + "politics", -30);
+        long go = insertTopic(FEEDBACK_TOPIC_PREFIX + "go", 10);
+        long n = insertThreeTopicArticle(feedId, rust, politics, go);
+
+        String put = putVote(n, "{\"vote\":-1,\"topicIds\":[" + politics + "]}");
+        String get = getArticle(n);
+
+        for (String[] doc : new String[][] {{get, "$.feedback"}, {put, "$.article.feedback"}}) {
+            assertThat((Integer) JsonPath.read(doc[0], doc[1] + ".vote")).isEqualTo(-1);
+            assertThat((Boolean) JsonPath.read(doc[0], doc[1] + ".narrowed")).isTrue();
+            assertThat((List<?>) JsonPath.read(doc[0], doc[1] + ".topics")).hasSize(1);
+            assertThat(((Number) JsonPath.read(doc[0], doc[1] + ".topics[0].topicId")).longValue()).isEqualTo(politics);
+            assertThat((String) JsonPath.read(doc[0], doc[1] + ".topics[0].name"))
+                    .isEqualTo(FEEDBACK_TOPIC_PREFIX + "politics");
+        }
+    }
+
+    @Test
+    void unNarrowedVoteHasNoPicks() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+
+        putVote(a, "{\"vote\":1}");
+        String get = getArticle(a);
+
+        assertThat((Integer) JsonPath.read(get, "$.feedback.vote")).isEqualTo(1);
+        assertThat((Boolean) JsonPath.read(get, "$.feedback.narrowed")).isFalse();
+        assertThat((List<?>) JsonPath.read(get, "$.feedback.topics")).isEmpty();
+    }
+
+    @Test
+    void removedVoteHasNoFeedbackKey() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+        putVote(a, "{\"vote\":1}");
+
+        String deleted = deleteVote(a);
+        String get = getArticle(a);
+
+        Map<String, Object> deletedArticle = JsonPath.read(deleted, "$.article");
+        Map<String, Object> gotArticle = JsonPath.read(get, "$");
+        assertThat(deletedArticle).doesNotContainKey("feedback");
+        assertThat(gotArticle).doesNotContainKey("feedback");
+    }
+
+    @Test
+    void listItemsOmitFeedback() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+        putVote(a, "{\"vote\":1}");
+
+        String body = mockMvc.perform(get("/api/articles").param("feedId", String.valueOf(feedId)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        List<Map<String, Object>> items = JsonPath.read(body, "$.items");
+        assertThat(items).hasSize(1);
+        assertThat(((Number) items.get(0).get("id")).longValue()).isEqualTo(a);
+        assertThat(items.get(0)).doesNotContainKey("feedback");
+    }
+
     /** Article N: rust noul 0.95 (m 0.9), politics 0.8 (m 0.6), go 0.6 (m 0.2). */
     private long insertThreeTopicArticle(long feedId, long rust, long politics, long go) {
         long n = insertMatchingArticle(feedId, "n", rust, 0.95);
@@ -308,11 +376,14 @@ class FeedbackApiIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
     }
 
-    private Integer badge(long articleId) throws Exception {
-        String body = mockMvc.perform(get("/api/articles/{id}", articleId))
+    private String getArticle(long articleId) throws Exception {
+        return mockMvc.perform(get("/api/articles/{id}", articleId))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        return JsonPath.read(body, "$.interestScore");
+    }
+
+    private Integer badge(long articleId) throws Exception {
+        return JsonPath.read(getArticle(articleId), "$.interestScore");
     }
 
     /** The article's stored feedback rows as "vote=V narrowed=N" strings (at most one by the primary key). */
