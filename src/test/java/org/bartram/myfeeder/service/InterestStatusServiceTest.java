@@ -12,9 +12,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -100,5 +103,22 @@ class InterestStatusServiceTest {
         verify(store).counts(cutoff.capture());
         Instant expected = Instant.now().minus(Duration.ofDays(14));
         assertThat(cutoff.getValue()).isCloseTo(expected, within(Duration.ofSeconds(5)));
+    }
+
+    @Test
+    void servesTheDefaultTierThresholds() {
+        assertThat(statusService.status().tiers()).isEqualTo(new TierThresholds(70, 40));
+    }
+
+    @Test
+    void tiersBindFromTheBlendTiersKeys() {
+        MyfeederProperties bound = new Binder(new MapConfigurationPropertySource(Map.of(
+                "myfeeder.interest.blend.tiers.high", "55",
+                "myfeeder.interest.blend.tiers.neutral", "25")))
+                .bind("myfeeder", MyfeederProperties.class).get();
+        InterestStatusService tuned = new InterestStatusService(jevApiClient, registry, interestService, store, bound);
+
+        assertThat(tuned.status().tiers()).isEqualTo(new TierThresholds(55, 25));
+        assertThat(bound.getInterest().getBlend().getProfilePoints()).isEqualTo(100);
     }
 }

@@ -43,6 +43,10 @@ myfeeder:
       profile-points: 100
       learn-rate: 2
       learned-cap: 20
+      # D-13: badge tier thresholds served on /api/interest/status (display score >= high is high, >= neutral is neutral). Phase 7 tunes them (07-CALIBRATION.md).
+      tiers:
+        high: 70
+        neutral: 40
 
 resilience4j:
   circuitbreaker:
