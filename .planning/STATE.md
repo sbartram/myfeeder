@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 07
 current_phase_name: Rollout & Calibration
 status: executing
-stopped_at: Completed 07-04-PLAN.md
-last_updated: "2026-09-27T20:36:32.010Z"
+stopped_at: Completed 07-05-PLAN.md
+last_updated: "2026-09-27T20:41:52.668Z"
 last_activity: 2026-09-27
 last_activity_desc: Phase 07 execution started
-state_head: 7492a871a2ed239f80ef6bdaa31e86f6eb90437b
+state_head: 400ecbdb5f2dd85b015a000b65fea0e859176ccb
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 49
-  completed_plans: 44
+  completed_plans: 45
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-27)
 ## Current Position
 
 Phase: 07 (Rollout & Calibration) — EXECUTING
-Plan: 5 of 9
+Plan: 6 of 9
 Status: Ready to execute
 Last activity: 2026-09-27 — Phase 07 execution started
 
@@ -107,6 +107,7 @@ Progress: [█████████░] 86%
 | Phase 07 P02 | 2 min | 2 tasks | 8 files |
 | Phase 07 P03 | 3 min | 2 tasks | 2 files |
 | Phase 07 P04 | 4 min | 2 tasks | 4 files |
+| Phase 07 P05 | 3min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -186,6 +187,7 @@ Recent decisions affecting current work:
 - [Phase 07]: InterestBadge reads TierContext (default DEFAULT_TIERS 70/40); MainLayout is the single provider via a non-polling useInterestTiers observer (staleTime Infinity, select tiers)
 - [Phase 07]: 07-03: JevEventLogging logs jev retries (INFO), exhausted retries and breaker transitions (WARN, StateTransition.name()) as fixed text, class names and numbers only; no metric added (D-15)
 - [Phase 07]: 07-04: the calibration replay SQL is reflected verbatim from InterestScoreQueries (blendCte now package-private) and pinned by InterestCalibrationReplaySqlTest; the driver forces default_transaction_read_only=on and validates inputs before connecting
+- [Phase 07]: 07-05: CLAUDE.md OPS-03 doc written source-first: every Jev fact grep-checked, package lists from ls; throttle override removal is explicit (kubectl set env NAME-), never assumed reverted by Helm
 
 ### Pending Todos
 
@@ -218,6 +220,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-27T20:36:31.951Z
-Stopped at: Completed 07-04-PLAN.md
+Last session: 2026-09-27T20:41:52.606Z
+Stopped at: Completed 07-05-PLAN.md
 Resume file: None
