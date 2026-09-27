@@ -10,6 +10,8 @@ const shortcuts = [
   { key: 'o', action: 'Open original URL' },
   { key: 'm', action: 'Toggle read / unread' },
   { key: 's', action: 'Toggle star' },
+  { key: 'u / d', action: 'Thumbs up / down (press again to remove)' },
+  { key: 'Shift+D', action: 'Choose topics to penalize' },
   { key: 'b', action: 'Add to board' },
   { key: 'v', action: 'Save to Raindrop' },
   { key: 'i', action: 'Toggle score breakdown' },

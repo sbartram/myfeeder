@@ -2,11 +2,14 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../stores/uiStore'
 import { usePriorityStore } from '../stores/priorityStore'
+import { useFeedbackStore } from '../stores/feedbackStore'
 import { usePreferences, FONT_SIZE_STEPS } from '../stores/preferencesStore'
 import { useArticle, useUpdateArticleState, useSaveToRaindrop } from './useArticles'
 import { usePollFeed } from './useFeeds'
 import { useMarkAllReadInFeed } from './useMarkAllReadInFeed'
 import { useUnreadFeedNavigation } from './useUnreadFeedNavigation'
+import { useVoteFeedback } from './useFeedback'
+import { canNarrow } from '../utils/feedback'
 import type { Article } from '../types'
 
 interface KeyboardShortcutCallbacks {
@@ -44,6 +47,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
   const saveToRaindrop = useSaveToRaindrop()
   const markAllReadInFeed = useMarkAllReadInFeed()
   const { findUnreadFeedId } = useUnreadFeedNavigation()
+  const { press } = useVoteFeedback()
 
   const currentIndex = articles.findIndex((a) => a.id === selectedArticleId)
   // The action target (o/m/s/v/b) must work even when the selected article is
@@ -152,6 +156,19 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
             updateState.mutate({ id: currentArticle.id, state: { starred: !currentArticle.starred } })
           }
           break
+        case 'u':
+        case 'd':
+          // Thumbs vote (D-01). Cmd/Ctrl/Alt are left to the browser (Cmd+D bookmarks; Pitfall 6).
+          // The by-id article carries the vote, so wait for it; never the list row (Pattern 5).
+          if (e.metaKey || e.ctrlKey || e.altKey) break
+          if (fetchedArticle) press(fetchedArticle, e.key === 'u' ? 1 : -1)
+          break
+        case 'D':
+          // Shift+D opens the topic picker only when the narrow control shows; it never votes (D-13).
+          if (e.shiftKey && !(e.metaKey || e.ctrlKey || e.altKey) && fetchedArticle && canNarrow(fetchedArticle)) {
+            useFeedbackStore.getState().setNarrowOpen(true)
+          }
+          break
         case 'o':
           if (currentArticle) window.open(currentArticle.url, '_blank', 'noopener')
           break
@@ -202,7 +219,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           break
       }
     },
-    [articles, currentIndex, currentArticle, selectedArticleId, selectedFeedId, findUnreadFeedId, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setKeyboardFocus, setSearchQuery, updateState, markAllReadInFeed, pollFeed, saveToRaindrop, callbacks, keyboardFocus, articleListFontSize, readingFontSize, setArticleListFontSize, setReadingFontSize]
+    [articles, currentIndex, currentArticle, fetchedArticle, press, selectedArticleId, selectedFeedId, findUnreadFeedId, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setKeyboardFocus, setSearchQuery, updateState, markAllReadInFeed, pollFeed, saveToRaindrop, callbacks, keyboardFocus, articleListFontSize, readingFontSize, setArticleListFontSize, setReadingFontSize]
   )
 
   useEffect(() => {
