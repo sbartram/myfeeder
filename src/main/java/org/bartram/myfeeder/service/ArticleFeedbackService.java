@@ -51,12 +51,13 @@ public class ArticleFeedbackService {
         Map<Long, TopicWeight> before = queries.topicWeights(matched);
         write.run();
         Map<Long, TopicWeight> after = queries.topicWeights(matched);
+        int cap = properties.getInterest().getBlend().getLearnedCap();
         List<TopicEffect> effects = matched.stream()
                 .filter(id -> before.containsKey(id) && after.containsKey(id))
                 .map(id -> {
                     TopicWeight a = after.get(id);
                     return new TopicEffect(id, a.name(), before.get(id).effective(), a.effective(), a.base(),
-                            a.learned());
+                            a.learned(), LearnedLimit.of(a, cap));
                 })
                 .toList();
         return new FeedbackResult(articleService.findByIdWithBreakdown(articleId).orElseThrow(), scored, effects);

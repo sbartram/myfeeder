@@ -16,8 +16,9 @@ public record FeedbackResult(Article article, boolean scored, List<TopicEffect> 
     /**
      * One matched topic's effective weight before and after the write, both read inside the write's
      * transaction and rounded to 6 decimals. {@code learned} is the capped learned value after the write.
-     * The client prints {@code after - before} and never recomputes it.
+     * The client prints {@code after - before} and never recomputes it. {@code limit} names why the change
+     * is smaller than the nominal nudge ({@link LearnedLimit}).
      */
     public record TopicEffect(long topicId, String name, double before, double after, double baseWeight,
-                              double learned) {}
+                              double learned, LearnedLimit limit) {}
 }

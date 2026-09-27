@@ -12,6 +12,9 @@ import org.bartram.myfeeder.service.ArticleFeedbackService;
 import org.bartram.myfeeder.service.ArticleService;
 import org.bartram.myfeeder.service.ExtractedContent;
 import org.bartram.myfeeder.service.FeedFetchException;
+import org.bartram.myfeeder.service.FeedbackResult;
+import org.bartram.myfeeder.service.FeedbackResult.TopicEffect;
+import org.bartram.myfeeder.service.LearnedLimit;
 import org.bartram.myfeeder.service.NotFoundException;
 import org.bartram.myfeeder.service.PriorityService;
 import org.junit.jupiter.api.Test;
@@ -350,6 +353,64 @@ class ArticleControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items.length()").value(2))
                 .andExpect(jsonPath("$.nextCursor").value(nullValue()));
+    }
+
+    @Test
+    void putFeedbackReturnsTheResult() throws Exception {
+        when(articleFeedbackService.vote(5L, 1, null)).thenReturn(feedbackResult());
+
+        mockMvc.perform(put("/api/articles/5/feedback").contentType(MediaType.APPLICATION_JSON).content("{\"vote\":1}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.scored").value(true))
+                .andExpect(jsonPath("$.article.id").value(5))
+                .andExpect(jsonPath("$.effects[0].after").value(21.8))
+                .andExpect(jsonPath("$.effects[0].limit").value("NONE"));
+    }
+
+    @Test
+    void putFeedbackRequiresJson() throws Exception {
+        // A text or form PUT is a CORS "simple request" a foreign page can send
+        mockMvc.perform(put("/api/articles/5/feedback").contentType(MediaType.TEXT_PLAIN).content("{\"vote\":1}"))
+                .andExpect(status().isUnsupportedMediaType());
+        mockMvc.perform(put("/api/articles/5/feedback")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED).content("vote=1"))
+                .andExpect(status().isUnsupportedMediaType());
+
+        verifyNoInteractions(articleFeedbackService);
+    }
+
+    @Test
+    void putFeedbackBadRequestIs400() throws Exception {
+        when(articleFeedbackService.vote(5L, 0, null))
+                .thenThrow(new IllegalArgumentException("vote must be 1 or -1"));
+
+        mockMvc.perform(put("/api/articles/5/feedback").contentType(MediaType.APPLICATION_JSON).content("{\"vote\":0}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("vote must be 1 or -1"));
+    }
+
+    @Test
+    void putFeedbackMissingArticleIs404() throws Exception {
+        when(articleFeedbackService.vote(99L, 1, null)).thenThrow(new NotFoundException("Article not found: 99"));
+
+        mockMvc.perform(put("/api/articles/99/feedback").contentType(MediaType.APPLICATION_JSON).content("{\"vote\":1}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteFeedbackReturnsTheResult() throws Exception {
+        when(articleFeedbackService.clear(5L)).thenReturn(feedbackResult());
+
+        mockMvc.perform(delete("/api/articles/5/feedback"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.scored").value(true))
+                .andExpect(jsonPath("$.effects[0].topicId").value(10))
+                .andExpect(jsonPath("$.effects[0].limit").value("NONE"));
+    }
+
+    private static FeedbackResult feedbackResult() {
+        return new FeedbackResult(articleWithId(5L), true,
+                List.of(new TopicEffect(10, "Rust", 20, 21.8, 20, 1.8, LearnedLimit.NONE)));
     }
 
     private static PriorityRow priorityRow(long id) {

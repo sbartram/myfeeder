@@ -155,6 +155,130 @@ class FeedbackApiIntegrationTest {
         assertThat(topicWeight(rust)).isEqualTo(20);
     }
 
+    @Test
+    void narrowedDownVoteMovesOnlyPickedTopics() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long politics = insertTopic(FEEDBACK_TOPIC_PREFIX + "politics", -30);
+        long go = insertTopic(FEEDBACK_TOPIC_PREFIX + "go", 10);
+        long n = insertThreeTopicArticle(feedId, rust, politics, go);
+
+        String body = putVote(n, "{\"vote\":-1,\"topicIds\":[" + politics + "]}");
+
+        assertEffect(body, 0, rust, 20.0, 20.0);
+        assertEffect(body, 1, politics, -30.0, -31.2);
+        assertEffect(body, 2, go, 10.0, 10.0);
+        assertThat(storedFeedback(n)).containsExactly("vote=-1 narrowed=true");
+        assertThat(storedPicks(n)).containsExactly(politics);
+        assertThat(topicWeight(politics)).isEqualTo(-30);
+    }
+
+    @Test
+    void flipToUpClearsNarrowing() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long politics = insertTopic(FEEDBACK_TOPIC_PREFIX + "politics", -30);
+        long go = insertTopic(FEEDBACK_TOPIC_PREFIX + "go", 10);
+        long n = insertThreeTopicArticle(feedId, rust, politics, go);
+        putVote(n, "{\"vote\":-1,\"topicIds\":[" + politics + "]}");
+
+        String body = putVote(n, "{\"vote\":1}");
+
+        assertEffect(body, 0, rust, 20.0, 21.8);
+        assertEffect(body, 1, politics, -31.2, -28.8);
+        assertEffect(body, 2, go, 10.0, 10.4);
+        assertThat(storedFeedback(n)).containsExactly("vote=1 narrowed=false");
+        assertThat(storedPicks(n)).isEmpty();
+    }
+
+    @Test
+    void pickingAnUnmatchedTopicIs400AndWritesNothing() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long politics = insertTopic(FEEDBACK_TOPIC_PREFIX + "politics", -30);
+        long go = insertTopic(FEEDBACK_TOPIC_PREFIX + "go", 10);
+        long other = insertTopic(FEEDBACK_TOPIC_PREFIX + "other", 15);
+        long n = insertThreeTopicArticle(feedId, rust, politics, go);
+        putVote(n, "{\"vote\":1}");
+
+        mockMvc.perform(put("/api/articles/{id}/feedback", n)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"vote\":-1,\"topicIds\":[" + other + "]}"))
+                .andExpect(status().isBadRequest());
+
+        assertThat(storedFeedback(n)).containsExactly("vote=1 narrowed=false");
+        assertThat(storedPicks(n)).isEmpty();
+    }
+
+    @Test
+    void unscoredVoteIsStoredAndReportsNotScored() throws Exception {
+        long feedId = insertFeed();
+        long u = insertArticle(feedId, "u", Instant.parse("2026-09-20T10:00:00Z"));
+
+        String body = putVote(u, "{\"vote\":1}");
+
+        assertThat((Boolean) JsonPath.read(body, "$.scored")).isFalse();
+        assertThat((List<?>) JsonPath.read(body, "$.effects")).isEmpty();
+        assertThat(storedFeedback(u)).containsExactly("vote=1 narrowed=false");
+    }
+
+    @Test
+    void scoredNoMatchVoteIsStoredWithNoEffects() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long c = insertMatchingArticle(feedId, "c", rust, 0.4);
+
+        String body = putVote(c, "{\"vote\":-1}");
+
+        assertThat((Boolean) JsonPath.read(body, "$.scored")).isTrue();
+        assertThat((List<?>) JsonPath.read(body, "$.effects")).isEmpty();
+        assertThat(storedFeedback(c)).containsExactly("vote=-1 narrowed=false");
+        assertThat(topicWeight(rust)).isEqualTo(20);
+    }
+
+    @Test
+    void voteLeavesReadAndStarredAlone() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+
+        putVote(a, "{\"vote\":1}");
+        assertThat(readAndStarred(a)).isEqualTo("read=false starred=false");
+        deleteVote(a);
+        assertThat(readAndStarred(a)).isEqualTo("read=false starred=false");
+    }
+
+    @Test
+    void upVoteEffectNamesItsLimit() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+
+        String body = putVote(a, "{\"vote\":1}");
+
+        assertThat((String) JsonPath.read(body, "$.effects[0].limit")).isEqualTo("NONE");
+    }
+
+    /** Article N: rust noul 0.95 (m 0.9), politics 0.8 (m 0.6), go 0.6 (m 0.2). */
+    private long insertThreeTopicArticle(long feedId, long rust, long politics, long go) {
+        long n = insertMatchingArticle(feedId, "n", rust, 0.95);
+        insertTopicScore(n, politics, 0.8);
+        insertTopicScore(n, go, 0.6);
+        return n;
+    }
+
+    private List<Long> storedPicks(long articleId) {
+        return jdbcTemplate.queryForList(
+                "SELECT topic_id FROM article_feedback_topic WHERE article_id = ? ORDER BY topic_id",
+                Long.class, articleId);
+    }
+
+    private String readAndStarred(long articleId) {
+        return jdbcTemplate.queryForObject("SELECT read, starred FROM article WHERE id = ?",
+                (rs, rowNum) -> "read=" + rs.getBoolean("read") + " starred=" + rs.getBoolean("starred"),
+                articleId);
+    }
+
     /** A SCORED article (profile 2.0/4) that judged {@code topicId} at {@code noul}. */
     private long insertMatchingArticle(long feedId, String guid, long topicId, double noul) {
         long id = insertArticle(feedId, guid, Instant.parse("2026-09-20T10:00:00Z"));
