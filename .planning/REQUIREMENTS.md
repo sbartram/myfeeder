@@ -60,7 +60,7 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 - [ ] **FDBK-04**: After a vote, the user sees its effect (e.g. "Rust +2")
 - [ ] **FDBK-05**: When a vote matches no topics, the user is told and offered to create a topic from the article
 - [x] **FDBK-06**: On thumbs-down of an article that matched several topics, the user can choose which topic(s) to penalize
-- [ ] **FDBK-07**: Topic editor shows each topic's base weight and learned adjustment separately
+- [x] **FDBK-07**: Topic editor shows each topic's base weight and learned adjustment separately
 
 ### Rollout
 
@@ -144,7 +144,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FDBK-04 | Phase 6 | Pending |
 | FDBK-05 | Phase 6 | Pending |
 | FDBK-06 | Phase 6 | Complete |
-| FDBK-07 | Phase 6 | Pending |
+| FDBK-07 | Phase 6 | Complete |
 | OPS-01 | Phase 7 | Pending |
 | OPS-02 | Phase 7 | Pending |
 | OPS-03 | Phase 7 | Pending |
