@@ -18,6 +18,9 @@ public record InterestBreakdown(BigDecimal raw, int total, int display, List<Row
      * One breakdown line, discriminated by {@code kind}: a PROFILE row carries {@code levelIndex};
      * a TOPIC row carries {@code topicId}, {@code name}, {@code noul}, {@code hinge} and the effective
      * {@code weight}. {@code exact} is the unrounded contribution (6 decimals); null fields are omitted.
+     * A TOPIC row also carries {@code baseWeight} (the topic's own weight) and {@code learnedWeight}, the
+     * applied learned part (effective minus base, after the cap, the sign clamp and the +/-50 range), so
+     * {@code baseWeight + learnedWeight} equals {@code weight} (D-11, Pitfall 4); PROFILE rows omit both.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Row(String kind, Long topicId, String name, Integer levelIndex, Double noul, Double hinge,

@@ -81,7 +81,12 @@ public class InterestScoreQueries {
                                   Integer profileMaxLevel, BigDecimal profileExact,
                                   List<TopicContribution> topics) {}
 
-    /** One judged topic of an article as the blend CTE saw it: effective weight, hinge and exact points. */
+    /**
+     * One judged topic of an article as the blend CTE saw it: effective weight, hinge and exact points,
+     * plus the topic's base weight and the applied learned part ({@code weight - baseWeight}, after the
+     * cap, the sign clamp and the +/-50 range), so {@code baseWeight + learnedWeight} equals
+     * {@code weight} (D-11). Weights are rounded to 6 decimals.
+     */
     public record TopicContribution(long topicId, String name, double noul, double hinge, double weight,
                                     BigDecimal exact, double baseWeight, double learnedWeight) {}
 
@@ -204,8 +209,9 @@ public class InterestScoreQueries {
         if (header.isEmpty()) {
             return Optional.empty();
         }
-        List<TopicContribution> topics = blendSql(blendCte(ARTICLE_SCOPE) + " SELECT c.topic_id, t.name, c.noul, c.hinge, c.w, "
-                        + "ROUND(c.points::numeric, 6) AS exact "
+        List<TopicContribution> topics = blendSql(blendCte(ARTICLE_SCOPE) + " SELECT c.topic_id, t.name, c.noul, c.hinge, "
+                        + "ROUND(c.w::numeric, 6) AS w, ROUND(c.points::numeric, 6) AS exact, "
+                        + "ROUND(c.base::numeric, 6) AS base_w, ROUND(c.learned_applied::numeric, 6) AS learned_w "
                         + "FROM contrib c JOIN interest_topic t ON t.id = c.topic_id WHERE c.article_id = :articleId")
                 .param("articleId", articleId)
                 .query((rs, rowNum) -> new TopicContribution(
@@ -215,8 +221,8 @@ public class InterestScoreQueries {
                         rs.getDouble("hinge"),
                         rs.getDouble("w"),
                         rs.getBigDecimal("exact"),
-                        0,
-                        0))
+                        rs.getDouble("base_w"),
+                        rs.getDouble("learned_w")))
                 .list();
         BreakdownInputs h = header.get();
         return Optional.of(new BreakdownInputs(h.raw(), h.total(), h.display(), h.profileScore(),
@@ -283,12 +289,14 @@ public class InterestScoreQueries {
     /**
      * The blend: {@code raw = ROUND(profilePoints x profile_score / profile_max_level
      * + SUM(max(0, (noul - 0.5) x 2) x w), 6)} over SCORED rows, with {@code w} the effective weight from
-     * {@link #LEARNED_CTE}. Only this class's scope constants are ever passed as {@code scope}.
+     * {@link #LEARNED_CTE}. {@code contrib} also carries the topic's {@code base} and
+     * {@code learned_applied = w - base}, the learned part that actually applied. Only this class's scope
+     * constants are ever passed as {@code scope}.
      */
     private static String blendCte(String scope) {
         return LEARNED_CTE + ", "
                 + "contrib AS (SELECT ts.article_id, ts.topic_id, ts.noul, "
-                + "GREATEST(0, (ts.noul - 0.5) * 2) AS hinge, e.w, "
+                + "GREATEST(0, (ts.noul - 0.5) * 2) AS hinge, e.w, e.base, e.w - e.base AS learned_applied, "
                 + "GREATEST(0, (ts.noul - 0.5) * 2) * e.w AS points "
                 + "FROM article_topic_score ts JOIN eff2 e ON e.id = ts.topic_id), "
                 + "blended AS (SELECT s.article_id, "
