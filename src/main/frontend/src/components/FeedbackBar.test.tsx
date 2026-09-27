@@ -242,6 +242,35 @@ describe('FeedbackBar', () => {
     expect(useUIStore.getState().selectedArticleId).toBe(1)
   })
 
+  it('unscoredVoteToastSaysItCountsLater', async () => {
+    route('GET', '/api/articles/1', () => ({
+      status: 200,
+      body: { ...article(null), interestScore: null, interestBreakdown: undefined },
+    }))
+    route('PUT', '/api/articles/1/feedback', () => ({
+      status: 200,
+      body: { ...result(up, []), scored: false },
+    }))
+    renderBar()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thumbs up' }))
+    await waitFor(() =>
+      expect(toasts()).toEqual(['success:👍 Saved — counts once this article is scored'])
+    )
+  })
+
+  it('noMatchVoteToastSaysNoTopicsMatched', async () => {
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(null, []) }))
+    route('PUT', '/api/articles/1/feedback', () => ({
+      status: 200,
+      body: result(down, [], []),
+    }))
+    renderBar()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thumbs down' }))
+    await waitFor(() => expect(toasts()).toEqual(['success:👎 Saved · No topics matched']))
+  })
+
   it('buttonsCarryLabelsAndTitles', async () => {
     route('GET', '/api/articles/1', () => ({ status: 200, body: article(null) }))
     const qc = renderBar()

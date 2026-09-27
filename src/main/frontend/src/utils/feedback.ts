@@ -58,12 +58,28 @@ const LEADS: Record<VoteKind, string> = {
   'all-matched': '👎 All matched topics · ',
 }
 
+/** The lead for a saved vote with nothing to list; removals use "Vote removed" instead. */
+const SAVED_LEADS: Record<Exclude<VoteKind, 'removed'>, string> = {
+  up: '👍 Saved',
+  down: '👎 Saved',
+  narrowed: '👎 Narrowed',
+  'all-matched': '👎 All matched topics',
+}
+
 /**
- * The effect toast (D-07, D-08, D-10, FDBK-04): each topic whose rounded server change
+ * The effect toast (D-07, D-08, D-10, FDBK-04): an unscored article's vote says it counts once
+ * the article is scored (D-03), and a scored article with no matched topic says so (D-18, D-19);
+ * a removal of either is just "Vote removed". Otherwise each topic whose rounded server change
  * (after − before) is non-zero, largest change first (ties keep server order), joined by " · "
  * after the vote's lead. The client prints the server's numbers and never recomputes a weight.
  */
 export function formatVoteToast(kind: VoteKind, result: FeedbackResult): string {
+  if (!result.scored) {
+    return kind === 'removed' ? 'Vote removed' : `${SAVED_LEADS[kind]} — counts once this article is scored`
+  }
+  if (result.effects.length === 0) {
+    return kind === 'removed' ? 'Vote removed' : `${SAVED_LEADS[kind]} · No topics matched`
+  }
   const entries = result.effects
     .map((e) => ({ name: e.name, d: e.after - e.before }))
     .filter(({ d }) => Math.round(d * 10) !== 0)
