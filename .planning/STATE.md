@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 milestone: v0.1.24
 current_phase: 07
-current_phase_name: rollout-calibration
+current_phase_name: Rollout & Calibration
 status: executing
-stopped_at: Phase 7 context gathered
-last_updated: "2026-09-27T19:52:51.276Z"
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-09-27T20:20:50.525Z"
 last_activity: 2026-09-27
-last_activity_desc: Phase 06 complete, transitioned to Phase 7
-state_head: 4a7a978f082be30d6c17a11766b2b9acda4f7a87
+last_activity_desc: Phase 07 execution started
+state_head: e5989c778f82f35b95267027525a5c8587ceab1d
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 49
-  completed_plans: 40
+  completed_plans: 41
 ---
 
 # Project State
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-27)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 7 — Rollout & Calibration
+**Current focus:** Phase 07 — Rollout & Calibration
 
 ## Current Position
 
-Phase: 07 (rollout-calibration) — READY TO EXECUTE
-Plan: Not started
+Phase: 07 (Rollout & Calibration) — EXECUTING
+Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-09-27 — Phase 06 complete, transitioned to Phase 7
+Last activity: 2026-09-27 — Phase 07 execution started
 
 Progress: [█████████░] 86%
 
@@ -103,6 +103,7 @@ Progress: [█████████░] 86%
 | Phase 06 P06 | 3 min | 2 tasks | 7 files |
 | Phase 06 P05 | 7 min | 3 tasks | 14 files |
 | Phase 06 P07 | 4 min | 2 tasks | 5 files |
+| Phase 07 P01 | 2 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -178,6 +179,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-05: The Create topic from article draft is one-shot, held in MainLayout state and seeded once as row d-1 in the TopicsSection useState initializer; at 25 topics the at-max notice replaces it
 - [Phase 06]: 06-05: useLearnedTopics lives on its own ['interest','learned'] key, invalidated by votes and topic create/update/delete, never the topics list, so unsaved row edits survive
 - [Phase 06]: 06-07: vote toast follows the UI-SPEC list rule (sort by absolute change), so the capped example prints Go before Rust; limit notes take precedence over (now …)
+- [Phase 07]: 07-01: badge tier thresholds are server config myfeeder.interest.blend.tiers.high=70/.neutral=40, served last on /api/interest/status as tiers:{high,neutral} (D-13)
 
 ### Pending Todos
 
@@ -210,6 +212,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-27T18:43:48.504Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-rollout-calibration/07-CONTEXT.md
+Last session: 2026-09-27T20:20:50.464Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None
