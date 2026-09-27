@@ -311,7 +311,7 @@ public class InterestScoreQueries {
      * {@code learned_applied = w - base}, the learned part that actually applied. Only this class's scope
      * constants are ever passed as {@code scope}.
      */
-    private static String blendCte(String scope) {
+    static String blendCte(String scope) {
         return LEARNED_CTE + ", "
                 + "contrib AS (SELECT ts.article_id, ts.topic_id, ts.noul, "
                 + "GREATEST(0, (ts.noul - 0.5) * 2) AS hinge, e.w, e.base, e.w - e.base AS learned_applied, "
