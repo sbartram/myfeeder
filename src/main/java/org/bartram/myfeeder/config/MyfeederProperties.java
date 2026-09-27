@@ -53,6 +53,10 @@ public class MyfeederProperties {
         public static class Blend {
             /** Points for a full profile match (R1): the profile contributes profile_score / profile_max_level x profilePoints. */
             private int profilePoints = 100;
+            /** Points one vote moves a topic at a full match (R2): learned = learnRate x SUM(vote x hinge). Phase 7 tunes it. */
+            private double learnRate = 2;
+            /** Bound on a topic's learned adjustment in points, either direction (FDBK-03). */
+            private int learnedCap = 20;
         }
     }
 }

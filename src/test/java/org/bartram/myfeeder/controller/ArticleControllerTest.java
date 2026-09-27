@@ -8,6 +8,7 @@ import org.bartram.myfeeder.model.InterestBreakdown.Row;
 import org.bartram.myfeeder.repository.InterestScoreQueries.PriorityRow;
 import org.bartram.myfeeder.repository.InterestScoreQueries.SortKey;
 import org.bartram.myfeeder.service.ArticleExtractionService;
+import org.bartram.myfeeder.service.ArticleFeedbackService;
 import org.bartram.myfeeder.service.ArticleService;
 import org.bartram.myfeeder.service.ExtractedContent;
 import org.bartram.myfeeder.service.FeedFetchException;
@@ -41,6 +42,7 @@ class ArticleControllerTest {
     @MockitoBean private RaindropService raindropService;
     @MockitoBean private ArticleExtractionService articleExtractionService;
     @MockitoBean private PriorityService priorityService;
+    @MockitoBean private ArticleFeedbackService articleFeedbackService;
 
     @Test
     void shouldReturnExtractedContent() throws Exception {

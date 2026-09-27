@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,8 +32,10 @@ import java.util.Optional;
  * from zero; only the sort key is cast to {@code float8}, with {@code '-Infinity'} for unscored rows so
  * they sort after every scored row, negative ones included.
  *
- * <p>The {@code learned} CTE returns 0 for every topic until Phase 6. Its replacement body must honor
- * {@code article_feedback.topics_narrowed} (03 D-02).
+ * <p>The {@link #LEARNED_CTE} derives each topic's learned adjustment from the stored thumbs votes in
+ * {@code article_feedback}, honoring {@code topics_narrowed} and its {@code article_feedback_topic} picks
+ * (03 D-02). The adjustment is derived on every read and never stored, so removing or flipping a vote
+ * undoes it exactly. This class still only reads.
  */
 @Repository
 @RequiredArgsConstructor
@@ -82,6 +85,40 @@ public class InterestScoreQueries {
     public record TopicContribution(long topicId, String name, double noul, double hinge, double weight,
                                     BigDecimal exact) {}
 
+    /**
+     * The learned model (R2, FDBK-03), shared by the blend and {@link #topicWeights(Collection)}.
+     * {@code learned} sums {@code vote x max(0, (noul - 0.5) x 2)} per topic over votes on SCORED articles,
+     * keeping a narrowed vote's picked topics only (03 D-02). {@code eff} scales it by {@code :learnRate}
+     * ({@code learned_raw}) and clamps it to {@code +/- :learnedCap} ({@code learned}). {@code eff2} adds
+     * the effective weight {@code w = base + learned} with the sign clamp (a positive base never goes
+     * below 0, a negative base never above 0, a zero base moves either way) inside -50..+50.
+     * The constants are cast to float8 because an untyped unary minus is ambiguous in Postgres.
+     */
+    static final String LEARNED_CTE = "WITH learned AS (SELECT ts.topic_id, "
+            + "SUM(f.vote * GREATEST(0, (ts.noul - 0.5) * 2)) AS vote_sum "
+            + "FROM article_feedback f "
+            + "JOIN article_score fs ON fs.article_id = f.article_id AND fs.status = 'SCORED' "
+            + "JOIN article_topic_score ts ON ts.article_id = f.article_id "
+            + "WHERE NOT f.topics_narrowed OR EXISTS (SELECT 1 FROM article_feedback_topic ft "
+            + "WHERE ft.article_id = f.article_id AND ft.topic_id = ts.topic_id) "
+            + "GROUP BY ts.topic_id), "
+            + "eff AS (SELECT t.id, t.name, t.weight AS base, "
+            + "CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0) AS learned_raw, "
+            + "LEAST(CAST(:learnedCap AS float8), GREATEST(-CAST(:learnedCap AS float8), "
+            + "CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0))) AS learned "
+            + "FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id), "
+            + "eff2 AS (SELECT e.*, CASE WHEN e.base > 0 THEN GREATEST(0, LEAST(50, e.base + e.learned)) "
+            + "WHEN e.base < 0 THEN LEAST(0, GREATEST(-50, e.base + e.learned)) "
+            + "ELSE GREATEST(-50, LEAST(50, e.learned)) END AS w "
+            + "FROM eff e)";
+
+    /**
+     * One topic's weights under the learned model, rounded to 6 decimals: the stored base weight, the
+     * uncapped learned points, the capped learned points and the effective weight.
+     */
+    public record TopicWeight(long topicId, String name, double base, double learnedRaw, double learned,
+                              double effective) {}
+
     /** The Priority sort tuple of one row as served; {@code score} is {@code -Infinity} when unscored. */
     public record SortKey(double score, Instant date, long id) {}
 
@@ -93,9 +130,8 @@ public class InterestScoreQueries {
 
     /** First Priority page: scored articles by blended score, then unscored ones by date. */
     public List<PriorityRow> priorityFirstPage(int limit) {
-        return jdbc.sql(blendCte(UNREAD_SCOPE) + keyed(UNREAD_SCOPE)
+        return blendSql(blendCte(UNREAD_SCOPE) + keyed(UNREAD_SCOPE)
                         + " SELECT k.* FROM keyed k " + KEYED_ORDER + " LIMIT :limit")
-                .param("profilePoints", properties.getInterest().getBlend().getProfilePoints())
                 .param("limit", limit)
                 .query((rs, rowNum) -> mapPriorityRow(rs))
                 .list();
@@ -112,11 +148,10 @@ public class InterestScoreQueries {
      * timestamptz with an explicit offset, so it cannot shift with the JVM or session time zone.
      */
     public List<PriorityRow> priorityPageAfter(SortKey after, int limit) {
-        return jdbc.sql(blendCte(UNREAD_SCOPE) + keyed(UNREAD_SCOPE)
+        return blendSql(blendCte(UNREAD_SCOPE) + keyed(UNREAD_SCOPE)
                         + " SELECT k.* FROM keyed k WHERE (k.sort_score, k.sort_date, k.id)"
                         + " < (CAST(:cursorScore AS float8), CAST(:cursorDate AS timestamptz), CAST(:cursorId AS bigint)) "
                         + KEYED_ORDER + " LIMIT :limit")
-                .param("profilePoints", properties.getInterest().getBlend().getProfilePoints())
                 .param("cursorScore", after.score())
                 .param("cursorDate", after.date().atOffset(ZoneOffset.UTC))
                 .param("cursorId", after.id())
@@ -135,8 +170,7 @@ public class InterestScoreQueries {
             return Map.of();
         }
         Map<Long, Integer> scores = new HashMap<>();
-        jdbc.sql(blendCte(IDS_SCOPE) + " SELECT b.article_id, " + INTEREST_SCORE + " AS interest_score FROM blended b")
-                .param("profilePoints", properties.getInterest().getBlend().getProfilePoints())
+        blendSql(blendCte(IDS_SCOPE) + " SELECT b.article_id, " + INTEREST_SCORE + " AS interest_score FROM blended b")
                 .param("ids", ids)
                 .query(rs -> {
                     scores.put(rs.getLong("article_id"), rs.getObject("interest_score", Integer.class));
@@ -152,13 +186,11 @@ public class InterestScoreQueries {
      * noul and are not listed (R5).
      */
     public Optional<BreakdownInputs> breakdownInputs(long articleId) {
-        int profilePoints = properties.getInterest().getBlend().getProfilePoints();
-        Optional<BreakdownInputs> header = jdbc.sql(blendCte(ARTICLE_SCOPE) + " SELECT b.raw_n, " + TOTAL + " AS total, "
+        Optional<BreakdownInputs> header = blendSql(blendCte(ARTICLE_SCOPE) + " SELECT b.raw_n, " + TOTAL + " AS total, "
                         + INTEREST_SCORE + " AS interest_score, s.profile_score, s.profile_max_level, "
                         + "CASE WHEN s.profile_score IS NULL THEN NULL ELSE ROUND((:profilePoints * "
                         + "COALESCE(s.profile_score / NULLIF(s.profile_max_level, 0), 0))::numeric, 6) END AS profile_exact "
                         + "FROM blended b JOIN article_score s ON s.article_id = b.article_id")
-                .param("profilePoints", profilePoints)
                 .param("articleId", articleId)
                 .query((rs, rowNum) -> new BreakdownInputs(
                         rs.getBigDecimal("raw_n"),
@@ -172,10 +204,9 @@ public class InterestScoreQueries {
         if (header.isEmpty()) {
             return Optional.empty();
         }
-        List<TopicContribution> topics = jdbc.sql(blendCte(ARTICLE_SCOPE) + " SELECT c.topic_id, t.name, c.noul, c.hinge, c.w, "
+        List<TopicContribution> topics = blendSql(blendCte(ARTICLE_SCOPE) + " SELECT c.topic_id, t.name, c.noul, c.hinge, c.w, "
                         + "ROUND(c.points::numeric, 6) AS exact "
                         + "FROM contrib c JOIN interest_topic t ON t.id = c.topic_id WHERE c.article_id = :articleId")
-                .param("profilePoints", profilePoints)
                 .param("articleId", articleId)
                 .query((rs, rowNum) -> new TopicContribution(
                         rs.getLong("topic_id"),
@@ -191,18 +222,73 @@ public class InterestScoreQueries {
     }
 
     /**
+     * The current weights of {@code topicIds} under the learned model, in ascending id order. Ids of
+     * topics that no longer exist are absent; an empty collection returns an empty map without SQL.
+     */
+    public Map<Long, TopicWeight> topicWeights(Collection<Long> topicIds) {
+        if (topicIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, TopicWeight> weights = new LinkedHashMap<>();
+        learnedSql(LEARNED_CTE + " SELECT e.id, e.name, ROUND(e.base::numeric, 6) AS base, "
+                        + "ROUND(e.learned_raw::numeric, 6) AS learned_raw, ROUND(e.learned::numeric, 6) AS learned, "
+                        + "ROUND(e.w::numeric, 6) AS w FROM eff2 e WHERE e.id IN (:ids) ORDER BY e.id")
+                .param("ids", topicIds)
+                .query(rs -> {
+                    long id = rs.getLong("id");
+                    weights.put(id, new TopicWeight(id, rs.getString("name"), rs.getDouble("base"),
+                            rs.getDouble("learned_raw"), rs.getDouble("learned"), rs.getDouble("w")));
+                });
+        return weights;
+    }
+
+    /**
+     * The topics an article matched: those with a stored noul above 0.5 (hinge above 0), and only when
+     * the article has a SCORED row. Ascending topic id; empty for an unscored article.
+     */
+    public List<Long> matchedTopicIds(long articleId) {
+        return jdbc.sql("SELECT ts.topic_id FROM article_topic_score ts "
+                        + "JOIN article_score s ON s.article_id = ts.article_id AND s.status = 'SCORED' "
+                        + "WHERE ts.article_id = :articleId AND GREATEST(0, (ts.noul - 0.5) * 2) > 0 "
+                        + "ORDER BY ts.topic_id")
+                .param("articleId", articleId)
+                .query(Long.class)
+                .list();
+    }
+
+    /** Whether the article has a SCORED score row (FAILED and SKIPPED rows are not scored). */
+    public boolean isScored(long articleId) {
+        return Boolean.TRUE.equals(jdbc.sql("SELECT EXISTS (SELECT 1 FROM article_score "
+                        + "WHERE article_id = :articleId AND status = 'SCORED')")
+                .param("articleId", articleId)
+                .query(Boolean.class)
+                .single());
+    }
+
+    /** A statement that reads the learned model: binds {@code learnRate} and {@code learnedCap}. */
+    private JdbcClient.StatementSpec learnedSql(String sql) {
+        MyfeederProperties.Interest.Blend blend = properties.getInterest().getBlend();
+        return jdbc.sql(sql)
+                .param("learnRate", blend.getLearnRate())
+                .param("learnedCap", blend.getLearnedCap());
+    }
+
+    /** A statement built from {@link #blendCte(String)}: binds every blend constant in one place. */
+    private JdbcClient.StatementSpec blendSql(String sql) {
+        return learnedSql(sql).param("profilePoints", properties.getInterest().getBlend().getProfilePoints());
+    }
+
+    /**
      * The blend: {@code raw = ROUND(profilePoints x profile_score / profile_max_level
-     * + SUM(max(0, (noul - 0.5) x 2) x w), 6)} over SCORED rows, with {@code w = weight + learned}.
-     * Only this class's scope constants are ever passed as {@code scope}.
+     * + SUM(max(0, (noul - 0.5) x 2) x w), 6)} over SCORED rows, with {@code w} the effective weight from
+     * {@link #LEARNED_CTE}. Only this class's scope constants are ever passed as {@code scope}.
      */
     private static String blendCte(String scope) {
-        return "WITH learned AS (SELECT t.id AS topic_id, 0::double precision AS delta FROM interest_topic t), "
-                + "eff AS (SELECT t.id, t.weight + COALESCE(l.delta, 0) AS w "
-                + "FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id), "
+        return LEARNED_CTE + ", "
                 + "contrib AS (SELECT ts.article_id, ts.topic_id, ts.noul, "
                 + "GREATEST(0, (ts.noul - 0.5) * 2) AS hinge, e.w, "
                 + "GREATEST(0, (ts.noul - 0.5) * 2) * e.w AS points "
-                + "FROM article_topic_score ts JOIN eff e ON e.id = ts.topic_id), "
+                + "FROM article_topic_score ts JOIN eff2 e ON e.id = ts.topic_id), "
                 + "blended AS (SELECT s.article_id, "
                 + "ROUND((:profilePoints * COALESCE(s.profile_score / NULLIF(s.profile_max_level, 0), 0) "
                 + "+ COALESCE(SUM(c.points), 0))::numeric, 6) AS raw_n "
