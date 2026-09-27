@@ -83,20 +83,22 @@ export async function refreshPriority(qc: QueryClient): Promise<void> {
 }
 
 /**
- * Patches one row of the loaded Priority pages in place (D-07): the row keeps its index
- * and its listed interestScore; only the request's read / starred values are copied.
- * Used by the state mutation (and by the Phase 6 thumbs). The Priority query is
- * patched, never invalidated: any refetch would reload every page and re-rank.
+ * Patches one row of the loaded Priority pages in place (D-07): the row keeps its index;
+ * only the keys present in the patch are copied (null is a real value). The state mutation
+ * copies read / starred from its request; the thumbs vote copies interestScore from the
+ * vote response (D-06). The Priority query is patched, never invalidated: any refetch
+ * would reload every page and re-rank.
  * Only an existing Priority query is updated, so this never creates a cache entry.
  */
 export function patchPriorityArticle(
   qc: QueryClient,
   id: number,
-  patch: { read?: boolean; starred?: boolean },
+  patch: { read?: boolean; starred?: boolean; interestScore?: number | null },
 ): void {
-  const fields: { read?: boolean; starred?: boolean } = {}
+  const fields: { read?: boolean; starred?: boolean; interestScore?: number | null } = {}
   if (patch.read !== undefined) fields.read = patch.read
   if (patch.starred !== undefined) fields.starred = patch.starred
+  if (patch.interestScore !== undefined) fields.interestScore = patch.interestScore
   qc.setQueriesData<InfiniteData<PriorityPage>>({ queryKey: PRIORITY_KEY }, (old) => {
     if (!old) return old
     return {

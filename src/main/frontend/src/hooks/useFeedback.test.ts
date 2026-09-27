@@ -90,6 +90,12 @@ function client(): QueryClient {
   return qc
 }
 
+interface Rendered {
+  vote: ReturnType<typeof useVoteFeedback>
+  article: ReturnType<typeof useArticle>
+  priority?: ReturnType<typeof usePriorityArticles>
+}
+
 /** The vote hook, the by-id article and (optionally) the Priority list in one render. */
 function renderVote(opts: { path?: string; id?: number; priority?: boolean } = {}) {
   const { path = '/', id = 1, priority = false } = opts
@@ -100,14 +106,10 @@ function renderVote(opts: { path?: string; id?: number; priority?: boolean } = {
       { client: qc },
       createElement(MemoryRouter, { initialEntries: [path] }, children),
     )
-  const hook = renderHook(
-    () => ({
-      vote: useVoteFeedback(),
-      article: useArticle(id),
-      priority: usePriorityArticles(priority),
-    }),
-    { wrapper },
-  )
+  // Only the Priority test mounts the list: even a disabled query creates a ['priority'] entry.
+  const useBoth = (): Rendered => ({ vote: useVoteFeedback(), article: useArticle(id) })
+  const useAll = (): Rendered => ({ ...useBoth(), priority: usePriorityArticles() })
+  const hook = renderHook(priority ? useAll : useBoth, { wrapper })
   return { qc, ...hook }
 }
 
@@ -230,7 +232,7 @@ describe('useVoteFeedback', () => {
       result(article(2, { feedback: up, interestScore: 95 })),
     )
     const { qc, result: hook } = renderVote({ path: '/priority', id: 2, priority: true })
-    await waitFor(() => expect(hook.current.priority.rows).toHaveLength(3))
+    await waitFor(() => expect(hook.current.priority!.rows).toHaveLength(3))
     await waitFor(() => expect(hook.current.article.data).toBeDefined())
     qc.setQueryData(['article', 3], article(3))
     qc.setQueryData(['articles', {}], { pages: [], pageParams: [] })
@@ -239,7 +241,7 @@ describe('useVoteFeedback', () => {
     await waitFor(() => expect(toasts()).toHaveLength(1))
 
     await waitFor(() =>
-      expect(hook.current.priority.rows.map((a) => [a.id, a.interestScore])).toEqual([
+      expect(hook.current.priority!.rows.map((a) => [a.id, a.interestScore])).toEqual([
         [1, 90],
         [2, 95],
         [3, 70],

@@ -2,7 +2,10 @@ import { useCallback } from 'react'
 import { useMatch } from 'react-router-dom'
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { articlesApi } from '../api/articles'
+import { ApiError } from '../api/client'
 import { useToastStore } from '../components/Toast'
+import { usePriorityStore } from '../stores/priorityStore'
+import { patchPriorityArticle } from './usePriorityArticles'
 import { formatVoteToast, matchedTopics, nextVote, type Vote, type VoteKind } from '../utils/feedback'
 import type { Article, ArticleFeedback, FeedbackResult } from '../types'
 
@@ -22,6 +25,16 @@ function writeIntent(qc: QueryClient, id: number, feedback: ArticleFeedback | nu
   qc.setQueryData<Article>(['article', id], (old) => (old ? { ...old, feedback } : old))
 }
 
+/** The vote error toast (UI-SPEC Error states): fixed copy by status, never the server's message. */
+function voteErrorCopy(error: unknown, v: VoteVars): string {
+  const status = error instanceof ApiError ? error.status : undefined
+  if (status === 404) return "This article no longer exists, so the vote wasn't saved."
+  if (status === 400 && v.topicIds !== null) {
+    return "Couldn't narrow the vote because this article's topics changed. Open Narrow… and pick again."
+  }
+  return "Couldn't save your vote. Your previous vote is back; press u or d to try again."
+}
+
 /**
  * The thumbs vote (FDBK-01): `press` stores, flips or removes the vote from the freshest intent,
  * `narrow` stores a 👎 limited to picked topics (null picks = every matched topic). Votes are
@@ -33,11 +46,38 @@ export function useVoteFeedback() {
   const { mutate } = useMutation({
     mutationKey: ['feedback'],
     scope: { id: FEEDBACK_SCOPE },
+    meta: { inlineError: true },
     mutationFn: (v: VoteVars): Promise<FeedbackResult> =>
       v.vote === 0 ? articlesApi.clearFeedback(v.id) : articlesApi.setFeedback(v.id, v.vote, v.topicIds),
     onSuccess: (res, v) => {
-      qc.setQueryData(['article', v.id], res.article)
+      // Pitfall 3: while a newer vote on this article is still queued, keep its cached intent.
+      const newerPending =
+        qc.isMutating({
+          mutationKey: ['feedback'],
+          predicate: (m) => (m.state.variables as VoteVars | undefined)?.id === v.id,
+        }) > 1
+      const feedback = newerPending
+        ? (qc.getQueryData<Article>(['article', v.id])?.feedback ?? null)
+        : (res.article.feedback ?? null)
+      qc.setQueryData<Article>(['article', v.id], { ...res.article, feedback })
+      void qc.invalidateQueries({ queryKey: ['interest', 'learned'] })
+      void qc.invalidateQueries({ queryKey: ['articles'] })
+      if (v.onPriority) {
+        // D-06: patch only the voted row; the Priority key is never invalidated or refetched.
+        patchPriorityArticle(qc, v.id, { interestScore: res.article.interestScore ?? null })
+        usePriorityStore.getState().setRankingChanged(true)
+      } else {
+        // D-05: every other by-id article re-reads its badge; ['article', n, 'extracted'] is left alone.
+        void qc.invalidateQueries({
+          predicate: (q) => q.queryKey[0] === 'article' && q.queryKey.length === 2 && q.queryKey[1] !== v.id,
+        })
+      }
       useToastStore.getState().addToast(formatVoteToast(v.kind, res), 'success')
+    },
+    onError: (error, v) => {
+      useToastStore.getState().addToast(voteErrorCopy(error, v), 'error')
+      // Revert the pressed state to the server's.
+      void qc.invalidateQueries({ queryKey: ['article', v.id], exact: true })
     },
   })
 
