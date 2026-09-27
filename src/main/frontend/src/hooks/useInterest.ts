@@ -5,8 +5,10 @@ import {
   type InterestTopic,
   type TopicInput,
   type TopicPreviewRequest,
+  type TierThresholds,
 } from '../api/interest'
 import { usePriorityStore } from '../stores/priorityStore'
+import { DEFAULT_TIERS } from '../utils/interest'
 
 /**
  * Status is refetched on every dialog open (staleTime 0); the server owns coldStart (D-05).
@@ -25,6 +27,22 @@ export function useInterestStatus() {
       return s && s.configured && !s.coldStart && s.eligibleUnscored > 0 ? 15_000 : false
     },
   })
+}
+
+/**
+ * The badge tier thresholds (D-13). Shares the status cache key with useInterestStatus but never
+ * polls: staleTime Infinity and no refetchInterval mean this observer fetches once when nothing is
+ * cached and never refetches on mount or focus. select re-renders only when tiers change. Falls
+ * back to DEFAULT_TIERS while loading, on error, or when the server sends no tiers.
+ */
+export function useInterestTiers(): TierThresholds {
+  const { data } = useQuery({
+    queryKey: ['interest', 'status'],
+    queryFn: interestApi.getStatus,
+    staleTime: Infinity,
+    select: (s) => s.tiers,
+  })
+  return data ?? DEFAULT_TIERS
 }
 
 export function useInterestProfile() {

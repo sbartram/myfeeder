@@ -1,3 +1,6 @@
+import { createContext } from 'react'
+import type { TierThresholds } from '../api/interest'
+
 /**
  * A number with an explicit sign: "+20", "−15" (U+2212 minus) or "0", with `digits` decimals.
  */
@@ -25,10 +28,16 @@ export function articles(count: number): string {
 
 export type Tier = 'high' | 'neutral' | 'low'
 
-/** Badge tier of a server display score, inclusive at the low end (carried-forward tiers): 70+ high, 40+ neutral, else low. */
-export function tierOf(score: number): Tier {
-  if (score >= 70) return 'high'
-  if (score >= 40) return 'neutral'
+/** Tier thresholds used until /api/interest/status loads (D-13 fallback). */
+export const DEFAULT_TIERS: TierThresholds = { high: 70, neutral: 40 }
+
+/** Tier thresholds for every InterestBadge; MainLayout provides the served values, and a tree without a provider gets DEFAULT_TIERS. */
+export const TierContext = createContext<TierThresholds>(DEFAULT_TIERS)
+
+/** Badge tier of a server display score, inclusive at the low end, using the served thresholds (DEFAULT_TIERS until status loads). */
+export function tierOf(score: number, tiers: TierThresholds = DEFAULT_TIERS): Tier {
+  if (score >= tiers.high) return 'high'
+  if (score >= tiers.neutral) return 'neutral'
   return 'low'
 }
 

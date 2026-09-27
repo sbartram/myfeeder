@@ -30,12 +30,22 @@ export interface TopicLearned {
   limit: LearnedLimit
 }
 
+/**
+ * Badge tier thresholds served on /api/interest/status (D-13): a score at or above high is high,
+ * at or above neutral is neutral, else low.
+ */
+export interface TierThresholds {
+  high: number
+  neutral: number
+}
+
 export interface InterestStatus {
   configured: boolean
   breakerState: string
   coldStart: boolean
   eligibleUnscored: number
   failed: number
+  tiers?: TierThresholds
 }
 
 export interface RescoreCount {
