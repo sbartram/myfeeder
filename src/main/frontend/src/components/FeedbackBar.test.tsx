@@ -6,8 +6,9 @@ import { FeedbackBar } from './FeedbackBar'
 import { createQueryClient } from '../queryClient'
 import { useToastStore } from './Toast'
 import { useUIStore } from '../stores/uiStore'
+import { useFeedbackStore } from '../stores/feedbackStore'
 import { useArticle } from '../hooks/useArticles'
-import type { Article, ArticleFeedback, FeedbackResult, TopicEffect } from '../types'
+import type { Article, ArticleFeedback, FeedbackResult, TopicBreakdownRow, TopicEffect } from '../types'
 
 type Reply = { status: number; body?: unknown }
 type Handler = (init?: RequestInit) => Reply | Promise<Reply>
@@ -41,7 +42,23 @@ function deferred<T>() {
   return { promise, resolve }
 }
 
-function article(feedback: ArticleFeedback | null = null): Article {
+const topicRow = (topicId: number, name: string, weight: number, noul = 0.8): TopicBreakdownRow => ({
+  kind: 'TOPIC',
+  topicId,
+  name,
+  noul,
+  hinge: noul * 2 - 1,
+  weight,
+  exact: weight / 2,
+  points: Math.round(weight / 2),
+})
+
+const rustRow = topicRow(7, 'Rust', 20, 0.9)
+const politicsRow = topicRow(3, 'Politics', -30)
+const cryptoRow = topicRow(4, 'Crypto', -15)
+const goRow = topicRow(8, 'Go', 10)
+
+function article(feedback: ArticleFeedback | null = null, topics: TopicBreakdownRow[] = [rustRow]): Article {
   return {
     id: 1,
     feedId: 1,
@@ -61,10 +78,7 @@ function article(feedback: ArticleFeedback | null = null): Article {
       raw: 70,
       total: 70,
       display: 70,
-      rows: [
-        { kind: 'PROFILE', levelIndex: 3, exact: 50, points: 50 },
-        { kind: 'TOPIC', topicId: 7, name: 'Rust', noul: 0.9, hinge: 0.8, weight: 20, exact: 20, points: 20 },
-      ],
+      rows: [{ kind: 'PROFILE', levelIndex: 3, exact: 50, points: 50 }, ...topics],
       nonMatching: [],
     },
     feedback,
@@ -83,10 +97,22 @@ const rustEffect = (before: number, after: number): TopicEffect => ({
 
 const up: ArticleFeedback = { vote: 1, narrowed: false, topics: [] }
 const down: ArticleFeedback = { vote: -1, narrowed: false, topics: [] }
+const narrowedTo = (...picks: TopicBreakdownRow[]): ArticleFeedback => ({
+  vote: -1,
+  narrowed: true,
+  topics: picks.map((p) => ({ topicId: p.topicId, name: p.name })),
+})
 
-function result(feedback: ArticleFeedback | null, effects: TopicEffect[]): FeedbackResult {
-  return { article: article(feedback), scored: true, effects }
+function result(
+  feedback: ArticleFeedback | null,
+  effects: TopicEffect[],
+  topics: TopicBreakdownRow[] = [rustRow]
+): FeedbackResult {
+  return { article: article(feedback, topics), scored: true, effects }
 }
+
+const threeTopics = [politicsRow, rustRow, goRow]
+const narrowControl = () => document.querySelector<HTMLButtonElement>('.narrow-toggle')
 
 function Harness() {
   const { data } = useArticle(1)
@@ -112,6 +138,7 @@ describe('FeedbackBar', () => {
     calls = []
     routes = {}
     useToastStore.setState({ toasts: [] })
+    useFeedbackStore.setState({ narrowOpen: false })
     useUIStore.setState({ selectedArticleId: 1 })
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
       const url = String(input)
@@ -237,5 +264,125 @@ describe('FeedbackBar', () => {
       )
     )
     expect(screen.getByRole('button', { name: 'Thumbs down' })).toHaveTextContent('👎 Down')
+  })
+  it('narrowControlShowsForADownVoteOnSeveralTopics', async () => {
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(down, threeTopics) }))
+    const qc = renderBar()
+
+    const control = await screen.findByRole('button', { name: 'Choose topics to penalize' })
+    expect(control).toHaveTextContent('Narrow…')
+    expect(control).toHaveAttribute('aria-haspopup', 'dialog')
+    expect(control).toHaveAttribute('aria-controls', 'narrow-picker')
+    expect(control).toHaveAttribute('aria-expanded', 'false')
+    expect(control).toHaveClass('toolbar-btn', 'narrow-toggle')
+    expect(control.previousElementSibling).toHaveAccessibleName('Thumbs down')
+
+    qc.setQueryData<Article>(['article', 1], article(up, threeTopics))
+    await waitFor(() => expect(narrowControl()).toBeNull())
+
+    qc.setQueryData<Article>(['article', 1], article(down, [rustRow]))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Thumbs down' })).toHaveAttribute('aria-pressed', 'true'))
+    expect(narrowControl()).toBeNull()
+
+    qc.setQueryData<Article>(['article', 1], article(narrowedTo(rustRow), [rustRow]))
+    await waitFor(() => expect(narrowControl()).not.toBeNull())
+  })
+
+  it('applyingASubsetNarrowsTheVote', async () => {
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(down, threeTopics) }))
+    const put = deferred<Reply>()
+    route('PUT', '/api/articles/1/feedback', () => put.promise)
+    renderBar()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose topics to penalize' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Rust/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Go/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Apply to 1 topic' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.method === 'PUT')!.body!)).toEqual({
+      vote: -1,
+      topicIds: [politicsRow.topicId],
+    })
+    // The intent shows before the response.
+    expect(narrowControl()).toHaveTextContent('Politics only')
+
+    put.resolve({
+      status: 200,
+      body: result(narrowedTo(politicsRow), [rustEffect(16, 20)], threeTopics),
+    })
+    await waitFor(() => expect(toasts()).toHaveLength(1))
+    expect(toasts()[0].startsWith('success:👎 Narrowed · ')).toBe(true)
+    expect(narrowControl()).toHaveTextContent('Politics only')
+  })
+
+  it('narrowedLabels', async () => {
+    const fourTopics = [politicsRow, cryptoRow, rustRow, goRow]
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(narrowedTo(politicsRow), fourTopics) }))
+    const qc = renderBar()
+
+    const one = await screen.findByRole('button', { name: 'Penalizing Politics only. Change topics' })
+    expect(one).toHaveTextContent('Politics only')
+    expect(one).toHaveAttribute('title', 'Politics only')
+    expect(one).toHaveClass('narrowed')
+    expect(one.querySelector('.narrow-toggle-name')).toHaveTextContent('Politics')
+
+    qc.setQueryData<Article>(['article', 1], article(narrowedTo(politicsRow, cryptoRow), fourTopics))
+    await waitFor(() => expect(narrowControl()).toHaveTextContent('Politics, Crypto only'))
+    expect(narrowControl()).toHaveAttribute('title', 'Politics, Crypto only')
+    expect(narrowControl()!.querySelectorAll('.narrow-toggle-name')).toHaveLength(2)
+
+    qc.setQueryData<Article>(['article', 1], article(narrowedTo(politicsRow, cryptoRow, rustRow), fourTopics))
+    await waitFor(() => expect(narrowControl()).toHaveTextContent('3 of 4 topics'))
+    expect(narrowControl()).toHaveAttribute('title', '3 of 4 topics')
+
+    const gone = topicRow(99, 'Deleted', -10)
+    qc.setQueryData<Article>(['article', 1], article(narrowedTo(gone), fourTopics))
+    await waitFor(() => expect(narrowControl()).toHaveTextContent('No topics'))
+    expect(narrowControl()).toHaveAccessibleName('Penalizing No topics. Change topics')
+  })
+
+  it('clickingTheNarrowedLabelReopensThePicker', async () => {
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(narrowedTo(politicsRow), threeTopics) }))
+    renderBar()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Penalizing Politics only. Change topics' }))
+    expect(screen.getByRole('dialog', { name: 'Choose topics to penalize' })).toBeInTheDocument()
+    expect(narrowControl()).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('checkbox', { name: /Politics/ })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: /Rust/ })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: /Go/ })).not.toBeChecked()
+  })
+
+  it('pressingDownAgainRemovesTheWholeVote', async () => {
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(narrowedTo(politicsRow), threeTopics) }))
+    route('DELETE', '/api/articles/1/feedback', () => ({
+      status: 200,
+      body: result(null, [], threeTopics),
+    }))
+    renderBar()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thumbs down' }))
+    await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true))
+    expect(calls.find((c) => c.method === 'DELETE')!.url).toBe('/api/articles/1/feedback')
+    expect(calls.some((c) => c.method === 'PUT')).toBe(false)
+    expect(narrowControl()).toBeNull()
+  })
+
+  it('flippingToUpClearsNarrowing', async () => {
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(narrowedTo(politicsRow), threeTopics) }))
+    const put = deferred<Reply>()
+    route('PUT', '/api/articles/1/feedback', () => put.promise)
+    renderBar()
+
+    await screen.findByRole('button', { name: 'Penalizing Politics only. Change topics' })
+    fireEvent.click(screen.getByRole('button', { name: 'Thumbs up' }))
+    await waitFor(() => expect(narrowControl()).toBeNull())
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.method === 'PUT')!.body!)).toEqual({ vote: 1, topicIds: null })
+    put.resolve({ status: 200, body: result(up, [], threeTopics) })
+    await waitFor(() => expect(toasts()).toHaveLength(1))
+    expect(narrowControl()).toBeNull()
   })
 })

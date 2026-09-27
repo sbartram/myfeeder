@@ -18,6 +18,32 @@ export function matchedTopics(article: Article): TopicBreakdownRow[] {
   )
 }
 
+/** D-13: narrowing is offered on a 👎 with 2 or more matched topics, or on an already narrowed vote. */
+export function canNarrow(article: Article): boolean {
+  const fb = article.feedback
+  if (!fb || fb.vote !== -1) return false
+  return fb.narrowed || matchedTopics(article).length >= 2
+}
+
+/** The narrowed vote's picks that still match the article, in breakdown order (empty when not narrowed). */
+export function narrowedPicks(article: Article): { topicId: number; name: string }[] {
+  const fb = article.feedback
+  if (!fb?.narrowed) return []
+  const picked = new Set(fb.topics.map((t) => t.topicId))
+  return matchedTopics(article)
+    .filter((row) => picked.has(row.topicId))
+    .map((row) => ({ topicId: row.topicId, name: row.name }))
+}
+
+/** The narrow control's label (D-16): "Narrow…", "No topics", "{name} only", "{a}, {b} only" or "{k} of {n} topics". */
+export function narrowLabel(article: Article): string {
+  if (!article.feedback?.narrowed) return 'Narrow…'
+  const picks = narrowedPicks(article)
+  if (picks.length === 0) return 'No topics'
+  if (picks.length <= 2) return `${picks.map((p) => p.name).join(', ')} only`
+  return `${picks.length} of ${matchedTopics(article).length} topics`
+}
+
 /** "+2.0", "−4.0" (U+2212) or "+0.0"; rounds to one decimal first, so a tiny negative prints "+0.0", never "−0.0". */
 export function formatDelta(d: number): string {
   const r = Math.round(d * 10) / 10
