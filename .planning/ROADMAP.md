@@ -221,12 +221,12 @@ Plans:
   4. A vote on an article that matched no topics tells the user so and offers to create a topic from the article
   5. A thumbs-down on an article that matched several topics lets the user choose which topic(s) to penalize
 
-**Plans**: 7 plans
+**Plans**: 1/7 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 06-01-PLAN.md — Backend vote write path: learned CTE (cap, sign clamp, ±50, narrowing), PUT/DELETE /api/articles/{id}/feedback with before/after effects and limits, validation (wave 1)
+- [x] 06-01-PLAN.md — Backend vote write path: learned CTE (cap, sign clamp, ±50, narrowing), PUT/DELETE /api/articles/{id}/feedback with before/after effects and limits, validation (wave 1)
 - [ ] 06-03-PLAN.md — Reading-pane 👍/👎 with instant pressed state and pressed styling, effect toast, serialized votes, Priority patch vs list refresh, error revert (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -267,5 +267,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
 | 5. Blend & Priority View | 8/8 | Complete    | 2026-09-26 |
-| 6. Thumbs Feedback | 0/7 | Not started | - |
+| 6. Thumbs Feedback | 1/7 | In Progress|  |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |

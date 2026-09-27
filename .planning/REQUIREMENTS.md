@@ -56,7 +56,7 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 
 - [ ] **FDBK-01**: User can give an article a thumbs up or down (buttons plus `u`/`d` keys); pressing again removes the vote, and switching flips it
 - [ ] **FDBK-02**: A vote adjusts the effective weight of the topics that article matched; ranking and badges reflect it immediately, with no Jev call
-- [ ] **FDBK-03**: The learned adjustment per topic is capped (±20 points) and never flips a topic's base weight sign; undoing a vote exactly reverses it
+- [x] **FDBK-03**: The learned adjustment per topic is capped (±20 points) and never flips a topic's base weight sign; undoing a vote exactly reverses it
 - [ ] **FDBK-04**: After a vote, the user sees its effect (e.g. "Rust +2")
 - [ ] **FDBK-05**: When a vote matches no topics, the user is told and offered to create a topic from the article
 - [ ] **FDBK-06**: On thumbs-down of an article that matched several topics, the user can choose which topic(s) to penalize
@@ -140,7 +140,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRIO-08 | Phase 5 | Complete |
 | FDBK-01 | Phase 6 | Pending |
 | FDBK-02 | Phase 6 | Pending |
-| FDBK-03 | Phase 6 | Pending |
+| FDBK-03 | Phase 6 | Complete |
 | FDBK-04 | Phase 6 | Pending |
 | FDBK-05 | Phase 6 | Pending |
 | FDBK-06 | Phase 6 | Pending |

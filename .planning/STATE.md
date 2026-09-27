@@ -1,19 +1,19 @@
 ---
 gsd_state_version: "1.0"
 milestone: v0.1.24
-current_phase: 6
+current_phase: 06
 current_phase_name: Thumbs Feedback
 status: executing
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-09-27T01:27:41.431Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-09-27T03:13:07.402Z"
 last_activity: 2026-09-26
-last_activity_desc: Phase 05 complete, transitioned to Phase 6
-state_head: b29beb6ce0832926705fbecc3537a8789b21642c
+last_activity_desc: Phase 06 execution started
+state_head: 70f92b3b122186cd7612650a7047db7e79e3a49b
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 40
-  completed_plans: 33
+  completed_plans: 34
 ---
 
 # Project State
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-26)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 6 — Thumbs Feedback
+**Current focus:** Phase 06 — Thumbs Feedback
 
 ## Current Position
 
-Phase: 6 (Thumbs Feedback) — READY TO EXECUTE
-Plan: Not started
+Phase: 06 (Thumbs Feedback) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
-Last activity: 2026-09-26 - Completed quick task 260926-hhz: fix WR-04 bound the decoded cursor date
+Last activity: 2026-09-26 — Phase 06 execution started
 
 Progress: [███████░░░] 71%
 
@@ -95,6 +95,7 @@ Progress: [███████░░░] 71%
 | Phase 05 P06 | 6 min | 3 tasks | 12 files |
 | Phase 05 P07 | 5 min | 3 tasks | 13 files |
 | Phase 05 P08 | 24 min | 3 tasks | 14 files |
+| Phase 06 P01 | 10min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -158,6 +159,8 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-07: The reading pane explains a score only from GET /api/articles/{id}: ScoreRow chips are TOPIC rows with weight != 0 in server order; WhyBreakdown prints server points and a total line always equal to the badge (capped/floored wording); the client never recomputes points
 - [Phase 05]: 05-07: whyOpen/toggleWhy live in usePriorityStore (session-only), shared by the Why button and i (every view, scored articles only); the non-matching footer is local state that collapses on article change
 - [Phase 05]: 05-08: Priority cursor is an opaque base64url encoding of the served (sort_score, sort_date, id) tuple via the sibling PriorityPage record (same {items,nextCursor} JSON); the next page compares literal cursor values (date bound as UTC), undecodable cursors are a fixed-text 404; PaginatedResponse and other endpoints keep Long cursors (closes G-05-7/WR-02)
+- [Phase 06]: 06-01: ArticleFeedbackService.applyAndReport takes Function<List<Long>, Runnable> so pick validation runs on the matched set before any weight read or write, keeping before/write/after in one method
+- [Phase 06]: 06-01: vote effects skip a matched topic missing from either weight read (topic deleted mid-request) rather than failing the vote
 
 ### Pending Todos
 
@@ -188,6 +191,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-27T00:27:11.400Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-thumbs-feedback/06-UI-SPEC.md
+Last session: 2026-09-27T03:13:07.352Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None
