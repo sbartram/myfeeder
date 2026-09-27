@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { matchedTopics, narrowedPicks } from '../utils/feedback'
 import type { Article } from '../types'
 
@@ -23,11 +23,31 @@ function sameSet(a: Set<number>, b: Set<number>): boolean {
  * the article's matched topics in breakdown order. It opens with the current picks checked (every
  * matched topic when not narrowed). Apply never sends an empty set: every matched topic checked
  * un-narrows (null), a strict subset narrows, and an unchanged set just closes.
+ *
+ * Keys (Pitfall 5): 1-9 toggle, Enter applies, Esc cancels. Each stops propagation, so the
+ * document-level shortcut handler never sees them (React delegates at the root container).
+ * A mousedown outside `.feedback-group` closes it.
  */
 export function NarrowPicker({ article, onApply, onClose }: NarrowPickerProps) {
   const topics = matchedTopics(article)
   const [initial] = useState(() => initialChecks(article))
   const [checked, setChecked] = useState<Set<number>>(() => new Set(initial))
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  // Focus the first checkbox on open (the dialog itself when the list is empty).
+  useEffect(() => {
+    const root = rootRef.current
+    ;(root?.querySelector<HTMLInputElement>('input[type="checkbox"]') ?? root)?.focus()
+  }, [])
+
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      const scope = rootRef.current?.closest('.feedback-group') ?? rootRef.current
+      if (scope && !scope.contains(e.target as Node)) onClose()
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [onClose])
 
   const toggle = (topicId: number) =>
     setChecked((prev) => {
@@ -50,10 +70,39 @@ export function NarrowPicker({ article, onApply, onClose }: NarrowPickerProps) {
     onApply(topics.filter((t) => checked.has(t.topicId)).map((t) => t.topicId))
   }
 
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (/^[1-9]$/.test(e.key)) {
+      const t = topics[Number(e.key) - 1]
+      if (t) toggle(t.topicId)
+    } else if (e.key === 'Enter') {
+      // On a focused Cancel/Apply button, Enter keeps its native click.
+      if ((e.target as HTMLElement).tagName !== 'BUTTON') {
+        e.preventDefault()
+        apply()
+      }
+      e.stopPropagation()
+      return
+    } else if (e.key === 'Escape') {
+      onClose()
+    } else {
+      return
+    }
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
   const k = checked.size
 
   return (
-    <div id="narrow-picker" className="narrow-picker" role="dialog" aria-label="Choose topics to penalize">
+    <div
+      id="narrow-picker"
+      ref={rootRef}
+      className="narrow-picker"
+      role="dialog"
+      aria-label="Choose topics to penalize"
+      tabIndex={-1}
+      onKeyDown={onKeyDown}
+    >
       <p className="narrow-picker-title">Penalize which topics?</p>
       {topics.length === 0 ? (
         <p className="narrow-empty">

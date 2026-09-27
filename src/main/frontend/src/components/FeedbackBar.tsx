@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import { useVoteFeedback } from '../hooks/useFeedback'
 import { useFeedbackStore } from '../stores/feedbackStore'
 import { canNarrow, narrowedPicks, narrowLabel } from '../utils/feedback'
@@ -40,6 +40,24 @@ export function FeedbackBar({ article }: { article: Article }) {
   const narrowable = canNarrow(article)
   const narrowed = article.feedback?.narrowed ?? false
   const label = narrowLabel(article)
+  const toggleRef = useRef<HTMLButtonElement>(null)
+  const wasOpen = useRef(false)
+
+  // The picker closes when another article is shown or the vote stops being a narrowable 👎.
+  useEffect(() => {
+    setNarrowOpen(false)
+  }, [article.id, setNarrowOpen])
+  useEffect(() => {
+    if (narrowOpen && !narrowable) setNarrowOpen(false)
+  }, [narrowOpen, narrowable, setNarrowOpen])
+
+  // On close, focus returns to the narrow control, or to the article text when the control is gone.
+  useEffect(() => {
+    if (wasOpen.current && !narrowOpen) {
+      ;(toggleRef.current ?? document.querySelector<HTMLElement>('.reading-content'))?.focus()
+    }
+    wasOpen.current = narrowOpen
+  }, [narrowOpen])
 
   return (
     <div className="feedback-group">
@@ -63,6 +81,7 @@ export function FeedbackBar({ article }: { article: Article }) {
       </button>
       {narrowable && (
         <button
+          ref={toggleRef}
           className={`toolbar-btn narrow-toggle${narrowed ? ' narrowed' : ''}`}
           aria-haspopup="dialog"
           aria-expanded={narrowOpen}
