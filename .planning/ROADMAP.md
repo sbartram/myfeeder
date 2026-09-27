@@ -221,7 +221,7 @@ Plans:
   4. A vote on an article that matched no topics tells the user so and offers to create a topic from the article
   5. A thumbs-down on an article that matched several topics lets the user choose which topic(s) to penalize
 
-**Plans**: 3/7 plans executed
+**Plans**: 4/7 plans executed
 
 Plans:
 **Wave 1**
@@ -232,7 +232,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 06-02-PLAN.md — Vote state on GET /api/articles/{id}, base/learned on Why rows (wave 2)
-- [ ] 06-04-PLAN.md — Thumbs-down topic picker ("Narrow…", Shift+D), narrowed label, u/d keys and overlay (wave 2)
+- [x] 06-04-PLAN.md — Thumbs-down topic picker ("Narrow…", Shift+D), narrowed label, u/d keys and overlay (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -267,5 +267,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
 | 5. Blend & Priority View | 8/8 | Complete    | 2026-09-26 |
-| 6. Thumbs Feedback | 3/7 | In Progress|  |
+| 6. Thumbs Feedback | 4/7 | In Progress|  |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |

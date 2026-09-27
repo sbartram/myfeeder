@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 06
 current_phase_name: Thumbs Feedback
 status: executing
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-09-27T03:38:32.080Z"
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-09-27T03:48:02.910Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 06 execution started
-state_head: 900f2c8ee127b133817471b1a743d24d4bae74eb
+state_head: 3f379dda7413dcd4275bf03f8dd8d826599a0c7c
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 40
-  completed_plans: 36
+  completed_plans: 37
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-26)
 ## Current Position
 
 Phase: 06 (Thumbs Feedback) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
 Last activity: 2026-09-26 — Phase 06 execution started
 
@@ -98,6 +98,7 @@ Progress: [███████░░░] 71%
 | Phase 06 P01 | 10min | 3 tasks | 14 files |
 | Phase 06 P03 | 5 min | 3 tasks | 13 files |
 | Phase 06 P02 | 5 min | 2 tasks | 12 files |
+| Phase 06 P04 | 7 min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -167,6 +168,8 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-03: a vote on /priority patches only the voted row's interestScore and sets rankingChanged; elsewhere it invalidates ['articles'] and other length-2 ['article', n] keys; ['interest','learned'] always
 - [Phase 06]: 06-02: breakdownInputs rounds the effective weight to 6 decimals like base_w and learned_w, so base + learned equals weight exactly; exact, sort and badge unchanged
 - [Phase 06]: 06-02: article.feedback rides only on findByIdWithBreakdown (GET /api/articles/{id} and the PUT/DELETE feedback responses), never on lists
+- [Phase 06]: 06-04: Enter on a focused Cancel/Apply button in the narrow picker keeps its native click; only Enter elsewhere applies, and every picker Enter stops propagation
+- [Phase 06]: 06-04: Shift+D, like u and d, ignores Cmd/Ctrl/Alt; it opens the picker only when canNarrow and never votes
 
 ### Pending Todos
 
@@ -197,6 +200,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-27T03:38:32.029Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-09-27T03:48:02.858Z
+Stopped at: Completed 06-04-PLAN.md
 Resume file: None
