@@ -12,7 +12,15 @@ const profile = (levelIndex: number, points: number): BreakdownRow => ({
 
 const topic = (
   name: string,
-  opts: { noul?: number; hinge: number; weight: number; exact?: number; points: number }
+  opts: {
+    noul?: number
+    hinge: number
+    weight: number
+    exact?: number
+    points: number
+    baseWeight?: number
+    learnedWeight?: number
+  }
 ): BreakdownRow => ({
   kind: 'TOPIC',
   topicId: name.length,
@@ -22,6 +30,8 @@ const topic = (
   weight: opts.weight,
   exact: opts.exact ?? opts.points,
   points: opts.points,
+  ...(opts.baseWeight !== undefined ? { baseWeight: opts.baseWeight } : {}),
+  ...(opts.learnedWeight !== undefined ? { learnedWeight: opts.learnedWeight } : {}),
 })
 
 const nonMatch = (name: string, noul: number, topicId = 90): NonMatchingTopic => ({ topicId, name, noul })
@@ -189,5 +199,91 @@ describe('WhyBreakdown', () => {
     )
 
     expect(points(container)).toEqual(['+18', '18'])
+  })
+
+  describe('learned part (D-11)', () => {
+    const rust = () =>
+      topic('Rust', { noul: 0.95, hinge: 0.9, weight: 21.8, exact: 19.62, points: 20, baseWeight: 20, learnedWeight: 1.8 })
+    const politics = () =>
+      topic('Politics', { hinge: 0.6, weight: -28.8, exact: -17.28, points: -17, baseWeight: -30, learnedWeight: 1.2 })
+    const label = (c: HTMLElement, name: string) =>
+      Array.from(c.querySelectorAll('.why-label')).find((e) => e.textContent?.startsWith(name))!
+
+    it('learnedPartShownWhenItRoundsAboveZero', () => {
+      const { container } = render(<WhyBreakdown breakdown={breakdown([rust()], 20, 20)} articleId={1} />)
+
+      expect(labels(container)).toEqual(['Rust  90% × +21.8 (+20 +1.8 learned)', 'Score'])
+      expect(points(container)).toEqual(['+20', '20'])
+    })
+
+    it('negativeLearnedPart', () => {
+      const { container } = render(
+        <WhyBreakdown breakdown={breakdown([profile(3, 64), politics()], 47, 47)} articleId={1} />
+      )
+
+      expect(labels(container)).toContain('Politics  60% × −28.8 (−30 +1.2 learned)')
+    })
+
+    it('phase5LabelUnchangedWithoutLearned', () => {
+      const tiny = render(
+        <WhyBreakdown
+          breakdown={breakdown(
+            [topic('Rust', { noul: 0.93, hinge: 0.86, weight: 20.04, exact: 17.2, points: 17, baseWeight: 20, learnedWeight: 0.04 })],
+            17,
+            17
+          )}
+          articleId={1}
+        />
+      )
+      expect(labels(tiny.container)[0]).toBe('Rust  86% × +20')
+      expect(label(tiny.container, 'Rust').getAttribute('title')).toBe('Match 93% → counts 86% × +20 = +17.2 pts')
+      tiny.unmount()
+
+      const absent = render(
+        <WhyBreakdown
+          breakdown={breakdown(
+            [topic('Rust', { noul: 0.93, hinge: 0.86, weight: 20, exact: 17.2, points: 17 })],
+            17,
+            17
+          )}
+          articleId={1}
+        />
+      )
+      expect(labels(absent.container)[0]).toBe('Rust  86% × +20')
+      expect(label(absent.container, 'Rust').getAttribute('title')).toBe('Match 93% → counts 86% × +20 = +17.2 pts')
+    })
+
+    it('titleCarriesBaseAndLearned', () => {
+      const { container } = render(<WhyBreakdown breakdown={breakdown([rust()], 20, 20)} articleId={1} />)
+
+      const title = label(container, 'Rust').getAttribute('title')
+      expect(title).toBe('Match 95% → counts 90% × +21.8 = +19.6 pts · base +20, learned +1.8')
+      expect(title?.endsWith(' · base +20, learned +1.8')).toBe(true)
+    })
+
+    it('rowsStillSumToTheBadge', () => {
+      const { container } = render(
+        <WhyBreakdown
+          breakdown={breakdown(
+            [profile(3, 64), rust(), politics(), topic('Go', { hinge: 0.7, weight: 10, points: 4 })],
+            71,
+            71
+          )}
+          articleId={1}
+        />
+      )
+
+      const values = points(container)
+      const rows = values.slice(0, -1).map((v) => Number(v!.replace('−', '-')))
+      expect(values).toEqual(['+64', '+20', '−17', '+4', '71'])
+      expect(rows.reduce((a, b) => a + b, 0)).toBe(71)
+      expect(labels(container)).toEqual([
+        'Profile match (Mainly)',
+        'Rust  90% × +21.8 (+20 +1.8 learned)',
+        'Politics  60% × −28.8 (−30 +1.2 learned)',
+        'Go  70% × +10',
+        'Score',
+      ])
+    })
   })
 })
