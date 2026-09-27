@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 06
 current_phase_name: Thumbs Feedback
 status: executing
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-09-27T03:13:07.402Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-09-27T03:29:03.292Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 06 execution started
-state_head: 70f92b3b122186cd7612650a7047db7e79e3a49b
+state_head: 402550acc7cbb3fc7f6e68e450b12bb4ac6c9908
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 40
-  completed_plans: 34
+  completed_plans: 35
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-26)
 ## Current Position
 
 Phase: 06 (Thumbs Feedback) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-09-26 — Phase 06 execution started
 
@@ -96,6 +96,7 @@ Progress: [███████░░░] 71%
 | Phase 05 P07 | 5 min | 3 tasks | 13 files |
 | Phase 05 P08 | 24 min | 3 tasks | 14 files |
 | Phase 06 P01 | 10min | 3 tasks | 14 files |
+| Phase 06 P03 | 5 min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -161,6 +162,8 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-08: Priority cursor is an opaque base64url encoding of the served (sort_score, sort_date, id) tuple via the sibling PriorityPage record (same {items,nextCursor} JSON); the next page compares literal cursor values (date bound as UTC), undecodable cursors are a fixed-text 404; PaginatedResponse and other endpoints keep Long cursors (closes G-05-7/WR-02)
 - [Phase 06]: 06-01: ArticleFeedbackService.applyAndReport takes Function<List<Long>, Runnable> so pick validation runs on the matched set before any weight read or write, keeping before/write/after in one method
 - [Phase 06]: 06-01: vote effects skip a matched topic missing from either weight read (topic deleted mid-request) rather than failing the vote
+- [Phase 06]: 06-03: vote errors use fixed UI-SPEC copy by ApiError.status (meta.inlineError); a failed vote refetches the by-id article so the pressed state reverts
+- [Phase 06]: 06-03: a vote on /priority patches only the voted row's interestScore and sets rankingChanged; elsewhere it invalidates ['articles'] and other length-2 ['article', n] keys; ['interest','learned'] always
 
 ### Pending Todos
 
@@ -191,6 +194,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-27T03:13:07.352Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-09-27T03:29:03.242Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None
