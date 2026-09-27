@@ -384,9 +384,20 @@ html, body, #root {
 .reading-toolbar {
   padding: 8px 16px;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  row-gap: 4px;
   border-bottom: 1px solid var(--border);
 }
+
+.feedback-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vote-btn[aria-pressed='true'] { color: var(--accent); font-weight: 600; }
 
 .reading-content {
   flex: 1;
