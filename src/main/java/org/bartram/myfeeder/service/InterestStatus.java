@@ -12,9 +12,11 @@ package org.bartram.myfeeder.service;
  *   <li>{@code eligibleUnscored}: eligible articles (unread, inside the window) with no score row
  *       or a FAILED row still under 3 attempts (D-11, D-12).</li>
  *   <li>{@code failed}: eligible articles whose FAILED row used all 3 attempts (D-11).</li>
+ *   <li>{@code tiers}: the badge tier thresholds from {@code myfeeder.interest.blend.tiers} (D-13, appended in Phase 7).</li>
  * </ul>
  *
  * <p>Both counts come from one query, so they are consistent with each other. Later fields are
  * appended; existing components are never renamed.
  */
-public record InterestStatus(boolean configured, String breakerState, boolean coldStart, long eligibleUnscored, long failed) {}
+public record InterestStatus(boolean configured, String breakerState, boolean coldStart, long eligibleUnscored,
+                             long failed, TierThresholds tiers) {}

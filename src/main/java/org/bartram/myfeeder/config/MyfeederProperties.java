@@ -57,6 +57,16 @@ public class MyfeederProperties {
             private double learnRate = 2;
             /** Bound on a topic's learned adjustment in points, either direction (FDBK-03). */
             private int learnedCap = 20;
+            /** Badge tier thresholds served on /api/interest/status (D-13). */
+            private Tiers tiers = new Tiers();
+
+            @Data
+            public static class Tiers {
+                /** Display score at or above which a badge is high (inclusive). Phase 7 tunes it. */
+                private int high = 70;
+                /** Display score at or above which a badge is neutral (inclusive); below it the badge is low. */
+                private int neutral = 40;
+            }
         }
     }
 }

@@ -136,6 +136,19 @@ class InterestApiIntegrationTest {
     }
 
     @Test
+    void statusServesTheConfiguredTierThresholds() throws Exception {
+        mockMvc.perform(get("/api/interest/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.configured").exists())
+                .andExpect(jsonPath("$.breakerState").exists())
+                .andExpect(jsonPath("$.coldStart").exists())
+                .andExpect(jsonPath("$.eligibleUnscored").exists())
+                .andExpect(jsonPath("$.failed").exists())
+                .andExpect(jsonPath("$.tiers.high").value(70))
+                .andExpect(jsonPath("$.tiers.neutral").value(40));
+    }
+
+    @Test
     void statusCountsEligibleUnscoredAndExhaustedFailures() throws Exception {
         // Deltas over a baseline: the Spring context and Postgres are shared with other test classes.
         String before = mockMvc.perform(get("/api/interest/status"))

@@ -25,11 +25,13 @@ public class InterestStatusService {
 
     public InterestStatus status() {
         ScoreCounts c = store.counts(properties.getInterest().eligibilityCutoff());
+        MyfeederProperties.Interest.Blend.Tiers t = properties.getInterest().getBlend().getTiers();
         return new InterestStatus(
                 jevApiClient.isConfigured(),
                 circuitBreakerRegistry.circuitBreaker("jev").getState().name(),
                 interestService.isColdStart(),
                 c.eligibleUnscored(),
-                c.failed());
+                c.failed(),
+                new TierThresholds(t.getHigh(), t.getNeutral()));
     }
 }
