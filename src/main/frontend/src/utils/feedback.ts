@@ -1,4 +1,5 @@
-import type { Article, FeedbackResult, TopicBreakdownRow } from '../types'
+import type { Article, FeedbackResult, TopicBreakdownRow, TopicEffect } from '../types'
+import { formatSigned } from './interest'
 
 /** An article's vote: 1 up, -1 down, 0 none. */
 export type Vote = -1 | 0 | 1
@@ -66,12 +67,35 @@ const SAVED_LEADS: Record<Exclude<VoteKind, 'removed'>, string> = {
   'all-matched': '👎 All matched topics',
 }
 
+/** The toast lists at most this many topics, then " · +N more" (D-09). */
+const MAX_LISTED = 3
+
 /**
- * The effect toast (D-07, D-08, D-10, FDBK-04): an unscored article's vote says it counts once
- * the article is scored (D-03), and a scored article with no matched topic says so (D-18, D-19);
- * a removal of either is just "Vote removed". Otherwise each topic whose rounded server change
- * (after − before) is non-zero, largest change first (ties keep server order), joined by " · "
- * after the vote's lead. The client prints the server's numbers and never recomputes a weight.
+ * Why a topic's change is what it is (D-07), from the server's limit, learned and after values:
+ * a limit note, or "(now …)" for a disliked topic so a softening 👍 still reads as buried.
+ */
+function effectNote(e: TopicEffect): string {
+  switch (e.limit) {
+    case 'LEARNED_CAP':
+      return e.learned > 0
+        ? ` (learned at max ${formatSigned(e.learned)})`
+        : ` (learned at min ${formatSigned(e.learned)})`
+    case 'SIGN_CLAMP':
+      return " (can't cross 0)"
+    case 'WEIGHT_RANGE':
+      return e.after > 0 ? ' (weight at max +50)' : ' (weight at min −50)'
+    default:
+      return e.baseWeight < 0 ? ` (now ${formatSigned(e.after, 1)})` : ''
+  }
+}
+
+/**
+ * The effect toast (D-07..D-10, FDBK-04): an unscored article's vote says it counts once the
+ * article is scored (D-03), and a scored article with no matched topic says so (D-18, D-19); a
+ * removal of either is just "Vote removed". Otherwise it lists each topic whose rounded server
+ * change (after − before) is non-zero or that hit a limit, largest change first (ties keep server
+ * order), at most three then "+N more", each with its note; when every change rounds away it says
+ * "Effect under 0.1 points". The client prints the server's numbers and never recomputes a weight.
  */
 export function formatVoteToast(kind: VoteKind, result: FeedbackResult): string {
   if (!result.scored) {
@@ -80,10 +104,16 @@ export function formatVoteToast(kind: VoteKind, result: FeedbackResult): string 
   if (result.effects.length === 0) {
     return kind === 'removed' ? 'Vote removed' : `${SAVED_LEADS[kind]} · No topics matched`
   }
-  const entries = result.effects
-    .map((e) => ({ name: e.name, d: e.after - e.before }))
-    .filter(({ d }) => Math.round(d * 10) !== 0)
+  const listed = result.effects
+    .map((e) => ({ e, d: e.after - e.before }))
+    .filter(({ e, d }) => Math.round(d * 10) !== 0 || e.limit !== 'NONE')
     .sort((a, b) => Math.abs(b.d) - Math.abs(a.d))
-    .map(({ name, d }) => `${name} ${formatDelta(d)}`)
+  if (listed.length === 0) {
+    return `${kind === 'removed' ? 'Vote removed' : SAVED_LEADS[kind]} · Effect under 0.1 points`
+  }
+  const entries = listed
+    .slice(0, MAX_LISTED)
+    .map(({ e, d }) => `${e.name} ${formatDelta(d)}${effectNote(e)}`)
+  if (listed.length > MAX_LISTED) entries.push(`+${listed.length - MAX_LISTED} more`)
   return LEADS[kind] + entries.join(' · ')
 }
