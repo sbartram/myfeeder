@@ -11,6 +11,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useArticles } from './hooks/useArticles'
 import { usePriorityArticles, PRIORITY_KEY, refreshPriority } from './hooks/usePriorityArticles'
 import { useFeeds } from './hooks/useFeeds'
+import { useInterestTiers } from './hooks/useInterest'
 import { useUIStore } from './stores/uiStore'
 import { usePreferences } from './stores/preferencesStore'
 import { AddFeedDialog } from './components/AddFeedDialog'
@@ -19,6 +20,7 @@ import { InterestsDialog, type TopicDraft } from './components/InterestsDialog'
 import { ShortcutOverlay } from './components/ShortcutOverlay'
 import { ToastContainer } from './components/Toast'
 import { createQueryClient } from './queryClient'
+import { TierContext } from './utils/interest'
 import './App.css'
 
 const queryClient = createQueryClient()
@@ -90,6 +92,7 @@ function MainLayout() {
   const qc = useQueryClient()
   const isPriority = useMatch('/priority') !== null
   const priority = usePriorityArticles(isPriority)
+  const tiers = useInterestTiers()
 
   // Leaving /priority drops the frozen ranking so re-entry fetches page 1 fresh (D-08).
   // Under StrictMode, development may fetch page 1 twice on first mount (research A7).
@@ -109,7 +112,7 @@ function MainLayout() {
   })
 
   return (
-    <>
+    <TierContext.Provider value={tiers}>
       <AppShell
         feedPanel={<FeedPanel onAddFeed={() => setAddFeedOpen(true)} onSettings={() => setSettingsOpen(true)} onHelp={() => setShortcutsOpen(true)} />}
         articleList={
@@ -153,7 +156,7 @@ function MainLayout() {
       />
       <ShortcutOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <ToastContainer />
-    </>
+    </TierContext.Provider>
   )
 }
 
