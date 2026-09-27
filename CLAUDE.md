@@ -38,6 +38,7 @@ cd src/main/frontend && npm run dev
 - **Database**: PostgreSQL via Spring Data JDBC (not JPA), Flyway migrations
 - **Caching**: Redis via Spring Cache abstraction
 - **AI**: Spring AI Anthropic starter on the classpath (not yet used by any application code)
+- **Jev (interest scoring)**: `org.springaicommunity:spring-ai-starter-typesafe` (explicit version 0.1.0 via `typesafeVersion` in `build.gradle.kts`; it is not in the Spring AI BOM); the app owns the `TypeSafeClient` bean (see Jev Scoring and Resilience)
 - **Resilience**: Resilience4j circuit breaker via Spring Cloud
 - **HTTP Client**: Spring RestClient for outbound calls
 - **Monitoring**: Spring Boot Actuator
@@ -48,15 +49,15 @@ cd src/main/frontend && npm run dev
 
 ```
 org.bartram.myfeeder
-├── config/           MyfeederProperties, RestClientConfig (User-Agent customizer), SpaForwardController
-├── model/            Feed, FeedType, Article, Folder, Board, BoardArticle, IntegrationConfig, IntegrationType, UnreadCount, InterestProfile, InterestTopic
-├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig/InterestProfile/InterestTopic repositories
+├── config/           MyfeederProperties, RestClientConfig (User-Agent customizer), SpaForwardController, TypeSafeConfig (app-owned TypeSafeClient, jev retry interval), InterestScoringConfig (jev-score executor), JevEventLogging (jev retry/breaker log lines)
+├── model/            Feed, FeedType, Article, Folder, Board, BoardArticle, IntegrationConfig, IntegrationType, UnreadCount, InterestProfile, InterestTopic, InterestBreakdown, ArticleFeedback
+├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig/InterestProfile/InterestTopic repositories, ArticleScoreStore, ArticleFeedbackStore, InterestScoreQueries (blend/learned CTEs: Priority sort, badge, breakdown)
 ├── parser/           FeedParser (ROME + Jackson), ParsedFeed, ParsedArticle, FeedParseException, OpmlFeed, OpmlParseException
-├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, OpmlImportResult, FeedFetcher, FetchResult, FeedUrlValidator, ArticleExtractionService, ExtractedContent, NotFoundException, FeedFetchException
-├── integration/      RaindropService, RaindropApiClient/RaindropApiClientImpl (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig, RaindropCollection, RaindropNotConfiguredException
-├── event/            FeedSavedEvent, FeedDeletedEvent (after-commit feed scheduling events)
-├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml/Version/Interest/InterestStatus/InterestPreview controllers + PaginatedResponse + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest, FeedUpdateRequest, ProfileUpdateRequest, TopicRequest, TopicPreviewRequest + board/folder request records)
-├── scheduler/        FeedPollingScheduler (dynamic per-feed scheduling with backoff)
+├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, OpmlImportResult, FeedFetcher, FetchResult, FeedUrlValidator, ArticleExtractionService, ExtractedContent, NotFoundException, FeedFetchException; interest: InterestService, InterestStatusService, InterestStatus, TierThresholds, InterestPreviewService, InterestRescoreService, RescoreCount, ArticleScoringService, ScoringQueue, ScoringFailure, InterestScoringListener, InterestQuestions, ArticleStateBuilder, PriorityService, ScoreBreakdowns, ArticleFeedbackService, FeedbackResult, LearnedLimit, TopicLearned, TopicPreviewResponse
+├── integration/      RaindropService, RaindropApiClient/RaindropApiClientImpl (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig, RaindropCollection, RaindropNotConfiguredException, JevApiClient/JevApiClientImpl (@CircuitBreaker(name = "jev") + @Retry(name = "jev")), JevJudgment, JevNotConfiguredException
+├── event/            FeedSavedEvent, FeedDeletedEvent (after-commit feed scheduling events), ArticlesIngestedEvent (new article ids for interest scoring)
+├── controller/       Feed/Article/Folder/Board/IntegrationConfig/Opml/Version/Interest/InterestStatus/InterestPreview/InterestRescore controllers + PaginatedResponse + PriorityPage + GlobalExceptionHandler + request DTOs (SubscribeRequest, MarkReadRequest, ArticleStateRequest, FeedUpdateRequest, ProfileUpdateRequest, TopicRequest, TopicPreviewRequest, FeedbackRequest, RescoreRequest + board/folder request records)
+├── scheduler/        FeedPollingScheduler (dynamic per-feed scheduling with backoff), InterestScoringSweep (jev scoring sweep)
 └── MyfeederApplication.java (@EnableScheduling, @ConfigurationPropertiesScan)
 ```
 
@@ -84,8 +85,8 @@ org.bartram.myfeeder
 - **Tests**: Vitest + React Testing Library; run with `cd src/main/frontend && npm test`
 - **Type-check**: use `npx tsc -b` from `src/main/frontend/` — plain `tsc --noEmit` returns success even with errors because the root `tsconfig.json` has `files: []` and uses project references
 - **Key conventions**:
-  - API client in `src/api/` — thin fetch wrappers per domain (feeds, articles, folders, boards, integrations, opml)
-  - TanStack Query hooks in `src/hooks/` — one file per domain (useArticles, useFeeds, useFolders, useBoards, useOpml)
+  - API client in `src/api/` — thin fetch wrappers per domain (feeds, articles, folders, boards, integrations, opml, interest)
+  - TanStack Query hooks in `src/hooks/` — one file per domain (useArticles, useFeeds, useFolders, useBoards, useOpml, useInterest (interest status, tiers and rubric), useFeedback, usePriorityArticles)
   - Zustand stores in `src/stores/` — `uiStore` (selection, panel state), `preferencesStore` (localStorage-persisted settings)
   - Components in `src/components/` — AppShell, FeedPanel, ArticleList, ReadingPane, BoardArticleList, BoardManager, SettingsDialog, ShortcutOverlay, Toast, dialogs
   - Keyboard shortcuts: vim-style (j/k/n/p/m/s/o/b/v/r), g-chords, managed by `useKeyboardShortcuts` hook
@@ -96,7 +97,7 @@ org.bartram.myfeeder
 - `compose.yaml` defines Postgres and Redis for local dev (`bootRun`)
 - `TestcontainersConfiguration` provides Postgres and Redis containers for tests and `bootTestRun`
 - Docker must be running for both tests and local development
-- Flyway migrations: `V1__initial_schema.sql` (feeds, articles, integration_configs), `V2__folders_boards_and_feed_folder.sql` (folders, boards, board_articles, feed.folder_id), `V3__article_image_url.sql`, `V4__strip_raindrop_api_token.sql`, `V5__article_extracted_content.sql`
+- Flyway migrations: `V1__initial_schema.sql` (feeds, articles, integration_configs), `V2__folders_boards_and_feed_folder.sql` (folders, boards, board_articles, feed.folder_id), `V3__article_image_url.sql`, `V4__strip_raindrop_api_token.sql`, `V5__article_extracted_content.sql`, `V6__interest_scoring.sql` (interest_profile, interest_topic, article_score, article_topic_score, article_feedback, article_feedback_topic)
 
 ## Deployment
 
@@ -110,10 +111,12 @@ org.bartram.myfeeder
 VERSION=$(./gradlew currentVersion -q | grep 'Project version' | awk '{print $NF}')
 docker build --provenance=false -t registry.bartram.org/bartram/myfeeder:$VERSION .
 docker push registry.bartram.org/bartram/myfeeder:$VERSION
-./deploy.sh $VERSION                    # needs MYFEEDER_PG_PASSWORD + MYFEEDER_ANTHROPIC_API_KEY (MYFEEDER_RAINDROP_API_TOKEN optional)
+./deploy.sh $VERSION                    # needs MYFEEDER_PG_PASSWORD + MYFEEDER_ANTHROPIC_API_KEY (MYFEEDER_RAINDROP_API_TOKEN and MYFEEDER_TYPESAFE_API_KEY optional)
 kubectl -n myfeeder rollout status deploy/myfeeder
 kubectl -n myfeeder logs deploy/myfeeder --tail=20   # verify clean startup
 ```
+
+For a minor release (new schema, dependency or view, as for 0.2.0) cut the tag with `./gradlew release -Prelease.versionIncrementer=incrementMinor`; the default increments the patch.
 
 Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT`); always pass `$VERSION` to `deploy.sh` explicitly (no arg → axion computes the *next* snapshot, which won't match any pushed image).
 
@@ -125,7 +128,7 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 - **Build image** (Dockerfile, not buildpacks — see Gotchas): first build the jar on the host with `./gradlew clean bootJar` (compiles + embeds the frontend via `npmBuild`→`processResources`, stamps the axion-release version into build-info), then `docker build --provenance=false -t registry.bartram.org/bartram/myfeeder:<version> .` (the `Dockerfile` only packages `build/libs/*.jar` into a JRE runtime; `--provenance=false` keeps the pushed artifact a plain single-platform image instead of a buildkit attestation index). Use `clean` so the latest frontend bundle is included; `<version>` comes from `./gradlew currentVersion -q`.
 - **Push image**: `docker push registry.bartram.org/bartram/myfeeder:<version>` (build does NOT push)
 - **Cut release tag**: `./gradlew release` (creates tag locally via axion-release, pushes via git CLI — see Gotchas)
-- **Deploy**: `./deploy.sh [version]` (requires `MYFEEDER_PG_PASSWORD` and `MYFEEDER_ANTHROPIC_API_KEY` env vars; no arg → axion computes the *next* snapshot version, which won't match a built image, so for chart-only redeploys against a release tag pass it explicitly: `./deploy.sh 0.1.2`)
+- **Deploy**: `./deploy.sh [version]` (requires `MYFEEDER_PG_PASSWORD` and `MYFEEDER_ANTHROPIC_API_KEY` env vars; `MYFEEDER_RAINDROP_API_TOKEN` and `MYFEEDER_TYPESAFE_API_KEY` are optional — a blank TypeSafe key disables interest scoring and the app still starts; every key or token is passed through `helm --set`, so it must not contain `,` or `\`; no arg → axion computes the *next* snapshot version, which won't match a built image, so for chart-only redeploys against a release tag pass it explicitly: `./deploy.sh 0.1.2`)
 
 
 ## Key Conventions
@@ -144,7 +147,7 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 - **Schema**: `V6__interest_scoring.sql` creates all six interest tables (`interest_profile` singleton row 1, `interest_topic`, `article_score`, `article_topic_score`, `article_feedback`, `article_feedback_topic`); later milestone phases add no migrations
 - **InterestService** owns the profile/topic limits (service constants, fixed-text 400s) and the version rules; `isColdStart()` is the single cold-start predicate (blank profile AND zero topics) — callers never reimplement it
 - **InterestQuestions** and **ArticleStateBuilder** are pure static builders shared by the preview and the scorer, so the preview judges exactly what scoring sends
-- **InterestStatusService**/`InterestStatus` serve `{configured, breakerState, coldStart, eligibleUnscored, failed}` (breaker state read from `CircuitBreakerRegistry.circuitBreaker("jev")`); both counts come from one query over eligible articles (unread, inside the window): `eligibleUnscored` = no score row or a FAILED row under 3 attempts, `failed` = FAILED with all 3 attempts used; later fields are appended, existing ones are never renamed
+- **InterestStatusService**/`InterestStatus` serve `{configured, breakerState, coldStart, eligibleUnscored, failed, tiers}` (breaker state read from `CircuitBreakerRegistry.circuitBreaker("jev")`; `tiers` = `{high, neutral}` from `myfeeder.interest.blend.tiers.*`, D-13); both counts come from one query over eligible articles (unread, inside the window): `eligibleUnscored` = no score row or a FAILED row under 3 attempts, `failed` = FAILED with all 3 attempts used; later fields are appended, existing ones are never renamed
 - **InterestPreviewService**/`TopicPreviewResponse` judge one description against one article with one `JevApiClient.judge` call and return `{noul, model}`; validation runs before `judge()`, there is no transaction and no service retry, and the preview persists nothing
 - **Routes** under `/api/interest`: `GET|PUT /profile`, `GET|POST /topics`, `GET /topics/learned`, `PUT|DELETE /topics/{id}`, `GET /status`, `POST /preview`, `GET|POST /rescore` (the POST requires the JSON body `{"confirm": true}` — a bodyless/form/text POST gets 415 and a missing or false `confirm` gets 400, which blocks cross-site triggering; it is 409 when Jev is unconfigured or in cold start)
 - **Scores are discarded if the rubric changed mid-call**: after `judge()` returns, `ArticleScoringService.score` re-reads the profile version and each topic's version; if any changed, it stores nothing and records no attempt, so the sweep re-scores the article. Changing only a topic's name or weight doesn't count. Keep this check when changing the scoring write path.
