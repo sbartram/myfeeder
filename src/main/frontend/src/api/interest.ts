@@ -1,4 +1,5 @@
 import { apiGet, apiPost, apiPut, apiDelete } from './client'
+import type { LearnedLimit } from '../types'
 
 export interface InterestProfile {
   id: number
@@ -15,6 +16,18 @@ export interface InterestTopic {
   version: number
   createdAt: string
   updatedAt: string
+}
+
+/**
+ * One topic's learned adjustment from GET /api/interest/topics/learned (FDBK-07). The server
+ * computes every number; the client prints them and never adds base and learned.
+ */
+export interface TopicLearned {
+  topicId: number
+  baseWeight: number
+  learned: number
+  effectiveWeight: number
+  limit: LearnedLimit
 }
 
 export interface InterestStatus {
@@ -53,6 +66,7 @@ export const interestApi = {
   saveProfile: (profileText: string) =>
     apiPut<InterestProfile>('/interest/profile', { profileText }),
   listTopics: () => apiGet<InterestTopic[]>('/interest/topics'),
+  getLearned: () => apiGet<TopicLearned[]>('/interest/topics/learned'),
   createTopic: (input: TopicInput) => apiPost<InterestTopic>('/interest/topics', input),
   updateTopic: (id: number, input: TopicInput) =>
     apiPut<InterestTopic>(`/interest/topics/${id}`, input),

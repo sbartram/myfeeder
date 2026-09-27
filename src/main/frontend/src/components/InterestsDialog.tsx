@@ -4,6 +4,7 @@ import {
   useInterestProfile,
   useInterestStatus,
   useInterestTopics,
+  useLearnedTopics,
   useRescoreCount,
   useRescoreUnread,
   useSaveInterestProfile,
@@ -464,6 +465,9 @@ function TopicsSection({ topics, status, statusFailed, onDirtyCountChange, draft
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
   const article = useArticle(selectedArticleId)
   const previewBlock = computePreviewBlock(status, statusFailed, selectedArticleId)
+  // Matched by topic id, so the server's order never reorders the rows (FDBK-07).
+  const learned = useLearnedTopics()
+  const learnedById = new Map((learned.data ?? []).map((entry) => [entry.topicId, entry]))
   // The seeded draft took key d-1, so + Add topic continues at d-2.
   const draftCounter = useRef(draft !== null && !draftBlocked ? 1 : 0)
 
@@ -525,6 +529,11 @@ function TopicsSection({ topics, status, statusFailed, onDirtyCountChange, draft
         </span>
       </div>
       <p className="interests-help">{TOPICS_HELP}</p>
+      {learned.isError && (
+        <p className="interests-note">
+          Couldn't load learned adjustments. Close and reopen Interests to try again.
+        </p>
+      )}
       {previewBlock && previewBlock.kind !== 'status-pending' ? (
         <p className="interests-preview-target">Preview unavailable: {previewBlock.reason}</p>
       ) : article.data ? (
@@ -554,6 +563,7 @@ function TopicsSection({ topics, status, statusFailed, onDirtyCountChange, draft
               onDeleted={() => removeRow(row.key)}
               articleId={selectedArticleId}
               previewBlock={previewBlock}
+              learned={row.id !== null ? learnedById.get(row.id) : undefined}
             />
           ))}
         </div>

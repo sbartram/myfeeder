@@ -51,6 +51,15 @@ export function useInterestTopics() {
   return useQuery({ queryKey: ['interest', 'topics'], queryFn: interestApi.listTopics })
 }
 
+/**
+ * Each topic's learned adjustment and effective weight (FDBK-07). It has its own key so refreshing
+ * learned values after a vote or a topic save never refetches the topics list, which would
+ * disturb unsaved row edits (research Pattern 4).
+ */
+export function useLearnedTopics() {
+  return useQuery({ queryKey: ['interest', 'learned'], queryFn: interestApi.getLearned })
+}
+
 /** Appends the created topic to the cached list; a new topic can end cold start (D-05). */
 export function useCreateInterestTopic() {
   const qc = useQueryClient()
@@ -60,6 +69,7 @@ export function useCreateInterestTopic() {
     onSuccess: (topic: InterestTopic) => {
       qc.setQueryData<InterestTopic[]>(TOPICS_KEY, (old) => (old ? [...old, topic] : [topic]))
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+      void qc.invalidateQueries({ queryKey: ['interest', 'learned'] })
       usePriorityStore.getState().setRankingChanged(true)
     },
   })
@@ -79,6 +89,7 @@ export function useUpdateInterestTopic() {
       qc.setQueryData<InterestTopic[]>(TOPICS_KEY, (old) =>
         old?.map((t) => (t.id === topic.id ? topic : t)),
       )
+      void qc.invalidateQueries({ queryKey: ['interest', 'learned'] })
       usePriorityStore.getState().setRankingChanged(true)
     },
   })
@@ -104,6 +115,7 @@ export function useDeleteInterestTopic() {
     onSuccess: (_result: void, id: number) => {
       qc.setQueryData<InterestTopic[]>(TOPICS_KEY, (old) => old?.filter((t) => t.id !== id))
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+      void qc.invalidateQueries({ queryKey: ['interest', 'learned'] })
       usePriorityStore.getState().setRankingChanged(true)
     },
   })

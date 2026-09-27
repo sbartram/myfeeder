@@ -769,6 +769,16 @@ html, body, #root {
 
 .interests-help { font-size: 13px; line-height: 1.5; color: var(--text-muted); margin-bottom: 8px; }
 
+/* Read-only learned line under a saved topic's weight (FDBK-07) */
+.interests-learned {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0 0;
+}
+.interests-learned-value { color: var(--text-secondary); }
+
 .interests-empty-heading { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
 
 .interests-topic-list { display: flex; flex-direction: column; gap: 8px; }

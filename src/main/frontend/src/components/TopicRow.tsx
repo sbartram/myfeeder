@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { InterestTopic } from '../api/interest'
+import type { InterestTopic, TopicLearned } from '../api/interest'
 import { ApiError } from '../api/client'
 import {
   useCreateInterestTopic,
@@ -208,6 +208,51 @@ interface TopicRowProps {
   /** The article open in the reading pane, which Preview judges the row against. */
   articleId?: number | null
   previewBlock?: PreviewBlock | null
+  /** This saved topic's learned values from the server, or undefined (loading, failed, a draft). */
+  learned?: TopicLearned
+}
+
+/**
+ * The read-only learned line under a saved row's weight (FDBK-07). It prints the server's learned
+ * and effective values; the only client arithmetic is rounding. While the base weight has an
+ * unsaved edit, the effective weight isn't known, so the line says it updates on save.
+ */
+function LearnedLine({ learned, baseEdited }: { learned: TopicLearned; baseEdited: boolean }) {
+  const capSuffix =
+    learned.limit === 'LEARNED_CAP' ? (learned.learned > 0 ? ' (at max)' : ' (at min)') : ''
+  const effSuffix =
+    learned.limit === 'SIGN_CLAMP'
+      ? " (can't cross 0)"
+      : learned.limit === 'WEIGHT_RANGE'
+        ? learned.effectiveWeight > 0
+          ? ' (at the +50 limit)'
+          : ' (at the −50 limit)'
+        : ''
+  const value = (text: string) => <span className="interests-learned-value">{text}</span>
+
+  if (baseEdited) {
+    return (
+      <p className="interests-learned">
+        Learned from votes {value(formatSigned(learned.learned, 1))}
+        {capSuffix} · Effective weight updates when you save
+      </p>
+    )
+  }
+  if (Math.round(learned.learned * 10) === 0) {
+    return (
+      <p className="interests-learned">
+        No learned adjustment yet · Effective weight {value(formatSigned(learned.effectiveWeight))}
+        {effSuffix}
+      </p>
+    )
+  }
+  return (
+    <p className="interests-learned">
+      Learned from votes {value(formatSigned(learned.learned, 1))}
+      {capSuffix} · Effective weight {value(formatSigned(learned.effectiveWeight, 1))}
+      {effSuffix}
+    </p>
+  )
 }
 
 /**
@@ -222,6 +267,7 @@ export function TopicRow({
   onDeleted,
   articleId = null,
   previewBlock = null,
+  learned,
 }: TopicRowProps) {
   const create = useCreateInterestTopic()
   const update = useUpdateInterestTopic()
@@ -234,11 +280,14 @@ export function TopicRow({
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const typed = useRef({ name: false, description: false })
   const nameRef = useRef<HTMLInputElement>(null)
-  // A draft only mounts when "+ Add topic" appends it, so focus its first input once.
+  // A draft only mounts when it's appended ("+ Add topic" or "Create topic from article"), so
+  // focus its first input once and scroll it into view.
   const focusOnMount = useRef(row.saved === null)
 
   useEffect(() => {
-    if (focusOnMount.current) nameRef.current?.focus()
+    if (!focusOnMount.current) return
+    nameRef.current?.focus()
+    nameRef.current?.scrollIntoView?.({ block: 'nearest' })
   }, [])
 
   // D-09: advice only. It never changes the text and never affects Save.
@@ -396,6 +445,9 @@ export function TopicRow({
           </div>
         )}
       </div>
+      {row.saved !== null && learned && (
+        <LearnedLine learned={learned} baseEdited={row.weight !== row.saved.weight} />
+      )}
       {errors.map((message) => (
         <div key={message} className="dialog-error">
           {message}
