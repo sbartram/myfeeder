@@ -12,6 +12,7 @@ import { usePreferences, READING_FONT_PX } from '../stores/preferencesStore'
 import { useReadLater, useRemoveArticleFromBoard } from '../hooks/useBoards'
 import { BoardManager } from './BoardManager'
 import { ScoreRow } from './ScoreRow'
+import { FeedbackBar } from './FeedbackBar'
 import { WhyBreakdown } from './WhyBreakdown'
 import { usePriorityStore } from '../stores/priorityStore'
 import { formatPublishedDate } from '../utils/dates'
@@ -151,6 +152,7 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose }: Read
         <button className="toolbar-btn" onClick={handleStar}>
           {article.starred ? '★ Unstar' : '★ Star'}
         </button>
+        <FeedbackBar article={article} />
         <button className="toolbar-btn" onClick={handleToggleRead}>
           {article.read ? '○ Mark Unread' : '● Mark Read'}
         </button>

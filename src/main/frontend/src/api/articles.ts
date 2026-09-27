@@ -1,5 +1,12 @@
-import { apiGet, apiPost, apiPatch } from './client'
-import type { Article, ArticleFilters, ExtractedContent, PaginatedArticles, PriorityPage } from '../types'
+import { apiGet, apiPost, apiPatch, apiPut, apiDeleteJson } from './client'
+import type {
+  Article,
+  ArticleFilters,
+  ExtractedContent,
+  FeedbackResult,
+  PaginatedArticles,
+  PriorityPage,
+} from '../types'
 
 export const articlesApi = {
   list: (filters: ArticleFilters = {}, limit = 50, before?: number) => {
@@ -27,4 +34,7 @@ export const articlesApi = {
     apiPost<void>('/articles/mark-read', { articleIds, feedId, olderThanDays }),
   counts: () => apiGet<Record<string, number>>('/articles/counts'),
   saveToRaindrop: (id: number) => apiPost<void>(`/articles/${id}/raindrop`),
+  setFeedback: (id: number, vote: 1 | -1, topicIds?: number[] | null) =>
+    apiPut<FeedbackResult>(`/articles/${id}/feedback`, { vote, topicIds: topicIds ?? null }),
+  clearFeedback: (id: number) => apiDeleteJson<FeedbackResult>(`/articles/${id}/feedback`),
 }

@@ -75,3 +75,10 @@ export async function apiDelete(path: string): Promise<void> {
   const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE' })
   await raiseIfBad(res, 'DELETE', path)
 }
+
+/** A DELETE whose response carries a JSON body (apiDelete drops the body). */
+export async function apiDeleteJson<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE' })
+  await raiseIfBad(res, 'DELETE', path)
+  return parseBody<T>(res)
+}

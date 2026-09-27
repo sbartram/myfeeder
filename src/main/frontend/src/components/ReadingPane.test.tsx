@@ -7,6 +7,11 @@ import { usePriorityStore } from '../stores/priorityStore'
 
 let mockArticle: Article
 const mockUseExtractedArticle = vi.fn()
+const mockPress = vi.fn()
+
+vi.mock('../hooks/useFeedback', () => ({
+  useVoteFeedback: () => ({ press: mockPress, narrow: vi.fn() }),
+}))
 
 vi.mock('../hooks/useArticles', () => ({
   useArticle: () => ({ data: mockArticle }),
@@ -98,6 +103,7 @@ const mockRows = (): BreakdownRow[] => [
 ]
 
 beforeEach(() => {
+  mockPress.mockReset()
   usePriorityStore.setState({ whyOpen: false })
   mockUseExtractedArticle
     .mockReset()
@@ -277,5 +283,21 @@ describe('ReadingPane Why breakdown', () => {
     usePriorityStore.setState({ whyOpen: false })
     const closed = renderPane()
     expect(closed.container.querySelector('#why-breakdown')).toBeNull()
+  })
+})
+
+describe('ReadingPane vote buttons', () => {
+  it('rendersVoteButtonsAfterStar', () => {
+    mockArticle = article({ content: '<p>Body</p>' })
+    const { container } = renderPane()
+
+    const labels = Array.from(container.querySelectorAll('.reading-toolbar button')).map(
+      (b) => b.textContent
+    )
+    expect(labels.slice(0, 4)).toEqual(['★ Star', '👍 Up', '👎 Down', '● Mark Read'])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Thumbs up' }))
+    expect(mockPress).toHaveBeenCalledTimes(1)
+    expect(mockPress).toHaveBeenCalledWith(mockArticle, 1)
   })
 })
