@@ -206,6 +206,34 @@ describe('usePriorityArticles cache policy', () => {
     expect(qc.getQueryCache().findAll({ queryKey: PRIORITY_KEY })).toHaveLength(0)
   })
 
+  it('patchCopiesInterestScoreIncludingNull', () => {
+    const { qc } = createWrapper()
+    qc.setQueryData(PRIORITY_KEY, { pages: [page([article(1), article(2), article(3)])], pageParams: [undefined] })
+    const rows = () =>
+      qc.getQueryData<{ pages: PriorityPage[] }>(PRIORITY_KEY)!.pages[0].items.map((a) => ({
+        id: a.id,
+        score: a.interestScore,
+        read: a.read,
+        starred: a.starred,
+      }))
+
+    patchPriorityArticle(qc, 2, { interestScore: 91 })
+    expect(rows()[1]).toEqual({ id: 2, score: 91, read: false, starred: false })
+
+    patchPriorityArticle(qc, 2, { interestScore: null })
+    expect(rows()[1].score).toBeNull()
+
+    patchPriorityArticle(qc, 2, {})
+    expect(rows()[1].score).toBeNull()
+
+    patchPriorityArticle(qc, 2, { read: true, starred: true })
+    expect(rows()).toEqual([
+      { id: 1, score: 82, read: false, starred: false },
+      { id: 2, score: null, read: true, starred: true },
+      { id: 3, score: 82, read: false, starred: false },
+    ])
+  })
+
   it('cursorRowReadBeforeLoadMoreContinues', async () => {
     vi.mocked(articlesApi.priority).mockImplementation(async (_limit, before) =>
       before === 'c3' ? page([article(3), article(4)]) : page([article(1), article(2), article(3)], 'c3'),
