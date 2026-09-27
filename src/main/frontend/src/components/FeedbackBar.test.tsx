@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { FeedbackBar } from './FeedbackBar'
@@ -114,17 +114,24 @@ function result(
 const threeTopics = [politicsRow, rustRow, goRow]
 const narrowControl = () => document.querySelector<HTMLButtonElement>('.narrow-toggle')
 
-function Harness() {
-  const { data } = useArticle(1)
-  return data ? <FeedbackBar article={data} /> : null
+/** The bar for the selected article, like ReadingPane; `withContent` adds a focusable .reading-content. */
+function Harness({ withContent }: { withContent: boolean }) {
+  const id = useUIStore((s) => s.selectedArticleId)
+  const { data } = useArticle(id)
+  return (
+    <>
+      {data ? <FeedbackBar article={data} /> : null}
+      {withContent && <div className="reading-content" tabIndex={-1} />}
+    </>
+  )
 }
 
-function renderBar(client?: QueryClient) {
+function renderBar(client?: QueryClient, withContent = false) {
   const qc = client ?? createQueryClient()
   render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={['/']}>
-        <Harness />
+        <Harness withContent={withContent} />
       </MemoryRouter>
     </QueryClientProvider>
   )
@@ -384,5 +391,81 @@ describe('FeedbackBar', () => {
     put.resolve({ status: 200, body: result(up, [], threeTopics) })
     await waitFor(() => expect(toasts()).toHaveLength(1))
     expect(narrowControl()).toBeNull()
+  })
+  it('pickerClosesWhenTheArticleChanges', async () => {
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(down, threeTopics) }))
+    route('GET', '/api/articles/2', () => ({ status: 200, body: { ...article(down, threeTopics), id: 2 } }))
+    renderBar()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose topics to penalize' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    act(() => useUIStore.setState({ selectedArticleId: 2 }))
+    await waitFor(() => expect(calls.some((c) => c.url === '/api/articles/2')).toBe(true))
+    await screen.findByRole('button', { name: 'Choose topics to penalize' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(useFeedbackStore.getState().narrowOpen).toBe(false)
+    expect(calls.filter((c) => c.method !== 'GET')).toEqual([])
+  })
+
+  it('pickerClosesWhenTheVoteIsNoLongerDown', async () => {
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(down, threeTopics) }))
+    const put = deferred<Reply>()
+    route('PUT', '/api/articles/1/feedback', () => put.promise)
+    renderBar()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose topics to penalize' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Thumbs up' }))
+
+    await waitFor(() => expect(useFeedbackStore.getState().narrowOpen).toBe(false))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('focusReturnsToTheNarrowControl', async () => {
+    route('GET', '/api/articles/1', () => ({ status: 200, body: article(down, threeTopics) }))
+    route('DELETE', '/api/articles/1/feedback', () => new Promise<Reply>(() => {}))
+    renderBar(undefined, true)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose topics to penalize' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(narrowControl()).toHaveFocus())
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    // Removing the vote hides the control, so focus lands on the reading content.
+    fireEvent.click(narrowControl()!)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Thumbs down' }))
+    await waitFor(() => expect(narrowControl()).toBeNull())
+    await waitFor(() => expect(document.querySelector('.reading-content')).toHaveFocus())
+  })
+
+  it('rejectedNarrowingRevertsTheLabel', async () => {
+    let served = 0
+    route('GET', '/api/articles/1', () => {
+      served += 1
+      return { status: 200, body: article(down, threeTopics) }
+    })
+    const put = deferred<Reply>()
+    route('PUT', '/api/articles/1/feedback', () => put.promise)
+    renderBar()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose topics to penalize' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Rust/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Go/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Apply to 1 topic' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    await waitFor(() => expect(narrowControl()).toHaveTextContent('Politics only'))
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
+    put.resolve({ status: 400, body: { message: 'topic 8 not matched' } })
+    await waitFor(() =>
+      expect(toasts()).toEqual([
+        "error:Couldn't narrow the vote because this article's topics changed. Open Narrow… and pick again.",
+      ])
+    )
+    await waitFor(() => expect(served).toBe(2))
+    await waitFor(() => expect(narrowControl()).toHaveTextContent('Narrow…'))
+    expect(narrowControl()).toHaveAccessibleName('Choose topics to penalize')
   })
 })
