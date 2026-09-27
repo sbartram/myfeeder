@@ -9,6 +9,8 @@ vi.mock('../api/articles', () => ({
     counts: vi.fn(),
     saveToRaindrop: vi.fn(),
     priority: vi.fn(),
+    setFeedback: vi.fn(),
+    clearFeedback: vi.fn(),
   },
 }))
 vi.mock('../api/feeds', () => ({
@@ -30,10 +32,12 @@ import { createElement } from 'react'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts'
 import { useUIStore } from '../stores/uiStore'
 import { usePriorityStore } from '../stores/priorityStore'
+import { useFeedbackStore } from '../stores/feedbackStore'
+import { useToastStore } from '../components/Toast'
 import { articlesApi } from '../api/articles'
 import { feedsApi } from '../api/feeds'
 import { foldersApi } from '../api/folders'
-import type { Article, Feed } from '../types'
+import type { Article, ArticleFeedback, Feed, FeedbackResult, TopicBreakdownRow } from '../types'
 
 const feed = (id: number, overrides: Partial<Feed> = {}): Feed => ({
   id,
@@ -80,9 +84,9 @@ function createWrapper() {
   }
 }
 
-function press(key: string) {
+function press(key: string, init: KeyboardEventInit = {}) {
   act(() => {
-    document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+    document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...init }))
   })
 }
 
@@ -104,6 +108,8 @@ describe('useKeyboardShortcuts', () => {
     // Reset the selection/focus slice of the UI store between tests.
     useUIStore.setState({ selectedArticleId: null, selectedFeedId: null, keyboardFocus: 'articles' })
     usePriorityStore.setState({ whyOpen: false })
+    useFeedbackStore.setState({ narrowOpen: false })
+    useToastStore.setState({ toasts: [] })
   })
 
   it("'o' opens the selected article's URL even when it is not in the passed list", async () => {
@@ -446,6 +452,143 @@ describe('useKeyboardShortcuts', () => {
       })
 
       expect(usePriorityStore.getState().whyOpen).toBe(false)
+      input.remove()
+    })
+  })
+  describe('u / d (thumbs) and Shift+D (narrow)', () => {
+    const topicRow = (topicId: number, name: string, weight: number): TopicBreakdownRow => ({
+      kind: 'TOPIC',
+      topicId,
+      name,
+      noul: 0.8,
+      hinge: 0.6,
+      weight,
+      exact: weight * 0.6,
+      points: Math.round(weight * 0.6),
+    })
+    const scored = (feedback: ArticleFeedback | null, topics: TopicBreakdownRow[] = []): Article =>
+      article(1, {
+        interestScore: 60,
+        interestBreakdown: {
+          raw: 60,
+          total: 60,
+          display: 60,
+          rows: [{ kind: 'PROFILE', levelIndex: 3, exact: 50, points: 50 }, ...topics],
+          nonMatching: [],
+        },
+        feedback,
+      })
+    const downVote: ArticleFeedback = { vote: -1, narrowed: false, topics: [] }
+    const result = (a: Article): FeedbackResult => ({ article: a, scored: true, effects: [] })
+    const voteCalls = () =>
+      vi.mocked(articlesApi.setFeedback).mock.calls.length + vi.mocked(articlesApi.clearFeedback).mock.calls.length
+
+    /** Selects article 1 with its by-id article loaded, like ReadingPane. */
+    async function mountWith(a: Article) {
+      const { qc, wrapper } = createWrapper()
+      qc.setQueryData(['article', 1], a)
+      vi.mocked(articlesApi.getById).mockResolvedValue(a)
+      useUIStore.setState({ selectedArticleId: 1 })
+      renderHook(() => useKeyboardShortcuts([a]), { wrapper })
+      await waitFor(() => expect(qc.getQueryData(['article', 1])).toBeTruthy())
+      return qc
+    }
+
+    it('uVotesUpOnTheSelectedArticle', async () => {
+      vi.mocked(articlesApi.setFeedback).mockResolvedValue(result(scored({ vote: 1, narrowed: false, topics: [] })))
+      await mountWith(scored(null))
+
+      press('u')
+      await waitFor(() => expect(articlesApi.setFeedback).toHaveBeenCalledWith(1, 1, null))
+    })
+
+    it('dVotesDownAndDAgainRemoves', async () => {
+      vi.mocked(articlesApi.setFeedback).mockResolvedValue(result(scored(downVote)))
+      vi.mocked(articlesApi.clearFeedback).mockResolvedValue(result(scored(null)))
+      const qc = await mountWith(scored(null))
+
+      press('d')
+      await waitFor(() => expect(articlesApi.setFeedback).toHaveBeenCalledWith(1, -1, null))
+      await waitFor(() => expect(useToastStore.getState().toasts).toHaveLength(1))
+      expect(qc.getQueryData<Article>(['article', 1])?.feedback?.vote).toBe(-1)
+
+      press('d')
+      await waitFor(() => expect(articlesApi.clearFeedback).toHaveBeenCalledWith(1))
+      expect(articlesApi.setFeedback).toHaveBeenCalledTimes(1)
+    })
+
+    it('modifiedVotingKeysAreIgnored', async () => {
+      await mountWith(scored(null))
+
+      press('d', { metaKey: true })
+      press('d', { ctrlKey: true })
+      press('d', { altKey: true })
+      press('u', { metaKey: true })
+      press('D', { shiftKey: true, metaKey: true })
+
+      await new Promise((r) => setTimeout(r, 20))
+      expect(voteCalls()).toBe(0)
+      expect(useFeedbackStore.getState().narrowOpen).toBe(false)
+    })
+
+    it('votingKeysWaitForTheArticle', async () => {
+      const { wrapper } = createWrapper()
+      vi.mocked(articlesApi.getById).mockReturnValue(new Promise(() => {}))
+      useUIStore.setState({ selectedArticleId: 1 })
+      renderHook(() => useKeyboardShortcuts([scored(null)]), { wrapper })
+      await waitFor(() => expect(articlesApi.getById).toHaveBeenCalledWith(1))
+
+      press('u')
+      press('d')
+
+      await new Promise((r) => setTimeout(r, 20))
+      expect(voteCalls()).toBe(0)
+    })
+
+    it('votingKeysLeaveReadAndSelectionAlone', async () => {
+      vi.mocked(articlesApi.setFeedback).mockResolvedValue(result(scored({ vote: 1, narrowed: false, topics: [] })))
+      await mountWith(scored(null))
+
+      press('u')
+      await waitFor(() => expect(articlesApi.setFeedback).toHaveBeenCalledTimes(1))
+      await waitFor(() => expect(useToastStore.getState().toasts).toHaveLength(1))
+      expect(articlesApi.updateState).not.toHaveBeenCalled()
+      expect(articlesApi.markRead).not.toHaveBeenCalled()
+      expect(useUIStore.getState().selectedArticleId).toBe(1)
+    })
+
+    it('shiftDOpensThePickerWhenNarrowable', async () => {
+      await mountWith(scored(downVote, [topicRow(3, 'Politics', -30), topicRow(7, 'Rust', 20)]))
+
+      press('D', { shiftKey: true })
+
+      expect(useFeedbackStore.getState().narrowOpen).toBe(true)
+      await new Promise((r) => setTimeout(r, 20))
+      expect(voteCalls()).toBe(0)
+    })
+
+    it('shiftDDoesNothingOtherwise', async () => {
+      await mountWith(scored(null, [topicRow(3, 'Politics', -30), topicRow(7, 'Rust', 20)]))
+
+      press('D', { shiftKey: true })
+
+      expect(useFeedbackStore.getState().narrowOpen).toBe(false)
+      await new Promise((r) => setTimeout(r, 20))
+      expect(voteCalls()).toBe(0)
+    })
+
+    it('votingKeysIgnoredInInputs', async () => {
+      await mountWith(scored(null))
+      const input = document.createElement('input')
+      document.body.appendChild(input)
+      input.focus()
+
+      act(() => {
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'u', bubbles: true }))
+      })
+
+      await new Promise((r) => setTimeout(r, 20))
+      expect(voteCalls()).toBe(0)
       input.remove()
     })
   })
