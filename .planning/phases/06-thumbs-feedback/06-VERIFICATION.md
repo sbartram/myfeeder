@@ -1,9 +1,10 @@
 ---
 phase: 06-thumbs-feedback
 verified: 2026-09-27T04:25:00Z
-status: human_needed
+status: passed
 score: 113/119 must-haves verified (5/5 roadmap success criteria; 108/114 plan truths; 6 backstop truths routed to human)
 covered_files:
+
   - .planning/REQUIREMENTS.md
   - .planning/phases/06-thumbs-feedback/06-01-PLAN.md
   - .planning/phases/06-thumbs-feedback/06-01-SUMMARY.md
@@ -76,10 +77,12 @@ covered_files:
   - src/test/java/org/bartram/myfeeder/service/ArticleServiceTest.java
   - src/test/java/org/bartram/myfeeder/service/ScoreBreakdownsTest.java
   - src/test/resources/application.yaml
+
 covered_digest: "v1:sha256:62194354b4d30b99f0175eda40f83bf0582bbf2c8e1a035f6468273d5dcd089c"
 behavior_unverified: 0
 overrides_applied: 0
 coincidental_reliance_items:
+
   - truth: "06-02: the breakdown rows' integer points still sum exactly to total, and total and display still come from SQL"
     reason: incidental-ordering
     harden: "breakdownInputs runs the header query and the topic-row query as two statements outside any transaction (READ COMMITTED). The invariant holds only if no vote commits between them; now that votes change learned weights for every article sharing a topic, a concurrent vote (d then j) can tear it. Run findByIdWithBreakdown in a REPEATABLE_READ read-only transaction, or produce header and rows in one statement (06-REVIEW WR-03)."
@@ -87,6 +90,7 @@ coincidental_reliance_items:
     reason: incidental-ordering
     harden: "writeIntent/onSuccess do not cancel in-flight ['article', id] fetches, so a star/read refetch that is already running can land after the intent and erase it; a second u press in that window then reads vote 0 and re-sends an up-vote instead of removing it. Cancel queries before setQueryData and apply the newer-pending guard in onError (06-REVIEW WR-01)."
 human_verification:
+
   - test: "Pressed-state styling and toolbar wrap: with ./gradlew bootTestRun and npm run dev, open an article and press 👍 Up; then narrow the reading pane"
     expected: "👍 Up turns the theme accent color and weight 600 while 👎 Down stays plain; the toolbar wraps to a second row instead of clipping"
     why_human: "Visual CSS outcome (.vote-btn[aria-pressed='true'], .reading-toolbar flex-wrap); jsdom tests assert aria-pressed only"

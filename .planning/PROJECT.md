@@ -32,10 +32,11 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Blended 0–100 interest score computed at query time from stored raw Jev outputs (one CTE is the single source of sort and badge), so weight edits re-rank on refresh with no Jev calls — Phase 5
 - ✓ Priority view at `/priority` (feed tree + `g p`): unread scored articles by score, ties by date, then "Not yet scored" by date; keyset paging with an opaque served-tuple cursor that survives mid-walk score changes (G-05-7); frozen order while triaging; status banner — Phase 5
 - ✓ Tier-colored interest badge in every article list and the reading pane, with matched-topic chips and an exact "Why N?" breakdown that sums to the badge — Phase 5
+- ✓ Thumbs up/down (buttons + `u`/`d`, Shift+D narrow picker) stores one reversible `article_feedback` row; the learned adjustment (capped ±20, sign-clamped, within ±50) is derived in SQL on every read, so the badge, Why row and Priority order update with no Jev call and no write to topic weights; effect toast, no-match "Create topic from article" draft, learned line per topic in Interests — Phase 6
 
 ### Active
 
-- [ ] Thumbs up/down on an article nudges the weights of the topics that article matched; ranking updates immediately with no new Jev calls
+(none — remaining milestone work is Phase 7 rollout and calibration)
 
 ### Out of Scope
 
@@ -73,10 +74,10 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Judge at ingest (once per new article) | Predictable cost, instant ranking | ✓ Good — ArticlesIngestedEvent hand-off scores new arrivals before the sweep (Phase 4 UAT) |
-| Interest signals = written profile + weighted topic rubric + thumbs feedback | User wants explicit control plus lightweight feedback | — Pending |
+| Interest signals = written profile + weighted topic rubric + thumbs feedback | User wants explicit control plus lightweight feedback | ✓ Good — all three signals feed one blend CTE (Phase 6) |
 | Weighted blend: profile `Score` + Σ(topic `Noul` × weight), single `systemOne` call | One call per article covers all signals; negative weights push articles down | — Pending |
 | Store raw Jev outputs; blend at query time | Thumbs-driven weight nudges re-rank instantly with zero extra Jev calls | ✓ Good — one blend CTE drives sort and badge; weight edits re-rank on refresh with no Jev calls (Phase 5) |
-| Thumbs feedback adjusts topic weights (not in-context examples) | Deterministic and explainable | — Pending |
+| Thumbs feedback adjusts topic weights (not in-context examples) | Deterministic and explainable | ✓ Good — derived (not stored) learned adjustment keeps votes reversible and base weights untouched; toast and Interests show exact before/after (Phase 6) |
 | Jev input = title + summary + feed name | Cheap, always available at ingest, no extra fetches | — Pending |
 | Optional integration, degrade gracefully + background backfill | Ingest must never fail because of Jev | ✓ Good — ScoringIsolationTest; live 30-article backlog drained with 0 feed errors (Phase 4) |
 | Profile/topic edits apply to new articles, plus a manual "Re-score unread" button | Research: ~$0.10/1k articles; only way edits reach existing unread | ✓ Good — count and delete share one scope; scores discarded if the rubric changes mid-call (Phase 4) |
@@ -114,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-26 after Phase 5*
+*Last updated: 2026-09-27 after Phase 6*

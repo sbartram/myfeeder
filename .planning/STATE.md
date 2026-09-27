@@ -1,44 +1,45 @@
 ---
 gsd_state_version: "1.0"
 milestone: v0.1.24
-current_phase: 06
-current_phase_name: Thumbs Feedback
-status: verifying
-stopped_at: Completed 06-07-PLAN.md
-last_updated: "2026-09-27T04:09:18.172Z"
-last_activity: 2026-09-26
-last_activity_desc: Phase 06 execution started
-state_head: e86d0a51ab3ef8f5f1460cbaedcb060cab056a5a
+current_phase: 7
+current_phase_name: Rollout & Calibration
+status: planning
+stopped_at: Phase 06 complete, ready to plan Phase 7
+last_updated: "2026-09-27T18:08:16.887Z"
+last_activity: 2026-09-27
+last_activity_desc: Phase 06 complete, transitioned to Phase 7
+state_head: 8550c573b05a02910924de0b4d23ac17b5a88d3e
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 40
   completed_plans: 40
+  percent: 86
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-26)
+See: .planning/PROJECT.md (updated 2026-09-27)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 06 — Thumbs Feedback
+**Current focus:** Phase 7 — Rollout & Calibration
 
 ## Current Position
 
-Phase: 06 (Thumbs Feedback) — EXECUTING
-Plan: 7 of 7
-Status: Phase complete — ready for verification
-Last activity: 2026-09-26 — Phase 06 execution started
+Phase: 7 — Rollout & Calibration
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-27 — Phase 06 complete, transitioned to Phase 7
 
-Progress: [███████░░░] 71%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 33
+- Total plans completed: 40
 - Average duration: -
 - Total execution time: 0.0 hours
 
@@ -51,6 +52,7 @@ Progress: [███████░░░] 71%
 | 03 | 8 | - | - |
 | 04 | 9 | - | - |
 | 05 | 8 | - | - |
+| 06 | 7 | - | - |
 
 **Recent Trend:**
 
@@ -185,10 +187,12 @@ Recent decisions affecting current work:
 ### Blockers/Concerns
 
 - [Phase 2] 02-REVIEW WR-04 (Raindrop createBookmark POST retried) and WR-05 (helm --set secret mangling) still deferred; WR-01..03 closed in Phase 4
-- [Phase 5] 05-REVIEW.md WR-04 closed by quick 260926-hhz (decoded cursor date bounded to years 1..9999 → 404); WR-05 (an unserved row whose score rises past the fixed cursor boundary is skipped — Phase 6 votes should set the Ranking-changed hint); WR-01/WR-03 user-deferred
+- [Phase 5] 05-REVIEW.md WR-04 closed by quick 260926-hhz (decoded cursor date bounded to years 1..9999 → 404); WR-05 (an unserved row whose score rises past the fixed cursor boundary is skipped — mitigated in Phase 6: votes set the Ranking-changed hint); WR-01/WR-03 user-deferred
 - [Phase 3] 03-REVIEW.md WR-01..WR-05 (dialog save race, keyboard shortcuts behind modal, error copy, failed article load) still open
 - [Phase 4] 04-VERIFICATION advisories: suite offline-ness relies on shell hygiene (strip SPRING_AI_TYPESAFE_*/SPRING_PROFILES_ACTIVE in the Gradle Test task); dev-overlay drift check is one-directional
 - [Phase 4] Preview spinner can run ~93s worst case (3×30s + backoff); consider a UI ceiling
+- [Phase 6] 06-REVIEW.md WR-01..WR-04 open (optimistic vote-state race, narrowed-vote toast credits untouched topics, breakdown rows torn by a concurrent vote under READ COMMITTED, Re-score leaves learned cache stale); non-blocking
+- [Phase 6] 06-UI-REVIEW.md 21/24: picker can overflow a narrow pane (positioned against viewport), vote-error toasts announced politely not as alert, aria-controls points at an absent element when picker is closed
 - Phase 7: 429 behavior during launch backfill is unobserved; fallback is concurrency 1 or the SDK retry layer (keep exactly one)
 
 ### Quick Tasks Completed
@@ -207,6 +211,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-27T04:09:18.118Z
-Stopped at: Completed 06-07-PLAN.md
+Last session: 2026-09-27T18:20:00Z
+Stopped at: Phase 06 complete, ready to plan Phase 7
 Resume file: None

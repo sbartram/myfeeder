@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Interest Model, Schema & Rubric Editor** - Profile and weighted topic editor, topic preview, and the full V6 interest schema (completed 2026-09-23)
 - [x] **Phase 4: Scoring Pipeline & Backfill Sweep** - Background, never-blocking scoring of new articles plus the sweep that backfills, recovers and re-scores (completed 2026-09-24)
 - [x] **Phase 5: Blend & Priority View** - Query-time blend, Priority route with stable keyset pagination, score badges and "Why N?" breakdown (completed 2026-09-26)
-- [ ] **Phase 6: Thumbs Feedback** - Reversible, bounded thumbs up/down that re-weights matched topics instantly
+- [x] **Phase 6: Thumbs Feedback** - Reversible, bounded thumbs up/down that re-weights matched topics instantly (completed 2026-09-27)
 - [ ] **Phase 7: Rollout & Calibration** - Production release with a live key, launch backfill observed, blend constants tuned, docs updated
 
 ## Phase Details
@@ -267,5 +267,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
 | 5. Blend & Priority View | 8/8 | Complete    | 2026-09-26 |
-| 6. Thumbs Feedback | 7/7 | In Progress|  |
+| 6. Thumbs Feedback | 7/7 | Complete    | 2026-09-27 |
 | 7. Rollout & Calibration | 0/TBD | Not started | - |
