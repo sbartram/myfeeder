@@ -74,7 +74,7 @@ public final class ScoreBreakdowns {
             TopicContribution t = c.topic();
             rows.add(t == null
                     ? Row.profile(c.levelIndex(), c.exact(), points[i])
-                    : Row.topic(t.topicId(), t.name(), t.noul(), t.hinge(), t.weight(), c.exact(), points[i]));
+                    : Row.topic(t.topicId(), t.name(), t.noul(), t.hinge(), t.weight(), c.exact(), points[i], 0, 0));
         }
         // Stable: rows with equal |points| keep the candidate order
         rows.sort(Comparator.comparingLong((Row r) -> Math.abs(r.points())).reversed());

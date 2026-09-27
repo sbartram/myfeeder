@@ -430,6 +430,39 @@ class InterestScoreQueriesTest {
     }
 
     @Test
+    void breakdownInputsCarryBaseAndAppliedLearned() {
+        insertFeedback(a1, 1, false);
+
+        Map<String, TopicContribution> topics = new HashMap<>();
+        queries.breakdownInputs(a1).orElseThrow().topics().forEach(t -> topics.put(t.name(), t));
+
+        assertContribution(topics.get("Rust"), 21.72, 20.0, 1.72);
+        assertContribution(topics.get("WebAssembly"), 15.0, 14.0, 1.0);
+        assertContribution(topics.get("Politics"), -29.6, -30.0, 0.4);
+        assertContribution(topics.get("Gardening"), 10.0, 10.0, 0.0);
+    }
+
+    @Test
+    void breakdownLearnedIsTheAppliedPart() {
+        long small = insertTopic("Small", 5);
+        List<Long> matching = insertMatchingArticles(small, 1.0, 13);
+        matching.subList(0, 12).forEach(id -> insertFeedback(id, -1, false));
+        long x = matching.get(12);
+
+        TopicContribution c = queries.breakdownInputs(x).orElseThrow().topics().getFirst();
+
+        assertThat(c.topicId()).isEqualTo(small);
+        assertContribution(c, 0.0, 5.0, -5.0);
+    }
+
+    private static void assertContribution(TopicContribution c, double weight, double baseWeight,
+                                           double learnedWeight) {
+        assertThat(c.weight()).as("weight of %s", c.name()).isEqualTo(weight);
+        assertThat(c.baseWeight()).as("baseWeight of %s", c.name()).isEqualTo(baseWeight);
+        assertThat(c.learnedWeight()).as("learnedWeight of %s", c.name()).isEqualTo(learnedWeight);
+    }
+
+    @Test
     void topicWeightsOfNoIdsIsEmpty() {
         assertThat(queries.topicWeights(List.of())).isEmpty();
     }

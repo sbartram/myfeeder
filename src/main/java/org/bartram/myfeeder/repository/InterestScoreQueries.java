@@ -83,7 +83,7 @@ public class InterestScoreQueries {
 
     /** One judged topic of an article as the blend CTE saw it: effective weight, hinge and exact points. */
     public record TopicContribution(long topicId, String name, double noul, double hinge, double weight,
-                                    BigDecimal exact) {}
+                                    BigDecimal exact, double baseWeight, double learnedWeight) {}
 
     /**
      * The learned model (R2, FDBK-03), shared by the blend and {@link #topicWeights(Collection)}.
@@ -214,7 +214,9 @@ public class InterestScoreQueries {
                         rs.getDouble("noul"),
                         rs.getDouble("hinge"),
                         rs.getDouble("w"),
-                        rs.getBigDecimal("exact")))
+                        rs.getBigDecimal("exact"),
+                        0,
+                        0))
                 .list();
         BreakdownInputs h = header.get();
         return Optional.of(new BreakdownInputs(h.raw(), h.total(), h.display(), h.profileScore(),

@@ -155,9 +155,9 @@ class ArticleControllerTest {
         article.setInterestScore(82);
         article.setInterestBreakdown(new InterestBreakdown(new BigDecimal("82.200000"), 82, 82,
                 List.of(Row.profile(3, new BigDecimal("64.000000"), 64),
-                        Row.topic(10L, "Rust", 0.93, 0.86, 20, new BigDecimal("17.200000"), 17),
-                        Row.topic(11L, "WebAssembly", 0.75, 0.5, 14, new BigDecimal("7.000000"), 7),
-                        Row.topic(12L, "Politics", 0.6, 0.2, -30, new BigDecimal("-6.000000"), -6)),
+                        Row.topic(10L, "Rust", 0.93, 0.86, 20, new BigDecimal("17.200000"), 17, 20, 0),
+                        Row.topic(11L, "WebAssembly", 0.75, 0.5, 14, new BigDecimal("7.000000"), 7, 14, 0),
+                        Row.topic(12L, "Politics", 0.6, 0.2, -30, new BigDecimal("-6.000000"), -6, -30, 0)),
                 List.of(new NonMatchingTopic(13L, "Gardening", 0.2))));
         when(articleService.findByIdWithBreakdown(1L)).thenReturn(Optional.of(article));
 
@@ -175,6 +175,28 @@ class ArticleControllerTest {
                 .andExpect(jsonPath("$.interestBreakdown.rows[1].levelIndex").doesNotExist())
                 .andExpect(jsonPath("$.interestBreakdown.nonMatching[0].name").value("Gardening"));
         verify(articleService, never()).findById(1L);
+    }
+
+    @Test
+    void getArticleSerializesBaseAndLearnedWeight() throws Exception {
+        var article = new Article();
+        article.setId(1L);
+        article.setTitle("Learned");
+        article.setInterestScore(83);
+        article.setInterestBreakdown(new InterestBreakdown(new BigDecimal("82.679200"), 83, 83,
+                List.of(Row.profile(3, new BigDecimal("64.000000"), 64),
+                        Row.topic(10L, "Rust", 0.93, 0.86, 21.72, new BigDecimal("18.679200"), 19, 20, 1.72)),
+                List.of()));
+        when(articleService.findByIdWithBreakdown(1L)).thenReturn(Optional.of(article));
+
+        mockMvc.perform(get("/api/articles/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].weight").value(21.72))
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].baseWeight").value(20.0))
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].learnedWeight").value(1.72))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].kind").value("PROFILE"))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].baseWeight").doesNotExist())
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].learnedWeight").doesNotExist());
     }
 
     @Test

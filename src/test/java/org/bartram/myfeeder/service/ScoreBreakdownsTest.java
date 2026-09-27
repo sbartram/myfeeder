@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class ScoreBreakdownsTest {
 
@@ -21,7 +22,12 @@ class ScoreBreakdownsTest {
 
     private static TopicContribution topic(long id, String name, double noul, double hinge, double weight,
                                            String exact) {
-        return new TopicContribution(id, name, noul, hinge, weight, bd(exact));
+        return topic(id, name, noul, hinge, weight, exact, weight, 0);
+    }
+
+    private static TopicContribution topic(long id, String name, double noul, double hinge, double weight,
+                                           String exact, double baseWeight, double learnedWeight) {
+        return new TopicContribution(id, name, noul, hinge, weight, bd(exact), baseWeight, learnedWeight);
     }
 
     private static BreakdownInputs inputs(String raw, int total, int display, Double profileScore,
@@ -70,6 +76,38 @@ class ScoreBreakdownsTest {
         assertThat(rust.levelIndex()).isNull();
 
         assertThat(b.nonMatching()).containsExactly(new NonMatchingTopic(5, "Gardening", 0.2));
+    }
+
+    @Test
+    void topicRowsCarryBaseAndLearnedWeight() {
+        InterestBreakdown b = ScoreBreakdowns.build(inputs("82.679200", 83, 83, 2.56, 4, "64.000000",
+                topic(1, "Rust", 0.93, 0.86, 21.72, "18.679200", 20, 1.72)));
+
+        Row profile = b.rows().get(0);
+        assertThat(profile.kind()).isEqualTo(Row.KIND_PROFILE);
+        assertThat(profile.baseWeight()).isNull();
+        assertThat(profile.learnedWeight()).isNull();
+
+        Row rust = b.rows().get(1);
+        assertThat(rust.kind()).isEqualTo(Row.KIND_TOPIC);
+        assertThat(rust.weight()).isEqualTo(21.72);
+        assertThat(rust.baseWeight()).isEqualTo(20.0);
+        assertThat(rust.learnedWeight()).isEqualTo(1.72);
+    }
+
+    @Test
+    void rowsStillSumToTotalWithLearnedWeights() {
+        InterestBreakdown b = ScoreBreakdowns.build(inputs("84.259200", 84, 84, 2.56, 4, "64.000000",
+                topic(1, "Rust", 0.93, 0.86, 21.72, "18.679200", 20, 1.72),
+                topic(2, "WebAssembly", 0.75, 0.5, 15.0, "7.500000", 14, 1.0),
+                topic(3, "Politics", 0.6, 0.2, -29.6, "-5.920000", -30, 0.4),
+                topic(5, "Gardening", 0.2, 0, 10, "0.000000", 10, 0)));
+
+        assertThat(sum(b.rows())).isEqualTo(84);
+        assertThat(b.total()).isEqualTo(84);
+        b.rows().stream().filter(r -> Row.KIND_TOPIC.equals(r.kind())).forEach(r ->
+                assertThat(r.baseWeight() + r.learnedWeight()).as("base + learned of %s", r.name())
+                        .isCloseTo(r.weight(), within(1e-6)));
     }
 
     @Test

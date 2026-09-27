@@ -21,18 +21,19 @@ public record InterestBreakdown(BigDecimal raw, int total, int display, List<Row
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Row(String kind, Long topicId, String name, Integer levelIndex, Double noul, Double hinge,
-                      Double weight, BigDecimal exact, long points) {
+                      Double weight, BigDecimal exact, long points, Double baseWeight, Double learnedWeight) {
 
         public static final String KIND_PROFILE = "PROFILE";
         public static final String KIND_TOPIC = "TOPIC";
 
         public static Row profile(int levelIndex, BigDecimal exact, long points) {
-            return new Row(KIND_PROFILE, null, null, levelIndex, null, null, null, exact, points);
+            return new Row(KIND_PROFILE, null, null, levelIndex, null, null, null, exact, points, null, null);
         }
 
         public static Row topic(long topicId, String name, double noul, double hinge, double weight,
-                                BigDecimal exact, long points) {
-            return new Row(KIND_TOPIC, topicId, name, null, noul, hinge, weight, exact, points);
+                                BigDecimal exact, long points, double baseWeight, double learnedWeight) {
+            return new Row(KIND_TOPIC, topicId, name, null, noul, hinge, weight, exact, points, baseWeight,
+                    learnedWeight);
         }
     }
 
