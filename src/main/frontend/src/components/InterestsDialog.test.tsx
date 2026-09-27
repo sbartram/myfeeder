@@ -134,6 +134,7 @@ describe('InterestsDialog', () => {
     }))
     route('GET', '/api/interest/profile', () => ({ status: 200, body: profile('') }))
     route('GET', '/api/interest/topics', () => ({ status: 200, body: [] }))
+    route('GET', '/api/interest/topics/learned', () => ({ status: 200, body: [] }))
     route('PUT', '/api/interest/profile', (init) => {
       const { profileText } = JSON.parse(String(init?.body)) as { profileText: string }
       return { status: 200, body: { ...profile(profileText), version: 2 } }
@@ -1124,6 +1125,120 @@ describe('InterestsDialog', () => {
       const second = renderDialog(<InterestsDialog open={true} onClose={() => {}} draft={null} />)
       await screen.findByText('2 / 25')
       expect(topicRows(second.container)).toHaveLength(2)
+    })
+  })
+
+  describe('learned adjustments', () => {
+    function learnedEntry(topicId: number, learned: number, effectiveWeight: number, baseWeight = 20) {
+      return { topicId, baseWeight, learned, effectiveWeight, limit: 'NONE' }
+    }
+
+    function learnedGets() {
+      return calls.filter((c) => c.method === 'GET' && c.url === '/api/interest/topics/learned')
+    }
+
+    function topicsGets() {
+      return calls.filter((c) => c.method === 'GET' && c.url === '/api/interest/topics')
+    }
+
+    it('learnedValuesAreMatchedById', async () => {
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: [topic(2, 'Go', 'The Go language'), topic(1, 'Rust', 'The Rust language')],
+      }))
+      route('GET', '/api/interest/topics/learned', () => ({
+        status: 200,
+        body: [learnedEntry(2, -3, 17), learnedEntry(1, 4, 24)],
+      }))
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('2 / 25')
+
+      await waitFor(() => expect(container.querySelectorAll('.interests-learned')).toHaveLength(2))
+      const rows = topicRows(container)
+      expect(
+        rows.map((row) => (within(row).getByRole('textbox', { name: 'Topic name' }) as HTMLInputElement).value),
+      ).toEqual(['Rust', 'Go'])
+      expect(rows[0].querySelector('.interests-learned')?.textContent).toBe(
+        'Learned from votes +4.0 · Effective weight +24.0',
+      )
+      expect(rows[1].querySelector('.interests-learned')?.textContent).toBe(
+        'Learned from votes −3.0 · Effective weight +17.0',
+      )
+    })
+
+    it('learnedLoadFailureShowsOneNote', async () => {
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: [topic(1, 'Rust', 'The Rust language')],
+      }))
+      route('GET', '/api/interest/topics/learned', () => ({ status: 500 }))
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('1 / 25')
+
+      expect(
+        await screen.findByText("Couldn't load learned adjustments. Close and reopen Interests to try again."),
+      ).toBeInTheDocument()
+      expect(
+        screen.getAllByText("Couldn't load learned adjustments. Close and reopen Interests to try again."),
+      ).toHaveLength(1)
+      expect(container.querySelector('.interests-learned')).toBeNull()
+    })
+
+    it('learnedIsRefetchedAfterATopicSave', async () => {
+      const user = userEvent.setup()
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: [topic(3, 'Rust', 'The Rust language')],
+      }))
+      route('GET', '/api/interest/topics/learned', () => ({ status: 200, body: [learnedEntry(3, 4, 24)] }))
+      route('PUT', '/api/interest/topics/3', (init) => ({
+        status: 200,
+        body: { ...topic(3, '', ''), ...(JSON.parse(String(init?.body)) as object), version: 2 },
+      }))
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('1 / 25')
+      await waitFor(() => expect(learnedGets()).toHaveLength(1))
+
+      const row = topicRows(container)[0]
+      await user.type(within(row).getByRole('textbox', { name: 'Topic description' }), ' and Cargo')
+      await user.click(screen.getByRole('button', { name: 'Save topic: Rust' }))
+
+      await waitFor(() => expect(learnedGets()).toHaveLength(2))
+      expect(topicsGets()).toHaveLength(1)
+    })
+
+    it('rowEditsSurviveALearnedRefetch', async () => {
+      const user = userEvent.setup()
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: [topic(3, 'Rust', 'The Rust language'), topic(9, 'Go', 'The Go language')],
+      }))
+      route('GET', '/api/interest/topics/learned', () => ({
+        status: 200,
+        body: [learnedEntry(3, 4, 24), learnedEntry(9, 0, 20)],
+      }))
+      route('PUT', '/api/interest/topics/3', (init) => ({
+        status: 200,
+        body: { ...topic(3, '', ''), ...(JSON.parse(String(init?.body)) as object), version: 2 },
+      }))
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('2 / 25')
+      await waitFor(() => expect(learnedGets()).toHaveLength(1))
+      const [first, second] = topicRows(container)
+
+      await user.type(within(second).getByRole('textbox', { name: 'Topic description' }), ' and its tooling')
+      await user.type(within(first).getByRole('textbox', { name: 'Topic description' }), ' and Cargo')
+      await user.click(screen.getByRole('button', { name: 'Save topic: Rust' }))
+
+      await waitFor(() => expect(learnedGets()).toHaveLength(2))
+      await waitFor(() => expect(within(first).queryByText('Unsaved')).not.toBeInTheDocument())
+      expect(within(second).getByRole('textbox', { name: 'Topic description' })).toHaveValue(
+        'The Go language and its tooling',
+      )
+      expect(within(second).getByText('Unsaved')).toBeInTheDocument()
+      expect(second.querySelector('.interests-learned')?.textContent).toBe(
+        'No learned adjustment yet · Effective weight +20',
+      )
     })
   })
 })

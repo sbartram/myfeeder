@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
-import type { InterestTopic } from '../api/interest'
+import type { InterestTopic, TopicLearned } from '../api/interest'
 import { createQueryClient } from '../queryClient'
 import { TopicRow, type PreviewBlock, type TopicRowState } from './TopicRow'
 
@@ -89,6 +89,7 @@ interface HarnessProps {
   onDiscard?: () => void
   articleId?: number | null
   previewBlock?: PreviewBlock | null
+  learned?: TopicLearned
 }
 
 /** Owns the row state the way InterestsDialog does, so TopicRow runs controlled. */
@@ -99,6 +100,7 @@ function Harness({
   onDiscard = () => {},
   articleId,
   previewBlock,
+  learned,
 }: HarnessProps) {
   const [row, setRow] = useState(initial)
   return (
@@ -110,6 +112,7 @@ function Harness({
       onDiscard={onDiscard}
       articleId={articleId}
       previewBlock={previewBlock}
+      learned={learned}
     />
   )
 }
@@ -587,5 +590,107 @@ describe('TopicRow', () => {
 
     expect(previewCalls()).toHaveLength(1)
     expect(previewSlot(container)).toHaveTextContent('Preview failed: Jev is unavailable right now.')
+  })
+
+  describe('learned line', () => {
+    function learned(overrides: Partial<TopicLearned> = {}): TopicLearned {
+      return { topicId: 7, baseWeight: 20, learned: 4, effectiveWeight: 24, limit: 'NONE', ...overrides }
+    }
+
+    function learnedLine(container: HTMLElement) {
+      return container.querySelector('.interests-learned')
+    }
+
+    it('learnedLineShowsLearnedAndEffective', () => {
+      const { container } = renderRow({ initial: savedRow(), learned: learned() })
+
+      expect(learnedLine(container)?.textContent).toBe('Learned from votes +4.0 · Effective weight +24.0')
+      expect(screen.getByRole('spinbutton', { name: 'Topic weight value' })).toHaveValue(20)
+      expect(container.querySelector('.interests-weight-sign')).toHaveTextContent('+20')
+    })
+
+    it('noLearnedAdjustmentYet', () => {
+      const { container } = renderRow({
+        initial: savedRow(),
+        learned: learned({ learned: 0.04, effectiveWeight: 20 }),
+      })
+
+      expect(learnedLine(container)?.textContent).toBe('No learned adjustment yet · Effective weight +20')
+    })
+
+    it('limitSuffixes', () => {
+      const cases: [Partial<TopicLearned>, string][] = [
+        [
+          { learned: 20, effectiveWeight: 40, limit: 'LEARNED_CAP' },
+          'Learned from votes +20.0 (at max) · Effective weight +40.0',
+        ],
+        [
+          { learned: -20, effectiveWeight: 0, limit: 'LEARNED_CAP' },
+          'Learned from votes −20.0 (at min) · Effective weight 0.0',
+        ],
+        [
+          { learned: -20, effectiveWeight: 0, limit: 'SIGN_CLAMP' },
+          "Learned from votes −20.0 · Effective weight 0.0 (can't cross 0)",
+        ],
+        [
+          { baseWeight: 45, learned: 5, effectiveWeight: 50, limit: 'WEIGHT_RANGE' },
+          'Learned from votes +5.0 · Effective weight +50.0 (at the +50 limit)',
+        ],
+        [
+          { baseWeight: -45, learned: -5, effectiveWeight: -50, limit: 'WEIGHT_RANGE' },
+          'Learned from votes −5.0 · Effective weight −50.0 (at the −50 limit)',
+        ],
+        [
+          { baseWeight: 45, learned: 5, effectiveWeight: 50, limit: 'NONE' },
+          'Learned from votes +5.0 · Effective weight +50.0',
+        ],
+      ]
+      for (const [overrides, expected] of cases) {
+        const view = renderRow({ initial: savedRow(), learned: learned(overrides) })
+        expect(learnedLine(view.container)?.textContent).toBe(expected)
+        view.unmount()
+      }
+    })
+
+    it('unsavedBaseEditSaysItUpdatesOnSave', () => {
+      const { container } = renderRow({ initial: savedRow(), learned: learned() })
+
+      fireEvent.change(screen.getByRole('spinbutton', { name: 'Topic weight value' }), {
+        target: { value: '30' },
+      })
+
+      expect(learnedLine(container)?.textContent).toBe(
+        'Learned from votes +4.0 · Effective weight updates when you save',
+      )
+    })
+
+    it('draftsAndMissingEntriesShowNoLine', () => {
+      const draft = renderRow({ initial: draftRow(), learned: learned() })
+      expect(learnedLine(draft.container)).toBeNull()
+      draft.unmount()
+
+      const missing = renderRow({ initial: savedRow() })
+      expect(learnedLine(missing.container)).toBeNull()
+    })
+
+    it('draftScrollsIntoView', () => {
+      const scrollIntoView = vi.fn()
+      Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+        configurable: true,
+        writable: true,
+        value: scrollIntoView,
+      })
+      try {
+        const saved = renderRow({ initial: savedRow() })
+        expect(scrollIntoView).not.toHaveBeenCalled()
+        saved.unmount()
+
+        renderRow({ initial: draftRow() })
+        expect(scrollIntoView).toHaveBeenCalledTimes(1)
+        expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' })
+      } finally {
+        delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView
+      }
+    })
   })
 })
