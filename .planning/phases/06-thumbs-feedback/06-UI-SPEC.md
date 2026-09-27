@@ -1,7 +1,8 @@
 ---
 phase: "06"
 slug: "thumbs-feedback"
-status: draft
+status: approved
+reviewed_at: "2026-09-26"
 shadcn_initialized: false
 preset: none
 created: "2026-09-26"
@@ -410,7 +411,7 @@ Inserted directly after `{ key: 's', action: 'Toggle star' }`:
 
 Resolved by the researcher on 2026-09-26 against the ui-consideration-probe taxonomy. Empty-state and error copy lives in the Copywriting Contract; the rows below point to it.
 
-Applicable state considerations resolved: 31 covered, 5 backstop, 6 dismissed (with reason), 0 unresolved.
+Applicable state considerations resolved: 39 covered, 5 backstop, 9 dismissed (with reason), 0 unresolved. The last 11 rows were added in the post-verification probe (the engine also classified E5–E8 as list-collection); confirmed by the user 2026-09-26.
 
 Elements: **E1** Vote buttons (interactive-control) · **E2** Narrow control (interactive-control) · **E3** Topic picker (form, list-collection) · **E4** No-match line (static-content, interactive-control) · **E5** Effect toast (static-content) · **E6** Why row with learned part (static-content) · **E7** Topic editor learned line (static-content) · **E8** Prefilled draft row (form)
 
@@ -457,6 +458,18 @@ Elements: **E1** Vote buttons (interactive-control) · **E2** Narrow control (in
 | E4 | populated | static-content | ✅ covered | Shown only with a vote on a scored article with 0 matched topics; hidden when the vote is removed or the article changes |
 | E5 | populated | static-content | ✅ covered | `👍 Rust +2.0 · WebAssembly +1.4 · Go +0.2` with limit and "(now …)" notes per the toast table |
 | E6 | populated | static-content | ✅ covered | `Rust  90% × +21.8 (+20 +1.8 learned)` → `+20`; rows sum to the badge |
+| E5 | loading | list-collection | ❎ dismissed | The toast is emitted only after the server responds; there is nothing to show before |
+| E5 | error | list-collection | ✅ covered | A failed save shows the "Couldn't save your vote" error toast instead of the effect toast (see E1 error) |
+| E5 | partial | list-collection | ✅ covered | Topics that hit `LEARNED_CAP` / `SIGN_CLAMP` / `WEIGHT_RANGE` carry their limit note per the toast table; others print plain deltas |
+| E6 | empty | list-collection | ✅ covered | No matched topics → the Phase 5 panel renders unchanged (no learned part to show) |
+| E6 | loading | list-collection | ❎ dismissed | Rows derive from the already-loaded article score data; no separate fetch |
+| E6 | error | list-collection | ❎ dismissed | No separate fetch, so no row-level error; the article's own load error applies |
+| E6 | zero-one-many | list-collection | ✅ covered | One row per matched topic; each row decides its learned part independently (rounds to 0.0 → Phase 5 label) |
+| E7 | populated | list-collection | ✅ covered | `Learned from votes {±n} · Effective weight {±n}` with limit suffixes per the topic editor table |
+| E7 | zero-one-many | list-collection | ✅ covered | One learned line per saved topic row; drafts show none |
+| E8 | populated | list-collection | ✅ covered | Name input empty and focused; description prefilled from the article title (cut to 500 chars) |
+| E8 | overflow | list-collection | ✅ covered | At 25 topics no draft is added and the at-max notice shows (see E8 partial) |
+| E8 | zero-one-many | list-collection | ✅ covered | At most one prefilled draft per open of the dialog |
 
 ---
 
@@ -472,12 +485,12 @@ No new npm dependencies are introduced by this contract.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: FLAG (non-blocking: picker secondary button is plain "Cancel"; a specific dismiss label such as "Keep current topics" is optional)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-09-26
