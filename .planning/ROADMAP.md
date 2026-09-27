@@ -253,13 +253,13 @@ Plans:
   2. Blend constants (profile weight, learning rate, cap, badge tier thresholds) are configurable and have been tuned against the real score distribution, so badges spread across tiers instead of clustering
   3. CLAUDE.md documents the Jev behaviors and gotchas: the app-owned client bean, the single retry layer, the scoring executor and the eligibility window
 
-**Plans**: 1/9 plans executed
+**Plans**: 2/9 plans executed
 
 Plans:
 **Wave 1**
 
 - [x] 07-01-PLAN.md — Tier thresholds as server config: myfeeder.interest.blend.tiers.{high,neutral} bound in MyfeederProperties, TierThresholds appended to /api/interest/status (D-13) (wave 1)
-- [ ] 07-02-PLAN.md — Badges read the served tiers: useInterestTiers → TierContext → InterestBadge with a 70/40 fallback, MainLayout provider, boundary tables (D-13) (wave 1)
+- [x] 07-02-PLAN.md — Badges read the served tiers: useInterestTiers → TierContext → InterestBadge with a 70/40 fallback, MainLayout provider, boundary tables (D-13) (wave 1)
 - [ ] 07-03-PLAN.md — JevEventLogging: jev retry, exhausted-retry and breaker-transition log lines with OutputCapture tests (D-15) (wave 1)
 - [ ] 07-04-PLAN.md — Read-only calibration replay: verbatim blend SQL, candidate driver, drift guard, scratch-Postgres smoke (D-09) (wave 1)
 
@@ -296,4 +296,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
 | 5. Blend & Priority View | 8/8 | Complete    | 2026-09-26 |
 | 6. Thumbs Feedback | 7/7 | Complete    | 2026-09-27 |
-| 7. Rollout & Calibration | 1/9 | In Progress|  |
+| 7. Rollout & Calibration | 2/9 | In Progress|  |
