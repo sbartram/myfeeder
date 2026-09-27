@@ -192,6 +192,55 @@ class JevResilienceTest {
     }
 
     @Test
+    void exhaustedRetriesAreLogged(CapturedOutput output) {
+        // D-15: a call the retry could not absorb leaves a WARN line, so it is visible in the prod logs.
+        stub.enqueue(500);
+        stub.enqueue(500);
+        stub.enqueue(500);
+        runner.run(ctx -> {
+            assertThatThrownBy(() -> ctx.getBean(JevApiClient.class).judge(state(), questions()))
+                    .isExactlyInstanceOf(TypeSafeInternalServerException.class);
+            assertThat(stub.hits()).isEqualTo(3);
+        });
+        assertThat(output.toString())
+                .contains("Jev retry attempt 1 after TypeSafeInternalServerException")
+                .contains("Jev retry attempt 2 after TypeSafeInternalServerException")
+                .contains("Jev retries exhausted after 3 attempts: TypeSafeInternalServerException")
+                .doesNotContain("LEAKCHECK")
+                .doesNotContain("stubbed failure");
+    }
+
+    @Test
+    void breakerTransitionsAreLogged(CapturedOutput output) {
+        // The enum name, not StateTransition.toString(), which is prose.
+        runner.run(ctx -> {
+            CircuitBreaker b = jevBreaker(ctx);
+            b.transitionToOpenState();
+            b.transitionToHalfOpenState();
+            b.transitionToClosedState();
+        });
+        assertThat(output.toString())
+                .contains("Jev circuit breaker CLOSED_TO_OPEN")
+                .contains("Jev circuit breaker OPEN_TO_HALF_OPEN")
+                .contains("Jev circuit breaker HALF_OPEN_TO_CLOSED")
+                .doesNotContain("State transition from");
+    }
+
+    @Test
+    void perArticleErrorsLogNoRetryLine(CapturedOutput output) {
+        // A non-retryable error publishes RetryOnIgnoredErrorEvent, which is deliberately not logged.
+        stub.enqueue(400);
+        runner.run(ctx -> {
+            assertThatThrownBy(() -> ctx.getBean(JevApiClient.class).judge(state(), questions()))
+                    .isExactlyInstanceOf(TypeSafeBadRequestException.class);
+            assertThat(stub.hits()).isEqualTo(1);
+        });
+        assertThat(output.toString())
+                .doesNotContain("Jev retry attempt")
+                .doesNotContain("Jev retries exhausted");
+    }
+
+    @Test
     void badRequestAndUnprocessableAreNotRetriedOrRecorded() {
         // Per-article errors: attempted once and ignored by the breaker, so they can never open it.
         stub.enqueue(400);
