@@ -3,17 +3,17 @@ gsd_state_version: "1.0"
 milestone: v0.1.24
 current_phase: 06
 current_phase_name: Thumbs Feedback
-status: executing
-stopped_at: Completed 06-05-PLAN.md
-last_updated: "2026-09-27T04:03:30.063Z"
+status: verifying
+stopped_at: Completed 06-07-PLAN.md
+last_updated: "2026-09-27T04:09:18.172Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 06 execution started
-state_head: f64ea05895c092057284a0b04d840451b15b2b04
+state_head: e86d0a51ab3ef8f5f1460cbaedcb060cab056a5a
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 40
-  completed_plans: 39
+  completed_plans: 40
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-26)
 
 Phase: 06 (Thumbs Feedback) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-26 — Phase 06 execution started
 
 Progress: [███████░░░] 71%
@@ -101,6 +101,7 @@ Progress: [███████░░░] 71%
 | Phase 06 P04 | 7 min | 3 tasks | 10 files |
 | Phase 06 P06 | 3 min | 2 tasks | 7 files |
 | Phase 06 P05 | 7 min | 3 tasks | 14 files |
+| Phase 06 P07 | 4 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -175,6 +176,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-06: GET /api/interest/topics/learned serves [{topicId, baseWeight, learned, effectiveWeight, limit}] from the eff2 CTE via ArticleFeedbackService.learnedTopics; topicWeights and allTopicWeights share one select fragment
 - [Phase 06]: 06-05: The Create topic from article draft is one-shot, held in MainLayout state and seeded once as row d-1 in the TopicsSection useState initializer; at 25 topics the at-max notice replaces it
 - [Phase 06]: 06-05: useLearnedTopics lives on its own ['interest','learned'] key, invalidated by votes and topic create/update/delete, never the topics list, so unsaved row edits survive
+- [Phase 06]: 06-07: vote toast follows the UI-SPEC list rule (sort by absolute change), so the capped example prints Go before Rust; limit notes take precedence over (now …)
 
 ### Pending Todos
 
@@ -205,6 +207,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-27T04:03:30.009Z
-Stopped at: Completed 06-05-PLAN.md
+Last session: 2026-09-27T04:09:18.118Z
+Stopped at: Completed 06-07-PLAN.md
 Resume file: None
