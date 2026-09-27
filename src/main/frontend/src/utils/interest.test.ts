@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { PROFILE_LEVEL_LABELS, formatPreviewText, formatSigned, hinge, isNegated } from './interest'
+import {
+  DEFAULT_TIERS,
+  PROFILE_LEVEL_LABELS,
+  formatPreviewText,
+  formatSigned,
+  hinge,
+  isNegated,
+  tierOf,
+} from './interest'
 
 describe('isNegated', () => {
   it('isNegatedMatchesTheWordList', () => {
@@ -60,5 +68,38 @@ describe('formatPreviewText', () => {
 describe('PROFILE_LEVEL_LABELS', () => {
   it('levelLabels', () => {
     expect([...PROFILE_LEVEL_LABELS]).toEqual(['None', 'In passing', 'Partly', 'Mainly', 'Core interest'])
+  })
+})
+
+describe('tierOf', () => {
+  it('defaultsAreInclusiveAtTheLowEnd', () => {
+    const cases: [number, string][] = [
+      [0, 'low'],
+      [39, 'low'],
+      [40, 'neutral'],
+      [69, 'neutral'],
+      [70, 'high'],
+      [100, 'high'],
+    ]
+    for (const [score, tier] of cases) {
+      expect(tierOf(score), `score ${score}`).toBe(tier)
+    }
+  })
+
+  it('honorsServedThresholds', () => {
+    const tiers = { high: 60, neutral: 30 }
+    const cases: [number, string][] = [
+      [29, 'low'],
+      [30, 'neutral'],
+      [59, 'neutral'],
+      [60, 'high'],
+    ]
+    for (const [score, tier] of cases) {
+      expect(tierOf(score, tiers), `score ${score}`).toBe(tier)
+    }
+  })
+
+  it('defaultTiersAre70And40', () => {
+    expect(DEFAULT_TIERS).toEqual({ high: 70, neutral: 40 })
   })
 })

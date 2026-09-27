@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
 import { InterestBadge } from './InterestBadge'
+import { TierContext } from '../utils/interest'
 
 function badge(score: number | null | undefined) {
   const { container } = render(<InterestBadge score={score} />)
@@ -22,6 +23,27 @@ describe('InterestBadge', () => {
       expect(el, `score ${score}`).not.toBeNull()
       expect(el, `score ${score}`).toHaveClass(tier)
       expect(el).toHaveTextContent(String(score))
+    }
+  })
+
+  it('usesTheProvidedTiers', () => {
+    const cases: [number, string][] = [
+      [0, 'tier-low'],
+      [19, 'tier-low'],
+      [20, 'tier-neutral'],
+      [49, 'tier-neutral'],
+      [50, 'tier-high'],
+      [100, 'tier-high'],
+    ]
+    for (const [score, tier] of cases) {
+      const { container } = render(
+        <TierContext.Provider value={{ high: 50, neutral: 20 }}>
+          <InterestBadge score={score} />
+        </TierContext.Provider>,
+      )
+      const el = container.querySelector('.interest-badge')
+      expect(el, `score ${score}`).not.toBeNull()
+      expect(el, `score ${score}`).toHaveClass(tier)
     }
   })
 
