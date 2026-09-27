@@ -238,16 +238,34 @@ public class InterestScoreQueries {
             return Map.of();
         }
         Map<Long, TopicWeight> weights = new LinkedHashMap<>();
-        learnedSql(LEARNED_CTE + " SELECT e.id, e.name, ROUND(e.base::numeric, 6) AS base, "
-                        + "ROUND(e.learned_raw::numeric, 6) AS learned_raw, ROUND(e.learned::numeric, 6) AS learned, "
-                        + "ROUND(e.w::numeric, 6) AS w FROM eff2 e WHERE e.id IN (:ids) ORDER BY e.id")
+        learnedSql(TOPIC_WEIGHTS_SELECT + " WHERE e.id IN (:ids) ORDER BY e.id")
                 .param("ids", topicIds)
                 .query(rs -> {
-                    long id = rs.getLong("id");
-                    weights.put(id, new TopicWeight(id, rs.getString("name"), rs.getDouble("base"),
-                            rs.getDouble("learned_raw"), rs.getDouble("learned"), rs.getDouble("w")));
+                    TopicWeight w = topicWeight(rs);
+                    weights.put(w.topicId(), w);
                 });
         return weights;
+    }
+
+    /**
+     * Every topic's weights under the learned model, in ascending id order (FDBK-07). Read-only; an
+     * empty topic table returns an empty list.
+     */
+    public List<TopicWeight> allTopicWeights() {
+        return learnedSql(TOPIC_WEIGHTS_SELECT + " ORDER BY e.id")
+                .query((rs, rowNum) -> topicWeight(rs))
+                .list();
+    }
+
+    /** The {@link TopicWeight} select over {@code eff2}, rounded to 6 decimals; callers add filter and order. */
+    private static final String TOPIC_WEIGHTS_SELECT = LEARNED_CTE
+            + " SELECT e.id, e.name, ROUND(e.base::numeric, 6) AS base, "
+            + "ROUND(e.learned_raw::numeric, 6) AS learned_raw, ROUND(e.learned::numeric, 6) AS learned, "
+            + "ROUND(e.w::numeric, 6) AS w FROM eff2 e";
+
+    private static TopicWeight topicWeight(ResultSet rs) throws SQLException {
+        return new TopicWeight(rs.getLong("id"), rs.getString("name"), rs.getDouble("base"),
+                rs.getDouble("learned_raw"), rs.getDouble("learned"), rs.getDouble("w"));
     }
 
     /**

@@ -327,6 +327,53 @@ class FeedbackApiIntegrationTest {
         assertThat(items.get(0)).doesNotContainKey("feedback");
     }
 
+    @Test
+    void learnedEndpointMatchesTheVoteEffects() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long go = insertTopic(FEEDBACK_TOPIC_PREFIX + "go", 10);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+        putVote(a, "{\"vote\":1}");
+
+        List<Map<String, Object>> entries = learnedEntries(List.of(rust, go));
+
+        assertThat(entries).extracting(e -> ((Number) e.get("topicId")).longValue()).containsExactly(rust, go);
+        assertLearned(entries.get(0), 20.0, 1.8, 21.8, "NONE");
+        assertLearned(entries.get(1), 10.0, 0.0, 10.0, "NONE");
+        assertThat(topicWeight(rust)).isEqualTo(20);
+        assertThat(topicWeight(go)).isEqualTo(10);
+    }
+
+    @Test
+    void learnedEntryDisappearsWithItsTopic() throws Exception {
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long go = insertTopic(FEEDBACK_TOPIC_PREFIX + "go", 10);
+        assertThat(learnedEntries(List.of(rust, go))).hasSize(2);
+
+        mockMvc.perform(delete("/api/interest/topics/{id}", go))
+                .andExpect(status().isNoContent());
+
+        List<Map<String, Object>> entries = learnedEntries(List.of(rust, go));
+        assertThat(entries).extracting(e -> ((Number) e.get("topicId")).longValue()).containsExactly(rust);
+    }
+
+    /** The learned entries for {@code ids} (the container is shared), in the order the endpoint served them. */
+    private List<Map<String, Object>> learnedEntries(List<Long> ids) throws Exception {
+        String body = mockMvc.perform(get("/api/interest/topics/learned"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        List<Map<String, Object>> all = JsonPath.read(body, "$");
+        return all.stream().filter(e -> ids.contains(((Number) e.get("topicId")).longValue())).toList();
+    }
+
+    private static void assertLearned(Map<String, Object> entry, double base, double learned, double effective,
+                                      String limit) {
+        assertThat(((Number) entry.get("baseWeight")).doubleValue()).isEqualTo(base);
+        assertThat(((Number) entry.get("learned")).doubleValue()).isEqualTo(learned);
+        assertThat(((Number) entry.get("effectiveWeight")).doubleValue()).isEqualTo(effective);
+        assertThat(entry.get("limit")).isEqualTo(limit);
+    }
+
     /** Article N: rust noul 0.95 (m 0.9), politics 0.8 (m 0.6), go 0.6 (m 0.2). */
     private long insertThreeTopicArticle(long feedId, long rust, long politics, long go) {
         long n = insertMatchingArticle(feedId, "n", rust, 0.95);

@@ -3,7 +3,9 @@ package org.bartram.myfeeder.controller;
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.model.InterestProfile;
 import org.bartram.myfeeder.model.InterestTopic;
+import org.bartram.myfeeder.service.ArticleFeedbackService;
 import org.bartram.myfeeder.service.InterestService;
+import org.bartram.myfeeder.service.TopicLearned;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InterestController {
     private final InterestService interestService;
+    private final ArticleFeedbackService articleFeedbackService;
 
     @GetMapping("/profile")
     public InterestProfile getProfile() { return interestService.getProfile(); }
@@ -25,6 +28,10 @@ public class InterestController {
 
     @GetMapping("/topics")
     public List<InterestTopic> listTopics() { return interestService.listTopics(); }
+
+    /** Each topic's base, learned and effective weight (FDBK-07); /topics/{id} maps only PUT and DELETE. */
+    @GetMapping("/topics/learned")
+    public List<TopicLearned> learnedTopics() { return articleFeedbackService.learnedTopics(); }
 
     @PostMapping("/topics")
     public ResponseEntity<InterestTopic> createTopic(@RequestBody TopicRequest request) {

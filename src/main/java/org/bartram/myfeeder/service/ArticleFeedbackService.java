@@ -63,6 +63,17 @@ public class ArticleFeedbackService {
         return applyAndReport(articleId, matched -> () -> store.delete(articleId));
     }
 
+    /**
+     * Every topic's base, learned and effective weight with its limit, in ascending id order (FDBK-07),
+     * read from the same learned model as the ranking and the badge. No transaction and no write.
+     */
+    public List<TopicLearned> learnedTopics() {
+        int cap = properties.getInterest().getBlend().getLearnedCap();
+        return queries.allTopicWeights().stream()
+                .map(w -> new TopicLearned(w.topicId(), w.base(), w.learned(), w.effective(), LearnedLimit.of(w, cap)))
+                .toList();
+    }
+
     /** The picks de-duplicated in order; every one must be a topic the article matched. */
     private static List<Long> picksOf(List<Long> topicIds, List<Long> matched) {
         Set<Long> picks = new LinkedHashSet<>(topicIds);

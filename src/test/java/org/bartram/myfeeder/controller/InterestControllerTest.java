@@ -2,8 +2,11 @@ package org.bartram.myfeeder.controller;
 
 import org.bartram.myfeeder.model.InterestProfile;
 import org.bartram.myfeeder.model.InterestTopic;
+import org.bartram.myfeeder.service.ArticleFeedbackService;
 import org.bartram.myfeeder.service.InterestService;
+import org.bartram.myfeeder.service.LearnedLimit;
 import org.bartram.myfeeder.service.NotFoundException;
+import org.bartram.myfeeder.service.TopicLearned;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -18,6 +21,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -30,6 +34,7 @@ class InterestControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @MockitoBean private InterestService interestService;
+    @MockitoBean private ArticleFeedbackService articleFeedbackService;
 
     private static InterestTopic topic(Long id, String name, String description, int weight, int version) {
         InterestTopic t = new InterestTopic();
@@ -142,5 +147,44 @@ class InterestControllerTest {
         mockMvc.perform(delete("/api/interest/topics/5"))
                 .andExpect(status().isNoContent());
         verify(interestService).deleteTopic(5L);
+    }
+
+    @Test
+    void learnedTopicsAreServed() throws Exception {
+        when(articleFeedbackService.learnedTopics()).thenReturn(List.of(
+                new TopicLearned(10, 20, 4, 24, LearnedLimit.NONE),
+                new TopicLearned(11, 5, -20, 0, LearnedLimit.LEARNED_CAP)));
+
+        mockMvc.perform(get("/api/interest/topics/learned"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].topicId").value(10))
+                .andExpect(jsonPath("$[0].baseWeight").value(20.0))
+                .andExpect(jsonPath("$[0].learned").value(4.0))
+                .andExpect(jsonPath("$[0].effectiveWeight").value(24.0))
+                .andExpect(jsonPath("$[0].limit").value("NONE"))
+                .andExpect(jsonPath("$[1].topicId").value(11))
+                .andExpect(jsonPath("$[1].limit").value("LEARNED_CAP"));
+    }
+
+    @Test
+    void learnedTopicsEmptyWhenNoTopics() throws Exception {
+        when(articleFeedbackService.learnedTopics()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/interest/topics/learned"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+    }
+
+    @Test
+    void topicsListStillServed() throws Exception {
+        when(interestService.listTopics()).thenReturn(List.of(topic(7L, "Go", "Go lang", 10, 1)));
+
+        mockMvc.perform(get("/api/interest/topics"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(7))
+                .andExpect(jsonPath("$[0].name").value("Go"));
+        verify(articleFeedbackService, never()).learnedTopics();
     }
 }
