@@ -94,6 +94,12 @@ public class ArticleController {
         return articleFeedbackService.vote(id, request.vote(), request.topicIds());
     }
 
+    /** Removes a thumbs vote. DELETE is never a CORS simple request, so no content-type guard is needed. */
+    @DeleteMapping("/{id}/feedback")
+    public FeedbackResult clearFeedback(@PathVariable Long id) {
+        return articleFeedbackService.clear(id);
+    }
+
     @PostMapping("/{id}/raindrop")
     public ResponseEntity<Void> saveToRaindrop(@PathVariable Long id) {
         Article article = articleService.findById(id)

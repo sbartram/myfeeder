@@ -45,4 +45,11 @@ public class ArticleFeedbackStore {
                     .update();
         }
     }
+
+    /** Removes the article's vote; V6 cascades its picks. Returns the rows deleted (0 when there was no vote). */
+    public int delete(long articleId) {
+        return jdbc.sql("DELETE FROM article_feedback WHERE article_id = :articleId")
+                .param("articleId", articleId)
+                .update();
+    }
 }

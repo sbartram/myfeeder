@@ -41,6 +41,8 @@ myfeeder:
     # Blend constants (R1); the profile contributes profile_score / max level x profile-points. Phase 7 tunes these.
     blend:
       profile-points: 100
+      learn-rate: 2
+      learned-cap: 20
 
 resilience4j:
   circuitbreaker:

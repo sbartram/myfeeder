@@ -36,6 +36,12 @@ public class ArticleFeedbackService {
         return applyAndReport(articleId, () -> store.upsert(articleId, vote, topicIds));
     }
 
+    /** Removes the article's vote; with no stored vote nothing is written and before equals after. */
+    @Transactional
+    public FeedbackResult clear(long articleId) {
+        return applyAndReport(articleId, () -> store.delete(articleId));
+    }
+
     /** Reads the matched topics' weights, runs {@code write}, reads them again and builds the response. */
     private FeedbackResult applyAndReport(long articleId, Runnable write) {
         articleService.findById(articleId)
