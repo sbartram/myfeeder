@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -84,6 +85,95 @@ class FeedbackApiIntegrationTest {
         assertThat(topicWeight(rust)).isEqualTo(20);
         assertThat(storedFeedback(a)).containsExactly("vote=1 narrowed=false");
         verify(jevApiClient, never()).judge(any(), any());
+    }
+
+    @Test
+    void upDownUpEqualsASingleUp() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+
+        putVote(a, "{\"vote\":1}");
+        String down = putVote(a, "{\"vote\":-1}");
+        String up = putVote(a, "{\"vote\":1}");
+
+        assertEffect(down, 0, rust, 21.8, 18.2);
+        assertEffect(up, 0, rust, 18.2, 21.8);
+        assertThat(badge(a)).isEqualTo(70);
+        assertThat(storedFeedback(a)).containsExactly("vote=1 narrowed=false");
+        assertThat(topicWeight(rust)).isEqualTo(20);
+    }
+
+    @Test
+    void deleteRestoresExactly() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+
+        putVote(a, "{\"vote\":1}");
+        String body = deleteVote(a);
+
+        assertEffect(body, 0, rust, 21.8, 20.0);
+        assertThat((Integer) JsonPath.read(body, "$.article.interestScore")).isEqualTo(68);
+        assertThat(badge(a)).isEqualTo(68);
+        assertThat(storedFeedback(a)).isEmpty();
+        assertThat(topicWeight(rust)).isEqualTo(20);
+    }
+
+    @Test
+    void repeatedPutChangesNothing() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+        long c = insertMatchingArticle(feedId, "c", rust, 0.4);
+
+        putVote(a, "{\"vote\":1}");
+        String again = putVote(a, "{\"vote\":1}");
+
+        assertEffect(again, 0, rust, 21.8, 21.8);
+        assertThat(storedFeedback(a)).containsExactly("vote=1 narrowed=false");
+
+        for (int i = 0; i < 2; i++) {
+            String noMatch = putVote(c, "{\"vote\":1}");
+            assertThat((Boolean) JsonPath.read(noMatch, "$.scored")).isTrue();
+            assertThat((List<?>) JsonPath.read(noMatch, "$.effects")).isEmpty();
+        }
+        assertThat(storedFeedback(c)).containsExactly("vote=1 narrowed=false");
+        assertThat(topicWeight(rust)).isEqualTo(20);
+    }
+
+    @Test
+    void deleteWithoutAVoteIsANoOp() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+
+        String body = deleteVote(a);
+
+        assertEffect(body, 0, rust, 20.0, 20.0);
+        assertThat(storedFeedback(a)).isEmpty();
+        assertThat(topicWeight(rust)).isEqualTo(20);
+    }
+
+    /** A SCORED article (profile 2.0/4) that judged {@code topicId} at {@code noul}. */
+    private long insertMatchingArticle(long feedId, String guid, long topicId, double noul) {
+        long id = insertArticle(feedId, guid, Instant.parse("2026-09-20T10:00:00Z"));
+        insertScored(id, 2.0, 4);
+        insertTopicScore(id, topicId, noul);
+        return id;
+    }
+
+    private static void assertEffect(String body, int index, long topicId, double before, double after) {
+        Map<String, Object> effect = JsonPath.read(body, "$.effects[" + index + "]");
+        assertThat(((Number) effect.get("topicId")).longValue()).isEqualTo(topicId);
+        assertThat(((Number) effect.get("before")).doubleValue()).isEqualTo(before);
+        assertThat(((Number) effect.get("after")).doubleValue()).isEqualTo(after);
+    }
+
+    private String deleteVote(long articleId) throws Exception {
+        return mockMvc.perform(delete("/api/articles/{id}/feedback", articleId))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
     }
 
     private String putVote(long articleId, String json) throws Exception {

@@ -6,6 +6,7 @@ import org.bartram.myfeeder.repository.InterestScoreQueries.BreakdownInputs;
 import org.bartram.myfeeder.repository.InterestScoreQueries.PriorityRow;
 import org.bartram.myfeeder.repository.InterestScoreQueries.SortKey;
 import org.bartram.myfeeder.repository.InterestScoreQueries.TopicContribution;
+import org.bartram.myfeeder.repository.InterestScoreQueries.TopicWeight;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -311,6 +312,133 @@ class InterestScoreQueriesTest {
         }
     }
 
+    @Test
+    void learnedFollowsOneUpVote() {
+        insertFeedback(a1, 1, false);
+
+        Map<Long, TopicWeight> w = queries.topicWeights(List.of(rust, webAssembly, politics, zero, gardening));
+
+        assertWeight(w.get(rust), 1.72, 21.72);
+        assertWeight(w.get(webAssembly), 1.0, 15.0);
+        assertWeight(w.get(politics), 0.4, -29.6);
+        assertWeight(w.get(gardening), 0.0, 10.0);
+        assertWeight(w.get(zero), 0.0, 0.0);
+    }
+
+    @Test
+    void learnedIsCappedAtTwenty() {
+        insertMatchingArticles(rust, 1.0, 12).forEach(id -> insertFeedback(id, 1, false));
+
+        TopicWeight w = queries.topicWeights(List.of(rust)).get(rust);
+
+        assertThat(w.learnedRaw()).isCloseTo(24.0, within(1e-6));
+        assertWeight(w, 20.0, 40.0);
+    }
+
+    @Test
+    void positiveBaseNeverGoesBelowZero() {
+        long small = insertTopic("Small", 5);
+        insertMatchingArticles(small, 1.0, 12).forEach(id -> insertFeedback(id, -1, false));
+
+        assertWeight(queries.topicWeights(List.of(small)).get(small), -20.0, 0.0);
+    }
+
+    @Test
+    void negativeBaseNeverGoesAboveZero() {
+        long mild = insertTopic("Mild", -5);
+        insertMatchingArticles(mild, 1.0, 12).forEach(id -> insertFeedback(id, 1, false));
+
+        assertWeight(queries.topicWeights(List.of(mild)).get(mild), 20.0, 0.0);
+    }
+
+    @Test
+    void effectiveWeightStaysWithinFifty() {
+        long big = insertTopic("Big", 45);
+        long deep = insertTopic("Deep", -45);
+        insertMatchingArticles(big, 1.0, 12).forEach(id -> insertFeedback(id, 1, false));
+        insertMatchingArticles(deep, 1.0, 12).forEach(id -> insertFeedback(id, -1, false));
+
+        Map<Long, TopicWeight> w = queries.topicWeights(List.of(big, deep));
+
+        assertWeight(w.get(big), 20.0, 50.0);
+        assertWeight(w.get(deep), -20.0, -50.0);
+    }
+
+    @Test
+    void zeroBaseMovesBothWays() {
+        insertFeedback(a8, 1, false);
+        assertThat(queries.topicWeights(List.of(zero)).get(zero).effective()).isCloseTo(1.6, within(1e-6));
+
+        jdbc.update("UPDATE article_feedback SET vote = -1 WHERE article_id = ?", a8);
+        assertThat(queries.topicWeights(List.of(zero)).get(zero).effective()).isCloseTo(-1.6, within(1e-6));
+    }
+
+    @Test
+    void narrowedVoteMovesOnlyPickedTopics() {
+        insertFeedback(a1, -1, true);
+        insertPick(a1, politics);
+
+        Map<Long, TopicWeight> w = queries.topicWeights(List.of(rust, webAssembly, politics));
+
+        assertThat(w.get(politics).effective()).isCloseTo(-30.4, within(1e-6));
+        assertThat(w.get(rust).effective()).isCloseTo(20.0, within(1e-6));
+        assertThat(w.get(webAssembly).effective()).isCloseTo(14.0, within(1e-6));
+    }
+
+    @Test
+    void narrowedVoteWithNoPicksMovesNothing() {
+        insertFeedback(a1, -1, true);
+
+        Map<Long, TopicWeight> w = queries.topicWeights(List.of(rust, webAssembly, politics, zero, gardening));
+
+        assertWeight(w.get(rust), 0.0, 20.0);
+        assertWeight(w.get(webAssembly), 0.0, 14.0);
+        assertWeight(w.get(politics), 0.0, -30.0);
+        assertWeight(w.get(zero), 0.0, 0.0);
+        assertWeight(w.get(gardening), 0.0, 10.0);
+    }
+
+    @Test
+    void voteOnUnscoredArticleCountsNothing() {
+        insertTopicScore(u2, rust, 1.0);
+        insertFeedback(u1, 1, false);
+        insertFeedback(u2, 1, false);
+
+        assertWeight(queries.topicWeights(List.of(rust)).get(rust), 0.0, 20.0);
+    }
+
+    @Test
+    void deletingTheVoteRestoresExactly() {
+        List<Long> all = List.of(rust, webAssembly, politics, zero, gardening);
+        Map<Long, TopicWeight> before = queries.topicWeights(all);
+
+        insertFeedback(a1, 1, false);
+        assertThat(queries.topicWeights(all)).isNotEqualTo(before);
+        jdbc.update("DELETE FROM article_feedback WHERE article_id = ?", a1);
+
+        assertThat(queries.topicWeights(all)).isEqualTo(before);
+    }
+
+    @Test
+    void badgeReflectsLearnedWeight() {
+        insertFeedback(a1, 1, false);
+
+        Map<Long, Integer> display = queries.displayScores(List.of(a1, a2, a4));
+
+        assertThat(display).containsEntry(a1, 84).containsEntry(a2, 84).containsEntry(a4, 100);
+        assertThat(queries.breakdownInputs(a1).orElseThrow().raw()).isEqualByComparingTo("84.2592");
+    }
+
+    @Test
+    void topicWeightsOfNoIdsIsEmpty() {
+        assertThat(queries.topicWeights(List.of())).isEmpty();
+    }
+
+    private static void assertWeight(TopicWeight w, double learned, double effective) {
+        assertThat(w.learned()).as("learned of %s", w.name()).isCloseTo(learned, within(1e-6));
+        assertThat(w.effective()).as("effective of %s", w.name()).isCloseTo(effective, within(1e-6));
+    }
+
     private void seedFixture() {
         rust = insertTopic("Rust", 20);
         webAssembly = insertTopic("WebAssembly", 14);
@@ -409,6 +537,27 @@ class InterestScoreQueriesTest {
     private void insertTopicScore(long articleId, long topicId, double noul) {
         jdbc.update("INSERT INTO article_topic_score (article_id, topic_id, noul, topic_version) VALUES (?, ?, ?, 1)",
                 articleId, topicId, noul);
+    }
+
+    private void insertFeedback(long articleId, int vote, boolean narrowed) {
+        jdbc.update("INSERT INTO article_feedback (article_id, vote, topics_narrowed) VALUES (?, ?, ?)",
+                articleId, vote, narrowed);
+    }
+
+    private void insertPick(long articleId, long topicId) {
+        jdbc.update("INSERT INTO article_feedback_topic (article_id, topic_id) VALUES (?, ?)", articleId, topicId);
+    }
+
+    /** Inserts {@code count} unread SCORED articles (no profile) that each judged only {@code topicId}. */
+    private List<Long> insertMatchingArticles(long topicId, double noul, int count) {
+        List<Long> ids = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            long id = insertArticle("m" + topicId + "-" + i, false, now.minus(Duration.ofHours(1)), now);
+            insertScored(id, null, null);
+            insertTopicScore(id, topicId, noul);
+            ids.add(id);
+        }
+        return ids;
     }
 
     private static List<Long> ids(List<PriorityRow> rows) {
