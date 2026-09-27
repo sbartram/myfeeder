@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { apiGet, apiPost, apiDelete, ApiError } from './client'
+import { apiGet, apiPost, apiDelete, apiDeleteJson, ApiError } from './client'
 
 describe('API client', () => {
   beforeEach(() => {
@@ -73,6 +73,33 @@ describe('API client', () => {
       title: 'Jev unavailable',
       message: 'Jev is temporarily unavailable',
     })
+  })
+
+  it('apiDeleteJsonParsesTheBody', async () => {
+    const mockFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ scored: true, effects: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    const result = await apiDeleteJson<{ scored: boolean; effects: unknown[] }>('/articles/1/feedback')
+
+    expect(result).toEqual({ scored: true, effects: [] })
+    expect(mockFetch).toHaveBeenCalledWith('/api/articles/1/feedback', { method: 'DELETE' })
+  })
+
+  it('apiDeleteJsonRaisesApiError', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({ title: 'Not Found', detail: 'Article 1 not found', status: 404 }),
+        { status: 404, headers: { 'Content-Type': 'application/problem+json' } },
+      ),
+    )
+
+    const error = await apiDeleteJson('/articles/1/feedback').catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 404, title: 'Not Found', message: 'Article 1 not found' })
   })
 
   it('emptyBodyErrorHasStatusAndNoTitle', async () => {
