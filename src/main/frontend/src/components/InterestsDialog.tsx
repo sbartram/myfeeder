@@ -38,17 +38,25 @@ function describeUnsaved(profileDirty: boolean, dirtyTopics: number): string {
   return topics
 }
 
+/**
+ * A prefilled, unsaved topic draft from "Create topic from article" (D-20): the article title as
+ * the description and +20 after 👍 or −20 after 👎.
+ */
+export type TopicDraft = { description: string; weight: 20 | -20 }
+
 interface InterestsDialogProps {
   open: boolean
   onClose: () => void
+  /** Seeded once as the last topic row when the rows load; the caller clears it on close. */
+  draft?: TopicDraft | null
 }
 
-export function InterestsDialog({ open, onClose }: InterestsDialogProps) {
+export function InterestsDialog({ open, onClose, draft }: InterestsDialogProps) {
   if (!open) return null
-  return <InterestsDialogBody onClose={onClose} />
+  return <InterestsDialogBody onClose={onClose} draft={draft ?? null} />
 }
 
-function InterestsDialogBody({ onClose }: { onClose: () => void }) {
+function InterestsDialogBody({ onClose, draft }: { onClose: () => void; draft: TopicDraft | null }) {
   const profile = useInterestProfile()
   const topics = useInterestTopics()
   const status = useInterestStatus()
@@ -89,6 +97,7 @@ function InterestsDialogBody({ onClose }: { onClose: () => void }) {
           status={status.data}
           statusFailed={status.isError}
           onDirtyCountChange={setDirtyTopics}
+          draft={draft}
         />
         <RescoreFooter status={status.data} dirty={profileDirty || dirtyTopics > 0} />
       </>
@@ -424,19 +433,39 @@ interface TopicsSectionProps {
   status: InterestStatus | undefined
   statusFailed: boolean
   onDirtyCountChange: (count: number) => void
+  draft: TopicDraft | null
 }
 
 /**
  * Seeds its rows once from the loaded topics. After that, each row changes only through its own
  * callbacks, so a refetch or another row's save never overwrites unsaved edits (Pitfall 7).
+ * A "Create topic from article" draft is seeded last in the same pass, so it's added once per
+ * open; at 25 topics it's dropped and the at-max notice explains why (D-20).
  */
-function TopicsSection({ topics, status, statusFailed, onDirtyCountChange }: TopicsSectionProps) {
-  const [rows, setRows] = useState<TopicRowState[]>(() => seedRows(topics))
+function TopicsSection({ topics, status, statusFailed, onDirtyCountChange, draft }: TopicsSectionProps) {
+  const [draftBlocked] = useState(() => draft !== null && topics.length >= TOPICS_MAX)
+  const [rows, setRows] = useState<TopicRowState[]>(() =>
+    draft !== null && topics.length < TOPICS_MAX
+      ? [
+          ...seedRows(topics),
+          {
+            key: 'd-1',
+            id: null,
+            name: '',
+            description: draft.description,
+            weightText: String(draft.weight),
+            weight: draft.weight,
+            saved: null,
+          },
+        ]
+      : seedRows(topics),
+  )
   // The preview target is read live and never written here (D-07, D-12).
   const selectedArticleId = useUIStore((s) => s.selectedArticleId)
   const article = useArticle(selectedArticleId)
   const previewBlock = computePreviewBlock(status, statusFailed, selectedArticleId)
-  const draftCounter = useRef(0)
+  // The seeded draft took key d-1, so + Add topic continues at d-2.
+  const draftCounter = useRef(draft !== null && !draftBlocked ? 1 : 0)
 
   const updateRow = (key: string, update: (row: TopicRowState) => TopicRowState) =>
     setRows((current) => current.map((r) => (r.key === key ? update(r) : r)))
@@ -483,6 +512,12 @@ function TopicsSection({ topics, status, statusFailed, onDirtyCountChange }: Top
 
   return (
     <section className="interests-section">
+      {draftBlocked && (
+        <div className="interests-notice">
+          <strong>You have 25 topics, the maximum.</strong> Delete one, then use Create topic from
+          article again.
+        </div>
+      )}
       <div className="interests-topics-head">
         <h3>Topics</h3>
         <span className="interests-topic-count">

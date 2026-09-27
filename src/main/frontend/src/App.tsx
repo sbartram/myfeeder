@@ -15,7 +15,7 @@ import { useUIStore } from './stores/uiStore'
 import { usePreferences } from './stores/preferencesStore'
 import { AddFeedDialog } from './components/AddFeedDialog'
 import { SettingsDialog } from './components/SettingsDialog'
-import { InterestsDialog } from './components/InterestsDialog'
+import { InterestsDialog, type TopicDraft } from './components/InterestsDialog'
 import { ShortcutOverlay } from './components/ShortcutOverlay'
 import { ToastContainer } from './components/Toast'
 import { createQueryClient } from './queryClient'
@@ -76,6 +76,8 @@ function MainLayout() {
   const [addFeedOpen, setAddFeedOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [interestsOpen, setInterestsOpen] = useState(false)
+  // One-shot "Create topic from article" draft (D-20): cleared when Interests closes.
+  const [interestsDraft, setInterestsDraft] = useState<TopicDraft | null>(null)
   const [boardOpen, setBoardOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const selectedFeedId = useUIStore((s) => s.selectedFeedId)
@@ -121,7 +123,16 @@ function MainLayout() {
             <Route path="*" element={<AllArticles />} />
           </Routes>
         }
-        readingPane={<ReadingPane boardOpen={boardOpen} onBoardClose={() => setBoardOpen(false)} />}
+        readingPane={
+          <ReadingPane
+            boardOpen={boardOpen}
+            onBoardClose={() => setBoardOpen(false)}
+            onCreateTopic={(draft) => {
+              setInterestsDraft(draft)
+              setInterestsOpen(true)
+            }}
+          />
+        }
       />
       <AddFeedDialog open={addFeedOpen} onClose={() => setAddFeedOpen(false)} />
       <SettingsDialog
@@ -132,7 +143,14 @@ function MainLayout() {
           setInterestsOpen(true)
         }}
       />
-      <InterestsDialog open={interestsOpen} onClose={() => setInterestsOpen(false)} />
+      <InterestsDialog
+        open={interestsOpen}
+        draft={interestsDraft}
+        onClose={() => {
+          setInterestsOpen(false)
+          setInterestsDraft(null)
+        }}
+      />
       <ShortcutOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <ToastContainer />
     </>

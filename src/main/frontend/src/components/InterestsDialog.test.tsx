@@ -1017,4 +1017,113 @@ describe('InterestsDialog', () => {
       vi.useRealTimers()
     }
   })
+
+  describe('Create topic from article draft', () => {
+    const DRAFT = { description: 'Rust async runtimes', weight: -20 as const }
+
+    function twoTopics() {
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: [topic(3, 'Rust', 'The Rust language'), topic(9, 'Go', 'The Go language')],
+      }))
+    }
+
+    it('draftRowIsSeededLastWithTheTitle', async () => {
+      twoTopics()
+      const { container } = renderDialog(
+        <InterestsDialog open={true} onClose={() => {}} draft={DRAFT} />,
+      )
+      await screen.findByText('3 / 25')
+
+      const rows = topicRows(container)
+      expect(rows).toHaveLength(3)
+      const last = rows[2]
+      const name = within(last).getByRole('textbox', { name: 'Topic name' })
+      expect(name).toHaveValue('')
+      expect(name).toHaveFocus()
+      expect(within(last).getByRole('textbox', { name: 'Topic description' })).toHaveValue(
+        'Rust async runtimes',
+      )
+      expect(within(last).getByRole('spinbutton', { name: 'Topic weight value' })).toHaveValue(-20)
+      expect(within(last).getByRole('slider', { name: 'Topic weight' })).toHaveValue('-20')
+      expect(last.querySelector('.interests-weight-sign')).toHaveTextContent('−20')
+      expect(within(last).getByText('Unsaved')).toBeInTheDocument()
+    })
+
+    it('draftCountsAsUnsavedAndCloseAsksToDiscard', async () => {
+      const user = userEvent.setup()
+      twoTopics()
+      const onClose = vi.fn()
+      renderDialog(<InterestsDialog open={true} onClose={onClose} draft={DRAFT} />)
+      await screen.findByText('3 / 25')
+
+      await user.click(screen.getByRole('button', { name: 'Close' }))
+
+      expect(
+        screen.getByText('Discard unsaved changes? You have unsaved edits to 1 topic.'),
+      ).toBeInTheDocument()
+      expect(onClose).not.toHaveBeenCalled()
+      expect(calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/topics')).toEqual([])
+      expect(calls.filter((c) => c.method !== 'GET')).toEqual([])
+    })
+
+    it('draftIsSeededOnce', async () => {
+      twoTopics()
+      const qc = new QueryClient({
+        defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      })
+      const view = renderDialog(
+        <InterestsDialog open={true} onClose={() => {}} draft={DRAFT} />,
+        qc,
+      )
+      await screen.findByText('3 / 25')
+
+      view.rerender(
+        <QueryClientProvider client={qc}>
+          <InterestsDialog open={true} onClose={() => {}} draft={{ ...DRAFT }} />
+        </QueryClientProvider>,
+      )
+
+      const drafts = topicRows(view.container).filter(
+        (row) =>
+          (within(row).getByRole('textbox', { name: 'Topic description' }) as HTMLInputElement)
+            .value === 'Rust async runtimes',
+      )
+      expect(drafts).toHaveLength(1)
+      expect(topicRows(view.container)).toHaveLength(3)
+    })
+
+    it('atMaxShowsTheNoticeInsteadOfADraft', async () => {
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: Array.from({ length: 25 }, (_, i) => topic(i + 1, `Topic ${i + 1}`, `Subject ${i + 1}`)),
+      }))
+      const { container } = renderDialog(
+        <InterestsDialog open={true} onClose={() => {}} draft={DRAFT} />,
+      )
+
+      expect(await screen.findByText('25 / 25')).toBeInTheDocument()
+      expect(topicRows(container)).toHaveLength(25)
+      expect(screen.queryByDisplayValue('Rust async runtimes')).not.toBeInTheDocument()
+      const notice = Array.from(container.querySelectorAll('.interests-notice')).find((n) =>
+        n.textContent?.startsWith('You have 25 topics'),
+      )
+      expect(notice?.textContent).toBe(
+        'You have 25 topics, the maximum. Delete one, then use Create topic from article again.',
+      )
+      expect(notice?.querySelector('strong')).toHaveTextContent('You have 25 topics, the maximum.')
+    })
+
+    it('noDraftWithoutTheProp', async () => {
+      twoTopics()
+      const first = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('2 / 25')
+      expect(topicRows(first.container)).toHaveLength(2)
+      first.unmount()
+
+      const second = renderDialog(<InterestsDialog open={true} onClose={() => {}} draft={null} />)
+      await screen.findByText('2 / 25')
+      expect(topicRows(second.container)).toHaveLength(2)
+    })
+  })
 })

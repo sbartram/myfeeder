@@ -301,3 +301,28 @@ describe('ReadingPane vote buttons', () => {
     expect(mockPress).toHaveBeenCalledWith(mockArticle, 1)
   })
 })
+
+describe('ReadingPane no-match line', () => {
+  it('noticeSitsBetweenToolbarAndContent', () => {
+    mockArticle = article({
+      title: 'Rust async runtimes',
+      interestScore: 64,
+      interestBreakdown: breakdown([profileRow(64)], 64),
+      feedback: { vote: -1, narrowed: false, topics: [] },
+    })
+    const onCreateTopic = vi.fn()
+    const { container } = render(
+      <MemoryRouter>
+        <ReadingPane onCreateTopic={onCreateTopic} />
+      </MemoryRouter>
+    )
+
+    const order = Array.from(
+      container.querySelectorAll('.reading-toolbar, .feedback-notice, .reading-content')
+    ).map((el) => el.className)
+    expect(order).toEqual(['reading-toolbar', 'feedback-notice', 'reading-content'])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create topic from article' }))
+    expect(onCreateTopic).toHaveBeenCalledWith({ description: 'Rust async runtimes', weight: -20 })
+  })
+})
