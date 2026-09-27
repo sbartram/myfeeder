@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import type { InterestBreakdown } from '../types'
+import type { InterestBreakdown, TopicBreakdownRow } from '../types'
 import { PROFILE_LEVEL_LABELS, formatSigned } from '../utils/interest'
 
 /**
@@ -7,6 +7,9 @@ import { PROFILE_LEVEL_LABELS, formatSigned } from '../utils/interest'
  * integer points, then a total line whose value always equals the badge (D-02). Only the
  * presentation percentages are rounded here; no score or point value is ever recomputed.
  * Non-matching topics sit behind a footer that collapses on every article change (D-03).
+ * A topic row whose learned part rounds to a non-zero tenth also shows its base and learned
+ * parts (D-11); learnedWeight is the server's applied part, so base + learned is the printed
+ * weight and nothing is recomputed here.
  */
 export function WhyBreakdown({ breakdown, articleId }: { breakdown: InterestBreakdown; articleId: number }) {
   const [moreOpen, setMoreOpen] = useState(false)
@@ -36,12 +39,7 @@ export function WhyBreakdown({ breakdown, articleId }: { breakdown: InterestBrea
           </Fragment>
         ) : (
           <Fragment key={row.topicId}>
-            <span
-              className="why-label"
-              title={`Match ${Math.round(row.noul * 100)}% → counts ${Math.round(row.hinge * 100)}% × ${formatSigned(row.weight)} = ${formatSigned(row.exact, 1)} pts`}
-            >
-              {`${row.name}  ${Math.round(row.hinge * 100)}% × ${formatSigned(row.weight)}`}
-            </span>
+            <TopicLabel row={row} />
             <span className="why-points">{formatSigned(row.points)}</span>
           </Fragment>
         )
@@ -65,5 +63,31 @@ export function WhyBreakdown({ breakdown, articleId }: { breakdown: InterestBrea
           </Fragment>
         ))}
     </div>
+  )
+}
+
+/** A topic row's label and title: the Phase 5 form, or with the learned part when it's shown (D-11). */
+function TopicLabel({ row }: { row: TopicBreakdownRow }) {
+  const matchPct = Math.round(row.noul * 100)
+  const countsPct = Math.round(row.hinge * 100)
+  const learned = row.learnedWeight ?? 0
+  if (row.baseWeight !== undefined && Math.round(learned * 10) !== 0) {
+    const weight = formatSigned(row.weight, 1)
+    return (
+      <span
+        className="why-label"
+        title={`Match ${matchPct}% → counts ${countsPct}% × ${weight} = ${formatSigned(row.exact, 1)} pts · base ${formatSigned(row.baseWeight)}, learned ${formatSigned(learned, 1)}`}
+      >
+        {`${row.name}  ${countsPct}% × ${weight} (${formatSigned(row.baseWeight)} ${formatSigned(learned, 1)} learned)`}
+      </span>
+    )
+  }
+  return (
+    <span
+      className="why-label"
+      title={`Match ${matchPct}% → counts ${countsPct}% × ${formatSigned(row.weight)} = ${formatSigned(row.exact, 1)} pts`}
+    >
+      {`${row.name}  ${countsPct}% × ${formatSigned(row.weight)}`}
+    </span>
   )
 }
