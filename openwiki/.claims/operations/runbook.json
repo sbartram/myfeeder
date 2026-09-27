@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:8f429efdc8248c32db6a289963a347ea233da2cc94b1ec0670d8ccf7d1aee6b1",
+  "claims": [
+    {
+      "id": "claim_ffbe3575707742fdb3de38bd76b467b6",
+      "statement": "build.gradle.kts declares io.projectreactor.netty:reactor-netty-http as an explicit implementation dependency to pin the auto-configured outbound RestClient transport to Reactor Netty, because Spring AI 2.0.1 no longer brings it in transitively; without it Spring Boot auto-configuration would silently fall back to the JDK HttpClient transport for every outbound call (feed fetches, reader-view extraction, Raindrop).",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L168-L168",
+          "version": "repo-lines-v1:sha256:5f35daa8419caedc2b42ac64af0fb12783a925584e11f98893e421e04a26d980:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWYzNWRhYTg0MTljYWVkYzJiNDJhYzY0YWYwZmIxMjc4M2E5MjU1ODRlMTFmOTg4OTNlNDIxZTA0YTI2ZDk4MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWYzNWRhYTg0MTljYWVkYzJiNDJhYzY0YWYwZmIxMjc4M2E5MjU1ODRlMTFmOTg4OTNlNDIxZTA0YTI2ZDk4MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWExYjRkMjA0MTY1N2M3MTViMWE2NDJjMzBmOWNiM2RlMTk5MzZjY2MzZGE5ZDAyY2Y4MmVkMjgxMmI4ZGRkNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTY2Y2NiMDlmY2RiMGFiZjkwNDg2ZDlhNTAwMzU0MWFjYjdiNGY5ZTEzYmQ2ZWNlOWMxZjY4YWYzNmM0YWZmMSJ9"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L36-L39",
+          "version": "repo-lines-v1:sha256:6933ce6e50ed3e45b23b713d19d533a8ea88d3641149efab97b4b473038366f8:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWRiZmYxZjhhNDNlNTRhYzQwZDU2MTE1N2Q4NDI5ZDhlMGYzMmMzNDM0YTEzZjNlYWNmZjBjZGVhMGZlMjNmYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGJkYTRlYzJhZjc3OTk5MGQyY2JmMDg5YmNmOTgzMGIzY2M0ZDMwYzYwZWRiNGU2NjlmZjU0N2RkYTE0YjQzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjhmYjFlYWY3ODZiZWM3NWNjOWNjNzhlMGMzMmFkODY0NzM3MmMyNWY0MWFmMjlkYTUxOWRlNjU5NTdiZjIxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmU4NDAyMDRmNDY3M2VmYzVkM2NiNjQ3NDc5Zjk5OTNjZTEzNWFjOTc2NDM3YWE0NGE4YjhhM2YyMTExZDNhYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_349fdbef4ba8408b838fcf51579a6c3f",
+      "statement": "'./gradlew currentVersion -q' emits terminal control escape sequences rather than plain text, so the release pipeline's VERSION= line pipes the output through \"grep 'Project version'\" before extracting the version with awk to avoid contaminating the shell variable.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L162-L162",
+          "version": "repo-lines-v1:sha256:1d83fb7b7b9ef60d91ca9fdfaee4519fb613f65b6ac6e366fb02ca70c6e6a1f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWQ4M2ZiN2I3YjllZjYwZDkxY2E5ZmRmYWVlNDUxOWZiNjEzZjY1YjZhYzZlMzY2ZmIwMmNhNzBjNmU2YTFmOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWQ4M2ZiN2I3YjllZjYwZDkxY2E5ZmRmYWVlNDUxOWZiNjEzZjY1YjZhYzZlMzY2ZmIwMmNhNzBjNmU2YTFmOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjI2MzY1NTgyN2ZmNjRiNmQ1MzJhYmNmNjg3NzE3ZmM3NDJjY2FkNTdiNWFjMmZjZDYyMTg4Y2FhMmFmMzE3NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2FkYmMxN2JjMTNmOTNhZThjOWY3ZTJkZjIyOTM5NGY3YmI2MTE2MmRmOTBhMGQzN2M4YzRiMzc4NWU2MzIyMyJ9"
+        },
+        {
+          "resource": "repo://deploy.sh#L4-L4",
+          "version": "repo-lines-v1:sha256:3cae3cb7c19f24881edb3610699bf9518a0e8d8141ca6eb343576d9fb8c10b2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NhZTNjYjdjMTlmMjQ4ODFlZGIzNjEwNjk5YmY5NTE4YTBlOGQ4MTQxY2E2ZWIzNDM1NzZkOWZiOGMxMGIyYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NhZTNjYjdjMTlmMjQ4ODFlZGIzNjEwNjk5YmY5NTE4YTBlOGQ4MTQxY2E2ZWIzNDM1NzZkOWZiOGMxMGIyYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGY4MTdlNWU1ZmQ3NGMxYWYxZDUwMGM2MWFmOGI0MzVlMTllNTYyM2UwN2FjOWMxMGNmNmFhODI4ODNiYTk1MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTIyNmQwZGVlYmViZmZjYjZlZTBjZThiN2UyMjAxODliYTQ3OWYyZDllYWU3ZDRjZWI4NzVhZGY5NGExMWM5OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_96eea2b9240346ed82cb5d7d3b4e6b17",
+      "statement": "A machine-wide 'git lfs install' can leave a git-lfs pre-push hook in .git/hooks/ that runs 'git lfs pre-push' even though this repository has no LFS content, intermittently failing 'git push' and the gitPushRelease Exec task with a Git LFS locking-API error; the fix is 'git config lfs.https://github.com/sbartram/myfeeder.git/info/lfs.locksverify false', which is already set in this clone but must be re-applied after a fresh clone.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L164-L164",
+          "version": "repo-lines-v1:sha256:21a7fe34f94f0f80f9cc5c346c8be2bd2fd46e40797cb3353843857bbce343e1:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjFhN2ZlMzRmOTRmMGY4MGY5Y2M1YzM0NmM4YmUyYmQyZmQ0NmU0MDc5N2NiMzM1Mzg0Mzg1N2JiY2UzNDNlMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjFhN2ZlMzRmOTRmMGY4MGY5Y2M1YzM0NmM4YmUyYmQyZmQ0NmU0MDc5N2NiMzM1Mzg0Mzg1N2JiY2UzNDNlMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOThkNjUyNjE5NWZkNTY1MTFhMTdmZDU4MThlZmI3MjZlZTVmZTcxYjNkOWMxYjRjNjY5YzFlOTgzZTc3NWVlMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWExYjRkMjA0MTY1N2M3MTViMWE2NDJjMzBmOWNiM2RlMTk5MzZjY2MzZGE5ZDAyY2Y4MmVkMjgxMmI4ZGRkNyJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-09-27T13:47:46.861Z"
+  }
+}

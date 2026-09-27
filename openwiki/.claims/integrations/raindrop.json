@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b81f52ff7016711c87403f85e9aac2c423432ca721ceb8646b0c92a46e5b55f7",
+  "claims": [
+    {
+      "id": "claim_843da0c1948f49b8b0648b33889b96ce",
+      "statement": "RaindropService performs business-rule validation (integration existence, enabled flag, RaindropConfig deserialization, collectionId presence) before ever invoking RaindropApiClient, so IllegalStateException/IllegalArgumentException from bad configuration never pass through the Resilience4j circuit breaker.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L24-L45",
+          "version": "repo-lines-v1:sha256:8896954cac205c03a65d4376650213cb9e2fcf8250d4bef112afc5aed70573d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxNDQ5ZTM1ODMyZGRhYzYyZDcyNGQxYTFiNGI1ZDdlM2NmMzk3MWE5NDMzY2FiZDFkN2U0YWRmODA3NWFjNzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzM2MzOTAxNzQ2MzZiNDJmMmIzYWIwYmYzN2NhMWM2YWVlMzI5ZGNhZjY5ZGRmZDI2NjVhNmMwYTE4YTQ3NjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0ZGU0ZWZjMjJiZjlhZmU3ZWJmMzhjZDI0NTM2YmU5NmQ4NGQxNDU2YzUyZGY0MzhjYjk4ZTk4MDNjZmEzMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_956ba148ab9642feb919800a02a2bf5b",
+      "statement": "RaindropApiClientImpl is a separate Spring @Component bean (not a method on RaindropService) specifically so its @CircuitBreaker/@Retry annotations, which are AOP-proxy-based, are not bypassed by self-invocation.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L12-L34",
+          "version": "repo-lines-v1:sha256:d7a3d8ab35de9f738bbf70747150774d3c251ed3351fc1ea9c839338ec0925a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYThjMTE2MGViMGE5NTFkOWQxYzkzYmUxYmM0NTRiYjM0ZmY5NTM5NjNkMTNlMTdkZmE4OGM1NDMwZDBhMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkYzJiMzExYWJlODc1NzJlOGE3Y2MwZDk5NmE2NTg0NDA3NmU1MjMyZDIxYjdhODU0NzVmOWI0MDU1Yjc0OTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxNDE5ZWI2Nzg5ZGFkMjAwMTBlYWE5YTQwMzBlY2JiYTRhYjA1NDk3OTY5ZTBmMTIxMTVmN2JiZWRjYzRjOGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk1ODA2YjE0NGY0NDk1MTAyODk1Y2YxNGYwZTk4OWU3OWQxYTcyZmQ3M2JhODI5N2RmZDA4ODAwNzQ5OWM0NjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f52b4a87661549c794191785c93e67d0",
+      "statement": "RaindropService.listCollections() is cached under the 'raindrop-collections' Cacheable name so the Settings UI's collection picker does not call the Raindrop API on every render.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L47-L52",
+          "version": "repo-lines-v1:sha256:f283384b71d5347f2120c73186d6d1bfae8e16363501927a4aea573653d15e1f:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGZmYzQ2ZDU3ZjkwYjFkOGM4ZmNmNGNhMzE4MzhiOTcxY2Y1OTliNjk3NzNlOWNjNDRkZGUwMDM5NTEzOWU1YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmZhNjE4Yzc0ZTUzOGZmYjc2ODdkMjQ4ZDA2N2I3ZmYzYTk1MzYwZDM3ZDdlOTZmMjFhMTllYzY2ZGQ2OWNhMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_116b08f1a9a2468d92baf96caab97eb6",
+      "statement": "RaindropApiClientImpl's fallback methods (listCollectionsFallback, createBookmarkFallback) special-case RaindropNotConfiguredException and rethrow it unchanged; all other throwables are wrapped as IllegalStateException(\"Raindrop.io is currently unavailable\", throwable).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L68-L84",
+          "version": "repo-lines-v1:sha256:bc8a16de91f5fae8e68ed204f9fec99585fe0522116fb80cb311b80c998cd603:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNDhhNDIxNzRhMzFhYzEzMDBkNWI0OTFkMzRjYTgxZWQ5MWU0NjNiNGUwYzA2ZWQ1NTdjY2Q5ZDVjM2Q0YjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0N2MxNzdhZDMyYmQ0OGRiMzJjYmI4ZmM1YTZiMjQ3Yjg3MjRhYmY1YWM5YTNiZDVjMTY4YjQzMjdlMzRlYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5ODA1MTc3NmY2ZGRhZDA0NmQzZjMzNGJmZjY2MDRmOGRmYTdjMGZjNjJjNmNjNjliOGJlODQzMDNkODc3NDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9a9bc78f4bed4c318642d27432779773",
+      "statement": "RaindropNotConfiguredException is listed under ignore-exceptions for both the raindrop circuitbreaker and retry instances in application.yaml, so an unconfigured token is not treated as a circuit-breaker failure or retried.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L23-L42",
+          "version": "repo-lines-v1:sha256:d0ee0e742ba5d762adf105b1a1aab235d9e1ba03b643044e87d25772d7bea006:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmMDI4YTFjZWI5OWIzYWVhMTMzYmRiMzYwZTNiNWNiZjU3ODZmYThkM2E4YjEwZDVlM2RjMDk3YTA0NGJiZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlMDNlMDdiMzk2NDYzNzc3ZTMwNzU3ZWEzMDA0MDYyNzBkNTEwMGNjYTY1MDNjZGRlMTNiNDI1NDZkMzYyYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiMjk0NmM2ZDU0Y2RiMDNlYWYzMzA0YTJjYjQyYjhjNDJhMjkzYzU2MzViOWJhNmYxNjViZjI3NTIwYjhkYzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f44720938104400fb8cf4775902b913e",
+      "statement": "GlobalExceptionHandler maps RaindropNotConfiguredException to HTTP 503, IllegalStateException to 409, and IllegalArgumentException to 400, which determines the outward-facing status codes for Raindrop configuration and availability errors.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L44-L63",
+          "version": "repo-lines-v1:sha256:c04ce22d67f81151251a4f2eed0e9fb9f762c1f85005ec0b4a96bfcaa44690cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5OTljZGM0NjI5MDIzYmQwZTBlZjQ5ZGU1Nzk3ZTFlNDA5MjlhNjY3ZmEwN2Q1MTRjYmJmNjhhMzM0ZTM5YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkMDFkNWI3MDU2NGM3MjA1YWRiNDMwMGI4MGFhNDg1ZDI4ZDM4YTUxZWI5YjU5NzRkOTViNjBiNmIwNzk2MjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_500d63a139704431a30ba1856d1c0874",
+      "statement": "As of the Spring Boot 4.0.8 bump, reactor-netty-http is declared as an explicit build.gradle.kts dependency because Spring AI 2.0.1 no longer pulls it in transitively; without it, RaindropApiClientImpl's auto-configured RestClient (and other outbound RestClient calls) would silently fall back to the JDK HttpClient transport.",
+      "evidence": [
+        {
+          "resource": "repo://build.gradle.kts#L36-L38",
+          "version": "repo-lines-v1:sha256:45d6519854c1b72f4642252ded972c0f36eb8a374d45aa5d0f152d3ed7b79a6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWRiZmYxZjhhNDNlNTRhYzQwZDU2MTE1N2Q4NDI5ZDhlMGYzMmMzNDM0YTEzZjNlYWNmZjBjZGVhMGZlMjNmYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdmZTE2Y2E1ZTc1ZTc2YzQ5Y2Y4OWI3OGE5N2IyNDM5YjEyNmE0NTc5YWE2YThkMmZkYjRiMTkxOGM4MWJhYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjhmYjFlYWY3ODZiZWM3NWNjOWNjNzhlMGMzMmFkODY0NzM3MmMyNWY0MWFmMjlkYTUxOWRlNjU5NTdiZjIxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjg1YjA2MDMzYzIxMGJjOGNmNTM3ZjFlOTk1ZDkwYTYyYTk4YTMyODkxZTM0MzY3MGE4ZjIzZjRjMTk2ZmY5MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b91d87c8ab554ef89504aac34f667991",
+      "statement": "The Raindrop API token is a config property (myfeeder.raindrop.api-token, bound from MYFEEDER_RAINDROP_API_TOKEN) rather than a database value; RaindropApiClientImpl.requireConfigured() throws RaindropNotConfiguredException whenever the token is blank.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L26-L30",
+          "version": "repo-lines-v1:sha256:3333f47a297a3e75c157d3d5da96fdc3c2ae6ea7e7e1bd552cc1e40fcb8aee0b:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzIyM2JjMTllYWMxYzhmMDgwNjAzNmNhODhlNjgwNGNjNDQxMGNiYzk3YjljNmQ2MjRkOWEwMDFjMmI1ZWRjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTFmMGM2MTEyZDQ3YzUyMTEzMTZhNzg5MDE4MmQ5OTU4NzVjNmZmZDdjZGMxYzM2ZTAwOTZkODA0YmE0OGNmOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWE4ZTU0OGY2MmI1MDE4MDU3M2VlM2UyNDI4M2MwY2NlOGE2MWQ2MTNmNWMxZTdhN2EzMWM3MzdmM2I5YTNjNCJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L19-L21",
+          "version": "repo-lines-v1:sha256:da7ab5992fb4ab61ba62006ed0457efc317b7cd3cdbe6bc76e89ecaa8b02ba5b:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmQ1NDI0ZmZiMDU1ZmQxYTdmZmY4NjE4M2VkNTIxNTE5Yzk4OGMzNDkzM2Q5YmQ1YWZmYjBhMDU5N2E1ODdmOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDM1YWVmZDhhNzUwOTNmY2U3MjA1YWQ2ZTViZjJjNDA2ZjlhOGU2YTA0MGZjY2NhMmYzMGI3NmY0NDhhYWVkYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTY3YzZjNWYwOTNkMzU0MTNhNGU4NDdhYzEzMWUzNDc0MjIyMzFiZGJhZDViNTlmZWQ5YWQ3YzRmOGNjN2IzNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODQwNmEyYjAyYjA0ZmZmNTExNTlmYWViODllNDA1YTBmODhhNmE0MzQzYmQ2NmJkNzdhY2E3NWVjOGI2NDUwNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b9e17041a28946d980d913b854904a75",
+      "statement": "Migration V4__strip_raindrop_api_token.sql removed a legacy apiToken field that used to live inside integration_config.config's JSON blob, reflecting the move of the Raindrop token from the database to a config property.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/db/migration/V4__strip_raindrop_api_token.sql",
+          "version": "repo-file-v1:sha256:1e2b90683a8332bca99e6b9e866fd8861a385473a30770735963e770550f5cd5"
+        }
+      ]
+    },
+    {
+      "id": "claim_511c1e10e9de4487839a0cfcc332ea7f",
+      "statement": "GET /api/integrations/raindrop/status returns {configured: true/false} based solely on whether the configured API token is blank, without making a real call to Raindrop.io.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/IntegrationConfigController.java#L33-L38",
+          "version": "repo-lines-v1:sha256:c32f2a561dc9b37286e01e1e86050b90b2497710df67425dc6a4dea188bbaa5b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmVkZDVlODg0MjFhOTQxOGJkMjcxNDM0MmU0YjE2ODI0NTA5YzgzNGY1MTEzN2MyNTUwNDdhM2FiNTQxZTA5MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWJiYWEzZTA4YWNlNjZmODMyNTc2YzM0OWRmZDU5MWY1MDdiM2U1MjgyOTQxYjNmYTQyMzIyNDA1YzcyZGEyNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzQzZGM2MTE3MDdlM2Q2Y2Y1OGQ2ZWRjMTYzNjZmNWNmMDA4ODNhNGQ1OWI3ZjYyNTFmNDY5ZWM4ZjEzMzEzMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d409d71658db46d39d146ea93accc831",
+      "statement": "deploy.sh treats MYFEEDER_RAINDROP_API_TOKEN as optional, defaulting to an empty string and printing a warning if unset, then passes it to Helm as secrets.raindropApiToken, which is stored in a chart Secret (key myfeeder-raindrop-api-token) and mounted into the app deployment as an environment variable.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh#L12-L24",
+          "version": "repo-lines-v1:sha256:953138b3afc1937f8681b940c0ae0b1dd1fa847288aa158b67d1f01fe6cb668c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjYmFmZDA2MDYxMGNkYWM2MDA4OGY3YWJmY2Y3NmM1Y2E0YmY4ODM1ZTc4MDdlMWY1ZTUxMmRmZjk5MmE3YTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5NDE4Yzk0MzYzODdmM2RhNTQzODgxNjAyNzU4MmE5Yzc2YjIzNDJiMDIxMjI1N2FlNTE3NjgxODQ5ZGJhNDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjllNDM5ZmNlZDE4MDU5ZjFiMmY3ZDJlZjEyOTMzMjc3ODE5NDFkNDgyZDI5Mzg0YzVjMTg1N2EwZGYzN2FkNTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzY2QwNTdiYjIyM2FmMmYzMjQxNmZhYzMwYWFkNGRhZTA2MmVmNjIxNzJkYTdkNmU4ZGFjZDdkYzVmOGVjZmIifQ"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-deployment.yaml#L52-L52",
+          "version": "repo-lines-v1:sha256:6ba9d5be85adc7b8cf37711f496272c79bc5c34f32e297a39714ff0fc57c610a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmJhOWQ1YmU4NWFkYzdiOGNmMzc3MTFmNDk2MjcyYzc5YmM1YzM0ZjMyZTI5N2EzOTcxNGZmMGZjNTdjNjEwYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmJhOWQ1YmU4NWFkYzdiOGNmMzc3MTFmNDk2MjcyYzc5YmM1YzM0ZjMyZTI5N2EzOTcxNGZmMGZjNTdjNjEwYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjM1ODg2Mjg3ODEwYjJjMzU4Y2I0MjI5NWIxMzk5Mzc4Y2MxYTgwNTI1ZTI3ZDE3NTgxMTY2ZjRmNzlmNDZjYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjAzMzZkMTZjMzYxN2UyYWMxNjBlYmFiM2FkODYzY2Y4ZDc2YzgzNTgyMDVkZWIxNGJkODFkZjdjMzlkOWMxZSJ9"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-secret.yaml#L12-L12",
+          "version": "repo-lines-v1:sha256:d72091faf21dc1ce0553152afb3cb6a09e52f01c2804822de9a0f17306bda192:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDcyMDkxZmFmMjFkYzFjZTA1NTMxNTJhZmIzY2I2YTA5ZTUyZjAxYzI4MDQ4MjJkZTlhMGYxNzMwNmJkYTE5MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDcyMDkxZmFmMjFkYzFjZTA1NTMxNTJhZmIzY2I2YTA5ZTUyZjAxYzI4MDQ4MjJkZTlhMGYxNzMwNmJkYTE5MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzAzNTQyOGRjY2IzZWFmY2Y5NWVhZDRiYzkzNmYyNjUwYjUyYjU3ZjBiMDlkZjZmMjkyMzA2ODBlZjE1OTEyYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTEzZjFiOWZmY2RhNzM4MTE4MzdjNDdhYjJhYTllODFiNjU1MWU3YzA5NGVhNjcxNjJmZDE2ODgwZWNhODA5NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c8a8a6f1a6f141728e8294c8a54e2aac",
+      "statement": "RaindropApiClientImplTest instantiates RaindropApiClientImpl directly as a plain object rather than through a Spring-managed AOP proxy, so it exercises requireConfigured()'s direct throw and the HTTP request/response mapping via MockRestServiceServer, but does not exercise the Resilience4j circuit-breaker fallback methods (listCollectionsFallback/createBookmarkFallback) themselves.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/integration/RaindropApiClientImplTest.java#L22-L95",
+          "version": "repo-lines-v1:sha256:c4029d1801f6d361e4c0c1c73a82cea7b901efb93338d0d6b540346285597a21:eyJzZWxlY3RlZExpbmVDb3VudCI6NzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiYWI1NWZlMjFlMDVjMTkxYWNlM2ExZTYwNmEzOTRkNDI4NGQzYjk3NzZhNWNhZDEyNzZjZTc5M2E2MmQ2MDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMxN2M3NzRmNjUwZTFjNGEyZTcxZmE3NzQwNmMyODZmMmQ5MzFhZDNkYTg5YWUzMzFhNWFlNzY4ZTk3NzliOTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cf722c1f92b543259be2f3c46461fdda",
+      "statement": "RaindropServiceTest uses Mockito to cover the not-configured, disabled, and no-collection-selected error paths, successful delegation to RaindropApiClient.createBookmark, and case-insensitive sorting in listCollections().",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/integration/RaindropServiceTest.java#L23-L96",
+          "version": "repo-lines-v1:sha256:fabf6333a1a227cd81836b3a1d9a321cf5e5c8f002e751f04b06059d5fc1995c:eyJzZWxlY3RlZExpbmVDb3VudCI6NzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2YTgyY2MxMTUyZWE0ZTdjNThiYjQ2ZDhlMTZmYzU0NGQzNWVjMjkxMjAxMjBkNmIxYzJkNzBmMTFmYjA1ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEwNDg0MDYxNjgyODdiODUyYmM1YjU0ZjQwMWNhMDI5NDRjNWZmNDRhYzRmYjk3MjJkYzIzMWUzZjQ5YzQ1YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmMjU2NDNmYzEyN2IxMzViNzBjMjcxMTI5NWIyMDU2MjI2Zjc1ZWMzOGM1ZjExZmE5MzVlNDc2NDhhMjM4ZTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-09-27T13:47:46.861Z"
+  }
+}

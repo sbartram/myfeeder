@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:e168925f6ced8fbddc86c0dbe93fe4ff08c8ec083265c1a51e7668f64ded97d1",
+  "claims": [
+    {
+      "id": "claim_e05327a6962e422c8d7d20080498b784",
+      "statement": "FeedFetcher.fetch calls FeedUrlValidator.validate(url) before every HTTP request (unconditional subscribe-time fetch, conditional poll-time fetch, and the reader-view fetch), rejecting non-http/https schemes and hosts resolving to loopback, link-local, RFC1918 site-local, any-local, multicast, fc00::/7 unique-local IPv6, or 100.64.0.0/10 CGNAT addresses, throwing IllegalArgumentException (mapped to HTTP 400).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L44-L49",
+          "version": "repo-lines-v1:sha256:d33e9d155eda6eae41ede4fedb52c50b757fc100ed9a4a593ee1972a6812be78:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjk5OWNkYzQ2MjkwMjNiZDBlMGVmNDlkZTU3OTdlMWU0MDkyOWE2NjdmYTA3ZDUxNGNiYmY2OGEzMzRlMzlhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGQwMWQ1YjcwNTY0YzcyMDVhZGI0MzAwYjgwYWE0ODVkMjhkMzhhNTFlYjliNTk3NGQ5NWI2MGI2YjA3OTYyOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWYwODcwMDkyNjJkNTU0N2Q0OGYwNTNkNjNiOGI2ZTA1NGJhOTk5NWM2NGQwYWY4ZDU5NjYxZWFhYTRiMTIyZCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L37-L80",
+          "version": "repo-lines-v1:sha256:1c4b35af54b3420264f32ddc8a0f1225db0679e6e070e8fcad57242b20cb4919:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4YWQ2NTE1Nzk2NGZhZjFjYTk3Njc1ZmUxYjc2MmUxZmVjNzY2Mjc0MzE4NDI3ODQ0MzczMGE3Y2Y0ZDNhNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2ZGQxZjg0YjZmNDA5YzAyZjU1NmJiNjcwODYwMDM1MGU2Njg2MDI4ZGJkZmU1NDE4N2UxNThmYjY1ZDFlMWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java#L55-L125",
+          "version": "repo-lines-v1:sha256:3dcad2b169718029e50e115c1fbea4b89478a00eaa570a3d70a75a2be43a82ec:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3YzllODM3ZjUzYTVjZTgzMmUyYmY1NDliMzk0NzhlMmJkOTZmMWI3NWY1YjA1NjlkZmY5ZDU1MTE3NTZhMzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1ZDU2YTc0M2Q0N2NmN2ZhOGFjYWE1YmZlMDJmY2Q3OGMxMWNjZmYyODAyNGM3MjFlMmFmMjM5YWYwZGUzOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMyZDhjNWI0ZTk3YWZkZDA5NzBlNjExZDBhY2I0MThkZjBkYjA4YTBiOTAxMWY2OWFiM2QwN2ExOTc3OGRmYWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3b1e0f553ae04fbb8d940b8678332580",
+      "statement": "FeedUrlValidator's class javadoc documents two accepted limitations of the SSRF guard: DNS rebinding/TOCTOU (the validated IP can differ from the IP RestClient later connects to) and lack of per-redirect re-validation, both accepted for the single-user LAN deployment.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java#L11-L27",
+          "version": "repo-lines-v1:sha256:3f1782c78a25e4059be13d2718977111b5db15687ee393dd7ff454a408d05409:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhNzQ3NWEwYjkxYjY4NWQ4NGY1NTZhZGM0ZjA1YWQ4ZDlkZGRhZDEzNDJmNmYwODg2NGFkNGUyZTc4Y2I0MmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhYjFiNzVkMzdmYzc5NTc1OTQ4OGJhNWUyOWNkMjIyYmVhODcwYzMyOTM2YmQyMTAzZTU0NzViZTEzY2EzMTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_84ef2f82871044c599cf9d4f2b4029dd",
+      "statement": "GET /api/articles/{id}/extracted-content is handled by ArticleController.extractedContent, which delegates to ArticleExtractionService.extract(id) to serve the reader-view flow.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L69-L72",
+          "version": "repo-lines-v1:sha256:7de5ee387f58f5adc3ecb19820a18c5beef19568cf99b64c51e67501b8d69938:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjNiMjdkZDc0YzU1ZGEzOGMxYjc0MTNlYTk4ZWRlZDE1OGU0OGY1Mjg2YzdlNWViNmRhNTA0NDYwNzI2N2E2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjAwMTEyMDE4ZDljYmQ1NzA3MTJjZjZmZGQ3Y2ZmZDk3MzhhNzhjY2ViMWIwMjdmYzRkYjJiMDNlNmYxNjhjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTkxYmMxNDRlMTBlM2Q0NTNiZTRlYmRjOTFkODdmZmUzYWU3NjI5Mzg0MmQ5ZGM2NjMyYmQ4MTJkYTQ4ZjQ0MyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ed39a527fc0f41729498bd705de675ab",
+      "statement": "ArticleExtractionService.extract first checks the article.extracted_content cache via ArticleRepository.findExtractedContent; on a hit it returns cached content without any network fetch, and on a miss it fetches article.url through FeedFetcher (reusing the SSRF guard, size cap, and User-Agent), decodes with jsoup (header Content-Type charset else BOM/meta sniffing), runs Readability4J.parse(), persists the result via ArticleRepository.saveExtractedContent, and returns an ExtractedContent(title, contentHtml) record.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L30-L36",
+          "version": "repo-lines-v1:sha256:b5524bcc494854775eca087e5c5bc8832f533411e44bde2845a450cdeea99c42:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGJkNzBiOWQwMWExMGE5N2JiN2I4NDRiYmEwYzkwMmJkYjA1ZjQwNWFhMzlkZDUwNDBhZjkwYTVmYjlmYzZhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGQ4MzVjOTUzNTY5ZGFjYjRiN2U5MGFiODQzN2FkNTNjZTRmODFkNDBmZTI3ZGY1ZGRjZWFjOGJmYjNhZTkwZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODQ0ODgyOGFjMjczY2JhOGYxNGNiOWFlMzJjZmJhYWI0ODY5YjNkNjhhYTNmMDNjNDliNTgxNGMwYmRhZDZiZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzkxOTQ5Mzc1N2I5NzUwZGNmYzE1ZmRmNzczYTg2Njc3NGJhM2RkYWJmNDUyMjNmNTcwYmVkNmQ2OTA4ZTY2MiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L37-L84",
+          "version": "repo-lines-v1:sha256:aa94d917fc5bee383ae3d8991a43b92e8964830d6e2d3db8979039f6b5f16057:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxODRmMTYwZWIxYzVhNTg5NmY3MGI0NmMzMmEzNmQwMTYwZjg1NmRiZGRiZmZmNTk3MmNjMjFhMzU5ZTljNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiZGJlY2ZmNDQ0ZDVkMTFiYTVjMWFmMDgxMzNmZjY0ZWI2ZTg3N2JiZmFlOTA0MGQ5OGZiZDg1ZTEwM2VhMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bf6cd455b6fa499e8c641c74afc1ab33",
+      "statement": "ArticleExtractionService.extract's failure modes are NotFoundException (missing article, 404), IllegalArgumentException (article has no URL, 400), FeedFetchException (page fetch failure, 422), and FeedParseException (no readable content extracted, 422), all mapped by the shared GlobalExceptionHandler used by the subscribe/poll paths.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L16-L49",
+          "version": "repo-lines-v1:sha256:c4180bbe0bb9e79b4029a155c69a2f8cdafaab21d161f640d4b6442d5ad0f511:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYTc2OTM0YTRmYzU5NjkyZmM4MjIzMjE5MmFlOTY1NTI2ODcxNWIwZDg4Y2I5NjgwNzdkMDIyMWJjMGMwNzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI2NDI4NzNlMGNjMTUxNjRiYWI1OTRjYjhiYjY5ZGU3ZjUwYzI2YTAzZmVlZjllMGY3MWYwMDNhOWYwYzg2NWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmMDg3MDA5MjYyZDU1NDdkNDhmMDUzZDYzYjhiNmUwNTRiYTk5OTVjNjRkMGFmOGQ1OTY2MWVhYWE0YjEyMmQifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L28-L60",
+          "version": "repo-lines-v1:sha256:7887950bf7b1cc4d40e77f5d7be01fe6f632b8394b2b3d1eb40b688001f9bb10:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyYmMwODg1ZTdhNTQ3ZjY2YjZjMTg1NGY0NDU3Mjg3MWRmYTdhYTZlYjg5MjcxYTc5MzMyNzFhODhjNDkzOGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjZDcwZjY2N2VkODE0Mjk5MTc5M2ViMGJlNmQ1MmQ3ZWZjYzUwMzVkYmI4YzFjMzNmOGQzYTllMzcwMTJlNTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d9c11d55741643e6b7a4115eeb936d59",
+      "statement": "The article.extracted_content column, added by migration V5__article_extracted_content.sql, caches reader-view extraction results so repeated requests for the same article skip re-fetching and re-extracting.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L30-L36",
+          "version": "repo-lines-v1:sha256:b5524bcc494854775eca087e5c5bc8832f533411e44bde2845a450cdeea99c42:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGJkNzBiOWQwMWExMGE5N2JiN2I4NDRiYmEwYzkwMmJkYjA1ZjQwNWFhMzlkZDUwNDBhZjkwYTVmYjlmYzZhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGQ4MzVjOTUzNTY5ZGFjYjRiN2U5MGFiODQzN2FkNTNjZTRmODFkNDBmZTI3ZGY1ZGRjZWFjOGJmYjNhZTkwZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODQ0ODgyOGFjMjczY2JhOGYxNGNiOWFlMzJjZmJhYWI0ODY5YjNkNjhhYTNmMDNjNDliNTgxNGMwYmRhZDZiZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzkxOTQ5Mzc1N2I5NzUwZGNmYzE1ZmRmNzczYTg2Njc3NGJhM2RkYWJmNDUyMjNmNTcwYmVkNmQ2OTA4ZTY2MiJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V5__article_extracted_content.sql",
+          "version": "repo-file-v1:sha256:40144184eb66db1770bd31199ab5e043f157d4218386b7cc428363058171a6a5"
+        }
+      ]
+    },
+    {
+      "id": "claim_2707c48983a34938a196ffc09ea4d3cd",
+      "statement": "RetentionService.cleanupOldContent clears article.content, article.summary, and article.extracted_content together for articles older than full-content-days via ArticleRepository.clearContentOlderThan, so a purged article's reader-view cache is repopulated on the next extraction request.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleRepository.java#L26-L28",
+          "version": "repo-lines-v1:sha256:ca50c5b2ef4efb4c41431d6058d497b715767350bf1d14cd97fe6e00c1aae84d:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWMxNzdmZjkxN2U2YWYwZDM3YzhhNGQ4ODI2NzBlNmIwNWJhOTMwZjNhMmQxYzZjYzExZjIzYzA3NTI1YzBjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWEyM2IxYzcyYmEzZTE3Zjc2OWZjZDczYTlmMzlkMjExNmI1NzZlYjUxOTE5YjIzYTY1Nzg2NDM5YzFiMTc1NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWQ3ZDc3NDU3OWMyMjc0OWNiNzlkNmNkZmYxOWYxNWE1MDFhNWRjNDJjN2YxMTNjYWYxODkxMTlmN2UyMTg1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGU3MDgzMTI3NmJkMGZhZmMxZGNjZGFkYzM4ZDE0ODA0Y2MwNzY0N2YwOGRjZDgzZDk4OWFjNzM0YzA0MzEwNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_bef6daa47acb41eba358b2b9cda88ce5",
+      "statement": "The reader-view flow is triggered on-demand from the frontend ReadingPane, either automatically when the selected article has no feed-supplied content/summary, or manually via the '📖 Reader View' toggle, and is not part of the scheduled poll/backoff cycle.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L161-L163",
+          "version": "repo-lines-v1:sha256:1286bac5e9c7e1dd496857a09d151b2944d9754483aa9d1e84095969c3205f93:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWYyZmNlMTg3MmUxN2E4MDdkYzcxOTA4Mjk2YWRmMjdhYWU1ZDFlZTFhYjhhOWE4OGMxMDczNjI2ZWFjMTdkYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjk2NDdmZjU1YWYzNTQ1N2Q2NGRiZTE2ZTU3OGQ3ZTcxNGM3YmZkZjNjMjQyYmM0ZTE1OGZlYjU0ODAwOGNjMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDVhYTgxMDllNDgwOTg3MzhlN2JhN2M2NTExZTliNzAxYTNhNTliNzI2YjQxMDY0M2Q1YzJkY2FiZWU3OTIyOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODQwMjIxZTYxMTBkYzgyZTA0ZWY3Y2M1Mzg3MmE1NTllZjMxZmQ1OWU1OGRlNGQwYmNkYWM5YjAwNGI3MTI5MCJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L28-L32",
+          "version": "repo-lines-v1:sha256:994ec1676563aa291bed3b2db06cf3b38a564620c4ed62ed5d9cf281b99373ce:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDNjZDU1YjdlMWZkNjliMzI1Y2JhZTJiOWRlNjI0Mjk0MWY2M2FmOGM1YzRlZWFiNmY2ZTI0NzVlOGE5NzdkMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDdkYjc5MmFlMmQ2MjA3NzU1OTY1NjE3ZWE5ZjE2ZTQzNTk3OGVkZjQyOWI4MTMwZTU0NmI5NjM5ODU5NmY5YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzJhNDcyYmU0MTVlNTRjOWFjNjcwMDIwMTczNzNlNTU1YjVmZjY4MTdkNjNjMWYxZDMzNTI2MzZjZjY1NzQ0ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTVkZTY2MjVkODVjOGE1MDZmMmZjYWZiMTNjMmM1NjRmMDlkZjA2NmYxNjBjY2E4YjA0NzM3ZjQyZjM4YTRlYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ddad1a8746e44847a52ec46c6aa62ce5",
+      "statement": "ReadingPane sanitizes reader-view contentHtml with DOMPurify using FORBID_TAGS/FORBID_ATTR ['style'] before rendering, a stricter pass than the default sanitization applied to ordinary feed-supplied content/summary HTML.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L84-L94",
+          "version": "repo-lines-v1:sha256:e078b30cd59a5b02db435e9628067de1460e462440a98f8becff0d0e9d0446b2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjZhMWQxNTkyZTY0MzM1ZmY2ZDgxYTUzMDRlOTBhMTNlZjRiOGQ4OWY0MTUxZTM1MWJmZmFlMTA4YjZmNTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzODBlMzc0MzFmMzAwMGVhODg5Y2MwZmYyZmQ1MzJhNGY4OTVkMmVhNzg4MjY4NjM5MjJhM2RkNzdiNDM4ZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiZjM5YTg3MjM2NzBlYjBhMWFmYmExMzZhMTkwYTM3MjczNzZjMmJmZDAxMWYwZmVhMjEzNTc1NWI0ZjhkNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0NzVjN2M0MjY3NTM1NDk5M2U0NTE3NmEzNjI1ZGMxNmUxMzg2MmM1ODUyNjZlYjIzMGVmODQ3MDA0OTFhOTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_441eb80045914e10a0e3db3ad10d928c",
+      "statement": "The frontend calls GET /api/articles/{id}/extracted-content via articlesApi.getExtractedContent, wrapped by the useExtractedArticle React Query hook with staleTime Infinity and retry false, since server-cached results never go stale and extraction failures are deterministic.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/api/articles.ts#L16-L17",
+          "version": "repo-lines-v1:sha256:e616efcd79cb88ad27a24f755358eb06841ec25955497423dfee7c6cbeaa5db2:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODliYTY0NjUzYTUxOWFhZjlmYTU2YWEwMWRlYjZjMDY5NGJhOTIzNTZiNDM5YzZmMGMyMzRkN2UwMDI2ZWY2MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWViZDEyMDU2NTJhNTAyMmNlZjhmZDgzMGY3ZDhiMjYxYWU0NDBjZDVkYTFkMzk4YzQ3ODIyNTU2MGRkNGQ1YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTE3YWE4ODczMzc5Mzg0YjI1MWJjM2VlOGJkZGEyMTgyOTMwZGM4OTQ4NmNiNTNjMjIyZWNmYzAxMWUyYjg4NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzkxYzZhMTBhZDRhYWY5N2U2NDVkZjM3NzlhMjQ1YmUyZjNjMDljZTRmMzVhZmExZjkzZjI0MDVjNzI5Y2E4ZiJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useArticles.ts#L24-L37",
+          "version": "repo-lines-v1:sha256:a4ad413895a01c8d22a259258dd0431f459d2f8739bca7c48bcdf84bf16e3c2f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjZjk1ZjJhMmZmNDU0NDJlMTM1ZDA0ZjY2ZmIyNTRiYTcwMTBlZTMyYmU4YjNhY2EwMDI3M2UxNzdkMDlmMjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkYTQxNTIyNzc0YjA2NTNjODc5ZDQxZmE2YTdjZjQ3OGViYWI5NTg1ODI0MmEwZjM1YTBjNzE5MjVjYTI0YzkifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-09-27T13:47:46.861Z"
+  }
+}

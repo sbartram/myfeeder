@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:bf2a50dea2cf4663de8dd99eec27c8f31d96b532bc50ab9650c6c86ae7bd044c",
+  "claims": [
+    {
+      "id": "claim_31f9da8012c147e8b289d560850ddec3",
+      "statement": "FeedUrlValidatorTest verifies the SSRF guard in FeedUrlValidator by stubbing its package-private HostResolver to a fixed literal IP (avoiding real DNS), asserting public hosts are allowed while loopback, RFC1918 private, link-local/metadata (169.254.169.254), IPv6 unique-local (fc00::/7), CGNAT (100.64.0.0/10), broadcast, and IPv4-mapped-loopback addresses are rejected with a 'non-public' IllegalArgumentException, and that non-http(s) schemes and malformed URLs are rejected separately.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java",
+          "version": "repo-file-v1:sha256:cae5d5e123c9cb00c88271d42fbc1952e5671975ccc7b154eed9fd004495dadf"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/FeedUrlValidatorTest.java",
+          "version": "repo-file-v1:sha256:44bffc46d3c9ba8fd226c2478334f6c91f730673bf1484f2f13cd159a4346b6c"
+        }
+      ]
+    },
+    {
+      "id": "claim_e6e803dc63f54e78b8ab410e8c6e1d00",
+      "statement": "FeedFetcherTest exercises FeedFetcher against a MockRestServiceServer-backed RestClient, using a FeedUrlValidator stub that resolves every test host to a public IP so the SSRF guard doesn't block fixture requests; it covers raw-byte-plus-charset retrieval, conditional If-None-Match/If-Modified-Since requests mapping a 304 response to FetchResult.notModified(), ETag/Last-Modified header capture, FeedFetchException on HTTP error statuses, and rejection of a response body exceeding a configured byte cap via a package-private constructor overload.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java",
+          "version": "repo-file-v1:sha256:fd0980db52be2ec20eacdcd2b954e1c41c11f0c021a7f13f8b39976a6c22e703"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/FeedFetcherTest.java",
+          "version": "repo-file-v1:sha256:a513aec11fcc18561dae50e7b2cc4aa0a2ad5003732344275a9314b2cc4a8e98"
+        }
+      ]
+    },
+    {
+      "id": "claim_e2e516235eba483ca342ec17c6187946",
+      "statement": "ArticleExtractionServiceTest covers the reader-view extraction flow in ArticleExtractionService: caching behavior (extract-and-save via FeedFetcher plus Readability4J on first request, serving cached HTML without re-fetching on repeat requests, verified via verifyNoInteractions(feedFetcher)), NotFoundException (404) for a missing article, IllegalArgumentException (400) for an article with no URL, and mapping a page with no extractable content to FeedParseException (422).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java",
+          "version": "repo-file-v1:sha256:669160a7f4079b0b4dd06d2b4b5a903b242f1e6cdce9690565452db01cd334b0"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/ArticleExtractionServiceTest.java",
+          "version": "repo-file-v1:sha256:f290435842ccf84d6f91a6bb260cf9d01f3a27ce79064f00ca3d577a6c11002b"
+        }
+      ]
+    },
+    {
+      "id": "claim_ac71bbc115ae481c8b635cf67ce9fb13",
+      "statement": "ArticleExtractionService fetches an article's original page through FeedFetcher (preserving the SSRF guard, size cap, and User-Agent), decodes it with Jsoup using header-declared charset or Jsoup's own BOM/meta-tag detection, and extracts readable content via Readability4J, caching the extracted HTML through ArticleRepository so subsequent requests skip the fetch/parse step.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java",
+          "version": "repo-file-v1:sha256:669160a7f4079b0b4dd06d2b4b5a903b242f1e6cdce9690565452db01cd334b0"
+        }
+      ]
+    },
+    {
+      "id": "claim_d8848b1acd934a64897784f1fef9d3c4",
+      "statement": "ArticleControllerTest includes WebMvcTest slice tests for GET /api/articles/{id}/extracted-content that assert the ArticleExtractionService result is returned as 200 with title/contentHtml JSON, a NotFoundException from the service maps to HTTP 404, and a FeedFetchException maps to HTTP 422.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/ArticleControllerTest.java#L34-L61",
+          "version": "repo-lines-v1:sha256:b62f6f868b5b7640b96e91057bc2e518ebf0ca52603c3d387bcc0ab024344b85:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjZjA5ZWIwYzU3NDRmYjk3MzMxYjk4ZmYzZmJmMDVhNjAyYmEzZjdmNjdlNWRhNWJlOTA5NTAzM2Y2MjU4MjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI3ZTAzMmVhOTdhZjZjZTU2MzNjZDZjZjNmZjg5YzkzOWFjMmMxMWY5YzA3Y2ZjOGMzMGE3NzQzZGEyZDAyZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY4NWM1ZTFiZTY0OWFlODAyNzQxZmVkNTVlMTFmZTZkZDhiMjg5NTEzNGQ0ZTg3ZWFiNDhhZTYzYmVhOTMyY2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c33ba6525c2445d1aca50576204104e4",
+      "statement": "HttpClientConfigurationTest guards the spring.http.clients.* connect-timeout/read-timeout configuration introduced with the Boot 4.0.8 upgrade by running an ApplicationContextRunner with only HttpClientAutoConfiguration/ImperativeHttpClientAutoConfiguration loaded (no Docker), asserting the auto-configured ClientHttpRequestFactory is a ReactorClientHttpRequestFactory, and loading src/main/resources/application.yaml from disk (since src/test/resources/application.yaml shadows it on the test classpath) to assert the bound HttpClientSettings connect/read timeouts equal the configured 5s/30s.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L1-L9",
+          "version": "repo-lines-v1:sha256:dfbdccf45ef1c186e9ff057ac24e9dfea97b526922c6424691a8502e6f0266b6:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWIzY2RmNGZkNGI2YzFlY2VhZjM0MzE1ZGRiOTJkNzExMWI1MGE1MGNiNzcxNGZiM2I0ZDY2NDE2MGIyMGM0MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWJlMmY5YTQxNDQ0Y2ViMzBmZDY4MzU3MDQ3MmEwN2U2ZWZlNjZlMjBjZDU0ZjYzZmZlMzI5ZjAzYjc4NTE0MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjgzZDUxNTY5ZjQ0NTc0NmJkZjY5ZWI3NjIzODQ3N2IzMGI5ZmZhMGE1NzhjOWYzM2ZjOWQ2MjRlM2RjYWU1YyJ9"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/config/HttpClientConfigurationTest.java",
+          "version": "repo-file-v1:sha256:829d061cd368e116db7c2d1a35cc308878175aa9286de95a21d01d5b8d7e9733"
+        }
+      ]
+    },
+    {
+      "id": "claim_586d0f58ca334eb783d12c0b3909f758",
+      "statement": "MockRestServiceServer-based backend tests such as FeedFetcherTest and the Raindrop client tests replace the outbound HTTP request factory entirely, so they cannot catch a regression in the real Reactor Netty transport or in the spring.http.clients.* timeout wiring; HttpClientConfigurationTest exists specifically to cover that gap.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/config/HttpClientConfigurationTest.java#L19-L24",
+          "version": "repo-lines-v1:sha256:3e6b4dddaac4330e9808bf04b0b9e0ed0b5e975a75089aa09877aaf6e12ef7e1:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcyYTQyOTM4MmIyZTE0NzE4ZTBlMzdiMDU3MGE4YTE3MDI5OTFmY2Q4NDk4Y2Q4NDA2MGE4YmY0ZjA1MDE3YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjkzYWFmOWVjM2E5NTFhZWI3MjBlNmQ2NmFmMTkzNGY4OGRjNzQxNjA1Y2IzZTJhZDkzNDZjOWYwYzE4OWNiNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzRiODE4ZTU1OTQ4NTA4NjUyZjI0NTIzYjc2YWM1N2Q1ZjQzOGZkM2YxZTRhYmEzMjQ0YTk2NGI0YzgzMTAwZiJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-09-27T13:47:46.861Z"
+  }
+}

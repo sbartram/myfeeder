@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:cc50817069c9c71bcdcd5a621884fa83b7cd6931c5d3d6c844c9a2f513b65971",
+  "claims": [
+    {
+      "id": "claim_3181b004fc174a5281eac467857d7f20",
+      "statement": "myfeeder's backend runs on Spring Boot 4.0.8, Spring AI 2.0.1, and Spring Cloud 2025.1.3, as declared in build.gradle.kts.",
+      "evidence": [
+        {
+          "resource": "repo://build.gradle.kts#L1-L29",
+          "version": "repo-lines-v1:sha256:eadfa6d44d52f9332deca81023a811e05f6cf7dad8879893f72abdf0e41c7114:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0MDQwMTAzMTViZGJiMGZlYTBmZDZmZjAyMTRkOGJjOTIxY2UyODM2ZDFjYzZiY2I4ODQ5ZjM1NzZjZjVhNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlNWJhNmFjYjdlNWY3ZjI0ZmI0ZTcxMDFlMGZlZDYzNmZmYjhmYmVmMGMxNzZlNDYxODAzY2RhNDRiNWU3MjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5ZDYxMTg1MDJhOWQ3ZTRmOWYyZmNmMjJkNGMzYTA5NDhmOWY5NjJiNGZjOTU4Y2MzOTliMzFiZjhlOTQxYjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b2ff1a81426740ac9a3eec2915d23881",
+      "statement": "The Spring Boot/Spring AI/Spring Cloud dependency upgrade (from Boot 4.0.3 to 4.0.8) pinned the outbound RestClient transport to Reactor Netty via an explicit reactor-netty-http dependency and fixed inert outbound HTTP timeouts by renaming spring.http.client.* to spring.http.clients.*.",
+      "evidence": [
+        {
+          "resource": "repo://.planning/phases/01-dependency-upgrade/01-01-SUMMARY.md#L1-L40",
+          "version": "repo-lines-v1:sha256:7fd02eefe264b6632a4d82015b55dc261a14fe9e77f62f531fe532b586014e07:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MmQ3MTExMDNkNTBhNDM3ODMwYzZmYmNkMDRmYjRiYWI0OWEwZjgyZjZkMjZkMWM3OTFjNmU4NDg4ZGQwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlYjg2NzU4YjQ0MWQ0MGM0MTIyNjE3MGFkZDZjOGI5OThhYjU3YjJkZmExMTE2ZmM1MzFiOGY0MGE3ZjViM2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlOGM4Mjk4ODI4NjZmYWFjZWMzYWY3MmI5Yzk4ZDNkMTg1N2U1YTZhODI1NTcxN2I4NjNiMDc2MGEyMjNlMDkifQ"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L36-L38",
+          "version": "repo-lines-v1:sha256:45d6519854c1b72f4642252ded972c0f36eb8a374d45aa5d0f152d3ed7b79a6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWRiZmYxZjhhNDNlNTRhYzQwZDU2MTE1N2Q4NDI5ZDhlMGYzMmMzNDM0YTEzZjNlYWNmZjBjZGVhMGZlMjNmYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdmZTE2Y2E1ZTc1ZTc2YzQ5Y2Y4OWI3OGE5N2IyNDM5YjEyNmE0NTc5YWE2YThkMmZkYjRiMTkxOGM4MWJhYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjhmYjFlYWY3ODZiZWM3NWNjOWNjNzhlMGMzMmFkODY0NzM3MmMyNWY0MWFmMjlkYTUxOWRlNjU5NTdiZjIxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjg1YjA2MDMzYzIxMGJjOGNmNTM3ZjFlOTk1ZDkwYTYyYTk4YTMyODkxZTM0MzY3MGE4ZjIzZjRjMTk2ZmY5MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_dffa8cdbfd8f4c0d9191ec6b2b04477b",
+      "statement": "myfeeder implements a reader-view feature: ArticleExtractionService fetches an article's original page (via FeedFetcher, reusing its SSRF guard and size cap), decodes it with jsoup, extracts readable content with Readability4J, and caches the result on the article row.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L1-L85",
+          "version": "repo-lines-v1:sha256:669160a7f4079b0b4dd06d2b4b5a903b242f1e6cdce9690565452db01cd334b0:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmZmJjNTFiZDJjZWM3NDBkYzQxM2NhYjBiODI2YjU3NmM3MDY2YjczOWQxNzRhNGZkMDk4ZDdiMDcwNGE0NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0c99fe54568645b19a3a248632437b37",
+      "statement": "Flyway migration V5 (V5__article_extracted_content.sql) adds the article.extracted_content column that caches reader-view extraction output.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/db/migration/V5__article_extracted_content.sql",
+          "version": "repo-file-v1:sha256:40144184eb66db1770bd31199ab5e043f157d4218386b7cc428363058171a6a5"
+        }
+      ]
+    },
+    {
+      "id": "claim_14bfef66f0b646b79880bbd0e7d11469",
+      "statement": "FeedUrlValidator guards every caller-supplied outbound fetch (subscribed feed URLs and reader-view page fetches) against SSRF by requiring http/https scheme and rejecting hosts that resolve to non-public addresses (loopback, link-local, RFC1918/site-local, any-local, or multicast).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java#L1-L100",
+          "version": "repo-lines-v1:sha256:f760f1677a13baacbae810b1b8c4bd94b3cfea16186ff7ae35d7db378d9f61a2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxZmZiYzUxYmQyY2VjNzQwZGM0MTNjYWIwYjgyNmI1NzZjNzA2NmI3MzlkMTc0YTRmZDA5OGQ3YjA3MDRhNDQwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyMjRhOGE1MTAzNjUyMWUwMTdjMzc0MWIyZWE3YzUzNzY2Njg1YjU3NGEwMDgyNGRhNzg4ZjU4M2M1ZWZmYjRlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2ZjgwODYyYWQyM2M2MzNjNzRlZDkzNWRkMjIwNTBkODdhNjJhODQ0YzNhZTY1ZDIxY2UwMTM0MDBmNjdmOTc1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_3632dc4f13554b13ae95e882f7b56816",
+      "statement": "FeedFetcher is the single outbound HTTP fetch path used both for feed polling and for reader-view page fetches, and it invokes FeedUrlValidator.validate before every request and enforces a 10 MiB body size cap.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L1-L60",
+          "version": "repo-lines-v1:sha256:7b798184c4c710b33ceceacd8ca7a8eb97b97ef039c6efd13733b02ccae3bd28:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmZmJjNTFiZDJjZWM3NDBkYzQxM2NhYjBiODI2YjU3NmM3MDY2YjczOWQxNzRhNGZkMDk4ZDdiMDcwNGE0NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiY2VlYWYzNmRjNzg4NDg3ZDQ5YWQ1ZTQxMThlMDU3MzlmMTZlOTcwYTkzNzc1YjMxYTI1MzkyZDExNmZhNjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4ZjhiYTY2ZTY0ZGI4OTM0YmE5ZGIxZGQ2NWZkN2YyYzg4OWQ4ZjQ1YzE5MjViMDA2MjhjODljN2Y2MjA2NDYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-09-27T13:47:46.861Z"
+  }
+}

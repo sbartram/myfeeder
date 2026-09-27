@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:72d4b358ada7005a3f6c5779bd976ef9584821bceca82470864d5e74fa50481a",
+  "claims": [
+    {
+      "id": "claim_94cb6a50ac61470695907e9f6b4d3893",
+      "statement": "myfeeder is built on Spring Boot 4.0.8, with Spring AI 2.0.1 and Spring Cloud 2025.1.3 declared via the Spring AI/Cloud BOMs, and targets the Java 25 toolchain.",
+      "evidence": [
+        {
+          "resource": "repo://build.gradle.kts#L1-L29",
+          "version": "repo-lines-v1:sha256:eadfa6d44d52f9332deca81023a811e05f6cf7dad8879893f72abdf0e41c7114:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0MDQwMTAzMTViZGJiMGZlYTBmZDZmZjAyMTRkOGJjOTIxY2UyODM2ZDFjYzZiY2I4ODQ5ZjM1NzZjZjVhNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlNWJhNmFjYjdlNWY3ZjI0ZmI0ZTcxMDFlMGZlZDYzNmZmYjhmYmVmMGMxNzZlNDYxODAzY2RhNDRiNWU3MjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5ZDYxMTg1MDJhOWQ3ZTRmOWYyZmNmMjJkNGMzYTA5NDhmOWY5NjJiNGZjOTU4Y2MzOTliMzFiZjhlOTQxYjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5181345dd27f4248aef12f6a0945b0c3",
+      "statement": "FeedFetcher is the single fetch path for all caller-influenced outbound HTTP: it is used by feed subscribe/poll (FeedService, FeedPollingService) and by ArticleExtractionService's reader-view page fetch, so any new feature needing to dereference a remote URL should route through it rather than issuing a raw RestClient call.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L16-L48",
+          "version": "repo-lines-v1:sha256:6fc6bef65a5be06ee3424d7b11eb5d8f4f19131f81a86aade38724b5d44b7d87:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZjI3NWYyMDY0ODlmMDA5ZDM0MDU5NjdkMDU3MjNjNGYwNWQ5YzMxZTRlMTAxYzRjZjVlNGY4YTZmYWM4MmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0NmNiYzk3ZWM0MjE2ZDExZTVlMWE1YzhkY2IzZDBmNzY5MWY5NGE1OTUzZmI0YTE3ZTljMGQ4MmQwMjIxNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkNTRkZDhlZjZkYTcxYzdkY2VjYjRlZGQzNjg0ZWJhNjRmMDhlM2ZlZTkzYTY2OTI2MjVmMWM3ODdjNTY4M2QifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L1-L36",
+          "version": "repo-lines-v1:sha256:46738b9682c6c9990ef2510e40cff9b73e66fe4bf986d0b25773e4e9377a2068:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmZmJjNTFiZDJjZWM3NDBkYzQxM2NhYjBiODI2YjU3NmM3MDY2YjczOWQxNzRhNGZkMDk4ZDdiMDcwNGE0NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkMGU5NjU1MDEwYmUzNDVkOGYzMjVmZDcxY2RhNGUxNzRhZGE4MTljMWI3MjlmZDBiNDRjZDcxZjU2NzRkMDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_656a4cebad3f49d0bdab4d033c479b2c",
+      "statement": "FeedUrlValidator enforces an SSRF guard at the top of FeedFetcher.fetch(...): it requires http/https scheme, resolves the host, and rejects loopback, link-local, RFC1918 site-local, carrier-grade NAT (100.64.0.0/10), IPv6 unique-local (fc00::/7), any-local, and multicast addresses, throwing IllegalArgumentException (mapped to HTTP 400) on rejection.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L44-L49",
+          "version": "repo-lines-v1:sha256:d33e9d155eda6eae41ede4fedb52c50b757fc100ed9a4a593ee1972a6812be78:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjk5OWNkYzQ2MjkwMjNiZDBlMGVmNDlkZTU3OTdlMWU0MDkyOWE2NjdmYTA3ZDUxNGNiYmY2OGEzMzRlMzlhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGQwMWQ1YjcwNTY0YzcyMDVhZGI0MzAwYjgwYWE0ODVkMjhkMzhhNTFlYjliNTk3NGQ5NWI2MGI2YjA3OTYyOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWYwODcwMDkyNjJkNTU0N2Q0OGYwNTNkNjNiOGI2ZTA1NGJhOTk5NWM2NGQwYWY4ZDU5NjYxZWFhYTRiMTIyZCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L46-L48",
+          "version": "repo-lines-v1:sha256:f128f99e72198dfdd457a1cb5c1f2f8d66f40e7242685baa77346658bc05af7e:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODE5N2RkNGFlNGMwY2FkMjkyNGQyMWZiMWVhYWQzOTJjOGMxNDQyNTQ4ZWU5YjgyNGE3YTA2ZWYwZTgwNDU4YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2YxOTE0NDZhNjM3ZjdiOGNhMjdmZWUyY2FmN2RiYjRiMGU1Zjk3ZGM2YzBjYTI3MmEzZWY0OGUyZDQxMDAyYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWVjOTU5YmY5NTJjNjlmMWU5ODZkODQ1ZWVlNTJiNWYzMzVjMjQ3MzM4ODI5ZjkzY2RjMDAwM2YwYjQ0NDM3ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzU2NTY0MTBjYzhmZjNmZjhlOTNmMmUxNmM0MzBhZWJhNGUxMGQzZWViYjU1YTFhYTIwNjdiYzcyNGVhNzJlZSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java#L1-L135",
+          "version": "repo-lines-v1:sha256:cae5d5e123c9cb00c88271d42fbc1952e5671975ccc7b154eed9fd004495dadf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxZmZiYzUxYmQyY2VjNzQwZGM0MTNjYWIwYjgyNmI1NzZjNzA2NmI3MzlkMTc0YTRmZDA5OGQ3YjA3MDRhNDQwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_f039a51105ea422397ab66e9080a9d31",
+      "statement": "FeedUrlValidator has an accepted DNS-rebinding/TOCTOU limitation (the host is re-resolved by RestClient at connect time, after validation) and does not re-validate redirect targets per hop; both are accepted for the current single-user LAN deployment.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedUrlValidator.java#L11-L26",
+          "version": "repo-lines-v1:sha256:34adb679a280ba0f429db718aaa8a3c186b4ae09b221cb69b751d57177989b43:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5YTMxYWU4NmExZTFhYmI3NzIzZDBjYWUyNjYzZmE5ZjgzZTY5ZTJjODk1MDVhN2U2ZGRiMzY1NzljZWQxYzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhNzQ3NWEwYjkxYjY4NWQ4NGY1NTZhZGM0ZjA1YWQ4ZDlkZGRhZDEzNDJmNmYwODg2NGFkNGUyZTc4Y2I0MmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1NDk3NzZjNzkyYjZlYWZkM2RiMGQzZmM5OTEyYmVkMzQyYjFlMjYxZDMwNjUyMGIxNTQyZGY2OTgzNTIzMTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_717f54c74ba24da89c9ac6cf064739d5",
+      "statement": "FeedFetcher.DEFAULT_MAX_FEED_BYTES caps a fetched feed/page body at 10 MiB (10 * 1024 * 1024 bytes); the response body is read with a bounded readNBytes(maxFeedBytes + 1) and exceeding the cap throws FeedFetchException, mapped to HTTP 422.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L23-L28",
+          "version": "repo-lines-v1:sha256:d2bd6663464a66ac5751f7379d9d7426c0821557a6b19f9b87fc9a88185b2aba:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDRiOTdhYmQ1ZTE5NDNhZDJkYTFlNDYwZGJkNzE1ZjljYTcyM2M3NWJjNDAyNzA0M2JiZjQ4MjFhMjZmNjllMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGQwMWQ1YjcwNTY0YzcyMDVhZGI0MzAwYjgwYWE0ODVkMjhkMzhhNTFlYjliNTk3NGQ5NWI2MGI2YjA3OTYyOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTM3NTE4YTYxNDAwMDAxNTM5ZjYyYzZhZmMzYTNiMzFlMDg1ODM5MmNjNzY2OGQyYTgxMzJmM2I4YmM3ZGJhZSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L18-L19",
+          "version": "repo-lines-v1:sha256:3cdf6b98c26d60d0e8c3cd867b01a6afca1d1f0cb017f49265b6ad60f3c87b0a:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDU3OWI1NDk3N2ZiMWFmZjE3NGEzZWRiY2JiYjQ1ZTgzMTE0ZTU3ZTQzZWRiNGY4NjY2ODQ5NzgyNTM4OTA3NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWY5MDNmYzJhMTFjYjI4ZDdkZWJlY2QyYmNkOTE5MGQ1ZjkxYzYzNzA0YmZlZjlhNTNkYjM1OWExN2FiOTdkNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWFkZTIxNjU4NDIzNTExNDNiZTE0MzdkYWM4MzlkODQ2ZGY0OGM3NWU5ZTI0NGFiMDdjNjMwYWJlY2JiNjc1YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjkxMTkxZGY4NjZkMzI3OTc5MjBkMGVkMjEyYTg4ODU1NmVmMTE3MTUxYmI3OWI3ZTZkZGZmM2FmYTczMmQxZSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/FeedFetcher.java#L66-L72",
+          "version": "repo-lines-v1:sha256:d1d5a628bca67a3de9abf40cac336c3139164b0892d7745f311aac9b6d9e192e:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGI3NjFlNDhlMmI3MDIzZDIzMTFmMWI1ZTQ2OTE4ODIwNzc1MWViMTk0NWI3NmUzMWIyOTY0M2Y5MTc5NDM3OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGRiMzM5YzE3ZDRjYzU0ZTcwYzRmY2ZlY2I2MTFiYjllN2QzNjNmMjViMThlMDkyM2ExZDMwNmNjOTU5MjRlNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGE0MWExMzI2Y2YyYzgzMzMwZjgyYzg1YjBjOTMyNTE4NDk2NmMxYzkzOTY4YWIwMzFkOTc5YzlkYmZhOTQwYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzkzYThmNGZiYzk4OTAwNGVhYjIyYzVlOTRlODQzMjVhMGZlOWM5ZjgyNTc5NjkwNzg0MTJiOWRmOTg2MmU2NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2f478e1ef77749629d28be91defdfa1c",
+      "statement": "ArticleExtractionService implements the reader view (GET /api/articles/{id}/extracted-content): it fetches an article's original page via FeedFetcher, extracts readable content with Readability4J, caches the extracted HTML on the Article row, and throws NotFoundException/IllegalArgumentException/FeedFetchException/FeedParseException for its documented failure modes.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L69-L72",
+          "version": "repo-lines-v1:sha256:7de5ee387f58f5adc3ecb19820a18c5beef19568cf99b64c51e67501b8d69938:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjNiMjdkZDc0YzU1ZGEzOGMxYjc0MTNlYTk4ZWRlZDE1OGU0OGY1Mjg2YzdlNWViNmRhNTA0NDYwNzI2N2E2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjAwMTEyMDE4ZDljYmQ1NzA3MTJjZjZmZGQ3Y2ZmZDk3MzhhNzhjY2ViMWIwMjdmYzRkYjJiMDNlNmYxNjhjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTkxYmMxNDRlMTBlM2Q0NTNiZTRlYmRjOTFkODdmZmUzYWU3NjI5Mzg0MmQ5ZGM2NjMyYmQ4MTJkYTQ4ZjQ0MyJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L1-L65",
+          "version": "repo-lines-v1:sha256:9f357be23012c995a6f8517f66470862e75316ea2e5279a96bc3cbff30eed132:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmZmJjNTFiZDJjZWM3NDBkYzQxM2NhYjBiODI2YjU3NmM3MDY2YjczOWQxNzRhNGZkMDk4ZDdiMDcwNGE0NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MGZiZDQ3Zjc5YjhkZDllMzllOGU0M2RkOWMxYTU3MDFhNGQxM2RlYTJhYjI2MmY4ZmUyYTg1ODEyMmIxMjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_07f1b11db59e4ae9bfc562e73cd39808",
+      "statement": "In Jackson 3.x on this stack, databind classes (ObjectMapper, JsonNode, JsonMapper) moved to the tools.jackson.databind.* package while annotation classes (@JsonIgnoreProperties, @JsonProperty) remain under com.fasterxml.jackson.annotation.*.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L89-L94",
+          "version": "repo-lines-v1:sha256:82d4d0de67540474569e1fa377c4f8679d645ecf26bfdc27f95ff2a0c69985b8:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzk0ZWYwMWYxOWNkZThmNjEzOTc2MjI4NzRjZDVjZTA0YzM5N2E2MGYyYTE3MTc0M2YwZjc5YjZjMDUyMDgzMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTI4M2I3ZTk4MzA1OGYwMmQzOWE1ZmYxYjc1MDhlY2RmMDk4MmExOGEzNmE2MWNhODg3YjE0MTdlMDg2MjMyMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGU4YTg5NmFlMTRkMjBlODU0ZDJiMGE2NGUyYmFiYzUyODc0YzMzYmUwNmRhOWRiODgyM2MwZTlhNGVmYzAyMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropConfig.java#L1-L9",
+          "version": "repo-lines-v1:sha256:709f900f3a7b946c868781ef1e39596fb302a6aac4cad8d1cb21939bf5b4a504:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2ExZDg1ZDIxNzhlYTc2ZWViNzY5ZmUzN2M1MjIzMGRlNGUwNGFhNTFiYTI3ZjljM2RiMTc2MTQ5N2EwZDFkOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzUyNzY5NDM3NjNmNzZmZTQ0MTcyMzBhMjRhYjU4YzMyY2YxNmNhNTExZTBmMzFiZjMxZWQ4NTRkZDUxYWViNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/parser/FeedParser.java#L3-L4",
+          "version": "repo-lines-v1:sha256:0b8bf4d5811f6f35ce4fafde638080f8f1576cadf97799b73079cb5ccbc72ea4:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NjZWZkYWMzYTc5ZDUwMmMxY2ZhMWE4YTQyYzgzYWIwNzQ1YjA4OGRkMDY2NzM1ZDM3NWVhZTIyOTJlOTYxOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTY1ZDU3YzBiMzNmOGZhZTIyYWRhNTQ4Mzk3MTBjNjBhNjE5MDNhMTNmMTgzMTc2NGU5MTlmYjQ3YWQ4MGUwMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjIsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDkzYWRiNGY4NTU1MjM2YjZhYmQwYzY2OWNhZGZmOTU0MjNmOGI3OTNhNDc0MzQ1YTEzM2VjMjlhOWNhNTUzNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmFiMDljOGEzNzczMjllNTI1Yzk1N2IzMjY0MTQzNjk0MjdlMDJiMWI4OWVlNjAwZmUyMThiYmE0M2I2MWNlZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f7bd257d1d4e464798c57c0fa29925e1",
+      "statement": "Spring Boot 4 test slice annotations (e.g. @WebMvcTest) moved to org.springframework.boot.<slice>.test.autoconfigure.* packages (e.g. org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest), and JacksonAutoConfiguration moved to org.springframework.boot.jackson.autoconfigure.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/FeedControllerTest.java#L10-L10",
+          "version": "repo-lines-v1:sha256:5a5f1d5d671dbafefaa68d77dfc6e68ace5a5c811f54b912ac61a5ce65c3a15d:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWE1ZjFkNWQ2NzFkYmFmZWZhYTY4ZDc3ZGZjNmU2OGFjZTVhNWM4MTFmNTRiOTEyYWM2MWE1Y2U2NWMzYTE1ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWE1ZjFkNWQ2NzFkYmFmZWZhYTY4ZDc3ZGZjNmU2OGFjZTVhNWM4MTFmNTRiOTEyYWM2MWE1Y2U2NWMzYTE1ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTU4MGRmNjg3MzA0OTYxMjk4ZjgxYjJkN2E3ZjI2ODA0OWU0NTg1ZjM5NWU0Y2JlZWFmNjc3MTI3NGMwMDI1OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWFkYTgwYWE4OWNiYzU4NWYyZGU1NDFhNDI5MjNmNWQyYTZiMTI4MWQzYjk5Mjg2ZGVjOThhMzk3MjJhYjFhNiJ9"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/IntegrationConfigControllerTest.java#L12-L15",
+          "version": "repo-lines-v1:sha256:a59d56345a18f8411af1c2b6b5236af5428af531e4c6a0576a581ca6d2ba18b3:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTAzN2FlZDE5N2I1ZjhjZTdlNDJjYmU4ODhiODhmMGM5NDM1MWJiOGNlMDVmYTQyZDFmOTIyN2QxMjgwMzNkZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWE1ZjFkNWQ2NzFkYmFmZWZhYTY4ZDc3ZGZjNmU2OGFjZTVhNWM4MTFmNTRiOTEyYWM2MWE1Y2U2NWMzYTE1ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmRhYzkwZDcyOTUzMzY1NmRmMGQwNjkyZTI5ZDg1N2I4MzRjZGRmNTgyNWI1OTM2NDRiZjIzZTU1YjQzYjlkNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGExY2Q4NTMyODMzNjZhNjdlN2NkNDhjMmNhNDNhMmY1ZTMwYmVmZWUxNGQ4NDFmZGMyMjU4ZDY2ODIxMDRhNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_da032cd765f0482e8cf3f86e6f73defa",
+      "statement": "RestClientCustomizer moved to org.springframework.boot.restclient in Spring Boot 4; RestClientConfig uses it to register a myfeeder User-Agent customizer applied to the auto-configured RestClient.Builder.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/RestClientConfig.java#L1-L17",
+          "version": "repo-lines-v1:sha256:51c6e994e5b18d39220410fd1a45fcaca1c67a0a2bcebe4d2672bda5f851bc25:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4NTAyMmM0MzMxZjQ0NzIzY2FmNWE0OWExMDQ2YjE3ZTdlZDAwZjJkMTFmN2U3Njc4OWI0YTgwMDQyOWY4ZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7fb945bacf35461fa1f8202decddb322",
+      "statement": "Outbound RestClient connect/read timeouts are configured via the plural spring.http.clients.connect-timeout / spring.http.clients.read-timeout keys (not the deprecated singular spring.http.client.* keys), and this binding plus the resulting Reactor Netty transport choice is guarded by HttpClientConfigurationTest.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L1-L9",
+          "version": "repo-lines-v1:sha256:dfbdccf45ef1c186e9ff057ac24e9dfea97b526922c6424691a8502e6f0266b6:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWIzY2RmNGZkNGI2YzFlY2VhZjM0MzE1ZGRiOTJkNzExMWI1MGE1MGNiNzcxNGZiM2I0ZDY2NDE2MGIyMGM0MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWJlMmY5YTQxNDQ0Y2ViMzBmZDY4MzU3MDQ3MmEwN2U2ZWZlNjZlMjBjZDU0ZjYzZmZlMzI5ZjAzYjc4NTE0MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjgzZDUxNTY5ZjQ0NTc0NmJkZjY5ZWI3NjIzODQ3N2IzMGI5ZmZhMGE1NzhjOWYzM2ZjOWQ2MjRlM2RjYWU1YyJ9"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/config/HttpClientConfigurationTest.java#L1-L50",
+          "version": "repo-lines-v1:sha256:ce247f15c295cfe9e9946bff006b082a674a55147ef8d1b1e44144b48d41d5dd:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4NTAyMmM0MzMxZjQ0NzIzY2FmNWE0OWExMDQ2YjE3ZTdlZDAwZjJkMTFmN2U3Njc4OWI0YTgwMDQyOWY4ZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_36a8c790dbe449fdb65a56c1df701880",
+      "statement": "reactor-netty-http is declared as an explicit Gradle dependency because Spring AI 2.0.1 no longer pulls it in transitively; without it, Boot's auto-configuration would silently fall back to the JDK HttpClient transport for outbound RestClient calls, a regression HttpClientConfigurationTest.outboundTransportIsReactorNetty() specifically guards against.",
+      "evidence": [
+        {
+          "resource": "repo://build.gradle.kts#L36-L39",
+          "version": "repo-lines-v1:sha256:6933ce6e50ed3e45b23b713d19d533a8ea88d3641149efab97b4b473038366f8:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWRiZmYxZjhhNDNlNTRhYzQwZDU2MTE1N2Q4NDI5ZDhlMGYzMmMzNDM0YTEzZjNlYWNmZjBjZGVhMGZlMjNmYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGJkYTRlYzJhZjc3OTk5MGQyY2JmMDg5YmNmOTgzMGIzY2M0ZDMwYzYwZWRiNGU2NjlmZjU0N2RkYTE0YjQzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjhmYjFlYWY3ODZiZWM3NWNjOWNjNzhlMGMzMmFkODY0NzM3MmMyNWY0MWFmMjlkYTUxOWRlNjU5NTdiZjIxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmU4NDAyMDRmNDY3M2VmYzVkM2NiNjQ3NDc5Zjk5OTNjZTEzNWFjOTc2NDM3YWE0NGE4YjhhM2YyMTExZDNhYSJ9"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/config/HttpClientConfigurationTest.java#L19-L35",
+          "version": "repo-lines-v1:sha256:beb71b67592b9ab194d631c690ed8335677d0df116dcaadd1c7e8351b79bc30e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5M2FhZjllYzNhOTUxYWViNzIwZTZkNjZhZjE5MzRmODhkYzc0MTYwNWNiM2UyYWQ5MzQ2YzlmMGMxODljYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU4MzBjYzc4Nzc4YTZiZjZjOWYzNjdhYmYxMjMyY2I1NzUwOGY0YWJiY2QxMzU1OWUwZjQ1NmZhNWQ1OTE5N2MifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-09-27T13:47:46.861Z"
+  }
+}
