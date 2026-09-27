@@ -13,6 +13,7 @@ import io.github.resilience4j.spring6.retry.configure.RetryAspect;
 import io.github.resilience4j.springboot3.circuitbreaker.autoconfigure.CircuitBreakerAutoConfiguration;
 import io.github.resilience4j.springboot3.retry.autoconfigure.RetryAutoConfiguration;
 import io.netty.handler.timeout.ReadTimeoutException;
+import org.bartram.myfeeder.config.JevEventLogging;
 import org.bartram.myfeeder.config.RestClientConfig;
 import org.bartram.myfeeder.config.TypeSafeConfig;
 import org.junit.jupiter.api.AfterEach;
@@ -121,7 +122,7 @@ class JevResilienceTest {
                         CircuitBreakerAutoConfiguration.class, RetryAutoConfiguration.class,
                         TypeSafeAutoConfiguration.class, RestClientAutoConfiguration.class,
                         HttpClientAutoConfiguration.class, ImperativeHttpClientAutoConfiguration.class))
-                .withConfiguration(UserConfigurations.of(TypeSafeConfig.class, JevApiClientImpl.class))
+                .withConfiguration(UserConfigurations.of(TypeSafeConfig.class, JevApiClientImpl.class, JevEventLogging.class))
                 // addLast: the test properties below must beat the YAML's blank ${MYFEEDER_TYPESAFE_API_KEY:}
                 .withInitializer(ctx -> ctx.getEnvironment().getPropertySources().addLast(mainYaml))
                 .withPropertyValues(
@@ -171,6 +172,23 @@ class JevResilienceTest {
             assertThat(stub.hits()).isEqualTo(2);
             assertThat(elapsedMs).isGreaterThanOrEqualTo(650L).isLessThan(5_000L);
         });
+    }
+
+    @Test
+    void rateLimitRetryIsLoggedWithoutLeaking(CapturedOutput output) {
+        // D-15: a 429 the retry absorbs is visible in the log as fixed text (class name and numbers only).
+        stub.enqueue(429, Map.of("retry-after-ms", "700"));
+        stub.enqueue(200);
+        runner.run(ctx -> {
+            JevJudgment judgment = ctx.getBean(JevApiClient.class).judge(state(), questions());
+            assertThat(judgment.model()).isEqualTo("jev-1.13.0");
+            assertThat(stub.hits()).isEqualTo(2);
+        });
+        assertThat(output.toString())
+                .contains("Jev retry attempt 1 after TypeSafeRateLimitException (waiting 700 ms)")
+                .doesNotContain("LEAKCHECK")
+                .doesNotContain("stubbed failure")
+                .doesNotContain("Jev retries exhausted");
     }
 
     @Test
