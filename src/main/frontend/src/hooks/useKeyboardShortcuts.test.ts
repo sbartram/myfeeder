@@ -8,6 +8,9 @@ vi.mock('../api/articles', () => ({
     markRead: vi.fn(),
     counts: vi.fn(),
     saveToRaindrop: vi.fn(),
+    priority: vi.fn(),
+    setFeedback: vi.fn(),
+    clearFeedback: vi.fn(),
   },
 }))
 vi.mock('../api/feeds', () => ({
@@ -24,14 +27,17 @@ vi.mock('../api/folders', () => ({
 
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { createElement } from 'react'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts'
 import { useUIStore } from '../stores/uiStore'
+import { usePriorityStore } from '../stores/priorityStore'
+import { useFeedbackStore } from '../stores/feedbackStore'
+import { useToastStore } from '../components/Toast'
 import { articlesApi } from '../api/articles'
 import { feedsApi } from '../api/feeds'
 import { foldersApi } from '../api/folders'
-import type { Article, Feed } from '../types'
+import type { Article, ArticleFeedback, Feed, FeedbackResult, TopicBreakdownRow } from '../types'
 
 const feed = (id: number, overrides: Partial<Feed> = {}): Feed => ({
   id,
@@ -78,9 +84,9 @@ function createWrapper() {
   }
 }
 
-function press(key: string) {
+function press(key: string, init: KeyboardEventInit = {}) {
   act(() => {
-    document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+    document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...init }))
   })
 }
 
@@ -101,6 +107,9 @@ describe('useKeyboardShortcuts', () => {
     vi.mocked(foldersApi.getAll).mockResolvedValue([])
     // Reset the selection/focus slice of the UI store between tests.
     useUIStore.setState({ selectedArticleId: null, selectedFeedId: null, keyboardFocus: 'articles' })
+    usePriorityStore.setState({ whyOpen: false })
+    useFeedbackStore.setState({ narrowOpen: false })
+    useToastStore.setState({ toasts: [] })
   })
 
   it("'o' opens the selected article's URL even when it is not in the passed list", async () => {
@@ -217,5 +226,370 @@ describe('useKeyboardShortcuts', () => {
     press('n')
     // Current feed is the only one with unread → no-op.
     expect(useUIStore.getState().selectedFeedId).toBe(1)
+  })
+
+  it('gThenPOpensPriority', () => {
+    const { wrapper } = createWrapper()
+    useUIStore.setState({ selectedFeedId: 2 })
+
+    const { result } = renderHook(
+      () => {
+        useKeyboardShortcuts([])
+        return useLocation()
+      },
+      { wrapper },
+    )
+
+    press('g')
+    press('p')
+    expect(result.current.pathname).toBe('/priority')
+    expect(useUIStore.getState().selectedFeedId).toBeNull()
+  })
+
+  it('gThenPDoesNotJumpToThePreviousUnreadFeed', () => {
+    const { qc, wrapper } = createWrapper()
+    seedFeeds(qc, [feed(1), feed(2), feed(3)], { '1': 4, '2': 5, '3': 0 })
+    useUIStore.setState({ selectedFeedId: 3 })
+
+    const { result } = renderHook(
+      () => {
+        useKeyboardShortcuts([])
+        return useLocation()
+      },
+      { wrapper },
+    )
+
+    press('g')
+    press('p')
+    expect(result.current.pathname).toBe('/priority')
+    expect(result.current.pathname).not.toMatch(/^\/feed\//)
+    expect(useUIStore.getState().selectedFeedId).toBeNull()
+  })
+
+  it('plainPStillJumpsToThePreviousUnreadFeed', () => {
+    const { qc, wrapper } = createWrapper()
+    seedFeeds(qc, [feed(1), feed(2), feed(3)], { '1': 4, '2': 5, '3': 0 })
+    useUIStore.setState({ selectedFeedId: 3 })
+
+    const { result } = renderHook(
+      () => {
+        useKeyboardShortcuts([])
+        return useLocation()
+      },
+      { wrapper },
+    )
+
+    press('p')
+    expect(useUIStore.getState().selectedFeedId).toBe(2)
+    expect(result.current.pathname).toBe('/feed/2')
+  })
+
+  describe('on Priority', () => {
+    const rows = () => [article(1), article(2, { read: true }), article(3)]
+
+    it('jWalksPriorityRowsIncludingReadOnes', () => {
+      const { wrapper } = createWrapper()
+      useUIStore.setState({ selectedArticleId: 1 })
+      const list = rows()
+
+      renderHook(() => useKeyboardShortcuts(list, { isPriority: true, onPriorityNextPage: vi.fn() }), { wrapper })
+
+      press('j')
+      expect(useUIStore.getState().selectedArticleId).toBe(2)
+      press('j')
+      expect(useUIStore.getState().selectedArticleId).toBe(3)
+      press('k')
+      expect(useUIStore.getState().selectedArticleId).toBe(2)
+    })
+
+    it('jOnTheLastPriorityRowLoadsAndSelectsTheNextPage', async () => {
+      const { wrapper } = createWrapper()
+      useUIStore.setState({ selectedArticleId: 3 })
+      const list = rows()
+      const onPriorityNextPage = vi.fn().mockResolvedValue(7)
+
+      renderHook(() => useKeyboardShortcuts(list, { isPriority: true, onPriorityNextPage }), { wrapper })
+
+      press('j')
+      expect(onPriorityNextPage).toHaveBeenCalledTimes(1)
+      await waitFor(() => expect(useUIStore.getState().selectedArticleId).toBe(7))
+    })
+
+    it('jOnTheLastPriorityRowWithoutANextPageDoesNothing', async () => {
+      const { wrapper } = createWrapper()
+      useUIStore.setState({ selectedArticleId: 3 })
+      const list = rows()
+      const onPriorityNextPage = vi.fn().mockResolvedValue(undefined)
+
+      renderHook(() => useKeyboardShortcuts(list, { isPriority: true, onPriorityNextPage }), { wrapper })
+
+      press('j')
+      expect(onPriorityNextPage).toHaveBeenCalledTimes(1)
+      await act(async () => {
+        await Promise.resolve()
+      })
+      expect(useUIStore.getState().selectedArticleId).toBe(3)
+    })
+
+    it('jOnTheLastRowOutsidePriorityStaysPut', async () => {
+      const { wrapper } = createWrapper()
+      useUIStore.setState({ selectedArticleId: 3 })
+      const list = rows()
+      const onPriorityNextPage = vi.fn().mockResolvedValue(7)
+
+      renderHook(() => useKeyboardShortcuts(list, { onPriorityNextPage }), { wrapper })
+
+      press('j')
+      await act(async () => {
+        await Promise.resolve()
+      })
+      expect(onPriorityNextPage).not.toHaveBeenCalled()
+      expect(useUIStore.getState().selectedArticleId).toBe(3)
+    })
+
+    it('keysDoNothingWithNoPriorityRows', () => {
+      const { wrapper } = createWrapper()
+      const onPriorityNextPage = vi.fn().mockResolvedValue(7)
+
+      renderHook(() => useKeyboardShortcuts([], { isPriority: true, onPriorityNextPage }), { wrapper })
+
+      press('j')
+      press('k')
+      expect(useUIStore.getState().selectedArticleId).toBeNull()
+      expect(onPriorityNextPage).not.toHaveBeenCalled()
+    })
+
+    it('shiftAIsANoOpOnPriority', async () => {
+      const { qc, wrapper } = createWrapper()
+      seedFeeds(qc, [feed(1), feed(2)], { '1': 5, '2': 3 })
+      vi.mocked(articlesApi.markRead).mockResolvedValue(undefined as never)
+      useUIStore.setState({ selectedFeedId: 1 })
+      const shiftA = () =>
+        act(() => {
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'A', shiftKey: true, bubbles: true }))
+        })
+
+      const { rerender } = renderHook(
+        ({ isPriority }: { isPriority: boolean }) => useKeyboardShortcuts([], { isPriority }),
+        { wrapper, initialProps: { isPriority: true } },
+      )
+
+      shiftA()
+      await act(async () => {
+        await Promise.resolve()
+      })
+      expect(articlesApi.markRead).not.toHaveBeenCalled()
+
+      rerender({ isPriority: false })
+      shiftA()
+      await waitFor(() => expect(articlesApi.markRead).toHaveBeenCalledWith(undefined, 1, undefined))
+    })
+
+    it('rRefreshesTheRankingOnPriority', async () => {
+      const { wrapper } = createWrapper()
+      vi.mocked(feedsApi.poll).mockResolvedValue(undefined as never)
+      useUIStore.setState({ selectedFeedId: 4 })
+      const onPriorityRefresh = vi.fn()
+
+      const { rerender } = renderHook(
+        ({ isPriority }: { isPriority: boolean }) => useKeyboardShortcuts([], { isPriority, onPriorityRefresh }),
+        { wrapper, initialProps: { isPriority: true } },
+      )
+
+      press('r')
+      await act(async () => {
+        await Promise.resolve()
+      })
+      expect(onPriorityRefresh).toHaveBeenCalledTimes(1)
+      expect(feedsApi.poll).not.toHaveBeenCalled()
+
+      rerender({ isPriority: false })
+      press('r')
+      await waitFor(() => expect(feedsApi.poll).toHaveBeenCalledWith(4))
+      expect(onPriorityRefresh).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('i (score breakdown)', () => {
+    it('iTogglesTheBreakdownForAScoredArticle', () => {
+      const { wrapper } = createWrapper()
+      useUIStore.setState({ selectedArticleId: 1 })
+      renderHook(() => useKeyboardShortcuts([article(1, { interestScore: 82 })]), { wrapper })
+
+      press('i')
+      expect(usePriorityStore.getState().whyOpen).toBe(true)
+      press('i')
+      expect(usePriorityStore.getState().whyOpen).toBe(false)
+    })
+
+    it('iDoesNothingForAnUnscoredArticle', () => {
+      const { wrapper } = createWrapper()
+      useUIStore.setState({ selectedArticleId: 1 })
+      renderHook(() => useKeyboardShortcuts([article(1, { interestScore: null })]), { wrapper })
+
+      press('i')
+      expect(usePriorityStore.getState().whyOpen).toBe(false)
+    })
+
+    it('iDoesNothingWithNothingSelected', () => {
+      const { wrapper } = createWrapper()
+      renderHook(() => useKeyboardShortcuts([article(1, { interestScore: 82 })]), { wrapper })
+
+      press('i')
+      expect(usePriorityStore.getState().whyOpen).toBe(false)
+    })
+
+    it('iIsIgnoredWhileTyping', () => {
+      const { wrapper } = createWrapper()
+      useUIStore.setState({ selectedArticleId: 1 })
+      renderHook(() => useKeyboardShortcuts([article(1, { interestScore: 82 })]), { wrapper })
+      const input = document.createElement('input')
+      document.body.appendChild(input)
+      input.focus()
+
+      act(() => {
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', bubbles: true }))
+      })
+
+      expect(usePriorityStore.getState().whyOpen).toBe(false)
+      input.remove()
+    })
+  })
+  describe('u / d (thumbs) and Shift+D (narrow)', () => {
+    const topicRow = (topicId: number, name: string, weight: number): TopicBreakdownRow => ({
+      kind: 'TOPIC',
+      topicId,
+      name,
+      noul: 0.8,
+      hinge: 0.6,
+      weight,
+      exact: weight * 0.6,
+      points: Math.round(weight * 0.6),
+    })
+    const scored = (feedback: ArticleFeedback | null, topics: TopicBreakdownRow[] = []): Article =>
+      article(1, {
+        interestScore: 60,
+        interestBreakdown: {
+          raw: 60,
+          total: 60,
+          display: 60,
+          rows: [{ kind: 'PROFILE', levelIndex: 3, exact: 50, points: 50 }, ...topics],
+          nonMatching: [],
+        },
+        feedback,
+      })
+    const downVote: ArticleFeedback = { vote: -1, narrowed: false, topics: [] }
+    const result = (a: Article): FeedbackResult => ({ article: a, scored: true, effects: [] })
+    const voteCalls = () =>
+      vi.mocked(articlesApi.setFeedback).mock.calls.length + vi.mocked(articlesApi.clearFeedback).mock.calls.length
+
+    /** Selects article 1 with its by-id article loaded, like ReadingPane. */
+    async function mountWith(a: Article) {
+      const { qc, wrapper } = createWrapper()
+      qc.setQueryData(['article', 1], a)
+      vi.mocked(articlesApi.getById).mockResolvedValue(a)
+      useUIStore.setState({ selectedArticleId: 1 })
+      renderHook(() => useKeyboardShortcuts([a]), { wrapper })
+      await waitFor(() => expect(qc.getQueryData(['article', 1])).toBeTruthy())
+      return qc
+    }
+
+    it('uVotesUpOnTheSelectedArticle', async () => {
+      vi.mocked(articlesApi.setFeedback).mockResolvedValue(result(scored({ vote: 1, narrowed: false, topics: [] })))
+      await mountWith(scored(null))
+
+      press('u')
+      await waitFor(() => expect(articlesApi.setFeedback).toHaveBeenCalledWith(1, 1, null))
+    })
+
+    it('dVotesDownAndDAgainRemoves', async () => {
+      vi.mocked(articlesApi.setFeedback).mockResolvedValue(result(scored(downVote)))
+      vi.mocked(articlesApi.clearFeedback).mockResolvedValue(result(scored(null)))
+      const qc = await mountWith(scored(null))
+
+      press('d')
+      await waitFor(() => expect(articlesApi.setFeedback).toHaveBeenCalledWith(1, -1, null))
+      await waitFor(() => expect(useToastStore.getState().toasts).toHaveLength(1))
+      expect(qc.getQueryData<Article>(['article', 1])?.feedback?.vote).toBe(-1)
+
+      press('d')
+      await waitFor(() => expect(articlesApi.clearFeedback).toHaveBeenCalledWith(1))
+      expect(articlesApi.setFeedback).toHaveBeenCalledTimes(1)
+    })
+
+    it('modifiedVotingKeysAreIgnored', async () => {
+      await mountWith(scored(null))
+
+      press('d', { metaKey: true })
+      press('d', { ctrlKey: true })
+      press('d', { altKey: true })
+      press('u', { metaKey: true })
+      press('D', { shiftKey: true, metaKey: true })
+
+      await new Promise((r) => setTimeout(r, 20))
+      expect(voteCalls()).toBe(0)
+      expect(useFeedbackStore.getState().narrowOpen).toBe(false)
+    })
+
+    it('votingKeysWaitForTheArticle', async () => {
+      const { wrapper } = createWrapper()
+      vi.mocked(articlesApi.getById).mockReturnValue(new Promise(() => {}))
+      useUIStore.setState({ selectedArticleId: 1 })
+      renderHook(() => useKeyboardShortcuts([scored(null)]), { wrapper })
+      await waitFor(() => expect(articlesApi.getById).toHaveBeenCalledWith(1))
+
+      press('u')
+      press('d')
+
+      await new Promise((r) => setTimeout(r, 20))
+      expect(voteCalls()).toBe(0)
+    })
+
+    it('votingKeysLeaveReadAndSelectionAlone', async () => {
+      vi.mocked(articlesApi.setFeedback).mockResolvedValue(result(scored({ vote: 1, narrowed: false, topics: [] })))
+      await mountWith(scored(null))
+
+      press('u')
+      await waitFor(() => expect(articlesApi.setFeedback).toHaveBeenCalledTimes(1))
+      await waitFor(() => expect(useToastStore.getState().toasts).toHaveLength(1))
+      expect(articlesApi.updateState).not.toHaveBeenCalled()
+      expect(articlesApi.markRead).not.toHaveBeenCalled()
+      expect(useUIStore.getState().selectedArticleId).toBe(1)
+    })
+
+    it('shiftDOpensThePickerWhenNarrowable', async () => {
+      await mountWith(scored(downVote, [topicRow(3, 'Politics', -30), topicRow(7, 'Rust', 20)]))
+
+      press('D', { shiftKey: true })
+
+      expect(useFeedbackStore.getState().narrowOpen).toBe(true)
+      await new Promise((r) => setTimeout(r, 20))
+      expect(voteCalls()).toBe(0)
+    })
+
+    it('shiftDDoesNothingOtherwise', async () => {
+      await mountWith(scored(null, [topicRow(3, 'Politics', -30), topicRow(7, 'Rust', 20)]))
+
+      press('D', { shiftKey: true })
+
+      expect(useFeedbackStore.getState().narrowOpen).toBe(false)
+      await new Promise((r) => setTimeout(r, 20))
+      expect(voteCalls()).toBe(0)
+    })
+
+    it('votingKeysIgnoredInInputs', async () => {
+      await mountWith(scored(null))
+      const input = document.createElement('input')
+      document.body.appendChild(input)
+      input.focus()
+
+      act(() => {
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'u', bubbles: true }))
+      })
+
+      await new Promise((r) => setTimeout(r, 20))
+      expect(voteCalls()).toBe(0)
+      input.remove()
+    })
   })
 })

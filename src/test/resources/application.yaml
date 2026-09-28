@@ -2,6 +2,14 @@ spring:
   ai:
     anthropic:
       api-key: test-dummy-key
+    # Mirrors the main spring.ai.typesafe pins, without a key. The base-url is local: port 9
+    # refuses at once, so a stray call can never reach the network.
+    typesafe:
+      base-url: http://127.0.0.1:9
+      model: jev-1.13.0
+      timeout: 30s
+      retry:
+        max-retries: 0
   datasource:
     hikari:
       connection-timeout: 30000
@@ -20,9 +28,28 @@ myfeeder:
     cleanup-cron: "0 0 3 * * *"
   raindrop:
     api-base-url: https://api.raindrop.io/rest/v1
+  # Interest scoring: eligibility window, one scoring thread (D-09), sweep pacing (D-10/D-16).
+  interest:
+    window-days: 14
+    concurrency: 1
+    queue-capacity: 1000
+    sweep-batch-size: 50
+    sweep-delay: PT2M
+    # PT1H keeps @SpringBootTest contexts from sweeping during the suite (research Pitfall 12).
+    sweep-initial-delay: PT1H
+    # Blend constants (R1); the profile contributes profile_score / max level x profile-points. Phase 7 tunes these.
+    blend:
+      profile-points: 100
+      learn-rate: 2
+      learned-cap: 20
+      # D-13: badge tier thresholds served on /api/interest/status (display score >= high is high, >= neutral is neutral). Phase 7 tunes them (07-CALIBRATION.md).
+      tiers:
+        high: 70
+        neutral: 40
 
 resilience4j:
   circuitbreaker:
+    circuit-breaker-aspect-order: 1
     instances:
       raindrop:
         failure-rate-threshold: 50
@@ -33,7 +60,26 @@ resilience4j:
         minimum-number-of-calls: 5
         ignore-exceptions:
           - org.bartram.myfeeder.integration.RaindropNotConfiguredException
+      jev:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 60s
+        slow-call-duration-threshold: 15s
+        slow-call-rate-threshold: 50
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        # 401/403 (TypeSafeAuthentication/PermissionDenied) are deliberately absent: a bad key is recorded (D-06)
+        ignore-exceptions:
+          - org.bartram.myfeeder.integration.JevNotConfiguredException
+          - org.springaicommunity.typesafe.exception.TypeSafeBadRequestException
+          - org.springaicommunity.typesafe.exception.TypeSafeUnprocessableEntityException
+          - org.springaicommunity.typesafe.exception.TypeSafeMissingAnswerException
+          - org.springaicommunity.typesafe.exception.TypeSafeAnswerTypeException
+          - java.lang.IllegalArgumentException
   retry:
+    retry-aspect-order: 2
     instances:
       raindrop:
         max-attempts: 3
@@ -41,3 +87,14 @@ resilience4j:
         exponential-backoff-multiplier: 2
         ignore-exceptions:
           - org.bartram.myfeeder.integration.RaindropNotConfiguredException
+      jev:
+        max-attempts: 3
+        # Base interval for TypeSafeConfig.jevRetryInterval, which doubles it per attempt (1s, 2s) and
+        # honors a 429's retry-after-ms instead when present (capped at 10s).
+        wait-duration: 1s
+        retry-exceptions:
+          - org.springaicommunity.typesafe.exception.TypeSafeRateLimitException
+          - org.springaicommunity.typesafe.exception.TypeSafeInternalServerException
+          - org.springaicommunity.typesafe.exception.TypeSafeApiConnectionException
+        ignore-exceptions:
+          - org.bartram.myfeeder.integration.JevNotConfiguredException

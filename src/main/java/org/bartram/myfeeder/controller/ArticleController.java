@@ -3,11 +3,16 @@ package org.bartram.myfeeder.controller;
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.integration.RaindropService;
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.repository.InterestScoreQueries.SortKey;
 import org.bartram.myfeeder.service.ArticleExtractionService;
+import org.bartram.myfeeder.service.ArticleFeedbackService;
 import org.bartram.myfeeder.service.ArticleService;
 import org.bartram.myfeeder.service.ExtractedContent;
+import org.bartram.myfeeder.service.FeedbackResult;
 import org.bartram.myfeeder.service.NotFoundException;
+import org.bartram.myfeeder.service.PriorityService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +30,8 @@ public class ArticleController {
     private final ArticleService articleService;
     private final RaindropService raindropService;
     private final ArticleExtractionService articleExtractionService;
+    private final PriorityService priorityService;
+    private final ArticleFeedbackService articleFeedbackService;
 
     @GetMapping
     public PaginatedResponse<Article> listArticles(
@@ -42,6 +49,16 @@ public class ArticleController {
         return PaginatedResponse.of(fetched, safeLimit, Article::getId);
     }
 
+    /** Unread articles ranked by the blended interest score, then unscored ones by date. */
+    @GetMapping("/priority")
+    public PriorityPage priority(
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(required = false) String before) {
+        int safeLimit = Math.max(1, Math.min(limit, MAX_LIMIT));
+        SortKey after = before != null ? PriorityPage.decodeCursor(before) : null;
+        return PriorityPage.of(priorityService.page(after, safeLimit + 1), safeLimit);
+    }
+
     @GetMapping("/counts")
     public Map<Long, Long> unreadCounts() {
         return articleService.countUnreadByFeed();
@@ -49,7 +66,7 @@ public class ArticleController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Article> getArticle(@PathVariable Long id) {
-        return articleService.findById(id)
+        return articleService.findByIdWithBreakdown(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -69,6 +86,18 @@ public class ArticleController {
     @GetMapping("/{id}/extracted-content")
     public ExtractedContent extractedContent(@PathVariable Long id) {
         return articleExtractionService.extract(id);
+    }
+
+    /** Stores a thumbs vote. JSON-only like rescore, so a cross-site "simple" request gets 415. */
+    @PutMapping(value = "/{id}/feedback", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public FeedbackResult setFeedback(@PathVariable Long id, @RequestBody FeedbackRequest request) {
+        return articleFeedbackService.vote(id, request.vote(), request.topicIds());
+    }
+
+    /** Removes a thumbs vote. DELETE is never a CORS simple request, so no content-type guard is needed. */
+    @DeleteMapping("/{id}/feedback")
+    public FeedbackResult clearFeedback(@PathVariable Long id) {
+        return articleFeedbackService.clear(id);
     }
 
     @PostMapping("/{id}/raindrop")

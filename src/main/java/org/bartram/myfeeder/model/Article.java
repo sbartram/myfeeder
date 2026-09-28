@@ -1,7 +1,9 @@
 package org.bartram.myfeeder.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
@@ -23,4 +25,15 @@ public class Article {
     private Instant fetchedAt;
     private boolean read;
     private boolean starred;
+    // 0-100 display score from the blend CTE (InterestScoreQueries); null when the article is unscored
+    @Transient
+    private Integer interestScore;
+    // The "Why N?" breakdown; only set on GET /api/articles/{id}, omitted from JSON elsewhere
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private InterestBreakdown interestBreakdown;
+    // The stored thumbs vote; only set on GET /api/articles/{id} and the feedback responses, omitted from JSON elsewhere
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private ArticleFeedback feedback;
 }

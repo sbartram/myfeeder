@@ -1,0 +1,24 @@
+# Dev-only overlay. Loaded only when TestMyfeederApplication (./gradlew bootTestRun or an IDE
+# launch) activates the "dev" profile. bootTestRun runs on the test classpath, where
+# src/test/resources/application.yaml shadows the main one, so this file puts back main's live
+# values. A test must never activate this profile; DevProfileConfigTest guards that and the rule
+# that the test yaml plus this overlay resolve every main key to main's value.
+spring:
+  application:
+    name: myfeeder
+  http:
+    clients:
+      connect-timeout: 5s
+      read-timeout: 30s
+  ai:
+    typesafe:
+      api-key: ${MYFEEDER_TYPESAFE_API_KEY:}
+      # Main relies on the starter default; the test yaml pins loopback, so the overlay names the real URL.
+      base-url: https://api.typesafe.ai
+
+myfeeder:
+  raindrop:
+    api-token: ${MYFEEDER_RAINDROP_API_TOKEN:}
+  interest:
+    # D-10: first sweep about a minute after startup (the test yaml's PT1H is for the suite).
+    sweep-initial-delay: PT1M

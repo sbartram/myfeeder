@@ -4,6 +4,7 @@ import { useMarkAllReadInFeed } from '../hooks/useMarkAllReadInFeed'
 import { useUIStore } from '../stores/uiStore'
 import { usePreferences, ARTICLE_LIST_FONT_PX } from '../stores/preferencesStore'
 import { EmptyState } from './EmptyState'
+import { InterestBadge } from './InterestBadge'
 import { MarkOlderReadDialog } from './MarkOlderReadDialog'
 import type { Article, ArticleFilters } from '../types'
 
@@ -43,6 +44,10 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
     () => data?.pages.flatMap((p) => p.items) ?? [],
     [data]
   )
+
+  // Reserve the empty badge slot on unscored rows only when some loaded row is scored,
+  // so a list with no scores renders exactly as before (UI-SPEC, D-19)
+  const reserveSlot = useMemo(() => allArticles.some((a) => a.interestScore != null), [allArticles])
 
   // Preserve selected article (and its position) so it stays visible after being marked read
   const [preserved, setPreserved] = useState<{ article: Article; index: number } | null>(null)
@@ -170,7 +175,14 @@ export function ArticleList({ filters, title, feedName }: ArticleListProps) {
             className={`article-item ${selectedArticleId === article.id ? 'selected' : ''} ${article.read ? 'read' : ''}`}
             onClick={() => handleArticleClick(article)}
           >
-            <div className="article-item-title">{article.title}</div>
+            <div className="article-item-head">
+              {article.interestScore != null ? (
+                <InterestBadge score={article.interestScore} />
+              ) : (
+                reserveSlot && <span className="interest-badge-slot" aria-hidden="true" />
+              )}
+              <div className="article-item-title">{article.title}</div>
+            </div>
             <div className="article-item-meta">
               {formatTime(article.publishedAt)}
               {article.starred && ' starred'}

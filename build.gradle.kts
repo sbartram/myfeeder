@@ -27,6 +27,7 @@ repositories {
 
 extra["springAiVersion"] = "2.0.1"
 extra["springCloudVersion"] = "2025.1.3"
+extra["typesafeVersion"] = "0.1.0"
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -39,6 +40,10 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.springframework.ai:spring-ai-starter-model-anthropic")
 
+	// Activates Resilience4j's @CircuitBreaker/@Retry aspects (resilience4j registers them only when AspectJ is on the classpath)
+	implementation("org.springframework.boot:spring-boot-starter-aspectj")
+	// Not in any BOM, so the version is explicit; myfeeder owns the TypeSafeClient bean (Pattern A)
+	implementation("org.springaicommunity:spring-ai-starter-typesafe:${property("typesafeVersion")}")
 	implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
 	implementation("com.rometools:rome:2.1.0")
 	implementation("com.rometools:rome-modules:2.1.0")

@@ -25,20 +25,18 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Retention cleanup job — existing
 - ✓ Vim-style keyboard shortcuts, 6 themes, persisted preferences — existing
 - ✓ Helm/k3s deployment with release pipeline (axion tags, Dockerfile image) — existing
+- ✓ Dependencies upgraded (patch/GA line): Spring Boot 4.0.8, Spring AI BOM 2.0.1, Spring Cloud 2025.1.3, frontend in-major bumps; 162 backend + 47 frontend tests green; released and deployed as v0.1.24 — Phase 1
+- ✓ TypeSafe Jev integrated via `spring-ai-starter-typesafe` 0.1.0, optional like Raindrop (keyless startup), `JevApiClient.judge()` behind Resilience4j `jev` breaker/retry, optional Helm secret; live smoke returned `jev-1.13.0` — Phase 2
+- ✓ Interest profile (≤2,000 chars) and topic rubric (≤25 topics, weights −50..+50) editor with negation warning, not-configured/cold-start notices and one-call topic preview against the open article; V6 interest schema; question wording calibrated (v2 "substantially about") — Phase 3
+- ✓ Each newly ingested article judged once by Jev off the polling thread (bounded jev-score queue), raw profile `Score` + per-topic `Noul` stored per article; a 50-per-2-min sweep backfills the unread backlog, retries FAILED rows up to 3 attempts and pauses while the breaker is open; manual "Re-score unread"; `/api/interest/status` counts — Phase 4
+- ✓ Blended 0–100 interest score computed at query time from stored raw Jev outputs (one CTE is the single source of sort and badge), so weight edits re-rank on refresh with no Jev calls — Phase 5
+- ✓ Priority view at `/priority` (feed tree + `g p`): unread scored articles by score, ties by date, then "Not yet scored" by date; keyset paging with an opaque served-tuple cursor that survives mid-walk score changes (G-05-7); frozen order while triaging; status banner — Phase 5
+- ✓ Tier-colored interest badge in every article list and the reading pane, with matched-topic chips and an exact "Why N?" breakdown that sums to the badge — Phase 5
+- ✓ Thumbs up/down (buttons + `u`/`d`, Shift+D narrow picker) stores one reversible `article_feedback` row; the learned adjustment (capped ±20, sign-clamped, within ±50) is derived in SQL on every read, so the badge, Why row and Priority order update with no Jev call and no write to topic weights; effect toast, no-match "Create topic from article" draft, learned line per topic in Interests — Phase 6
 
 ### Active
 
-- [ ] Upgrade dependencies before Jev work (patch/GA line): Spring Boot 4.0.3→4.0.8, Spring AI BOM 2.0.0-M2→2.0.1, Spring Cloud 2025.1.0→2025.1.3, frontend minor/patch bumps; all backend + frontend tests green and a deploy verified
-- [ ] Integrate TypeSafe Jev via Spring AI community starter (`org.springaicommunity:spring-ai-starter-typesafe` 0.1.0), optional like Raindrop — app runs normally without an API key
-- [ ] Reader can write and edit a free-text interest profile
-- [ ] Reader can manage a topic rubric: add/remove topics, each with a description and a (possibly negative) weight
-- [ ] Each newly ingested article is judged once by Jev (title + summary + feed name as state): a profile-interest `Score` plus a `Noul` per topic, in a single `systemOne` call
-- [ ] Raw Jev outputs are stored per article; the blended interest score (profile score blended with Σ topic match × weight) is computed at query time
-- [ ] Thumbs up/down on an article nudges the weights of the topics that article matched; ranking updates immediately with no new Jev calls
-- [ ] "Priority" virtual feed in the feed tree: unread articles ordered by blended score desc (ties by date), unscored articles after, by date
-- [ ] Interest score badge on articles in the article list and reading pane
-- [ ] Graceful degradation: Jev failure/missing key/open circuit never fails ingest; unscored articles are backfilled by a background job
-- [ ] One-time backfill that scores the existing unread backlog when the feature ships
+(none — remaining milestone work is Phase 7 rollout and calibration)
 
 ### Out of Scope
 
@@ -64,33 +62,40 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 - **Tech stack**: Spring Boot 4.0.3, Java 25, Spring Data JDBC (not JPA), Flyway migrations (next is V6), Jackson 3.x (`tools.jackson.*`), React 19 + TanStack Query + Zustand — follow existing conventions in CLAUDE.md
 - **Build**: Gradle Kotlin DSL only (never Maven), even though the reference article shows Maven coordinates
-- **Resilience**: Jev calls wrapped with `@CircuitBreaker` (outer) + `@Retry` (inner) on a dedicated API-client bean, following the Raindrop pattern
+- **Resilience**: Jev calls wrapped with `@CircuitBreaker` + `@Retry` on a dedicated API-client bean (`JevApiClientImpl`), following the Raindrop pattern; runtime aspect order is Retry outer / breaker inner, so the breaker records every attempt (Phase 2)
 - **Compatibility**: Spring AI TypeSafe 0.1.0 (built against Boot 4.0.7) — upgrade to Boot 4.0.8 first, then verify the starter resolves and starts
 - **Performance**: Ingest must not block on Jev; polling latency and failure behavior unchanged when Jev is slow or down
 - **Cost**: one Jev call per new article (plus one-time backlog backfill); no re-scoring loops
 - **Deployment**: new secret `MYFEEDER_TYPESAFE_API_KEY` threaded through `deploy.sh` and Helm chart as optional
-- **Pagination**: Priority view must use cursor pagination compatible with `PaginatedResponse` (score-based composite cursor)
+- **Pagination**: Priority view uses keyset pagination with the same `{items, nextCursor}` JSON shape as `PaginatedResponse`, via a sibling `PriorityPage` record whose cursor is an opaque encoding of the served `(sort_score, sort_date, id)` tuple (Phase 5, G-05-7); every other paginated endpoint keeps its `Long` id cursor
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Judge at ingest (once per new article) | Predictable cost, instant ranking | — Pending |
-| Interest signals = written profile + weighted topic rubric + thumbs feedback | User wants explicit control plus lightweight feedback | — Pending |
+| Judge at ingest (once per new article) | Predictable cost, instant ranking | ✓ Good — ArticlesIngestedEvent hand-off scores new arrivals before the sweep (Phase 4 UAT) |
+| Interest signals = written profile + weighted topic rubric + thumbs feedback | User wants explicit control plus lightweight feedback | ✓ Good — all three signals feed one blend CTE (Phase 6) |
 | Weighted blend: profile `Score` + Σ(topic `Noul` × weight), single `systemOne` call | One call per article covers all signals; negative weights push articles down | — Pending |
-| Store raw Jev outputs; blend at query time | Thumbs-driven weight nudges re-rank instantly with zero extra Jev calls | — Pending |
-| Thumbs feedback adjusts topic weights (not in-context examples) | Deterministic and explainable | — Pending |
+| Store raw Jev outputs; blend at query time | Thumbs-driven weight nudges re-rank instantly with zero extra Jev calls | ✓ Good — one blend CTE drives sort and badge; weight edits re-rank on refresh with no Jev calls (Phase 5) |
+| Thumbs feedback adjusts topic weights (not in-context examples) | Deterministic and explainable | ✓ Good — derived (not stored) learned adjustment keeps votes reversible and base weights untouched; toast and Interests show exact before/after (Phase 6) |
 | Jev input = title + summary + feed name | Cheap, always available at ingest, no extra fetches | — Pending |
-| Optional integration, degrade gracefully + background backfill | Ingest must never fail because of Jev | — Pending |
-| Profile/topic edits apply to new articles, plus a manual "Re-score unread" button | Research: ~$0.10/1k articles; only way edits reach existing unread | — Pending |
+| Optional integration, degrade gracefully + background backfill | Ingest must never fail because of Jev | ✓ Good — ScoringIsolationTest; live 30-article backlog drained with 0 feed errors (Phase 4) |
+| Profile/topic edits apply to new articles, plus a manual "Re-score unread" button | Research: ~$0.10/1k articles; only way edits reach existing unread | ✓ Good — count and delete share one scope; scores discarded if the rubric changes mid-call (Phase 4) |
 | Score in points on a 0–100 scale: 100×profile + Σ hinge(noul)×weight; weights −50..+50; learned ±20 derived from stored votes, no sign flip | One coherent, explainable model (research R1/R2/R6) | — Pending |
-| Eligibility window: unread, published within 14 days, newest first | Prevents subscribe/OPML/startup floods | — Pending |
+| Eligibility window: unread, published within 14 days, newest first | Prevents subscribe/OPML/startup floods | ✓ Good — one ELIGIBLE predicate drives sweep, status and Re-score (Phase 4) |
 | Summary falls back to stripped/truncated content | Many Atom feeds have content but no summary | — Pending |
 | NULL-GUID articles skipped by scorer; parser fix is a separate task | Existing re-insert bug would cause re-scoring | — Pending |
-| App-owned TypeSafeClient bean; Resilience4j as the single retry layer | Starter crashes on a blank key; avoid 9× stacked retries | — Pending |
-| Priority view = unread by blended score, unscored after by date | Useful even while backfill is in progress | — Pending |
+| App-owned TypeSafeClient bean; Resilience4j as the single retry layer | Starter crashes on a blank key; avoid 9× stacked retries | ✓ Good — keyless startup + SDK max-retries 0 tested (Phase 2) |
+| Priority view = unread by blended score, unscored after by date | Useful even while backfill is in progress | ✓ Good — shipped with a "Not yet scored" separator and paging across the boundary (Phase 5 UAT) |
+| Priority cursor = opaque served `(sort_score, sort_date, id)` tuple, not the article id (Phase 5, G-05-7) | An id cursor re-read the live score and silently skipped rows when it dropped mid-walk | ✓ Good — drop/rise exact-sequence tests; residual: an unserved row whose score rises past the boundary is still skipped (05-REVIEW WR-05, Phase 6 votes should set the "Ranking changed" hint) |
 | One-time backfill of unread backlog at launch | Priority view useful immediately | — Pending |
-| Upgrade deps (patch/GA line) as the first phase, before Jev work | TypeSafe starter built against Boot 4.0.7; project was on 4.0.3 + Spring AI milestone M2 | — Pending |
+| Upgrade deps (patch/GA line) as the first phase, before Jev work | TypeSafe starter built against Boot 4.0.7; project was on 4.0.3 + Spring AI milestone M2 | ✓ Good — shipped v0.1.24 (Phase 1), soak clean |
+| Pin RestClient transport to Reactor Netty via explicit `reactor-netty-http` (D-01) | Spring AI 2.0.1 dropped it transitively; Boot would silently fall back to the JDK client | ✓ Good — guarded by HttpClientConfigurationTest |
+| Bind outbound timeouts under `spring.http.clients.*` (D-02) | Old singular keys were silently unbound, so the 5s/30s timeouts never applied | ✓ Good — stalled feeds now time out (Phase 1) |
+| Topic question wording v2 ("substantially about `topic`") (Phase 3 calibration) | v1 "primarily about" under-fired: obvious matches stayed far below noul 0.5 | ✓ Good — v2 doubles obvious-match nouls; under-firing threshold tuning deferred to Phase 4/5 |
+| Jev breaker wraps retry (aspect orders 1/2), 30s shared timeout, auto OPEN→HALF_OPEN (Phase 4) | Breaker must count articles, not attempts; profile+topics calls exceed 5s | ✓ Good — closes 02-REVIEW WR-01..03 |
+| bootTestRun activates a `dev` profile overlay for live settings; suite stays offline (Phase 4, G-04-1) | Test application.yaml shadows main under bootTestRun | ✓ Good — live-key UAT re-run passed; DevProfileConfigTest guards drift and activation |
+| Accept react-router v6 advisories (GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg) | Fix needs v7 major; no SSR, internal-only navigation targets | ⚠️ Revisit — when a v7 migration is scheduled |
 
 ## Evolution
 
@@ -110,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-22 after initialization*
+*Last updated: 2026-09-27 after Phase 6*

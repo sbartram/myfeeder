@@ -1,0 +1,90 @@
+-- interest-calibration-replay.sql: replays the Priority blend over the stored nouls and profile
+-- scores for ONE candidate set of blend constants and tier thresholds (Phase 7, D-09 / OPS-02).
+--
+-- Every blend line below (the long single line that starts with "WITH learned AS") reproduces,
+-- byte for byte, InterestScoreQueries.blendCte(scope), and the badge expression reproduces
+-- InterestScoreQueries.INTEREST_SCORE the same way. Identical SQL text plus identical bound values gives the
+-- badge the running app would serve. Never hand-edit those lines: regenerate them from the Java.
+-- InterestCalibrationReplaySqlTest fails on any drift.
+--
+-- Read-only: run it only through scripts/interest-calibration-replay.sh, which sets
+-- default_transaction_read_only=on for the session. Nothing here writes or defines objects,
+-- so every statement repeats the full blend.
+--
+-- psql variables (set with -v by the driver):
+--   :profilePoints  profile points (app: myfeeder.interest.blend.profile-points)
+--   :learnRate      learned-model rate (app: myfeeder.interest.blend.learn-rate)
+--   :learnedCap     learned-model cap (app: myfeeder.interest.blend.learned-cap)
+--   :tierHigh       badge at or above this is high
+--   :tierNeutral    badge at or above this (and below :tierHigh) is neutral; below it is low
+--   :windowDays     scoring window in days, for the window-summary cross-check
+--
+-- Output: tab-separated rows; the first column of every row is the section label.
+--   summary         tier histogram and percentiles over scored unread articles
+--   top / bottom    20 highest / lowest scored unread articles, ordered like the Priority sort
+--   window-summary  the summary columns over all SCORED articles inside the window, read or unread
+--   votes           thumbs vote counts
+--   learned         the learned model per topic id (never a topic name or description)
+
+-- summary: scored unread articles
+WITH learned AS (SELECT ts.topic_id, SUM(f.vote * GREATEST(0, (ts.noul - 0.5) * 2)) AS vote_sum FROM article_feedback f JOIN article_score fs ON fs.article_id = f.article_id AND fs.status = 'SCORED' JOIN article_topic_score ts ON ts.article_id = f.article_id WHERE NOT f.topics_narrowed OR EXISTS (SELECT 1 FROM article_feedback_topic ft WHERE ft.article_id = f.article_id AND ft.topic_id = ts.topic_id) GROUP BY ts.topic_id), eff AS (SELECT t.id, t.name, t.weight AS base, CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0) AS learned_raw, LEAST(CAST(:learnedCap AS float8), GREATEST(-CAST(:learnedCap AS float8), CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0))) AS learned FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id), eff2 AS (SELECT e.*, CASE WHEN e.base > 0 THEN GREATEST(0, LEAST(50, e.base + e.learned)) WHEN e.base < 0 THEN LEAST(0, GREATEST(-50, e.base + e.learned)) ELSE GREATEST(-50, LEAST(50, e.learned)) END AS w FROM eff e), contrib AS (SELECT ts.article_id, ts.topic_id, ts.noul, GREATEST(0, (ts.noul - 0.5) * 2) AS hinge, e.w, e.base, e.w - e.base AS learned_applied, GREATEST(0, (ts.noul - 0.5) * 2) * e.w AS points FROM article_topic_score ts JOIN eff2 e ON e.id = ts.topic_id), blended AS (SELECT s.article_id, ROUND((:profilePoints * COALESCE(s.profile_score / NULLIF(s.profile_max_level, 0), 0) + COALESCE(SUM(c.points), 0))::numeric, 6) AS raw_n FROM article_score s JOIN article a ON a.id = s.article_id AND (a."read" = false) LEFT JOIN contrib c ON c.article_id = s.article_id WHERE s.status = 'SCORED' GROUP BY s.article_id, s.profile_score, s.profile_max_level)
+, scored AS (SELECT b.article_id, b.raw_n, CASE WHEN b.raw_n IS NULL THEN NULL ELSE LEAST(100, GREATEST(0, ROUND(b.raw_n)))::int END AS interest_score FROM blended b)
+SELECT 'summary' AS section, :profilePoints AS profile_points, :tierHigh AS tier_high, :tierNeutral AS tier_neutral,
+       count(*) AS scored_unread,
+       round(100.0 * count(*) FILTER (WHERE interest_score >= :tierHigh) / NULLIF(count(*), 0), 1) AS high_pct,
+       round(100.0 * count(*) FILTER (WHERE interest_score >= :tierNeutral AND interest_score < :tierHigh) / NULLIF(count(*), 0), 1) AS neutral_pct,
+       round(100.0 * count(*) FILTER (WHERE interest_score < :tierNeutral) / NULLIF(count(*), 0), 1) AS low_pct,
+       percentile_disc(0.10) WITHIN GROUP (ORDER BY interest_score) AS p10,
+       percentile_disc(0.25) WITHIN GROUP (ORDER BY interest_score) AS p25,
+       percentile_disc(0.50) WITHIN GROUP (ORDER BY interest_score) AS p50,
+       percentile_disc(0.60) WITHIN GROUP (ORDER BY interest_score) AS p60,
+       percentile_disc(0.75) WITHIN GROUP (ORDER BY interest_score) AS p75,
+       percentile_disc(0.80) WITHIN GROUP (ORDER BY interest_score) AS p80,
+       percentile_disc(0.85) WITHIN GROUP (ORDER BY interest_score) AS p85,
+       percentile_disc(0.90) WITHIN GROUP (ORDER BY interest_score) AS p90,
+       percentile_disc(0.95) WITHIN GROUP (ORDER BY interest_score) AS p95,
+       count(*) FILTER (WHERE interest_score = 0) AS at_zero,
+       count(*) FILTER (WHERE interest_score = 100) AS at_100,
+       count(*) FILTER (WHERE raw_n = (SELECT min(raw_n) FROM scored)) AS ties_at_min_raw
+FROM scored;
+
+-- top: the 20 highest scored unread articles (score, then date, then id, like the Priority sort)
+WITH learned AS (SELECT ts.topic_id, SUM(f.vote * GREATEST(0, (ts.noul - 0.5) * 2)) AS vote_sum FROM article_feedback f JOIN article_score fs ON fs.article_id = f.article_id AND fs.status = 'SCORED' JOIN article_topic_score ts ON ts.article_id = f.article_id WHERE NOT f.topics_narrowed OR EXISTS (SELECT 1 FROM article_feedback_topic ft WHERE ft.article_id = f.article_id AND ft.topic_id = ts.topic_id) GROUP BY ts.topic_id), eff AS (SELECT t.id, t.name, t.weight AS base, CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0) AS learned_raw, LEAST(CAST(:learnedCap AS float8), GREATEST(-CAST(:learnedCap AS float8), CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0))) AS learned FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id), eff2 AS (SELECT e.*, CASE WHEN e.base > 0 THEN GREATEST(0, LEAST(50, e.base + e.learned)) WHEN e.base < 0 THEN LEAST(0, GREATEST(-50, e.base + e.learned)) ELSE GREATEST(-50, LEAST(50, e.learned)) END AS w FROM eff e), contrib AS (SELECT ts.article_id, ts.topic_id, ts.noul, GREATEST(0, (ts.noul - 0.5) * 2) AS hinge, e.w, e.base, e.w - e.base AS learned_applied, GREATEST(0, (ts.noul - 0.5) * 2) * e.w AS points FROM article_topic_score ts JOIN eff2 e ON e.id = ts.topic_id), blended AS (SELECT s.article_id, ROUND((:profilePoints * COALESCE(s.profile_score / NULLIF(s.profile_max_level, 0), 0) + COALESCE(SUM(c.points), 0))::numeric, 6) AS raw_n FROM article_score s JOIN article a ON a.id = s.article_id AND (a."read" = false) LEFT JOIN contrib c ON c.article_id = s.article_id WHERE s.status = 'SCORED' GROUP BY s.article_id, s.profile_score, s.profile_max_level)
+SELECT 'top' AS section, a.id AS article_id, CASE WHEN b.raw_n IS NULL THEN NULL ELSE LEAST(100, GREATEST(0, ROUND(b.raw_n)))::int END AS interest_score, round(b.raw_n, 1) AS raw, replace(replace(a.title, E'\t', ' '), E'\n', ' ') AS title
+FROM blended b JOIN article a ON a.id = b.article_id
+ORDER BY b.raw_n DESC, COALESCE(a.published_at, a.fetched_at) DESC, a.id DESC LIMIT 20;
+
+-- bottom: the 20 lowest scored unread articles (raw ties broken by date, then id)
+WITH learned AS (SELECT ts.topic_id, SUM(f.vote * GREATEST(0, (ts.noul - 0.5) * 2)) AS vote_sum FROM article_feedback f JOIN article_score fs ON fs.article_id = f.article_id AND fs.status = 'SCORED' JOIN article_topic_score ts ON ts.article_id = f.article_id WHERE NOT f.topics_narrowed OR EXISTS (SELECT 1 FROM article_feedback_topic ft WHERE ft.article_id = f.article_id AND ft.topic_id = ts.topic_id) GROUP BY ts.topic_id), eff AS (SELECT t.id, t.name, t.weight AS base, CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0) AS learned_raw, LEAST(CAST(:learnedCap AS float8), GREATEST(-CAST(:learnedCap AS float8), CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0))) AS learned FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id), eff2 AS (SELECT e.*, CASE WHEN e.base > 0 THEN GREATEST(0, LEAST(50, e.base + e.learned)) WHEN e.base < 0 THEN LEAST(0, GREATEST(-50, e.base + e.learned)) ELSE GREATEST(-50, LEAST(50, e.learned)) END AS w FROM eff e), contrib AS (SELECT ts.article_id, ts.topic_id, ts.noul, GREATEST(0, (ts.noul - 0.5) * 2) AS hinge, e.w, e.base, e.w - e.base AS learned_applied, GREATEST(0, (ts.noul - 0.5) * 2) * e.w AS points FROM article_topic_score ts JOIN eff2 e ON e.id = ts.topic_id), blended AS (SELECT s.article_id, ROUND((:profilePoints * COALESCE(s.profile_score / NULLIF(s.profile_max_level, 0), 0) + COALESCE(SUM(c.points), 0))::numeric, 6) AS raw_n FROM article_score s JOIN article a ON a.id = s.article_id AND (a."read" = false) LEFT JOIN contrib c ON c.article_id = s.article_id WHERE s.status = 'SCORED' GROUP BY s.article_id, s.profile_score, s.profile_max_level)
+SELECT 'bottom' AS section, a.id AS article_id, CASE WHEN b.raw_n IS NULL THEN NULL ELSE LEAST(100, GREATEST(0, ROUND(b.raw_n)))::int END AS interest_score, round(b.raw_n, 1) AS raw, replace(replace(a.title, E'\t', ' '), E'\n', ' ') AS title
+FROM blended b JOIN article a ON a.id = b.article_id
+ORDER BY b.raw_n ASC, COALESCE(a.published_at, a.fetched_at) DESC, a.id DESC LIMIT 20;
+
+-- window-summary: stability cross-check over all SCORED articles inside the window, read or unread
+-- (reading high articles shifts the unread population; the tier target stays on unread)
+WITH learned AS (SELECT ts.topic_id, SUM(f.vote * GREATEST(0, (ts.noul - 0.5) * 2)) AS vote_sum FROM article_feedback f JOIN article_score fs ON fs.article_id = f.article_id AND fs.status = 'SCORED' JOIN article_topic_score ts ON ts.article_id = f.article_id WHERE NOT f.topics_narrowed OR EXISTS (SELECT 1 FROM article_feedback_topic ft WHERE ft.article_id = f.article_id AND ft.topic_id = ts.topic_id) GROUP BY ts.topic_id), eff AS (SELECT t.id, t.name, t.weight AS base, CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0) AS learned_raw, LEAST(CAST(:learnedCap AS float8), GREATEST(-CAST(:learnedCap AS float8), CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0))) AS learned FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id), eff2 AS (SELECT e.*, CASE WHEN e.base > 0 THEN GREATEST(0, LEAST(50, e.base + e.learned)) WHEN e.base < 0 THEN LEAST(0, GREATEST(-50, e.base + e.learned)) ELSE GREATEST(-50, LEAST(50, e.learned)) END AS w FROM eff e), contrib AS (SELECT ts.article_id, ts.topic_id, ts.noul, GREATEST(0, (ts.noul - 0.5) * 2) AS hinge, e.w, e.base, e.w - e.base AS learned_applied, GREATEST(0, (ts.noul - 0.5) * 2) * e.w AS points FROM article_topic_score ts JOIN eff2 e ON e.id = ts.topic_id), blended AS (SELECT s.article_id, ROUND((:profilePoints * COALESCE(s.profile_score / NULLIF(s.profile_max_level, 0), 0) + COALESCE(SUM(c.points), 0))::numeric, 6) AS raw_n FROM article_score s JOIN article a ON a.id = s.article_id AND (COALESCE(a.published_at, a.fetched_at) > now() - :windowDays * interval '1 day') LEFT JOIN contrib c ON c.article_id = s.article_id WHERE s.status = 'SCORED' GROUP BY s.article_id, s.profile_score, s.profile_max_level)
+, scored AS (SELECT b.article_id, b.raw_n, CASE WHEN b.raw_n IS NULL THEN NULL ELSE LEAST(100, GREATEST(0, ROUND(b.raw_n)))::int END AS interest_score FROM blended b)
+SELECT 'window-summary' AS section, :profilePoints AS profile_points, :tierHigh AS tier_high, :tierNeutral AS tier_neutral,
+       count(*) AS scored_unread,
+       round(100.0 * count(*) FILTER (WHERE interest_score >= :tierHigh) / NULLIF(count(*), 0), 1) AS high_pct,
+       round(100.0 * count(*) FILTER (WHERE interest_score >= :tierNeutral AND interest_score < :tierHigh) / NULLIF(count(*), 0), 1) AS neutral_pct,
+       round(100.0 * count(*) FILTER (WHERE interest_score < :tierNeutral) / NULLIF(count(*), 0), 1) AS low_pct,
+       percentile_disc(0.10) WITHIN GROUP (ORDER BY interest_score) AS p10,
+       percentile_disc(0.25) WITHIN GROUP (ORDER BY interest_score) AS p25,
+       percentile_disc(0.50) WITHIN GROUP (ORDER BY interest_score) AS p50,
+       percentile_disc(0.60) WITHIN GROUP (ORDER BY interest_score) AS p60,
+       percentile_disc(0.75) WITHIN GROUP (ORDER BY interest_score) AS p75,
+       percentile_disc(0.80) WITHIN GROUP (ORDER BY interest_score) AS p80,
+       percentile_disc(0.85) WITHIN GROUP (ORDER BY interest_score) AS p85,
+       percentile_disc(0.90) WITHIN GROUP (ORDER BY interest_score) AS p90,
+       percentile_disc(0.95) WITHIN GROUP (ORDER BY interest_score) AS p95,
+       count(*) FILTER (WHERE interest_score = 0) AS at_zero,
+       count(*) FILTER (WHERE interest_score = 100) AS at_100,
+       count(*) FILTER (WHERE raw_n = (SELECT min(raw_n) FROM scored)) AS ties_at_min_raw
+FROM scored;
+
+-- votes: thumbs vote counts
+SELECT 'votes' AS section, count(*) AS votes, count(*) FILTER (WHERE vote = 1) AS up, count(*) FILTER (WHERE vote = -1) AS down FROM article_feedback;
+
+-- learned: the learned model per topic id (topic ids only)
+WITH learned AS (SELECT ts.topic_id, SUM(f.vote * GREATEST(0, (ts.noul - 0.5) * 2)) AS vote_sum FROM article_feedback f JOIN article_score fs ON fs.article_id = f.article_id AND fs.status = 'SCORED' JOIN article_topic_score ts ON ts.article_id = f.article_id WHERE NOT f.topics_narrowed OR EXISTS (SELECT 1 FROM article_feedback_topic ft WHERE ft.article_id = f.article_id AND ft.topic_id = ts.topic_id) GROUP BY ts.topic_id), eff AS (SELECT t.id, t.name, t.weight AS base, CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0) AS learned_raw, LEAST(CAST(:learnedCap AS float8), GREATEST(-CAST(:learnedCap AS float8), CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0))) AS learned FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id), eff2 AS (SELECT e.*, CASE WHEN e.base > 0 THEN GREATEST(0, LEAST(50, e.base + e.learned)) WHEN e.base < 0 THEN LEAST(0, GREATEST(-50, e.base + e.learned)) ELSE GREATEST(-50, LEAST(50, e.learned)) END AS w FROM eff e) SELECT 'learned' AS section, e.id AS topic_id, e.base, round(e.learned_raw::numeric, 3) AS learned_raw, round(e.learned::numeric, 3) AS learned, round(e.w::numeric, 3) AS effective, abs(e.learned_raw) >= :learnedCap AS at_cap FROM eff2 e ORDER BY e.id;

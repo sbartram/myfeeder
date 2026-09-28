@@ -109,3 +109,22 @@ describe('SettingsDialog Raindrop section', () => {
     })
   })
 })
+
+describe('SettingsDialog Interests section', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(integrationsApi.getRaindropStatus).mockResolvedValue({ configured: false })
+  })
+
+  it('editInterestsButtonCallsOnOpenInterests', async () => {
+    const onOpenInterests = vi.fn()
+    render(<SettingsDialog open={true} onClose={() => {}} onOpenInterests={onOpenInterests} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Edit interests…' }))
+
+    expect(onOpenInterests).toHaveBeenCalledTimes(1)
+    await waitFor(() => {
+      expect(screen.getByText(/not configured by the administrator/i)).toBeInTheDocument()
+    })
+  })
+})

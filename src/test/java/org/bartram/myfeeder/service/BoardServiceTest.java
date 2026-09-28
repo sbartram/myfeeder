@@ -1,13 +1,17 @@
 package org.bartram.myfeeder.service;
+import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.Board;
 import org.bartram.myfeeder.model.BoardArticle;
 import org.bartram.myfeeder.repository.BoardArticleRepository;
 import org.bartram.myfeeder.repository.BoardRepository;
+import org.bartram.myfeeder.repository.InterestScoreQueries;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -17,7 +21,23 @@ import static org.mockito.Mockito.*;
 class BoardServiceTest {
     @Mock private BoardRepository boardRepository;
     @Mock private BoardArticleRepository boardArticleRepository;
+    @Mock private InterestScoreQueries interestScoreQueries;
     @InjectMocks private BoardService boardService;
+
+    @Test
+    void findArticlesSetsInterestScore() {
+        Article newer = new Article();
+        newer.setId(9L);
+        Article older = new Article();
+        older.setId(4L);
+        when(boardArticleRepository.findArticlesByBoardId(1L, 51)).thenReturn(List.of(newer, older));
+        when(interestScoreQueries.displayScores(List.of(9L, 4L))).thenReturn(Map.of(4L, 100));
+
+        List<Article> result = boardService.findArticles(1L, null, 51);
+
+        assertThat(result).extracting(Article::getId).containsExactly(9L, 4L);
+        assertThat(result).extracting(Article::getInterestScore).containsExactly(null, 100);
+    }
 
     @Test
     void shouldCreateBoard() {

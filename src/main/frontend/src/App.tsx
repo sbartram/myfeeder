@@ -1,33 +1,29 @@
-import { useMemo, useState } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
+import { BrowserRouter, Routes, Route, useMatch, useParams } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { FeedPanel } from './components/FeedPanel'
 import { ArticleList } from './components/ArticleList'
 import { BoardArticleList } from './components/BoardArticleList'
+import { PriorityList } from './components/PriorityList'
 import { ReadingPane } from './components/ReadingPane'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useArticles } from './hooks/useArticles'
+import { usePriorityArticles, PRIORITY_KEY, refreshPriority } from './hooks/usePriorityArticles'
 import { useFeeds } from './hooks/useFeeds'
+import { useInterestTiers } from './hooks/useInterest'
 import { useUIStore } from './stores/uiStore'
 import { usePreferences } from './stores/preferencesStore'
 import { AddFeedDialog } from './components/AddFeedDialog'
 import { SettingsDialog } from './components/SettingsDialog'
+import { InterestsDialog, type TopicDraft } from './components/InterestsDialog'
 import { ShortcutOverlay } from './components/ShortcutOverlay'
-import { ToastContainer, useToastStore } from './components/Toast'
-import { MutationCache } from '@tanstack/react-query'
+import { ToastContainer } from './components/Toast'
+import { createQueryClient } from './queryClient'
+import { TierContext } from './utils/interest'
 import './App.css'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { staleTime: 30_000, retry: 1 },
-  },
-  mutationCache: new MutationCache({
-    onError: (error) => {
-      useToastStore.getState().addToast(error.message || 'An error occurred')
-    },
-  }),
-})
+const queryClient = createQueryClient()
 
 function FeedArticles() {
   const { feedId } = useParams()
@@ -81,6 +77,9 @@ function BoardArticles() {
 function MainLayout() {
   const [addFeedOpen, setAddFeedOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [interestsOpen, setInterestsOpen] = useState(false)
+  // One-shot "Create topic from article" draft (D-20): cleared when Interests closes.
+  const [interestsDraft, setInterestsDraft] = useState<TopicDraft | null>(null)
   const [boardOpen, setBoardOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const selectedFeedId = useUIStore((s) => s.selectedFeedId)
@@ -90,14 +89,30 @@ function MainLayout() {
   const readFilter = hideReadArticles ? { read: false as const } : {}
   const { data } = useArticles(selectedFeedId ? { feedId: selectedFeedId, sort, ...readFilter } : { sort, ...readFilter })
   const articles = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
+  const qc = useQueryClient()
+  const isPriority = useMatch('/priority') !== null
+  const priority = usePriorityArticles(isPriority)
+  const tiers = useInterestTiers()
 
-  useKeyboardShortcuts(articles, {
+  // Leaving /priority drops the frozen ranking so re-entry fetches page 1 fresh (D-08).
+  // Under StrictMode, development may fetch page 1 twice on first mount (research A7).
+  useEffect(() => {
+    if (!isPriority) return
+    return () => {
+      qc.removeQueries({ queryKey: PRIORITY_KEY })
+    }
+  }, [isPriority, qc])
+
+  useKeyboardShortcuts(isPriority ? priority.rows : articles, {
     onOpenBoard: () => setBoardOpen(true),
     onShowShortcuts: () => setShortcutsOpen(true),
+    isPriority,
+    onPriorityNextPage: priority.fetchNextNewId,
+    onPriorityRefresh: () => void refreshPriority(qc),
   })
 
   return (
-    <>
+    <TierContext.Provider value={tiers}>
       <AppShell
         feedPanel={<FeedPanel onAddFeed={() => setAddFeedOpen(true)} onSettings={() => setSettingsOpen(true)} onHelp={() => setShortcutsOpen(true)} />}
         articleList={
@@ -107,16 +122,41 @@ function MainLayout() {
             <Route path="/starred" element={<StarredArticles />} />
             <Route path="/boards" element={<AllArticles />} />
             <Route path="/board/:boardId" element={<BoardArticles />} />
+            <Route path="/priority" element={<PriorityList onSetUpInterests={() => setInterestsOpen(true)} />} />
             <Route path="*" element={<AllArticles />} />
           </Routes>
         }
-        readingPane={<ReadingPane boardOpen={boardOpen} onBoardClose={() => setBoardOpen(false)} />}
+        readingPane={
+          <ReadingPane
+            boardOpen={boardOpen}
+            onBoardClose={() => setBoardOpen(false)}
+            onCreateTopic={(draft) => {
+              setInterestsDraft(draft)
+              setInterestsOpen(true)
+            }}
+          />
+        }
       />
       <AddFeedDialog open={addFeedOpen} onClose={() => setAddFeedOpen(false)} />
-      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onOpenInterests={() => {
+          setSettingsOpen(false)
+          setInterestsOpen(true)
+        }}
+      />
+      <InterestsDialog
+        open={interestsOpen}
+        draft={interestsDraft}
+        onClose={() => {
+          setInterestsOpen(false)
+          setInterestsDraft(null)
+        }}
+      />
       <ShortcutOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <ToastContainer />
-    </>
+    </TierContext.Provider>
   )
 }
 

@@ -2,11 +2,21 @@ package org.bartram.myfeeder.controller;
 
 import org.bartram.myfeeder.integration.RaindropService;
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.model.InterestBreakdown;
+import org.bartram.myfeeder.model.InterestBreakdown.NonMatchingTopic;
+import org.bartram.myfeeder.model.InterestBreakdown.Row;
+import org.bartram.myfeeder.repository.InterestScoreQueries.PriorityRow;
+import org.bartram.myfeeder.repository.InterestScoreQueries.SortKey;
 import org.bartram.myfeeder.service.ArticleExtractionService;
+import org.bartram.myfeeder.service.ArticleFeedbackService;
 import org.bartram.myfeeder.service.ArticleService;
 import org.bartram.myfeeder.service.ExtractedContent;
 import org.bartram.myfeeder.service.FeedFetchException;
+import org.bartram.myfeeder.service.FeedbackResult;
+import org.bartram.myfeeder.service.FeedbackResult.TopicEffect;
+import org.bartram.myfeeder.service.LearnedLimit;
 import org.bartram.myfeeder.service.NotFoundException;
+import org.bartram.myfeeder.service.PriorityService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -14,11 +24,15 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -30,6 +44,8 @@ class ArticleControllerTest {
     @MockitoBean private ArticleService articleService;
     @MockitoBean private RaindropService raindropService;
     @MockitoBean private ArticleExtractionService articleExtractionService;
+    @MockitoBean private PriorityService priorityService;
+    @MockitoBean private ArticleFeedbackService articleFeedbackService;
 
     @Test
     void shouldReturnExtractedContent() throws Exception {
@@ -124,11 +140,78 @@ class ArticleControllerTest {
         article.setId(1L);
         article.setTitle("Test");
         article.setContent("<p>Full content</p>");
-        when(articleService.findById(1L)).thenReturn(Optional.of(article));
+        when(articleService.findByIdWithBreakdown(1L)).thenReturn(Optional.of(article));
 
         mockMvc.perform(get("/api/articles/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").value("<p>Full content</p>"));
+    }
+
+    @Test
+    void getArticleSerializesTheBreakdown() throws Exception {
+        var article = new Article();
+        article.setId(1L);
+        article.setTitle("Scored");
+        article.setInterestScore(82);
+        article.setInterestBreakdown(new InterestBreakdown(new BigDecimal("82.200000"), 82, 82,
+                List.of(Row.profile(3, new BigDecimal("64.000000"), 64),
+                        Row.topic(10L, "Rust", 0.93, 0.86, 20, new BigDecimal("17.200000"), 17, 20, 0),
+                        Row.topic(11L, "WebAssembly", 0.75, 0.5, 14, new BigDecimal("7.000000"), 7, 14, 0),
+                        Row.topic(12L, "Politics", 0.6, 0.2, -30, new BigDecimal("-6.000000"), -6, -30, 0)),
+                List.of(new NonMatchingTopic(13L, "Gardening", 0.2))));
+        when(articleService.findByIdWithBreakdown(1L)).thenReturn(Optional.of(article));
+
+        mockMvc.perform(get("/api/articles/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.interestScore").value(82))
+                .andExpect(jsonPath("$.interestBreakdown.total").value(82))
+                .andExpect(jsonPath("$.interestBreakdown.display").value(82))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].kind").value("PROFILE"))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].levelIndex").value(3))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].points").value(64))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].topicId").doesNotExist())
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].kind").value("TOPIC"))
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].name").value("Rust"))
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].levelIndex").doesNotExist())
+                .andExpect(jsonPath("$.interestBreakdown.nonMatching[0].name").value("Gardening"));
+        verify(articleService, never()).findById(1L);
+    }
+
+    @Test
+    void getArticleSerializesBaseAndLearnedWeight() throws Exception {
+        var article = new Article();
+        article.setId(1L);
+        article.setTitle("Learned");
+        article.setInterestScore(83);
+        article.setInterestBreakdown(new InterestBreakdown(new BigDecimal("82.679200"), 83, 83,
+                List.of(Row.profile(3, new BigDecimal("64.000000"), 64),
+                        Row.topic(10L, "Rust", 0.93, 0.86, 21.72, new BigDecimal("18.679200"), 19, 20, 1.72)),
+                List.of()));
+        when(articleService.findByIdWithBreakdown(1L)).thenReturn(Optional.of(article));
+
+        mockMvc.perform(get("/api/articles/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].weight").value(21.72))
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].baseWeight").value(20.0))
+                .andExpect(jsonPath("$.interestBreakdown.rows[1].learnedWeight").value(1.72))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].kind").value("PROFILE"))
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].baseWeight").doesNotExist())
+                .andExpect(jsonPath("$.interestBreakdown.rows[0].learnedWeight").doesNotExist());
+    }
+
+    @Test
+    void listItemsOmitTheBreakdown() throws Exception {
+        var article = new Article();
+        article.setId(1L);
+        article.setTitle("Listed");
+        article.setFetchedAt(Instant.now());
+        article.setInterestScore(50);
+        when(articleService.findFiltered(null, null, null, null, 51, false)).thenReturn(List.of(article));
+
+        mockMvc.perform(get("/api/articles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].interestScore").value(50))
+                .andExpect(jsonPath("$.items[0].interestBreakdown").doesNotExist());
     }
 
     @Test
@@ -199,5 +282,170 @@ class ArticleControllerTest {
                 .andExpect(status().isOk());
 
         verify(raindropService).saveToRaindrop(article);
+    }
+
+    @Test
+    void priorityRouteIsNotTheIdRoute() throws Exception {
+        var row = priorityRow(3L);
+        row.article().setInterestScore(82);
+        when(priorityService.page(null, 51)).thenReturn(List.of(row));
+
+        mockMvc.perform(get("/api/articles/priority"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].id").value(3))
+                .andExpect(jsonPath("$.items[0].interestScore").value(82))
+                .andExpect(jsonPath("$.nextCursor").value(nullValue()));
+
+        verify(articleService, never()).findById(any());
+    }
+
+    @Test
+    void priorityClampsLimit() throws Exception {
+        when(priorityService.page(any(), anyInt())).thenReturn(List.of());
+
+        for (String limit : List.of("0", "-5", "1")) {
+            mockMvc.perform(get("/api/articles/priority?limit=" + limit)).andExpect(status().isOk());
+        }
+        // clamped to 1, then +1 for the pagination look-ahead row
+        verify(priorityService, times(3)).page(null, 2);
+
+        for (String limit : List.of("100", "101")) {
+            mockMvc.perform(get("/api/articles/priority?limit=" + limit)).andExpect(status().isOk());
+        }
+        verify(priorityService, times(2)).page(null, 101);
+    }
+
+    @Test
+    void priorityPassesCursor() throws Exception {
+        SortKey key = new SortKey(82.2, Instant.parse("2026-09-25T12:34:56.123456Z"), 7L);
+        when(priorityService.page(any(), anyInt())).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/articles/priority").param("before", PriorityPage.encodeCursor(key)))
+                .andExpect(status().isOk());
+
+        verify(priorityService).page(key, 51);
+    }
+
+    @Test
+    void priorityMissingCursorIs404() throws Exception {
+        SortKey key = new SortKey(50.0, Instant.parse("2026-09-25T12:34:56Z"), 9L);
+        when(priorityService.page(eq(key), anyInt()))
+                .thenThrow(new NotFoundException("Article not found: 9"));
+
+        mockMvc.perform(get("/api/articles/priority").param("before", PriorityPage.encodeCursor(key)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void priorityUnreadableCursorIs404WithoutCallingTheService() throws Exception {
+        mockMvc.perform(get("/api/articles/priority?before=12345"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Priority cursor not recognized"));
+
+        verify(priorityService, never()).page(any(), anyInt());
+    }
+
+    @Test
+    void priorityOutOfRangeCursorDateIs404WithoutCallingTheService() throws Exception {
+        String before = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(("1.0|" + Long.MIN_VALUE + "|7").getBytes(StandardCharsets.UTF_8));
+
+        mockMvc.perform(get("/api/articles/priority").param("before", before))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Priority cursor not recognized"));
+
+        verify(priorityService, never()).page(any(), anyInt());
+    }
+
+    @Test
+    void priorityTrimsLookAheadRowAndSetsNextCursor() throws Exception {
+        when(priorityService.page(null, 3))
+                .thenReturn(List.of(priorityRow(10L), priorityRow(11L), priorityRow(12L)));
+
+        mockMvc.perform(get("/api/articles/priority?limit=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[1].id").value(11))
+                .andExpect(jsonPath("$.nextCursor").value(PriorityPage.encodeCursor(keyFor(11L))));
+
+        when(priorityService.page(null, 3))
+                .thenReturn(List.of(priorityRow(10L), priorityRow(11L)));
+
+        mockMvc.perform(get("/api/articles/priority?limit=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.nextCursor").value(nullValue()));
+    }
+
+    @Test
+    void putFeedbackReturnsTheResult() throws Exception {
+        when(articleFeedbackService.vote(5L, 1, null)).thenReturn(feedbackResult());
+
+        mockMvc.perform(put("/api/articles/5/feedback").contentType(MediaType.APPLICATION_JSON).content("{\"vote\":1}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.scored").value(true))
+                .andExpect(jsonPath("$.article.id").value(5))
+                .andExpect(jsonPath("$.effects[0].after").value(21.8))
+                .andExpect(jsonPath("$.effects[0].limit").value("NONE"));
+    }
+
+    @Test
+    void putFeedbackRequiresJson() throws Exception {
+        // A text or form PUT is a CORS "simple request" a foreign page can send
+        mockMvc.perform(put("/api/articles/5/feedback").contentType(MediaType.TEXT_PLAIN).content("{\"vote\":1}"))
+                .andExpect(status().isUnsupportedMediaType());
+        mockMvc.perform(put("/api/articles/5/feedback")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED).content("vote=1"))
+                .andExpect(status().isUnsupportedMediaType());
+
+        verifyNoInteractions(articleFeedbackService);
+    }
+
+    @Test
+    void putFeedbackBadRequestIs400() throws Exception {
+        when(articleFeedbackService.vote(5L, 0, null))
+                .thenThrow(new IllegalArgumentException("vote must be 1 or -1"));
+
+        mockMvc.perform(put("/api/articles/5/feedback").contentType(MediaType.APPLICATION_JSON).content("{\"vote\":0}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("vote must be 1 or -1"));
+    }
+
+    @Test
+    void putFeedbackMissingArticleIs404() throws Exception {
+        when(articleFeedbackService.vote(99L, 1, null)).thenThrow(new NotFoundException("Article not found: 99"));
+
+        mockMvc.perform(put("/api/articles/99/feedback").contentType(MediaType.APPLICATION_JSON).content("{\"vote\":1}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteFeedbackReturnsTheResult() throws Exception {
+        when(articleFeedbackService.clear(5L)).thenReturn(feedbackResult());
+
+        mockMvc.perform(delete("/api/articles/5/feedback"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.scored").value(true))
+                .andExpect(jsonPath("$.effects[0].topicId").value(10))
+                .andExpect(jsonPath("$.effects[0].limit").value("NONE"));
+    }
+
+    private static FeedbackResult feedbackResult() {
+        return new FeedbackResult(articleWithId(5L), true,
+                List.of(new TopicEffect(10, "Rust", 20, 21.8, 20, 1.8, LearnedLimit.NONE)));
+    }
+
+    private static PriorityRow priorityRow(long id) {
+        return new PriorityRow(articleWithId(id), keyFor(id));
+    }
+
+    private static SortKey keyFor(long id) {
+        return new SortKey(82.2, Instant.parse("2026-09-25T12:00:00.123456Z"), id);
+    }
+
+    private static Article articleWithId(long id) {
+        var article = new Article();
+        article.setId(id);
+        return article;
     }
 }

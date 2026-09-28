@@ -2,6 +2,7 @@ package org.bartram.myfeeder.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bartram.myfeeder.event.ArticlesIngestedEvent;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.Feed;
 import org.bartram.myfeeder.parser.FeedParser;
@@ -9,9 +10,12 @@ import org.bartram.myfeeder.parser.ParsedArticle;
 import org.bartram.myfeeder.parser.ParsedFeed;
 import org.bartram.myfeeder.repository.ArticleRepository;
 import org.bartram.myfeeder.repository.FeedRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -22,6 +26,7 @@ public class FeedPollingService {
     private final ArticleRepository articleRepository;
     private final FeedParser feedParser;
     private final FeedFetcher feedFetcher;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void pollFeed(Long feedId) {
         Feed feed = feedRepository.findById(feedId)
@@ -42,13 +47,12 @@ public class FeedPollingService {
             }
 
             ParsedFeed parsed = feedParser.parse(result.body(), result.contentType());
-            int newCount = 0;
+            List<Long> newIds = new ArrayList<>();
 
             for (ParsedArticle parsedArticle : parsed.articles()) {
                 if (!articleRepository.existsByFeedIdAndGuid(feed.getId(), parsedArticle.guid())) {
                     Article article = toArticle(parsedArticle, feed.getId());
-                    articleRepository.save(article);
-                    newCount++;
+                    newIds.add(articleRepository.save(article).getId());
                 }
             }
 
@@ -57,13 +61,30 @@ public class FeedPollingService {
             feed.setLastError(null);
             feedRepository.save(feed);
 
-            log.info("Polled feed '{}': {} new articles", feed.getTitle(), newCount);
+            log.info("Polled feed '{}': {} new articles", feed.getTitle(), newIds.size());
+            publishIngested(feed.getId(), newIds);
         } catch (Exception e) {
             feed.setLastPolledAt(Instant.now());
             feed.setErrorCount(feed.getErrorCount() + 1);
             feed.setLastError(e.toString());
             feedRepository.save(feed);
             log.warn("Failed to poll feed '{}': {}", feed.getTitle(), e.toString());
+        }
+    }
+
+    /**
+     * Hands the new ids to scoring. Runs after the success bookkeeping and inside its own try, so no
+     * scoring failure can reach the catch that increments errorCount (SCOR-02). pollFeed has no
+     * transaction, so the listener runs inline here; it only enqueues.
+     */
+    private void publishIngested(Long feedId, List<Long> newIds) {
+        if (newIds.isEmpty()) {
+            return;
+        }
+        try {
+            eventPublisher.publishEvent(new ArticlesIngestedEvent(feedId, List.copyOf(newIds)));
+        } catch (RuntimeException e) {
+            log.warn("Could not hand {} new articles to scoring: {}", newIds.size(), e.getClass().getSimpleName());
         }
     }
 

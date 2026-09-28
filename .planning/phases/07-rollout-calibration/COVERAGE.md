@@ -1,0 +1,1 @@
+No external API integration: Phase 7 releases, observes and calibrates the TypeSafe Jev integration built in Phase 2 (JevApiClient.judge is unchanged and no new external call path is added); it adds only an in-process Resilience4j event logger, an appended /api/interest/status field, a read-only SQL replay script and CLAUDE.md docs.

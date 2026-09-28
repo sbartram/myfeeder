@@ -7,6 +7,17 @@ spring:
     clients:
       connect-timeout: 5s
       read-timeout: 30s
+  # TypeSafe Jev (interest scoring). The key is optional: blank means Jev is disabled and the app
+  # still starts. The model is pinned (JEV-03). SDK retries are off because the Resilience4j "jev"
+  # instance is the only retry layer.
+  ai:
+    typesafe:
+      api-key: ${MYFEEDER_TYPESAFE_API_KEY:}
+      model: jev-1.13.0
+      # D-05: calibration measured ~2.6s average and >5s cold for a profile plus 7 topics; the rubric can grow to 25 topics.
+      timeout: 30s
+      retry:
+        max-retries: 0
 
 myfeeder:
   polling:
@@ -19,9 +30,28 @@ myfeeder:
   raindrop:
     api-base-url: https://api.raindrop.io/rest/v1
     api-token: ${MYFEEDER_RAINDROP_API_TOKEN:}
+  # Interest scoring: eligibility window, one scoring thread (D-09), sweep pacing (D-10/D-16).
+  interest:
+    window-days: 14
+    concurrency: 1
+    queue-capacity: 1000
+    sweep-batch-size: 50
+    sweep-delay: PT2M
+    sweep-initial-delay: PT1M
+    # Blend constants (R1); the profile contributes profile_score / max level x profile-points. Phase 7 tunes these.
+    blend:
+      profile-points: 100
+      learn-rate: 2
+      learned-cap: 20
+      # D-13: badge tier thresholds served on /api/interest/status (display score >= high is high, >= neutral is neutral). Phase 7 tunes them (07-CALIBRATION.md).
+      tiers:
+        high: 70
+        neutral: 40
 
 resilience4j:
   circuitbreaker:
+    # D-07: lower order = outer aspect. The breaker wraps the retry and records one outcome per logical call.
+    circuit-breaker-aspect-order: 1
     instances:
       raindrop:
         failure-rate-threshold: 50
@@ -32,7 +62,27 @@ resilience4j:
         minimum-number-of-calls: 5
         ignore-exceptions:
           - org.bartram.myfeeder.integration.RaindropNotConfiguredException
+      jev:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 60s
+        slow-call-duration-threshold: 15s
+        slow-call-rate-threshold: 50
+        permitted-number-of-calls-in-half-open-state: 3
+        # D-17: OPEN moves to HALF_OPEN after wait-duration-in-open-state without needing a call, so a paused sweep resumes.
+        automatic-transition-from-open-to-half-open-enabled: true
+        # 401/403 (TypeSafeAuthentication/PermissionDenied) are deliberately absent: a bad key is recorded (D-06)
+        ignore-exceptions:
+          - org.bartram.myfeeder.integration.JevNotConfiguredException
+          - org.springaicommunity.typesafe.exception.TypeSafeBadRequestException
+          - org.springaicommunity.typesafe.exception.TypeSafeUnprocessableEntityException
+          - org.springaicommunity.typesafe.exception.TypeSafeMissingAnswerException
+          - org.springaicommunity.typesafe.exception.TypeSafeAnswerTypeException
+          - java.lang.IllegalArgumentException
   retry:
+    retry-aspect-order: 2
     instances:
       raindrop:
         max-attempts: 3
@@ -40,3 +90,14 @@ resilience4j:
         exponential-backoff-multiplier: 2
         ignore-exceptions:
           - org.bartram.myfeeder.integration.RaindropNotConfiguredException
+      jev:
+        max-attempts: 3
+        # Base interval for TypeSafeConfig.jevRetryInterval, which doubles it per attempt (1s, 2s) and
+        # honors a 429's retry-after-ms instead when present (capped at 10s).
+        wait-duration: 1s
+        retry-exceptions:
+          - org.springaicommunity.typesafe.exception.TypeSafeRateLimitException
+          - org.springaicommunity.typesafe.exception.TypeSafeInternalServerException
+          - org.springaicommunity.typesafe.exception.TypeSafeApiConnectionException
+        ignore-exceptions:
+          - org.bartram.myfeeder.integration.JevNotConfiguredException

@@ -13,12 +13,12 @@ This milestone adds interest ranking to myfeeder. First the dependency stack mov
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Dependency Upgrade** - Move to Boot 4.0.8 / Spring AI 2.0.1 / Spring Cloud 2025.1.3 and frontend minor/patch versions, then deploy
-- [ ] **Phase 2: Jev Client Foundation** - Optional, pinned-model Jev client with a single Resilience4j retry layer and deploy-time secret
-- [ ] **Phase 3: Interest Model, Schema & Rubric Editor** - Profile and weighted topic editor, topic preview, and the full V6 interest schema
-- [ ] **Phase 4: Scoring Pipeline & Backfill Sweep** - Background, never-blocking scoring of new articles plus the sweep that backfills, recovers and re-scores
-- [ ] **Phase 5: Blend & Priority View** - Query-time blend, Priority route with stable keyset pagination, score badges and "Why N?" breakdown
-- [ ] **Phase 6: Thumbs Feedback** - Reversible, bounded thumbs up/down that re-weights matched topics instantly
+- [x] **Phase 1: Dependency Upgrade** - Move to Boot 4.0.8 / Spring AI 2.0.1 / Spring Cloud 2025.1.3 and frontend minor/patch versions, then deploy (completed 2026-09-22)
+- [x] **Phase 2: Jev Client Foundation** - Optional, pinned-model Jev client with a single Resilience4j retry layer and deploy-time secret (completed 2026-09-23)
+- [x] **Phase 3: Interest Model, Schema & Rubric Editor** - Profile and weighted topic editor, topic preview, and the full V6 interest schema (completed 2026-09-23)
+- [x] **Phase 4: Scoring Pipeline & Backfill Sweep** - Background, never-blocking scoring of new articles plus the sweep that backfills, recovers and re-scores (completed 2026-09-24)
+- [x] **Phase 5: Blend & Priority View** - Query-time blend, Priority route with stable keyset pagination, score badges and "Why N?" breakdown (completed 2026-09-26)
+- [x] **Phase 6: Thumbs Feedback** - Reversible, bounded thumbs up/down that re-weights matched topics instantly (completed 2026-09-27)
 - [ ] **Phase 7: Rollout & Calibration** - Production release with a live key, launch backfill observed, blend constants tuned, docs updated
 
 ## Phase Details
@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Frontend dependencies are on their latest minor/patch versions (no major bumps; react-router stays on v6), and `npm test` and `npx tsc -b` both pass
   3. The upgraded release is deployed to k3s, starts with clean logs, and feeds keep polling so new articles appear in the reader as before
 
-**Plans**: 2/4 plans executed
+**Plans**: 4/4 plans executed
 
 Plans:
 **Wave 1**
@@ -44,11 +44,11 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-03-PLAN.md — Combined build + local end-to-end smoke, STACK.md, `.serena` decision, `--no-ff` merge to local main (wave 2)
+- [x] 01-03-PLAN.md — Combined build + local end-to-end smoke, STACK.md, `.serena` decision, `--no-ff` merge to local main (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-04-PLAN.md — Read-only release preflight, approval gate, push + release v0.1.24 + image + k3s deploy + soak verification (D-05) (wave 3)
+- [x] 01-04-PLAN.md — Read-only release preflight, approval gate, push + release v0.1.24 + image + k3s deploy + soak verification (D-05) (wave 3)
 
 ### Phase 2: Jev Client Foundation
 
@@ -62,7 +62,21 @@ Plans:
   3. Sustained transient failures (429/5xx/timeout) are retried only by Resilience4j (SDK retries are off) and open the circuit breaker; per-article 400/422 errors are neither retried nor able to open the breaker
   4. `deploy.sh` and the Helm chart treat `MYFEEDER_TYPESAFE_API_KEY` as optional: a deploy without it succeeds with a warning, and changing only the key rolls the pod
 
-**Plans**: TBD
+**Plans**: 4/4 plans executed
+
+Plans:
+**Wave 1**
+
+- [x] 02-01-PLAN.md — App-owned keyless-safe TypeSafeClient (Pattern A, Reactor Netty, D-05/D-10), model pin + SDK retries off, then spring-boot-starter-aspectj in its own commit + full suite (wave 1)
+- [x] 02-04-PLAN.md — Optional TypeSafe key in Helm (secret, env, `checksum/secret` pod roll) and deploy.sh warning; helm template/lint + fake-helm proof, no cluster deploy (wave 1)
+
+**Wave 2** *(blocked on 02-01)*
+
+- [x] 02-02-PLAN.md — Generic `JevApiClient.judge` → app-owned `JevJudgment` with the response's model id (D-01..D-04, D-06 WARN), offline wire tests + opt-in live smoke (wave 2)
+
+**Wave 3** *(blocked on 02-02)*
+
+- [x] 02-03-PLAN.md — `@CircuitBreaker`/`@Retry("jev")`, D-09 breaker, Retry-After interval (D-07), typed propagation (D-08), proven through the AOP proxy against a socket stub (wave 3)
 
 ### Phase 3: Interest Model, Schema & Rubric Editor
 
@@ -77,13 +91,35 @@ Plans:
   4. User can preview a draft topic against the article open in the reading pane and see its match result (one Jev call) before saving it
   5. The interest settings UI shows a "not configured" notice when no API key is set, and a "cold start" prompt when the profile is empty and there are no topics
 
-**Plans**: TBD
+**Plans**: 8/8 plans executed
+
+Plans:
+**Wave 1**
+
+- [x] 03-01-PLAN.md — V6 interest-scoring schema (required topic name confirmed by the user; decision checkpoint for the article_topic_score parent and INTEGER/no-length-CHECK choices), profile/topic entities and repositories (wave 1)
+
+**Wave 2** *(blocked on 03-01)*
+
+- [x] 03-02-PLAN.md — Pure question/state builders shared with Phase 4 (D-12) and JevApiClient.isConfigured(), proven on the wire (wave 2)
+- [x] 03-03-PLAN.md — InterestService limits/versions/cold-start predicate (D-05) and profile + topic REST (INT-01, INT-02) (wave 2)
+- [x] 03-05-PLAN.md — Interests dialog from Settings: profile editor with guidance, status notices, unsaved guard, ApiError, toast opt-out (wave 2)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [x] 03-04-PLAN.md — GET /api/interest/status (D-04), one-call topic preview (D-12..D-14), Jev error mapping, CLAUDE.md + roadmap note fix (wave 3)
+- [x] 03-06-PLAN.md — Topic rubric editor: weight slider/number, negation warning, per-row save/delete, 25 cap (INT-02, INT-03) (wave 3)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [x] 03-07-PLAN.md — Topic preview UI: scoring math, disabled reasons, stale results, failure copy (INT-04) (wave 4)
+- [x] 03-08-PLAN.md — Gated calibration spike with the live key, human run, findings in 03-CALIBRATION.md (wave 4)
+
 **UI hint**: yes
 **Notes**:
 
   - `V6__interest_scoring.sql` ships the whole schema now (`interest_profile`, `interest_topic`, `article_score`, `article_topic_score`, `article_feedback`, with `ON DELETE CASCADE` and the weight CHECK −50..50), so later phases add no migrations. The feedback schema must support FDBK-06: a thumbs-down can penalize only the topics the user picks, so the feedback tables need per-topic selection (for example an `article_feedback_topic` child table, or per-topic feedback rows), not just `article_feedback(article_id, vote)`.
   - The question builder (5-level profile `Score`; one positively phrased `Noul` per topic) and the state builder (feed, title, summary; HTML stripped, truncated, content fallback) are pure functions delivered here, because INT-04 preview and the calibration spike both need them. Phase 4 reuses them.
-  - Phase 2 lays down `/api/interest/status` with the `configured` flag and breaker state, which INT-06 needs. The full JEV-05 endpoint (counts) is completed in Phase 4.
+  - Phase 3 creates `GET /api/interest/status` with `configured`, `breakerState` and `coldStart` (D-04; Phase 2 deferred it), which INT-06 needs. Phase 4 adds the eligible-unscored and failed counts to the same response to complete JEV-05.
   - **Research flag:** end with a calibration spike. Run the question builder against 10–20 real articles with the live key, check the spread and confidence of scores, and iterate the wording before Phase 5 builds the UI on it.
 
 ### Phase 4: Scoring Pipeline & Backfill Sweep
@@ -99,7 +135,32 @@ Plans:
   4. `GET /api/interest/status` reports whether Jev is configured, the circuit-breaker state, and the eligible-unscored and failed article counts
   5. User can trigger "Re-score unread", sees how many articles will be re-judged before confirming, and the in-window unread articles are then re-scored by the sweep
 
-**Plans**: TBD
+**Plans**: 9/9 plans executed
+
+Plans:
+**Wave 1**
+
+- [x] 04-01-PLAN.md — Jev client hardening: breaker wraps retry (D-07), 30s timeout (D-05), 15s slow-call (D-06), auto OPEN→HALF_OPEN (D-17), caller errors and Choice kept out of the bill and breaker (D-14, D-15), CLAUDE.md convention + narrowed todo (wave 1)
+- [x] 04-02-PLAN.md — ArticleScoreStore: the single eligibility predicate, write-once SCORED/FAILED/SKIPPED upserts, selection, status counts and Re-score scope SQL; MyfeederProperties.Interest (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 04-03-PLAN.md — ArticleScoringService: gates, dispatch recheck, shared builders, one judge() call, D-19 failure classification, D-13 truncate fix (wave 2)
+- [x] 04-06-PLAN.md — /api/interest/status eligibleUnscored + failed (JEV-05, D-08/D-11/D-12) (wave 2)
+- [x] 04-08-PLAN.md — GET/POST /api/interest/rescore on the shared Re-score scope with the D-18 guard (INT-05, D-02/D-03) (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [x] 04-04-PLAN.md — Ingest hand-off: ArticlesIngestedEvent, never-throwing listener, one-thread bounded jev-score executor, ScoringQueue, SC2 isolation proof (wave 3)
+- [x] 04-07-PLAN.md — Interests dialog: Re-score unread with inline server-count confirm (D-01, D-02, D-04), disabled reasons, "N waiting to be scored" line; CLAUDE.md status and rescore routes (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [x] 04-05-PLAN.md — InterestScoringSweep (2-minute drain, batch cap 50, D-10/D-16), myfeeder.interest YAML, schedule proof, full suite + live end-of-phase check (wave 4)
+
+**Gap closure** *(UAT G-04-1)*
+
+- [x] 04-09-PLAN.md — bootTestRun dev-profile overlay restores live Jev settings (key, base-url, PT1M sweep, 5s/30s timeouts); drift and offline-suite guards; CLAUDE.md + 04-05 live-key procedure
 
 ### Phase 5: Blend & Priority View
 
@@ -114,7 +175,32 @@ Plans:
   4. The Priority view shows a "not configured", "cold start", "scoring paused" or "N articles waiting to be scored" state when each applies
   5. Changing a topic's weight in settings changes badges and the Priority order on the next refresh, with no new Jev calls (the blend is computed at query time from stored raw outputs)
 
-**Plans**: TBD
+**Plans**: 8/8 plans executed
+
+Plans:
+**Wave 1**
+
+- [x] 05-01-PLAN.md — Backend Priority endpoint: the single blend CTE, keyset pages across the scored/unscored boundary, 404 on a missing cursor, /priority SPA forward, blend constant (wave 1)
+- [x] 05-02-PLAN.md — Frontend Priority list at /priority: frozen-cache infinite query, tier badges, "Not yet scored" separator, list states, ↻ Refresh ranking (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 05-03-PLAN.md — interestScore on every article response (D-18) and the exact "Why N?" breakdown on GET /api/articles/{id} (largest remainder against the SQL total) (wave 2)
+- [x] 05-04-PLAN.md — Feed-tree Priority entry, `g p`, one status banner with D-14 precedence, cold-start Set up interests (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [x] 05-05-PLAN.md — Interest badges in All/Feed/Folder/Starred and Board lists with the slot rule (wave 3)
+- [x] 05-06-PLAN.md — Triage stability (in-place read/star patch, no refetch), ranked `j`/`k` with `j` paging, `Shift+A` disabled, `r` refresh, "Ranking changed" hint, re-entry refetch (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [x] 05-07-PLAN.md — Reading-pane score row with matched-topic chips, "Why N?" breakdown, `i` shortcut (wave 4)
+
+**Gap closure** *(UAT G-05-7)*
+
+- [x] 05-08-PLAN.md — Priority cursor carries the served sort tuple as an opaque string, so a cursor score drop between pages skips no row (WR-02); SPA types follow
+
 **UI hint**: yes
 **Notes**:
 
@@ -135,7 +221,25 @@ Plans:
   4. A vote on an article that matched no topics tells the user so and offers to create a topic from the article
   5. A thumbs-down on an article that matched several topics lets the user choose which topic(s) to penalize
 
-**Plans**: TBD
+**Plans**: 7/7 plans executed
+
+Plans:
+**Wave 1**
+
+- [x] 06-01-PLAN.md — Backend vote write path: learned CTE (cap, sign clamp, ±50, narrowing), PUT/DELETE /api/articles/{id}/feedback with before/after effects and limits, validation (wave 1)
+- [x] 06-03-PLAN.md — Reading-pane 👍/👎 with instant pressed state and pressed styling, effect toast, serialized votes, Priority patch vs list refresh, error revert (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 06-02-PLAN.md — Vote state on GET /api/articles/{id}, base/learned on Why rows (wave 2)
+- [x] 06-04-PLAN.md — Thumbs-down topic picker ("Narrow…", Shift+D), narrowed label, u/d keys and overlay (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [x] 06-05-PLAN.md — "No topics matched" line with Create topic from article draft, learned line in the topic editor, learned part in Why rows (wave 3)
+- [x] 06-06-PLAN.md — GET /api/interest/topics/learned (base/learned/effective/limit per topic), CLAUDE.md feedback note (wave 3)
+- [x] 06-07-PLAN.md — Effect toast by every remaining UI-SPEC rule: unscored/no-match copy, top 3 + "+N more", limit notes, role status (wave 3)
+
 **UI hint**: yes
 
 ### Phase 7: Rollout & Calibration
@@ -149,7 +253,35 @@ Plans:
   2. Blend constants (profile weight, learning rate, cap, badge tier thresholds) are configurable and have been tuned against the real score distribution, so badges spread across tiers instead of clustering
   3. CLAUDE.md documents the Jev behaviors and gotchas: the app-owned client bean, the single retry layer, the scoring executor and the eligibility window
 
-**Plans**: TBD
+**Plans**: 5/9 plans executed
+
+Plans:
+**Wave 1**
+
+- [x] 07-01-PLAN.md — Tier thresholds as server config: myfeeder.interest.blend.tiers.{high,neutral} bound in MyfeederProperties, TierThresholds appended to /api/interest/status (D-13) (wave 1)
+- [x] 07-02-PLAN.md — Badges read the served tiers: useInterestTiers → TierContext → InterestBadge with a 70/40 fallback, MainLayout provider, boundary tables (D-13) (wave 1)
+- [x] 07-03-PLAN.md — JevEventLogging: jev retry, exhausted-retry and breaker-transition log lines with OutputCapture tests (D-15) (wave 1)
+- [x] 07-04-PLAN.md — Read-only calibration replay: verbatim blend SQL, candidate driver, drift guard, scratch-Postgres smoke (D-09) (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 07-05-PLAN.md — CLAUDE.md OPS-03: Jev Scoring and Resilience section plus stale package/migration/deploy/status lines (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-06-PLAN.md — Release 0.2.0: preflight, .envrc scan (D-16), approval gate, merge/release (incrementMinor), pg_dump, deploy with live key, V6 and key checks (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 07-07-PLAN.md — Launch backfill: throwaway watch, user-gated rubric save, drain with breaker CLOSED and 429s absorbed, D-08 throttle only if needed, 07-BACKFILL.md verdict (wave 4)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 07-08-PLAN.md — Calibration: prod replay matched to the app, candidate grid vs the D-10 target, 07-CALIBRATION.md with top/bottom 20, user approval (D-11) (wave 5)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 07-09-PLAN.md — Release 0.2.1: approved constants in main yaml plus the dev overlay (D-14), local proof, approval gate, deploy, prod tiers verified (wave 6)
 
 ## Progress
 
@@ -158,10 +290,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Dependency Upgrade | 2/4 | In Progress|  |
-| 2. Jev Client Foundation | 0/TBD | Not started | - |
-| 3. Interest Model, Schema & Rubric Editor | 0/TBD | Not started | - |
-| 4. Scoring Pipeline & Backfill Sweep | 0/TBD | Not started | - |
-| 5. Blend & Priority View | 0/TBD | Not started | - |
-| 6. Thumbs Feedback | 0/TBD | Not started | - |
-| 7. Rollout & Calibration | 0/TBD | Not started | - |
+| 1. Dependency Upgrade | 4/4 | Complete    | 2026-09-22 |
+| 2. Jev Client Foundation | 4/4 | Complete    | 2026-09-23 |
+| 3. Interest Model, Schema & Rubric Editor | 8/8 | Complete    | 2026-09-23 |
+| 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
+| 5. Blend & Priority View | 8/8 | Complete    | 2026-09-26 |
+| 6. Thumbs Feedback | 7/7 | Complete    | 2026-09-27 |
+| 7. Rollout & Calibration | 5/9 | In Progress|  |
