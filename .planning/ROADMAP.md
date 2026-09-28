@@ -253,7 +253,7 @@ Plans:
   2. Blend constants (profile weight, learning rate, cap, badge tier thresholds) are configurable and have been tuned against the real score distribution, so badges spread across tiers instead of clustering
   3. CLAUDE.md documents the Jev behaviors and gotchas: the app-owned client bean, the single retry layer, the scoring executor and the eligibility window
 
-**Plans**: 5/9 plans executed
+**Plans**: 6/9 plans executed
 
 Plans:
 **Wave 1**
@@ -269,7 +269,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 07-06-PLAN.md — Release 0.2.0: preflight, .envrc scan (D-16), approval gate, merge/release (incrementMinor), pg_dump, deploy with live key, V6 and key checks (wave 3)
+- [x] 07-06-PLAN.md — Release 0.2.0: preflight, .envrc scan (D-16), approval gate, merge/release (incrementMinor), pg_dump, deploy with live key, V6 and key checks (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -296,4 +296,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
 | 5. Blend & Priority View | 8/8 | Complete    | 2026-09-26 |
 | 6. Thumbs Feedback | 7/7 | Complete    | 2026-09-27 |
-| 7. Rollout & Calibration | 5/9 | In Progress|  |
+| 7. Rollout & Calibration | 6/9 | In Progress|  |
