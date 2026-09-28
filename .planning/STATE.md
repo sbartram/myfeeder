@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 07
 current_phase_name: Rollout & Calibration
 status: executing
-stopped_at: Completed 07-06-PLAN.md
-last_updated: "2026-09-28T22:41:10.253Z"
+stopped_at: Completed 07-07-PLAN.md
+last_updated: "2026-09-28T23:55:16.520Z"
 last_activity: 2026-09-28
 last_activity_desc: Phase 07 execution started
-state_head: 41391004567e4fbacf3daab06dee05797833e22e
+state_head: 9ea87593cc64e2d3d8867932c02c0ddd09c84352
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 49
-  completed_plans: 46
+  completed_plans: 47
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-27)
 ## Current Position
 
 Phase: 07 (Rollout & Calibration) — EXECUTING
-Plan: 7 of 9
+Plan: 8 of 9
 Status: Ready to execute
 Last activity: 2026-09-28 — Phase 07 execution started
 
@@ -109,6 +109,7 @@ Progress: [█████████░] 86%
 | Phase 07 P04 | 4 min | 2 tasks | 4 files |
 | Phase 07 P05 | 3min | 2 tasks | 1 files |
 | Phase 07 P06 | 14 min | 3 tasks | 2 files |
+| Phase 07 P07 | 1h 13m | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -192,6 +193,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-06: user approved release 0.2.0 (verbatim: approve); v0.2.0 = main 687217f, image sha256:2252196e, Helm rev 18, rollback rev 17 (0.1.24); failure path not run
 - [Phase 07]: 07-06: live TypeSafe key deployed (key-hash match), preview 200 jev-1.13.0, /status configured+coldStart+CLOSED tiers 70/40, 182 eligible unscored; 10.5-min soak 46/46 feeds, 0 ERROR
 - [Phase 07]: 07-06: a secret change rolls the app twice (chart checksum/secret + cluster Reloader); harmless, V6 applied once
+- [Phase 07]: 07-07: user chose load-phase3-rubric; Phase 3 rubric (profile + 7 topics) saved in prod at 2026-09-28T23:39:57Z
+- [Phase 07]: 07-07: launch backfill D-05 Overall PASS (183 legacy drained in 6m54s, 192 SCORED, 0 FAILED, breaker CLOSED, 0 retries); no D-08 throttle, so 07-09 has no override to remove
 
 ### Pending Todos
 
@@ -224,6 +227,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-28T22:40:39.270Z
-Stopped at: Completed 07-06-PLAN.md
+Last session: 2026-09-28T23:55:16.461Z
+Stopped at: Completed 07-07-PLAN.md
 Resume file: None
