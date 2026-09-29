@@ -22,3 +22,7 @@ myfeeder:
   interest:
     # D-10: first sweep about a minute after startup (the test yaml's PT1H is for the suite).
     sweep-initial-delay: PT1M
+    # D-14: main's tuned blend values (07-CALIBRATION.md); the test yaml keeps the pre-calibration constants for the suite.
+    blend:
+      tiers:
+        neutral: 22

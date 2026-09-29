@@ -39,6 +39,7 @@ myfeeder:
     sweep-delay: PT2M
     sweep-initial-delay: PT1M
     # Blend constants (R1); the profile contributes profile_score / max level x profile-points. Phase 7 tunes these.
+    # D-14: tuned against the prod score distribution (2026-09-29); see .planning/phases/07-rollout-calibration/07-CALIBRATION.md.
     blend:
       profile-points: 100
       learn-rate: 2
@@ -46,7 +47,7 @@ myfeeder:
       # D-13: badge tier thresholds served on /api/interest/status (display score >= high is high, >= neutral is neutral). Phase 7 tunes them (07-CALIBRATION.md).
       tiers:
         high: 70
-        neutral: 40
+        neutral: 22
 
 resilience4j:
   circuitbreaker:
