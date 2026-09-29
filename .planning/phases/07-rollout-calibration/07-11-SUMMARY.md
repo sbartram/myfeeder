@@ -198,3 +198,8 @@ None. No external service configuration is required.
 ---
 *Phase: 07-rollout-calibration*
 *Completed: 2026-09-29*
+
+## Self-Check: PASSED
+
+- FOUND: `.planning/phases/07-rollout-calibration/07-11-SUMMARY.md`, `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java`
+- FOUND commits: `04aef6c`, `615d7a5`, `2eb9c0e` (and the SUMMARY commit `7a2c24c`); working tree clean
