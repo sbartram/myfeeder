@@ -64,9 +64,9 @@ Scoring model (settled in research, SUMMARY.md R1/R2/R6): `score = 100 × profil
 
 ### Rollout
 
-- [x] **OPS-01**: The feature is released and deployed with a live key; the launch backfill runs without 429 storms or an open circuit
-- [x] **OPS-02**: Blend constants (profile weight, learning rate, cap, badge tiers) are configurable and tuned against the real score distribution
-- [x] **OPS-03**: CLAUDE.md documents the new Jev behaviors and gotchas (app-owned client bean, single retry layer, scoring executor, eligibility window)
+- [ ] **OPS-01**: The feature is released and deployed with a live key; the launch backfill runs without 429 storms or an open circuit
+- [ ] **OPS-02**: Blend constants (profile weight, learning rate, cap, badge tiers) are configurable and tuned against the real score distribution
+- [ ] **OPS-03**: CLAUDE.md documents the new Jev behaviors and gotchas (app-owned client bean, single retry layer, scoring executor, eligibility window)
 
 ## v2 Requirements
 
@@ -145,9 +145,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FDBK-05 | Phase 6 | Complete |
 | FDBK-06 | Phase 6 | Complete |
 | FDBK-07 | Phase 6 | Complete |
-| OPS-01 | Phase 7 | Complete |
-| OPS-02 | Phase 7 | Complete |
-| OPS-03 | Phase 7 | Complete |
+| OPS-01 | Phase 7 | Gaps Found |
+| OPS-02 | Phase 7 | Gaps Found |
+| OPS-03 | Phase 7 | Gaps Found |
 
 **Coverage:**
 
