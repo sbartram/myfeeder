@@ -225,3 +225,18 @@ all show badge 0.
 | Neutral 30-40% of scored unread | 34.9% | yes |
 
 ## Approval
+
+| | Value |
+|---|---|
+| Date | 2026-09-29 (00:04Z; 2026-09-28 local) |
+| Checkpoint | 07-08 Task 3 (D-11, blocking-human decision) |
+| User's answer (verbatim) | `approve` |
+| Option | approve: the proposed constants, as shown above |
+| Title redaction | Not requested; the titles stay as listed |
+
+The user approved the proposal after seeing the Proposal, the baseline versus proposal histograms and the
+top 20 and bottom 20 titles. Only tiers.neutral changes (40 to 22), so the Priority order is unchanged.
+The replay output for these constants is `$HOME/.cache/myfeeder-phase07/replay/replay-pp100-hi70-ne22.tsv`.
+07-09 reads the line below as its precondition.
+
+approved-constants: profile-points=100 tiers.high=70 tiers.neutral=22 learn-rate=2 learned-cap=20
