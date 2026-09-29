@@ -253,7 +253,7 @@ Plans:
   2. Blend constants (profile weight, learning rate, cap, badge tier thresholds) are configurable and have been tuned against the real score distribution, so badges spread across tiers instead of clustering
   3. CLAUDE.md documents the Jev behaviors and gotchas: the app-owned client bean, the single retry layer, the scoring executor and the eligibility window
 
-**Plans**: 9/10 plans executed
+**Plans**: 10/10 plans executed
 
 Plans:
 **Wave 1**
@@ -285,7 +285,7 @@ Plans:
 
 **Gap closure** *(07-VERIFICATION: 07-04 drift guard, 07-REVIEW WR-02)*
 
-- [ ] 07-10-PLAN.md — Replay drift guard checks every copy: each `WITH learned AS` line verbatim (5, in order), `INTEREST_SCORE` exactly 4, in-memory one-byte and missing/extra-copy proofs; test-only, no release
+- [x] 07-10-PLAN.md — Replay drift guard checks every copy: each `WITH learned AS` line verbatim (5, in order), `INTEREST_SCORE` exactly 4, in-memory one-byte and missing/extra-copy proofs; test-only, no release
 
 ## Progress
 
@@ -300,4 +300,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
 | 5. Blend & Priority View | 8/8 | Complete    | 2026-09-26 |
 | 6. Thumbs Feedback | 7/7 | Complete    | 2026-09-27 |
-| 7. Rollout & Calibration | 9/10 | In Progress|  |
+| 7. Rollout & Calibration | 10/10 | In Progress|  |
