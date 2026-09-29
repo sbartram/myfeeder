@@ -60,6 +60,10 @@ Backend commands use the proven prefix `DOCKER_HOST=unix:///Users/scottb/.docker
 | 07-08-T2 | 07-08 | 5 | OPS-02 | T-07-29 | no personal data in 07-CALIBRATION.md | doc | structure + `grep -F -f` privacy checks (07-08 Task 2) | ops | ⬜ pending |
 | 07-09-T1 | 07-09 | 6 | OPS-02 | T-07-33 | yaml parity; local /status serves approved tiers | unit + local | `GT --tests 'org.bartram.myfeeder.DevProfileConfigTest' ...` + bootTestRun `local-status.json` | ✅ | ⬜ pending |
 | 07-09-T3 | 07-09 | 6 | OPS-02 | T-07-32 | prod tiers equal approved; replay equals app | ops smoke | status tiers check + `crosscheck-0.2.1.json` | ops | ⬜ pending |
+| 07-10-T1 | 07-10 | 1 (gap) | OPS-02 | T-07-38 | every `WITH learned AS` line verbatim; one-byte drift of any blend copy fails | unit (no Docker) | `GT --tests 'org.bartram.myfeeder.repository.InterestCalibrationReplaySqlTest'` | ✅ extend | ⬜ pending |
+| 07-10-T2 | 07-10 | 1 (gap) | OPS-02 | T-07-39 | `INTEREST_SCORE` exactly 4; missing/extra copy fails; tracked SQL untouched | unit (no Docker) | `GT --tests 'org.bartram.myfeeder.repository.InterestCalibrationReplaySqlTest' --tests 'org.bartram.myfeeder.DevProfileConfigTest'` | ✅ extend | ⬜ pending |
+| 07-11-T1 | 07-11 | 1 (gap) | OPS-02 | T-07-41 | a drifted badge fails whatever verbatim copy survives (trailing/block comment, appended section, same line); raw `INTEREST_SCORE` 4 with comments included; each badge line's code holds the `interest_score` item once | unit (no Docker) | `GT --tests 'org.bartram.myfeeder.repository.InterestCalibrationReplaySqlTest'` | ✅ extend | ⬜ pending |
+| 07-11-T2 | 07-11 | 1 (gap) | OPS-02 | T-07-42 | an extra blend statement fails in any case, indentation or position (5 openings); tracked SQL untouched; WR-04/IN-07 recorded fixed | unit (no Docker) | `GT --tests 'org.bartram.myfeeder.repository.InterestCalibrationReplaySqlTest' --tests 'org.bartram.myfeeder.DevProfileConfigTest'` | ✅ extend | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
