@@ -76,12 +76,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| CAPT-01 | Phase 8 | Pending |
+| CAPT-02 | Phase 8 | Pending |
+| CAPT-03 | Phase 8 | Pending |
+| CAPT-04 | Phase 8 | Pending |
+| CAPT-05 | Phase 8 | Pending |
+| CAPT-06 | Phase 8 | Pending |
+| CAPT-07 | Phase 8 | Pending |
+| LRN-01 | Phase 9 | Pending |
+| LRN-02 | Phase 9 | Pending |
+| LRN-03 | Phase 9 | Pending |
+| LRN-04 | Phase 9 | Pending |
+| LRN-05 | Phase 9 | Pending |
+| LRN-06 | Phase 10 | Pending |
+| EXPL-01 | Phase 10 | Pending |
+| GAP-01 | Phase 11 | Pending |
+| GAP-02 | Phase 11 | Pending |
+| GAP-03 | Phase 11 | Pending |
+| GAP-04 | Phase 11 | Pending |
+| GAP-05 | Phase 11 | Pending |
+| CAL-01 | Phase 9 | Pending |
+| CAL-02 | Phase 12 | Pending |
+| CAL-03 | Phase 12 | Pending |
 
 **Coverage:**
 - v0.3.0 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22 ⚠️
+- Mapped to phases: 22
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-29*
-*Last updated: 2026-09-29 after initial definition*
+*Last updated: 2026-09-29 after v0.3.0 roadmap creation (Phases 8–12)*

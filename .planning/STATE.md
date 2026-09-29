@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v0.3.0
 milestone_name: Engagement Learning
 status: planning
-last_updated: "2026-09-29T18:39:08.520Z"
+last_updated: "2026-09-29T20:00:00.000Z"
 last_activity: 2026-09-29
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,102 +20,53 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-29)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Planning next milestone (v0.2.1 Interest Ranking shipped and archived 2026-09-29)
+**Current focus:** Phase 8 — Engagement Capture (v0.3.0 Engagement Learning)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-09-29 — Milestone v0.3.0 started
+Phase: 8 of 12 (Engagement Capture) — v0.3.0 spans Phases 8–12
+Plan: — (not planned yet)
+Status: Ready to plan
+Last activity: 2026-09-29 — v0.3.0 roadmap created (5 phases, 22/22 requirements mapped)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 51
+- Total plans completed: 51 (all in v0.2.1, Phases 1–7)
 - Average duration: -
-- Total execution time: 0.0 hours
+- Total execution time: -
 
-**By Phase:**
+**By Phase (v0.3.0):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 4 | - | - |
-| 2 | 4 | - | - |
-| 03 | 8 | - | - |
-| 04 | 9 | - | - |
-| 05 | 8 | - | - |
-| 06 | 7 | - | - |
-| 07 | 11 | - | - |
+| - | - | - | - |
 
 **Recent Trend:**
 
 - Last 5 plans: -
 - Trend: -
 
-*Updated after each plan completion*
-**Per-Plan Metrics:**
-
-| Plan | Duration | Tasks | Files |
-|------|----------|-------|-------|
-| Phase 01 P01 | 5 min | 3 tasks | 4 files |
-| Phase 01 P02 | 16 min | 3 tasks | 2 files |
-| Phase 01 P03 | 1 min | 3 tasks | 1 files |
-| Phase 01 P04 | 26 min | 3 tasks | 1 files |
-| Phase 02 P01 | 4 min | 2 tasks | 6 files |
-| Phase 02 P04 | 1 min | 2 tasks | 4 files |
-| Phase 02 P02 | 5 min | 3 tasks | 6 files |
-| Phase 02 P03 | 6 min | 3 tasks | 6 files |
-| Phase 03 P01 | 3 min | 3 tasks | 7 files |
-| Phase 03 P02 | 4 min | 3 tasks | 7 files |
-| Phase 03 P03 | 5 min | 3 tasks | 7 files |
-| Phase 03 P05 | 6 min | 3 tasks | 12 files |
-| Phase 03 P04 | 7 min | 3 tasks | 13 files |
-| Phase 03 P06 | 8 min | 3 tasks | 8 files |
-| Phase 03 P07 | 6 min | 2 tasks | 6 files |
-| Phase 03 P08 | 2h 30m | 3 tasks | 7 files |
-| Phase 04 P01 | 6 min | 3 tasks | 7 files |
-| Phase 04 P02 | 6 min | 3 tasks | 3 files |
-| Phase 04 P03 | 7 min | 3 tasks | 6 files |
-| Phase 04 P06 | 2 min | 1 tasks | 4 files |
-| Phase 04 P08 | 3 min | 2 tasks | 6 files |
-| Phase 04 P04 | 7 min | 3 tasks | 9 files |
-| Phase 04 P07 | 7 min | 3 tasks | 6 files |
-| Phase 04 P05 | 5 min | 2 tasks | 6 files |
-| Phase 04 P09 | 4 min | 3 tasks | 6 files |
-| Phase 05 P01 | 6 min | 3 tasks | 13 files |
-| Phase 05 P02 | 6 min | 3 tasks | 11 files |
-| Phase 05 P03 | 8 min | 3 tasks | 13 files |
-| Phase 05 P04 | 5 min | 3 tasks | 13 files |
-| Phase 05 P05 | 3 min | 2 tasks | 4 files |
-| Phase 05 P06 | 6 min | 3 tasks | 12 files |
-| Phase 05 P07 | 5 min | 3 tasks | 13 files |
-| Phase 05 P08 | 24 min | 3 tasks | 14 files |
-| Phase 06 P01 | 10min | 3 tasks | 14 files |
-| Phase 06 P03 | 5 min | 3 tasks | 13 files |
-| Phase 06 P02 | 5 min | 2 tasks | 12 files |
-| Phase 06 P04 | 7 min | 3 tasks | 10 files |
-| Phase 06 P06 | 3 min | 2 tasks | 7 files |
-| Phase 06 P05 | 7 min | 3 tasks | 14 files |
-| Phase 06 P07 | 4 min | 2 tasks | 5 files |
-| Phase 07 P01 | 2 min | 2 tasks | 8 files |
-| Phase 07 P02 | 2 min | 2 tasks | 8 files |
-| Phase 07 P03 | 3 min | 2 tasks | 2 files |
-| Phase 07 P04 | 4 min | 2 tasks | 4 files |
-| Phase 07 P05 | 3min | 2 tasks | 1 files |
-| Phase 07 P06 | 14 min | 3 tasks | 2 files |
-| Phase 07 P07 | 1h 13m | 3 tasks | 1 files |
-| Phase 07 P08 | 10 min | 3 tasks | 1 files |
-| Phase 07 P09 | 37 min | 3 tasks | 4 files |
-| Phase 07 P10 | 4 min | 2 tasks | 3 files |
+*Updated after each plan completion. v0.2.1 per-plan metrics (Phases 1–7) are in this file's git history at `18269f8`.*
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-The v0.2.1 per-plan decision log is archived with the phases in `.planning/milestones/v0.2.1-phases/` (each plan SUMMARY).
+Settled for v0.3.0 before roadmapping (do not reopen):
+
+- [v0.3.0]: Engagement skips topics with a negative base weight
+- [v0.3.0]: Engagement has its own additive cap, below the thumbs cap (20); thumbs take their share first
+- [v0.3.0]: Engagement is sticky (unstar, board removal and board delete keep it); a thumbs vote overrides it, and a minimal reading-pane "Forget engagement" control deletes the rows (no tombstone)
+- [v0.3.0]: No V7 backfill of existing stars or boards; the Phase 12 replay simulates one
+- [v0.3.0]: Open endpoint is a bodyless, idempotent `PUT /api/articles/{id}/engagement/open` returning 204, kind `OPEN_ORIGINAL`
+- [v0.3.0]: Engaged-but-unscored articles stay ineligible for scoring; dormant engagement is measured by the calibration replay, with no status field
+- [v0.3.0]: Gap discovery = "Suggested topics" list + near-miss filter + dismissal; all V7 schema (engagement and dismissal tables) ships in one migration in Phase 8
+- [v0.3.0 roadmap]: Capture ships and releases first with ranking unchanged, so prod accumulates engagement before calibration; CAL-01 (replay + drift guard regeneration) lands with the learned-CTE change in Phase 9; Phase 11 depends only on Phase 8
 
 ### Pending Todos
 
@@ -123,6 +74,9 @@ The v0.2.1 per-plan decision log is archived with the phases in `.planning/miles
 
 ### Blockers/Concerns
 
+- [Phase 8] Release version RESOLVED at roadmap approval (2026-09-29): capture (V7) ships as v0.3.0 (`incrementMinor`), the calibrated build (Phase 12) as v0.3.1 — the v0.2.0→v0.2.1 pattern
+- [Phase 9] LRN-05's startup rules collide at zero (0 ≤ 0 trips "save > open"), so validation must accept the disabled setting; highest-risk SQL of the milestone, plan test-first with `--research-phase`
+- [Phase 12] Waits on several weeks of prod engagement collected after the Phase 8 release
 - [Phase 2] 02-REVIEW WR-04 (Raindrop createBookmark POST retried) and WR-05 (helm --set secret mangling) still deferred; WR-01..03 closed in Phase 4
 - [Phase 5] 05-REVIEW.md WR-04 closed by quick 260926-hhz (decoded cursor date bounded to years 1..9999 → 404); WR-05 (an unserved row whose score rises past the fixed cursor boundary is skipped — mitigated in Phase 6: votes set the Ranking-changed hint); WR-01/WR-03 user-deferred
 - [Phase 3] 03-REVIEW.md WR-01..WR-05 (dialog save race, keyboard shortcuts behind modal, error copy, failed article load) still open
@@ -155,10 +109,10 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-29T13:20:00Z
-Stopped at: Milestone v0.2.1 completed and archived (override_closeout: 8 items acknowledged, phases 1–6 stale digests)
+Last session: 2026-09-29
+Stopped at: v0.3.0 Engagement Learning roadmap created (Phases 8–12, 22/22 requirements mapped)
 Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Discuss the first v0.3.0 phase with /gsd-discuss-phase 8
