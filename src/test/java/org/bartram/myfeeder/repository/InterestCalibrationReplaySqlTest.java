@@ -50,6 +50,9 @@ class InterestCalibrationReplaySqlTest {
     /** A block-comment span, or an unclosed {@code /*} through the end of the line. */
     private static final Pattern COMMENT_SPAN = Pattern.compile("/\\*.*?(?:\\*/|$)");
 
+    /** Opens a learned CTE, in any case or whitespace and anywhere in a line (deliberately unanchored). */
+    private static final Pattern BLEND_START = Pattern.compile("(?i)\\bwith\\s+learned\\s+as\\b");
+
     @Test
     void replaysTheAppsUnreadBlendVerbatim() throws IOException {
         String sql = Files.readString(SQL);
@@ -215,9 +218,32 @@ class InterestCalibrationReplaySqlTest {
                 .isInstanceOf(AssertionError.class)));
     }
 
+    /** An extra drifted blend statement fails whether it is indented, lower-case or opened mid-line (IN-07). */
+    @Test
+    void anExtraBlendStatementInAnyFormFails() throws IOException {
+        String sql = Files.readString(SQL);
+        assertThatCode(() -> assertEveryCopyIsVerbatim(sql)).doesNotThrowAnyException();
+
+        String unread = InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE);
+        String drifted = driftOneByte(unread, unread, 0);
+
+        Map<String, String> variants = new LinkedHashMap<>();
+        variants.put("indented", sql + "\n  " + drifted + "\n");
+        variants.put("lower-case", sql + "\nwith learned as" + drifted.substring("WITH learned AS".length()) + "\n");
+        variants.put("opened mid-line", sql + "\nSELECT * FROM (" + drifted + " SELECT * FROM blended) t;\n");
+
+        SoftAssertions.assertSoftly(softly -> variants.forEach((name, variant) -> softly
+                .assertThatCode(() -> assertEveryCopyIsVerbatim(variant))
+                .as(name)
+                .isInstanceOf(AssertionError.class)));
+    }
+
     /**
      * Checks, and only checks, the following:
      * <ol>
+     * <li>The code of the file opens a learned CTE ({@code with learned as} in any case, with any whitespace,
+     * anywhere in a line) exactly 5 times. Together with the next check this means no statement anywhere in
+     * the code opens a learned CTE other than the five verbatim lines.</li>
      * <li>The lines that start with {@code WITH learned AS} are, in file order, the unread blend three times
      * (summary, top, bottom), the window blend, then the learned section. The blend lines are compared with
      * the Java text by equality, so text appended to a line also fails.</li>
@@ -235,6 +261,11 @@ class InterestCalibrationReplaySqlTest {
     private static void assertEveryCopyIsVerbatim(String sql) {
         String unread = InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE);
         String window = InterestScoreQueries.blendCte(WINDOW_SCOPE);
+        String code = sql.lines().map(InterestCalibrationReplaySqlTest::codeOf).collect(Collectors.joining("\n"));
+        assertThat(BLEND_START.matcher(code).results().count())
+                .as("statements that open the learned CTE in the code, in any case, whitespace or position")
+                .isEqualTo(5);
+
         List<String> labels = sql.lines()
                 .filter(line -> line.startsWith("WITH learned AS"))
                 .map(line -> line.equals(unread) ? "unread"
