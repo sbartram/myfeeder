@@ -4,16 +4,16 @@ milestone: v0.1.24
 current_phase: 07
 current_phase_name: Rollout & Calibration
 status: executing
-stopped_at: Completed 07-07-PLAN.md
-last_updated: "2026-09-28T23:55:16.520Z"
+stopped_at: Completed 07-08-PLAN.md
+last_updated: "2026-09-29T00:06:02.380Z"
 last_activity: 2026-09-28
 last_activity_desc: Phase 07 execution started
-state_head: 9ea87593cc64e2d3d8867932c02c0ddd09c84352
+state_head: b460075dd5c2f1badf4e72853cae1dc8fdab0603
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 49
-  completed_plans: 47
+  completed_plans: 48
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-27)
 ## Current Position
 
 Phase: 07 (Rollout & Calibration) — EXECUTING
-Plan: 8 of 9
+Plan: 9 of 9
 Status: Ready to execute
 Last activity: 2026-09-28 — Phase 07 execution started
 
@@ -110,6 +110,7 @@ Progress: [█████████░] 86%
 | Phase 07 P05 | 3min | 2 tasks | 1 files |
 | Phase 07 P06 | 14 min | 3 tasks | 2 files |
 | Phase 07 P07 | 1h 13m | 3 tasks | 1 files |
+| Phase 07 P08 | 10 min | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -195,6 +196,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-06: a secret change rolls the app twice (chart checksum/secret + cluster Reloader); harmless, V6 applied once
 - [Phase 07]: 07-07: user chose load-phase3-rubric; Phase 3 rubric (profile + 7 topics) saved in prod at 2026-09-28T23:39:57Z
 - [Phase 07]: 07-07: launch backfill D-05 Overall PASS (183 legacy drained in 6m54s, 192 SCORED, 0 FAILED, breaker CLOSED, 0 retries); no D-08 throttle, so 07-09 has no override to remove
+- [Phase 07]: 07-08: user approved calibrated constants 100/70/22 (verbatim: approve), learn-rate 2, learned-cap 20; only tiers.neutral moves 40->22 so the Priority order is unchanged; no title redaction
+- [Phase 07]: 07-08: replay matched the app 5/5 at 100/70/40; D-10 met at 100/70/22 (high 14.1%, neutral 34.9% of 192 scored unread); pp above 100 rejected (18/30 badges saturate at 100)
 
 ### Pending Todos
 
@@ -227,6 +230,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-28T23:55:16.461Z
-Stopped at: Completed 07-07-PLAN.md
+Last session: 2026-09-29T00:06:02.319Z
+Stopped at: Completed 07-08-PLAN.md
 Resume file: None

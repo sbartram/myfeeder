@@ -253,7 +253,7 @@ Plans:
   2. Blend constants (profile weight, learning rate, cap, badge tier thresholds) are configurable and have been tuned against the real score distribution, so badges spread across tiers instead of clustering
   3. CLAUDE.md documents the Jev behaviors and gotchas: the app-owned client bean, the single retry layer, the scoring executor and the eligibility window
 
-**Plans**: 7/9 plans executed
+**Plans**: 8/9 plans executed
 
 Plans:
 **Wave 1**
@@ -277,7 +277,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 07-08-PLAN.md — Calibration: prod replay matched to the app, candidate grid vs the D-10 target, 07-CALIBRATION.md with top/bottom 20, user approval (D-11) (wave 5)
+- [x] 07-08-PLAN.md — Calibration: prod replay matched to the app, candidate grid vs the D-10 target, 07-CALIBRATION.md with top/bottom 20, user approval (D-11) (wave 5)
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
@@ -296,4 +296,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (most of 
 | 4. Scoring Pipeline & Backfill Sweep | 9/9 | Complete    | 2026-09-24 |
 | 5. Blend & Priority View | 8/8 | Complete    | 2026-09-26 |
 | 6. Thumbs Feedback | 7/7 | Complete    | 2026-09-27 |
-| 7. Rollout & Calibration | 7/9 | In Progress|  |
+| 7. Rollout & Calibration | 8/9 | In Progress|  |
