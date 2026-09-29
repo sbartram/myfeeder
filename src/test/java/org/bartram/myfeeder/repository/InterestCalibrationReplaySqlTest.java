@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -111,12 +112,57 @@ class InterestCalibrationReplaySqlTest {
         }
     }
 
+    @Test
+    void driftInAnySingleBadgeCopyFails() throws IOException {
+        String sql = Files.readString(SQL);
+        assertThatCode(() -> assertEveryCopyIsVerbatim(sql)).doesNotThrowAnyException();
+
+        assertThat(occurrences(sql, InterestScoreQueries.INTEREST_SCORE)).as("badge copies").isEqualTo(4);
+        for (int i = 0; i < 4; i++) {
+            String drifted = driftOneByte(sql, InterestScoreQueries.INTEREST_SCORE, i);
+            assertThatCode(() -> assertEveryCopyIsVerbatim(drifted))
+                    .as("badge copy " + i)
+                    .isInstanceOf(AssertionError.class);
+        }
+    }
+
+    /** One step either side of the shipped counts (5 blend lines, 4 badge copies) fails. */
+    @Test
+    void aMissingOrExtraCopyFails() throws IOException {
+        String sql = Files.readString(SQL);
+        assertThatCode(() -> assertEveryCopyIsVerbatim(sql)).doesNotThrowAnyException();
+
+        String unread = InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE);
+        String badge = InterestScoreQueries.INTEREST_SCORE;
+        StringBuilder withoutBottom = new StringBuilder();
+        int unreadSeen = 0;
+        for (String line : sql.lines().toList()) {
+            if (line.equals(unread) && ++unreadSeen == 3) {
+                continue;
+            }
+            withoutBottom.append(line).append('\n');
+        }
+        int lastBadge = sql.lastIndexOf(badge);
+
+        Map<String, String> variants = new LinkedHashMap<>();
+        variants.put("bottom blend line removed", withoutBottom.toString());
+        variants.put("extra unread blend line", sql + "\n" + unread + "\n");
+        variants.put("last badge copy replaced",
+                sql.substring(0, lastBadge) + "NULL" + sql.substring(lastBadge + badge.length()));
+        variants.put("extra badge copy", sql + "\n" + "SELECT " + badge + ";\n");
+
+        variants.forEach((name, variant) -> assertThatCode(() -> assertEveryCopyIsVerbatim(variant))
+                .as(name)
+                .isInstanceOf(AssertionError.class));
+    }
+
     /**
      * Every statement line that starts with {@code WITH learned AS} must be one of the allowed Java texts, in
      * file order: the unread blend three times (summary, top, bottom), the window blend, then the learned
      * section. The raw line is tested, so the {@code --} header comment that mentions the phrase is never
-     * counted. The blend kinds use equality, so text appended to a line also fails. On failure only the
-     * label list is shown, never a 1.6k-character SQL line.
+     * counted. The blend kinds use equality, so text appended to a line also fails. The badge expression
+     * must occur exactly 4 times outside comments, so a copy pasted into a comment cannot hide a drifted
+     * statement copy. On failure only labels and counts are shown, never a 1.6k-character SQL line.
      */
     private static void assertEveryCopyIsVerbatim(String sql) {
         String unread = InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE);
@@ -131,6 +177,16 @@ class InterestCalibrationReplaySqlTest {
 
         assertThat(labels).as("kind of each 'WITH learned AS' line, in file order")
                 .containsExactly("unread", "unread", "unread", "window", "learned");
+        assertThat(occurrences(withoutComments(sql), InterestScoreQueries.INTEREST_SCORE))
+                .as("verbatim INTEREST_SCORE copies outside comments")
+                .isEqualTo(4);
+    }
+
+    /** The statement text: drops {@code --} lines, the same filter as {@code replayIsReadOnly}. */
+    private static String withoutComments(String sql) {
+        return sql.lines()
+                .filter(line -> !line.strip().startsWith("--"))
+                .collect(Collectors.joining("\n"));
     }
 
     /** Non-overlapping count of {@code needle} in {@code haystack}. */
