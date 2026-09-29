@@ -56,3 +56,17 @@ helm/myfeeder/values-secrets.yaml
 ### Local scratch (may contain registry credentials) ###
 pub.sh
 .codegraph/
+
+### Local tool state (GSD install, Playwright MCP output) ###
+.claude/.gsd-profile
+.claude/agents/
+.claude/commands/
+.claude/gsd-core/
+.claude/gsd-file-manifest.json
+.claude/gsd-install-state.json
+.claude/gsd-migration-journal/
+.claude/hooks/
+.claude/scripts/
+.gsd/
+.planning/state.json
+.playwright-mcp/
