@@ -7,14 +7,14 @@ findings:
     severity: warning
     disposition: open
     title: "Breaker transition log prints \"-1.0%\" failure and slow-call rates for OPEN_TO_HALF_OPEN and HALF_OPEN_TO_CLOSED"
-  - id: WR-02
-    severity: warning
-    disposition: fixed
-    title: "Replay drift guard passes when only one of several blend and badge copies matches the app"
   - id: WR-03
     severity: warning
     disposition: open
     title: "Tier thresholds are not validated anywhere, on the server or in the replay driver"
+  - id: WR-04
+    severity: warning
+    disposition: open
+    title: "The badge guard counts copies without checking where they are, and its comment filter only removes whole-line `--` comments, so a drifted badge copy can still pass"
   - id: IN-01
     severity: info
     disposition: open
@@ -39,9 +39,25 @@ findings:
     severity: info
     disposition: open
     title: "CLAUDE.md misattributes the test-yaml tier pin"
-open: 8
-total: 9
-recorded: 2026-09-29T00:50:50.394Z
+  - id: IN-07
+    severity: info
+    disposition: open
+    title: "Blend lines are found by a case-sensitive, column-0 prefix, so an extra blend statement that is indented or lower-cased and drifted is never checked"
+  - id: IN-08
+    severity: info
+    disposition: open
+    title: "`replayIsReadOnly` only catches psql meta-commands at column 0 (pre-existing, unchanged by 07-10)"
+  - id: IN-09
+    severity: info
+    disposition: open
+    title: "`runDriver` inherits the developer's driver and libpq env, and its 30s timeout cannot fire (pre-existing, unchanged by 07-10)"
+  - id: WR-02
+    severity: warning
+    disposition: fixed
+    title: "Replay drift guard passes when only one of several blend and badge copies matches the app"
+open: 12
+total: 13
+recorded: 2026-09-29T02:29:34.688Z
 ---
 
 # Phase 07: Code Review Disposition
@@ -49,14 +65,18 @@ recorded: 2026-09-29T00:50:50.394Z
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
 | WR-01 | warning | open | - |
-| WR-02 | warning | fixed | 07-10 |
 | WR-03 | warning | open | - |
+| WR-04 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
 | IN-04 | info | open | - |
 | IN-05 | info | open | - |
 | IN-06 | info | open | - |
+| IN-07 | info | open | - |
+| IN-08 | info | open | - |
+| IN-09 | info | open | - |
+| WR-02 | warning | fixed | 07-10 |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.
