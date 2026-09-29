@@ -13,7 +13,7 @@ findings:
     title: "Tier thresholds are not validated anywhere, on the server or in the replay driver"
   - id: WR-04
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "The badge guard counts copies without checking where they are, and its comment filter only removes whole-line `--` comments, so a drifted badge copy can still pass"
   - id: IN-01
     severity: info
@@ -41,7 +41,7 @@ findings:
     title: "CLAUDE.md misattributes the test-yaml tier pin"
   - id: IN-07
     severity: info
-    disposition: open
+    disposition: fixed
     title: "Blend lines are found by a case-sensitive, column-0 prefix, so an extra blend statement that is indented or lower-cased and drifted is never checked"
   - id: IN-08
     severity: info
@@ -55,7 +55,7 @@ findings:
     severity: warning
     disposition: fixed
     title: "Replay drift guard passes when only one of several blend and badge copies matches the app"
-open: 12
+open: 10
 total: 13
 recorded: 2026-09-29T02:29:34.688Z
 ---
@@ -66,14 +66,14 @@ recorded: 2026-09-29T02:29:34.688Z
 |---------|----------|-------------|--------|
 | WR-01 | warning | open | - |
 | WR-03 | warning | open | - |
-| WR-04 | warning | open | - |
+| WR-04 | warning | fixed | 07-11 |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
 | IN-04 | info | open | - |
 | IN-05 | info | open | - |
 | IN-06 | info | open | - |
-| IN-07 | info | open | - |
+| IN-07 | info | fixed | 07-11 |
 | IN-08 | info | open | - |
 | IN-09 | info | open | - |
 | WR-02 | warning | fixed | 07-10 |
