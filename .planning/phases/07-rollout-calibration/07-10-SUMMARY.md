@@ -188,3 +188,8 @@ None. No external service configuration is required.
 ---
 *Phase: 07-rollout-calibration*
 *Completed: 2026-09-29*
+
+## Self-Check: PASSED
+
+- FOUND: InterestCalibrationReplaySqlTest.java, 07-REVIEW-DISPOSITION.md, 07-10-SUMMARY.md
+- FOUND commits: 08185bf, 7ede686, 1531fac, 6055cf2
