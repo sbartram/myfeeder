@@ -9,7 +9,7 @@ findings:
     title: "Breaker transition log prints \"-1.0%\" failure and slow-call rates for OPEN_TO_HALF_OPEN and HALF_OPEN_TO_CLOSED"
   - id: WR-02
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Replay drift guard passes when only one of several blend and badge copies matches the app"
   - id: WR-03
     severity: warning
@@ -39,7 +39,7 @@ findings:
     severity: info
     disposition: open
     title: "CLAUDE.md misattributes the test-yaml tier pin"
-open: 9
+open: 8
 total: 9
 recorded: 2026-09-29T00:50:50.394Z
 ---
@@ -49,7 +49,7 @@ recorded: 2026-09-29T00:50:50.394Z
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
 | WR-01 | warning | open | - |
-| WR-02 | warning | open | - |
+| WR-02 | warning | fixed | 07-10 |
 | WR-03 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
