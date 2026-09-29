@@ -33,10 +33,11 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Priority view at `/priority` (feed tree + `g p`): unread scored articles by score, ties by date, then "Not yet scored" by date; keyset paging with an opaque served-tuple cursor that survives mid-walk score changes (G-05-7); frozen order while triaging; status banner — Phase 5
 - ✓ Tier-colored interest badge in every article list and the reading pane, with matched-topic chips and an exact "Why N?" breakdown that sums to the badge — Phase 5
 - ✓ Thumbs up/down (buttons + `u`/`d`, Shift+D narrow picker) stores one reversible `article_feedback` row; the learned adjustment (capped ±20, sign-clamped, within ±50) is derived in SQL on every read, so the badge, Why row and Priority order update with no Jev call and no write to topic weights; effect toast, no-match "Create topic from article" draft, learned line per topic in Interests — Phase 6
+- ✓ Interest ranking live in production (v0.2.0 with a real TypeSafe key, v0.2.1 calibrated): launch backfill drained 183 legacy articles in 6m54s with 0 FAILED rows and the breaker CLOSED; blend constants tuned by a read-only prod replay (profile-points 100, tiers 70/22, learn-rate 2, learned-cap 20) and served to the badge via `/status` `tiers`; Jev retry/breaker log lines; CLAUDE.md documents the Jev config, throttle levers and tuning procedure — Phase 7
 
 ### Active
 
-(none — remaining milestone work is Phase 7 rollout and calibration)
+(none — milestone complete; next milestone not yet defined)
 
 ### Out of Scope
 
@@ -96,6 +97,9 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | Jev breaker wraps retry (aspect orders 1/2), 30s shared timeout, auto OPEN→HALF_OPEN (Phase 4) | Breaker must count articles, not attempts; profile+topics calls exceed 5s | ✓ Good — closes 02-REVIEW WR-01..03 |
 | bootTestRun activates a `dev` profile overlay for live settings; suite stays offline (Phase 4, G-04-1) | Test application.yaml shadows main under bootTestRun | ✓ Good — live-key UAT re-run passed; DevProfileConfigTest guards drift and activation |
 | Accept react-router v6 advisories (GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg) | Fix needs v7 major; no SSR, internal-only navigation targets | ⚠️ Revisit — when a v7 migration is scheduled |
+| Badge tier thresholds are server config served on `/status` (D-13), tuned only via committed yaml (D-14) | One source for the badge colours; no Helm/env drift | ✓ Good — prod serves 70/22; frontend falls back to 70/40 until status loads (brief first-paint flash, IN-01) (Phase 7) |
+| Calibrate by read-only replay of the verbatim blend SQL against prod, drift-guarded by a test (Phase 7) | Tune without re-scoring or writing prod | ✓ Good — replay matched the app 5/5; only tiers.neutral moved 40→22, so Priority order was unchanged; guard hardened in 07-10/07-11 (WR-05/IN-10 advisories remain) |
+| Keep a single retry layer (Resilience4j) and concurrency 1 for launch backfill (D-07) | Two retry layers multiply 429s | ✓ Good — 183-article backfill drained with 0 retries, 0 FAILED, breaker CLOSED; no D-08 throttle needed (Phase 7) |
 
 ## Evolution
 
@@ -115,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-27 after Phase 6*
+*Last updated: 2026-09-29 after Phase 7*
