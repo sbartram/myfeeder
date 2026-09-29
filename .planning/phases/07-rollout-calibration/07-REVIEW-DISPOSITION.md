@@ -55,9 +55,17 @@ findings:
     severity: warning
     disposition: fixed
     title: "Replay drift guard passes when only one of several blend and badge copies matches the app"
-open: 10
-total: 13
-recorded: 2026-09-29T02:29:34.688Z
+  - id: WR-05
+    severity: warning
+    disposition: open
+    title: "A learned CTE spelled any other way escapes the blend-opening count, so a commented-out verbatim blend can stand in for a drifted real statement"
+  - id: IN-10
+    severity: info
+    disposition: open
+    title: "`codeOf` does not strip string literals, so a verbatim badge item in a literal can stand in for a drifted, renamed badge column"
+open: 12
+total: 15
+recorded: 2026-09-29T03:24:53.000Z
 ---
 
 # Phase 07: Code Review Disposition
@@ -77,6 +85,8 @@ recorded: 2026-09-29T02:29:34.688Z
 | IN-08 | info | open | - |
 | IN-09 | info | open | - |
 | WR-02 | warning | fixed | 07-10 |
+| WR-05 | warning | open | - |
+| IN-10 | info | open | - |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.
