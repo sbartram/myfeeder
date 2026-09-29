@@ -6,6 +6,10 @@ severity: minor
 files:
   - src/main/resources/application.yaml
   - src/test/resources/application.yaml
+
+audit_acknowledged:
+  milestone: v0.2.1
+  at: 2026-09-29
 ---
 
 ## Problem
