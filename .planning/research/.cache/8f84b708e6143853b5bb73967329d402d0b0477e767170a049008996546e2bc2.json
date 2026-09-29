@@ -1,0 +1,1 @@
+{"content":"PostgreSQL docs (queries-with): a non-recursive side-effect-free WITH query is inlined when referenced once, materialized when referenced more than once; MATERIALIZED / NOT MATERIALIZED override.","source":"web","provider":"webfetch","confidence":"HIGH","fetched_at":"2026-09-29T18:46:13.811Z","ttl":86400000,"kind":"docs"}

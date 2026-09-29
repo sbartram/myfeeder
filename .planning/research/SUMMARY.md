@@ -1,231 +1,282 @@
 # Project Research Summary
 
-**Project:** myfeeder: interest ranking milestone (TypeSafe Jev)
-**Domain:** Adding judgment-model ("priority inbox") article ranking to an existing self-hosted, single-user Spring Boot 4 + React feed reader
-**Researched:** 2026-09-22
-**Confidence:** HIGH for the build approach (library compatibility was checked by running code; integration points were read from source). MEDIUM for ranking quality (blend constants and question wording need tuning on real data).
-
-> **Orchestrator note (added after synthesis):** The user added a **dependency-upgrade phase before all Jev work** (Spring Boot 4.0.3→4.0.8, Spring AI BOM 2.0.0-M2→2.0.1, Spring Cloud 2025.1.0→2025.1.3, frontend minor/patch bumps). The stack verification below was done on Boot 4.0.3 / Spring AI M2. After the upgrade, the TypeSafe starter (built against Boot 4.0.7) runs closer to its native baseline; re-run the key-state context tests in the Jev foundation phase. The phase numbers below shift by +1 in the roadmap.
+**Project:** myfeeder, milestone v0.3.0 Engagement Learning
+**Domain:** Implicit (engagement) feedback added to an explainable, query-time interest ranker in a self-hosted, single-user feed reader
+**Researched:** 2026-09-29
+**Confidence:** HIGH for the integration points and stack (read directly from the code at `8fd4145`). MEDIUM for the product and weighting calls and the browser-API facts.
 
 ## Executive Summary
 
-This milestone adds a priority inbox to a feed reader, the same pattern as Feedly Priorities, NewsBlur prompt classifiers and TT-RSS point scoring. Every new article is judged once by TypeSafe Jev against a written interest profile and a weighted topic rubric. The raw judgments are stored, and a blended score is computed at query time so weight edits and thumbs feedback re-rank instantly with no new API calls. The planned design is mainstream. What decides whether it succeeds is not the model but four things: explainability (an exact arithmetic "why this score"), feedback semantics (reversible, bounded, never flipping a declared dislike), list stability while triaging, and a hard guarantee that scoring never touches feed polling.
+v0.3.0 teaches the existing v0.2.1 learned model from four deliberate implicit signals: opening the original, starring, adding to a board and sending to Raindrop. Reference products (Feedly Leo, Gmail, YouTube, Artifact, Instagram) and the literature (Joachims 2005; Hu, Koren & Volinsky 2008) agree on three things:
+- Explicit signals always outrank implicit ones.
+- Saves count for more than clicks.
+- Learning from clicks on your own ranking creates a rich-get-richer loop.
 
-**Recommended approach.** Use `spring-ai-starter-typesafe` 0.1.0, which was verified to work on Boot 4.0.3, Java 25 and the Spring AI 2.0.0-M2 BOM; it has no Spring AI dependency at all. myfeeder should **own the `TypeSafeClient` bean** so that a blank key cannot crash startup. Wrap calls in a `JevApiClientImpl` with `@CircuitBreaker` + `@Retry`, with the SDK's own retries turned off. Scoring runs off the polling thread: an after-ingest event feeds a small bounded executor, and the database is the source of truth. A periodic sweep of eligible unscored articles is both the safety net and the launch backfill. Store raw Jev outputs in separate tables (`article_score`, `article_topic_score`), never as columns on `article`. Blend in one SQL CTE, which is the single source of truth for the sort, the badge and the breakdown. Feedback is derived from an `article_feedback` table, not accumulated into weights.
+The scope already decided matches the standard safeguards: positive-only, one count per article at its strongest kind, thumbs override, and a separate lower cap. myfeeder's exact point arithmetic also makes the votes-vs-engagement explanation a real advantage.
 
-**Key risks.**
-1. Present-but-blank API key crashes context startup (verified). Mitigation: the app-owned bean pattern plus context tests.
-2. Scoring stalls polling, because the app has one scheduler thread, no `@EnableAsync`, and `pollFeed` is non-transactional so `AFTER_COMMIT` listeners run inline. Mitigation: the listener only enqueues, and never throws.
-3. Floods from subscribe, OPML import and startup polls hit the rate limit and open the breaker. Mitigation: a recency eligibility window, newest-first ordering, and bounded concurrency.
-4. The Priority list reshuffles under the cursor after votes. Mitigation: do not invalidate the Priority query on mutation; update badges in place.
-5. Flat, uninformative scores from poorly worded questions. Mitigation: positive phrasing, a descriptive 5-level rubric, and a calibration spike against the live API.
+The build needs **zero new dependencies**:
+- **Storage:** one Flyway V7 migration (`article_engagement` keyed on `(article_id, kind)` with `ON DELETE CASCADE`, plus a dismissal table for gap suggestions) and a `JdbcClient` `ArticleEngagementStore`.
+- **Save capture:** server-side, in the three services that own the saves: `ArticleService.updateState`, `BoardService.addArticle`, and `RaindropService.saveToRaindrop` after `createBookmark` succeeds.
+- **Open capture:** client-side, through one `openOriginal` helper. It calls `window.open` synchronously, then fires a JSON request without awaiting it.
+- **Learning:** a second derived term in `InterestScoreQueries.LEARNED_CTE`. It collapses each article to one strength, drops articles that have a thumbs vote, counts only SCORED articles, applies the same hinge, then caps. Thumbs take their share first, so `base + thumbs_applied + engagement_applied = w` exactly.
+- The term never writes `interest_topic` and never calls Jev. Sort, badge, "Why N?" and Interests all read the same CTE, so they stay consistent.
+
+The risks are in the SQL, not the technology:
+- **Double counting** when engagement rows are joined before being collapsed per article.
+- **Broken "Why N?" sums** when two caps and the sign clamp interact.
+- **Engagement that never counts** on articles read before Jev scored them.
+- **Saturation and tier inflation** from the feedback loop.
+- **Drift-guard lag**, where the calibration replay no longer matches the CTE.
+
+The mitigations are real-Postgres grid tests, splitting the parts in SQL by subtraction, a conservative cap well below `learned-cap`, and committing each CTE change together with the regenerated replay. Ship conservative values, let engagement build up in prod, then calibrate.
+
+**Six design decisions are contested across the research files** (see Open Decisions). Settle them in requirements before the learned-model SQL is written.
 
 ## Key Findings
 
 ### Recommended Stack
 
-No new libraries apart from the starter; everything else (Resilience4j, Flyway, `RestClient`, jsoup via Readability4J, TanStack Query) is already present. See STACK.md for the full API surface and exception tree.
+Nothing to install: no `build.gradle.kts` or `package.json` change, and no BOM or version bump. The new files are `V7__article_engagement.sql`, `ArticleEngagementStore`, `EngagementKind`, the open endpoint and service, and one frontend hook.
 
-**Core technologies:**
-- **`org.springaicommunity:spring-ai-starter-typesafe:0.1.0`**, explicit version in `build.gradle.kts` (not in any BOM). Brings `TypeSafeClient`, typed `Noul`/`Score` questions and answers, and the typed exception hierarchy. The dependency-management plugin downgrades it to Spring 7.0.5 and Jackson 3.0.4, which works (verified). **Do not add `typesafe-spring-ai`**: it needs Spring AI 2.0.1 and is out of scope.
-- **App-owned `TypeSafeClient` bean ("Pattern A")**. Built with `apiKey(Supplier)`, an explicit 5s connect timeout, `spring.ai.typesafe.timeout: 5s`, and a clone of the context `RestClient.Builder` so the User-Agent customizer still applies. The auto-config's `@ConditionalOnMissingBean` backs off, so absent, blank and real keys all start cleanly (verified). This keeps the Raindrop convention (`${MYFEEDER_TYPESAFE_API_KEY:}` + `requireConfigured()` → `JevNotConfiguredException`) intact.
-- **Pinned model `jev-1.13.0`**, with `response.model()` stored per score. `jev-latest` can move and make stored scores incomparable.
-- **Resilience4j as the only retry layer**: `spring.ai.typesafe.retry.max-retries: 0` and Resilience4j `@Retry` with an allow-list of transient exceptions only (429, 5xx including 529, connection/timeout).
-- **Cost and limits.** About $0.042 per 1M input tokens (profile and topic text are billed on every call). Roughly $0.0001 per article. 1,200 req/min, a limit the vendor says "adjusts dynamically". About 300ms per call. There is no server-side batching: send one `systemOne` call per article carrying all its questions.
+**Core technologies (new usage only):**
+- **PostgreSQL + Flyway V7:**
+  - Table: `article_engagement(article_id FK ON DELETE CASCADE, kind CHECK, created_at, PK(article_id, kind))`.
+  - `INSERT ... ON CONFLICT DO NOTHING` is idempotent and safe under races.
+  - Store only the kind, never a weight.
+- **`JdbcClient` store:** follows the `ArticleFeedbackStore` pattern. Don't use a `CrudRepository`: with a composite key and a preset id, `save()` issues an `UPDATE`.
+- **`LEARNED_CTE`:**
+  - New `engaged` and `eng_learned` CTEs.
+  - New parameters `openWeight`, `saveWeight` and `engagementCap`, bound in `learnedSql()`, the single binding point.
+- **`myfeeder.interest.blend.engagement.{open-weight, save-weight, cap}`:**
+  - Query-time yaml constants, tuned only in committed yaml (D-14).
+  - Rules: `0 <= open < save < 1` and `cap < learned-cap` (20).
+- **Browser:** plain `fetch` (optionally `keepalive`) after a synchronous `window.open`. Don't use `sendBeacon`:
+  - Chrome throws on JSON Blobs.
+  - It breaks the JSON-only CSRF rule.
+  - jsdom doesn't implement it.
 
 ### Expected Features
 
-**Must have (table stakes, v1):**
-- Priority smart view (a route, next to All/Starred): unread sorted by score, then a "Not yet scored" separator, then unscored articles by date (T1, T2).
-- **List stability while triaging.** Votes and mark-read must not reorder the list under the cursor (T8). This is a real risk: `useArticles` currently invalidates `['articles']` on every mutation.
-- Score badge on a 0–100 display scale with tier colors from theme variables. Unscored shows no badge; never render "0" (T3, D7).
-- An exact arithmetic "Why 82?" breakdown plus matched-topic chips (T4, T5, D1). Jev returns no prose, so the explanation is computed from stored numbers, which makes it exact and free.
-- Thumbs up/down: toggleable, idempotent, exactly reversible, with a visible effect ("Nudged Rust +2") and a visible no-op ("No topics matched — add a topic?") (T6, T7, C2).
-- Profile editor with writing guidance, and a topic rubric editor with signed weights, "base + learned" display and "reset learning" (T9, T10, T11).
-- Not-configured / scoring-paused / cold-start / backfill-progress states, backed by a status endpoint (T12, T13, T14).
-- Keyboard: `u` / `d` for thumbs (toggles), `i` for the "why" breakdown, `g p` to open Priority. `Shift+A` is disabled in Priority. `+ = -` are already taken by font size (T15).
+**Must have (v0.3.0):**
+- **E1** Capture "open original" from `o` and the Open Original button(s), once per article. Don't count links inside the article body, or count one only when its `href` equals `article.url`.
+- **E2** Capture saves server-side: star (false to true only), board add, and Raindrop on success only.
+- **E3/E10** A way to reverse engagement. The mechanism is contested (Open Decision 3).
+- **E4** A thumbs vote overrides the article's engagement for every topic. Removing the vote brings the engagement back; the derived model does this for free.
+- **E5** Weights: save > open > 0, both below one vote. Starting values: open 0.25, save 0.5.
+- **E6** A separate, lower engagement cap: provisionally 8 to 10, against 20 for thumbs.
+- **E7** Engagement on an unscored article is dormant, and the UI doesn't suggest otherwise.
+- **E8** "Why N?" splits each topic's weight into base, votes and engagement, as a note on the topic's weight rather than as extra point rows.
+- **E9** The Interests learned line shows votes and engagement separately, with an at-cap flag and a count of contributing articles.
+- **E11** Engagement never re-sorts the list live. Patch the row, set the "Ranking changed" hint, and never invalidate `['priority']`.
+- **E12** Show the "matched no topic" notice for engaged articles too, reusing `FeedbackNotice` and `TopicDraft` with a +20 draft.
+- **D1 + D2** A gap-discovery list in Interests, with a stored dismissed/handled state. Articles are never re-judged against new topics (R5), so without that state suggestions never clear.
+- Calibration, plus extending the replay drift guard.
 
-**Should have (differentiators, v1.x):**
-- Manual "Re-score unread" (D4). **Needs a user decision because it conflicts with PROJECT.md** (see Reconciliations).
-- Create a topic from an article when feedback has nothing to act on (D3).
-- A topic picker on thumbs-down for mixed-topic articles, like Feedly's "less like this" (D2).
-- Topic test/preview against the open article (D5). Priority count above a threshold (D6). Per-topic stats (D9). "Mark below here as read" (D8).
+**Should have:**
+- **D3** An engagement glyph or line on the article, which also anchors the undo control and the explanation.
+- **Suggestion order:** either "by surprise", lowest blended score first (FEATURES), or by strength then recency (ARCHITECTURE and PITFALLS).
+- **Near-miss filter:** exclude articles whose best noul is above a threshold (about 0.35) and show the closest existing topic, so the user doesn't create duplicates.
+- **Status count:** an `engagedUnscored` field on `/api/interest/status` (appended, per the status contract).
 
-**Defer / anti-features:** auto-hiding or auto-marking low scores read; LLM prose explanations; implicit signals (dwell time, stars); percentile badges; per-feed topic scopes; super-dislike and precedence rules; using liked articles as examples; sort-by-interest everywhere; notifications.
+**Defer:**
+- D4: engaged articles become eligible for scoring (contested).
+- D5: backfill from existing stars and boards (contested).
+- D7: record which view an open came from.
+- Copy Link as a signal.
+- Rate-normalized engagement.
+- Feed affinity.
+- "Reset reading history".
+- Decaying votes and engagement together.
+
+**Anti-features (all files agree):**
+- Dwell time, selection, reader view or scroll as signals.
+- Negative signals from skipped articles.
+- A toast on every open.
+- Writing learned points into `interest_topic.weight`.
+- LLM-drafted suggestions.
+- Separate weights per save kind.
+- Counting repeat opens or saves.
+- Decaying engagement but not votes.
+- A "pause learning" toggle in the UI. Setting the weights to 0 in yaml does the same.
 
 ### Architecture Approach
 
-Layer-first packages as today; no feature package. Ingest publishes `ArticlesIngestedEvent(feedId, newIds)` after the existing dedup loop. A listener that never throws hands the IDs to a dedicated 2-thread bounded executor. `ArticleScoringService` builds a null-safe `LinkedHashMap` state `{feed, title, summary}` (HTML stripped, about 1,500 characters) and a question map (`profile` → a 5-level `Score`, `topic_<id>` → a `Noul` with `whenTrue`/`whenFalse`). It calls `JevApiClient` (the only bean touching the SDK), classifies failures, and writes results write-once with `ON CONFLICT DO NOTHING`. A scheduled sweep only SELECTs eligible unscored IDs and enqueues them; it never calls Jev on the scheduler thread. The read path is SQL only: `InterestScoreQueries` owns one blend CTE, used for the Priority keyset page, cursor resolution and `@Transient` enrichment (`interestScore`, `feedback`) of every article response.
+Record each engagement where the action is owned: the backend for saves, the client only for opens. Store only facts. All learning stays a derived term in the single `LEARNED_CTE`, so every learned point can be undone by deleting rows. The explanation splits a topic row's weight (`base + thumbsLearned + engagementLearned`). The integer point rows and their largest-remainder rounding (D-02) are unchanged. New DTO fields are appended, never renamed.
 
 **Major components:**
-1. **`JevApiClient` / `JevApiClientImpl`** (`integration/`). CB (outer) + Retry (inner). `isConfigured()` = key has text. No fallback method, so typed exceptions propagate for classification.
-2. **`ArticleScoringService` + `interestScoringExecutor` + `InterestScoringListener`** (`service/`, `config/`). A non-blocking `submit(ids)` with an in-flight dedup set, the state/question builders, failure classification and persistence.
-3. **`InterestBackfillJob`** (`scheduler/`). `@Scheduled(fixedDelay ≈ 2m)`. Skips when unconfigured, when the rubric is empty or when the breaker is OPEN. Enqueues up to the free queue capacity. This one job is the launch backfill, the outage recovery and the cold-start trigger.
-4. **`InterestProfileService` / `InterestController`**. Profile (singleton row) and topic CRUD, validation (≤25 topics, profile ≤2,000 chars, warn on negated topic text), version bumps on text edits. Serves `/api/interest/status`.
-5. **`InterestScoreQueries` + `PriorityService`**. The single blend CTE, `GET /api/articles/priority`, and enrichment.
-6. **Schema (Flyway V6, all five tables at once):** `interest_profile`, `interest_topic`, `article_score`, `article_topic_score`, `article_feedback`, all with `ON DELETE CASCADE`.
-7. **Frontend.** `/priority` route plus an `ArticleFilters.priority` flag (**not** a uiStore sentinel; this follows how `/starred` works). `MainLayout` derives the same filter object from the route so `j`/`k` walk the ranked order. Also `InterestBadge`, `ThumbsButtons`, and an `InterestSettings` dialog kept separate from the 233-line SettingsDialog.
+1. **V7 migration:** `article_engagement` plus `topic_suggestion_dismissal`, both in one migration like V6.
+2. **`ArticleEngagementStore`:** depends only on `JdbcClient`, so Article, Board and Raindrop services can use it without a dependency cycle.
+3. **Capture hooks:**
+   - **STAR:** make `updateState` transactional, or use a targeted `UPDATE ... WHERE starred = false` and record only when it changes a row.
+   - **BOARD:** in `addArticle`.
+   - **RAINDROP:** after `createBookmark` returns, outside the circuit-breaker bean.
+   - **Opens:** an endpoint that accepts only the open kind.
+4. **`LEARNED_CTE` pipeline:**
+   - Chain: `engaged` → `eng_learned` → `eff` → `eff2` (`w_thumbs`, `w`) → `contrib` (`thumbs_applied`, and `engagement_applied` by subtraction).
+   - `WITH learned AS` must stay the first token, because the drift guard looks for it.
+5. **Explanation fields and UI:**
+   - DTOs: `TopicContribution`, `Row`, `TopicWeight`, `TopicLearned`, `Article.engagement` (by-id only).
+   - `LearnedLimit` must check limits on `base + learned + engagement`.
+   - UI: the WhyBreakdown label, `TopicRow.LearnedLine`, and the vote toast saying the vote "replaces engagement".
+6. **`TopicSuggestionService` and its routes:** read-only apart from the dismissal row; tests assert `verifyNoInteractions(jevApiClient)`.
+7. **Frontend:**
+   - `useOpenOriginal` is the only way to open an original link.
+   - One shared reaction after any engagement: patch the Priority row, set the hint, invalidate `['interest','learned']` and `['interest','suggestions']`, and refresh the article by id.
+8. **Replay script and drift test:**
+   - Regenerate the replay byte for byte in the same plan as the CTE change.
+   - New psql `-v` variables must have the same names as the JdbcClient parameters.
+   - No kind name or alias may contain a word the replay's write-keyword check rejects; `COPY_LINK` would trip it.
 
 ### Critical Pitfalls
 
-1. **A blank API key crashes startup** (verified in the starter source and by test). Use Pattern A and add `@SpringBootTest` context tests with the key absent **and** empty. Add a `checksum/secret` pod annotation so a key-only redeploy rolls the pod, and have `deploy.sh` default the variable with a warning.
-2. **Scoring on the single polling thread.** The scheduler has one thread. There is no `@EnableAsync`, so `@Async` would silently run inline. `pollFeed` has no transaction, so the `AFTER_COMMIT` + `fallbackExecution` listener runs synchronously, and a listener that throws increments `feed.errorCount` and backs off a healthy feed. The listener must only enqueue, catch everything, and the executor must discard on overflow. Test: polling completes normally while the Jev stub sleeps 30s.
-3. **Floods and re-scoring loops.** Subscribe, OPML import, feed edits and startup all poll immediately and can insert hundreds of back-catalogue items. Apply one eligibility predicate at enqueue and in the sweep, process newest-first, and bound concurrency. Articles with a NULL GUID are **re-inserted as new on every poll** (verified: `existsByFeedIdAndGuid` uses `guid = :guid`, and `= NULL` never matches), so each copy would be scored again. Guard against it (see Reconciliations).
-4. **Lost updates if scores live on `article`.** `ArticleService.updateState` does a find → mutate → full-row `save()`, which would wipe scores written concurrently by the scorer. Keep scores in separate tables and never change the `Article` persistence shape.
-5. **Unstable Priority pagination and reshuffling.** NULL scores break row-value comparison, float sums are not bit-stable, and mutation-triggered invalidation re-sorts under the cursor. Use `COALESCE(score, '-Infinity')`, `ROUND(…, 6)`, `id` as the final tiebreaker, no invalidation of the Priority query on votes or mark-read, and client-side dedup by `id`.
+1. **Double counting.**
+   - Collapse to one `MAX` strength per article before joining topics.
+   - Any thumbs vote on the article removes all its engagement (`NOT EXISTS`).
+   - One BOARD row per article, however many boards it is on.
+   - Test: open + star + 2 boards + Raindrop on one article counts once.
+2. **Two caps plus the sign clamp break the exact split.**
+   - Formulas: `w1 = signClamp(base + t)`, `w = signClamp(base + t + e)`, `thumbs_applied = w1 − base`, `eng_applied = w − w1`.
+   - Compute the parts in SQL, and get the rounded engagement part by subtraction.
+   - Add a grid property test over base, thumbs and engagement values.
+3. **Engaged-but-unscored articles never count.** An article is auto-marked read after 1 s, and scoring only picks up unread articles. The learned model and gap discovery must require `status = 'SCORED'`. Make the loss visible with the status count or a reading-pane hint.
+4. **Saturation from the feedback loop.**
+   - The cap is the only brake: keep it at about half of `learned-cap` or less.
+   - Record `created_at` on every row now, so decay stays possible later.
+   - Calibration must report which topics are at the cap, and the tier histogram with engagement on and off.
+5. **Opens that are lost or blocked.** Awaiting the request before `window.open` gets the tab blocked, and `noopener` always returns `null`, so you can't even tell. Open synchronously, fire and forget, show no error toast, route every open through one helper, and keep Open Original a `<button>`.
+6. **Others:**
+   - Saves recorded in the wrong layer.
+   - A missing cascade that breaks feed delete.
+   - The drift guard and `DevProfileConfigTest` needing the new yaml keys mirrored.
+   - The CTE slowing as engagement rows grow. Measure it with 20k seeded rows, and keep the open response lightweight.
 
-Also important: stacked retries (SDK 2 × Resilience4j 3 = 9 attempts), per-article 400/422 opening the breaker, `Map.of` NPE on a null summary, raw HTML in the state, negated topic wording, and `jev-latest` drift. All are covered in the phases below.
+## Open Decisions (the research files disagree; settle in requirements)
 
-## Reconciliations: Where the Researchers Disagreed
+**1. Should engagement move topics with a negative base weight?** Lean: skip.
+- **Skip** (FEATURES E6b, PITFALLS 9): opening curiosity headlines on a −30 topic would pull it toward 0 and let buried articles come back. Softening a negative topic should take an explicit 👍. Implement with `CASE WHEN base < 0 THEN 0` on the engagement part.
+- **Soften** (ARCHITECTURE D-B): an engagement is literally a fractional up-vote, the same as an unnarrowed 👍. The cap bounds it, and the sign clamp never flips the sign.
 
-Each item gives the resolution. **[USER DECISION]** marks items that conflict with PROJECT.md or change its scope; requirements must settle them explicitly.
+**2. One combined cap, or separate caps that add up?** Lean: additive.
+- **Combined** (FEATURES E6a): positive learning is capped at `min(thumbs + engagement, learned-cap)`. Thumbs claim their share first and engagement fills what's left, so implicit learning can never push a topic further than votes could.
+- **Additive** (ARCHITECTURE D-D, PITFALLS 2): engagement gets its own cap on top of the thumbs cap, so learning can reach `learnedCap + engageCap` (for example 30) before the sign clamp and the ±50 range apply. The milestone's wording, "its own cap below the thumbs cap", reads as additive.
+- Both sides agree that thumbs claim their share first. Whichever is chosen, the UI and CLAUDE.md must say it.
 
-### R1. Score and weight units: points on a 0–100 scale (FEATURES' units, ARCHITECTURE's formula)
-The two proposals are the same model at different scales (ARCHITECTURE's ±3 × about 16.7 ≈ FEATURES' ±50). Use **points everywhere**, so the breakdown reads as plain addition and the user edits weights in the units they see:
+**3. Do unstarring and removing from a board undo the engagement?** Lean: sticky, with an explicit Forget control in v0.3.0.
+- **Reversible** (FEATURES E3/E10): unstar deletes the STAR row, and removal from the article's last board deletes BOARD, so an accidental `s` doesn't stick. Deleting a whole board keeps the rows. A per-article "Don't count" tombstone stops a later `o` from quietly re-adding the engagement.
+- **Sticky** (ARCHITECTURE D-C, PITFALLS 8): clearing a read-later queue after reading is normal, not a sign of disinterest. Undo comes from a thumbs vote plus an explicit `DELETE /api/articles/{id}/engagement` ("Forget engagement"). ARCHITECTURE says Forget can be deferred; PITFALLS says the "every learned point stays reversible" goal requires it.
+- Still to choose: a tombstone (survives a later `o`) or deleting the rows.
 
-```
-p        = profile_score / profile_max_level                      ∈ [0,1]  (0 if no profile question was asked)
-m_t      = GREATEST(0, (noul_t − 0.5) × 2)                          ∈ [0,1]  (hinge, see R6)
-learned_t= clamp(η × Σ_feedback vote × m_t, −L, +L)                 η = 2 pts/vote, L = 20 pts
-w_t      = clamp(base_t + learned_t, −50, +50), then clamped at 0 on base_t's sign side (see R2)
-raw      = ROUND(P × p + Σ_{topics scored on this article that still exist} m_t × w_t, 6)   P = 100
-display  = clamp(0, 100, round(raw))        -- sort uses raw; badge/breakdown use display
-```
-New topics default to ±20 points; the V6 `CHECK` is `weight BETWEEN -50 AND 50`. Constants live under `myfeeder.interest.blend.*`. Badge tiers: ≥70 high, 40–69 neutral, <40 muted. Store Score `confidence` but keep it out of the blend in v1; show a "low confidence" hint below 0.5. **The weight model must be fixed before V6 is written**, because the CHECK constraint and any feedback semantics depend on it.
+**4. Backfill existing stars and boards in V7?** Lean: no backfill, plus a simulated-backfill section in the replay; revisit after that preview.
+- **Yes** (ARCHITECTURE D-A): idempotent, only SCORED articles count, and calibration gets real data from day one.
+- **No** (PITFALLS 16): it would push topics to the cap and reshuffle Priority on release day, and the kinds would be uneven, since opens and Raindrop saves have no history.
+- FEATURES D5 treats it as P2, to be decided before calibration.
 
-### R2. Feedback storage: derived from `article_feedback` (ARCHITECTURE), with PITFALLS' guardrails
-Store only `article_feedback(article_id PK, vote ∈ {−1,+1})`. The learned delta is **computed in the blend CTE**, never written into `interest_topic.weight`. This gives FEATURES' "exact undo" without storing per-vote deltas: deleting or flipping one row exactly removes or reverses that vote. It is idempotent against double-clicks. It never clobbers the user's own edits (`weight` is the base; learned is separate, as PITFALLS asks). It can be retuned retroactively. Add PITFALLS' constraints: cap learned at ±L, and **no feedback-driven sign flip** (a positive base clamps at ≥0 and a negative base at ≤0; a base of 0 may move either way). The toast's "Nudged Rust +2" is `η × m_t × vote` from the same formula. Votes on unscored articles are stored and start counting once the article is scored.
+**5. Open endpoint shape.** Lean: either is CSRF-safe. Prefer a lightweight response and refetch the article by id. Also settle the kind name (`OPEN` or `OPEN_ORIGINAL`).
+- **Option A** (STACK): `PUT /api/articles/{id}/engagement/open`, no body, 204. It is an idempotent verb for an idempotent insert, and a PUT is never a CORS simple request, so it needs no content-type guard.
+- **Option B** (ARCHITECTURE, PITFALLS): `POST /api/articles/{id}/engagement`, JSON-only, body `{kind}`.
+  - ARCHITECTURE returns the article with its re-blended breakdown.
+  - PITFALLS 12 says return 204, because the breakdown costs two extra learned-CTE runs per open.
 
-### R3. Scoring queue: DB is the source of truth, in-memory executor as the fast path (a hybrid)
-Adopt PITFALLS' principle that **correctness never depends on the event**, using ARCHITECTURE's mechanism. "Needs scoring" is defined in SQL: the article has no `article_score` row, or has a `FAILED` row with `attempts < 3`, and meets the eligibility predicate (R-window below). Ingest writes **no** PENDING rows, which keeps the ingest path unchanged apart from publishing one event. The event feeds a 2-thread `ThreadPoolTaskExecutor` (queue about 1,000, `DiscardPolicy` + WARN log); the sweep drains anything dropped or missed. There is no need for `FOR UPDATE SKIP LOCKED`: the deployment is `replicaCount: 1` (verified), so an in-flight `Set` plus `ON CONFLICT DO NOTHING` is enough. Revisit if replicas ever exceed 1.
+**6. Should engaged-but-unscored articles become eligible for scoring?** Lean: defer. Ship the `engagedUnscored` count and decide from prod data.
+- **Later, yes** (FEATURES D4, P2): change the eligibility rule to `(read = false OR engaged)`. It costs at most one Jev call per engaged article.
+- **Not as a side effect** (PITFALLS 3): the eligibility rule also drives the sweep, the `/status` counts and Re-score, and the milestone promises no Jev calls for engagement. If wanted, make it a separate, costed decision.
+- STACK and ARCHITECTURE accept that such engagement stays dormant.
 
-Statuses: `SCORED` (write-once); `FAILED` (400/422/missing-answer/answer-type; `attempts`, `last_error`, retried by the sweep up to 3 times); `SKIPPED` (terminal, e.g. title and body both empty, so the sweep stops re-selecting it). Transient failures (429/5xx/timeout/connection), `CallNotPermittedException` and `JevNotConfiguredException` write **no row and do not count as an attempt**. 401/403 are recorded by the breaker, so it opens and the sweep pauses. The half-open probe every 60s serves as PITFALLS' "global pause with periodic probe".
-
-### R4. Priority cursor: keep the `Long` id cursor (ARCHITECTURE), fix drift in the frontend
-Keep `PaginatedResponse` unchanged (`nextCursor: Long`). `PriorityService` recomputes the cursor article's `(score, date)` with the same CTE; that lookup is **not** unread-scoped, because the cursor article may have just been read. An opaque cursor that carries the score (PITFALLS) would not actually fix weights changing mid-scroll: the *other* rows' scores move too. Only snapshotting the weights would, and that is over-engineering for one user. So drift is handled by policy:
-- **The Priority infinite query is excluded from the `['articles']` invalidation** on thumbs, mark-read and star. Update badge and feedback in place with `setQueryData`, and show a "Ranking changed — refresh" affordance.
-- Re-rank from page 1 only on explicit refresh, re-entering the view, or window refocus.
-- Dedupe by `id` across pages on the client as a safety net. If the cursor article is gone (404), restart from page 1.
-- The keyset is a single tuple `(COALESCE(score,'-Infinity'), COALESCE(published_at, fetched_at), id) < (...)`, all DESC, which also crosses cleanly into the unscored segment.
-
-### R5. Topics added after scoring: contribute 0, no Σ|w| normalization (ARCHITECTURE)
-Both researchers agree a later-added topic must not change old articles' scores; `LEFT JOIN` + `COALESCE(…,0)` already gives that. Reject PITFALLS' normalization by the Σ|w| of present topics: it weakens a strong match whenever an unrelated topic is added, and it breaks the "plain addition" explanation. **Accept the residual cohort bias** (after adding a positive topic, new articles can outrank older ones) as a known consequence of PROJECT.md's new-articles-only decision. It is bounded by the eligibility window (the old cohort ages out in about 14 days), explained in the breakdown ("scored before topic X existed", from `topic.created_at > score.scored_at`), and fully fixed by R-C1 if approved.
-
-### R6. Topic contribution: hinge `max(0, (noul − 0.5) × 2)`, not raw noul
-Noul 0.5 means "undecided". With raw nouls, ten irrelevant topics at about 0.2 each and a weight of 20 add about 40 points of noise, as much as a strong profile match. The hinge is still continuous (it is zero at 0.5 and rises linearly), which answers FEATURES' "no cliff" objection. The set of topics with `m_t > 0` is exactly the set FEATURES wanted in the breakdown (match ≥ 0.5), so the sort, the badge and the "why" all use one formula. Negative weights penalize only real matches. The same hinge gates the feedback nudge (R2), so uninformative mid-range nouls never move weights.
-
-### Other items to surface
-
-- **C1: manual "Re-score unread" [USER DECISION, conflicts with PROJECT.md Out of Scope].** FEATURES and PITFALLS both recommend it. At about $0.0001 per article, re-scoring 1,000 unread costs about $0.10, and it is the only fix for stale matches after a profile or topic-description edit and for the R5 cohort bias. **Recommendation: approve for v1**, user-triggered only, unread and in-window only, with a count estimate shown. Implementation: delete the in-scope `article_score` rows (topic rows cascade, or delete them explicitly) and let the sweep drain them. No new machinery. If declined, the editor must say "applies to newly arriving articles".
-- **C3: cold start.** Treat "profile empty **and** no topics" as not configured: no calls, no rows, and a CTA in the Priority view. (Consensus: profile text or at least one topic is enough to score.) Because the sweep is gated on this, the PROJECT.md "one-time backfill" effectively starts at first profile save. That satisfies both ARCHITECTURE (automatic) and PITFALLS (don't score the backlog against nothing). The backfill is **not** a one-time flag: it is the continuous sweep, which also covers a key added late and long outages.
-- **Recency eligibility window [USER DECISION on size].** Apply one predicate at enqueue and in the sweep: `read = false AND COALESCE(published_at, fetched_at) > now − 14d` (configurable), newest first. It must key on `published_at`: in a subscribe or OPML flood every back-catalogue item has `fetched_at = now`, so ARCHITECTURE's `fetched_at`-based 30-day filter would not stop floods. Consequence: unread items older than the window are never scored and stay in the "unscored" segment by date. That partly narrows PROJECT.md's "scores the existing unread backlog", so confirm the window size (14 vs 30 days). Recheck `read = false` at dispatch time too.
-- **NULL-GUID re-insert [USER DECISION on the root fix].** Verified in code. It is rare in practice (items with neither guid nor link, or JSON Feed items missing the required `id`), but when it happens every poll re-inserts, and would re-score, the same items. **In scope (recommended):** the scorer skips `guid IS NULL` articles (mark `SKIPPED`, log). **Root fix:** a fallback GUID in `FeedParser` (a hash of link and title). That is CONCERNS-adjacent code, which PROJECT.md scopes out; recommend it as a separate quick task.
-- **List stability in Priority** is a v1 requirement, not polish, and must ship in the same phase as the Priority view and thumbs (see R4). `ArticleList`'s existing "preserve selected article" logic helps.
-- **Blank-key crash and Helm.** With Pattern A (STACK, verified), the Raindrop-style `${MYFEEDER_TYPESAFE_API_KEY:}` and an always-rendered `secretKeyRef` are safe. That supersedes ARCHITECTURE and PITFALLS' "never declare the property; render the env var conditionally" (which is only needed with the starter's own bean). Keep a context test that fails if someone deletes the app-owned bean. Add `checksum/secret`. `deploy.sh` uses `${MYFEEDER_TYPESAFE_API_KEY:-}` with a warning.
-- **Single retry layer.** Resilience4j owns retries (the convention, one place to tune, the breaker sees each attempt), and SDK `max-retries: 0`. PITFALLS' opposite choice (keep the SDK retry for `retry-after-ms`) is the documented fallback if 429s actually appear during backfill. Breaker `ignore-exceptions` is the union of all three proposals: `JevNotConfiguredException`, `TypeSafeBadRequestException`, `TypeSafeUnprocessableEntityException`, `TypeSafeMissingAnswerException`, `TypeSafeAnswerTypeException`. Suggested settings: COUNT_BASED window 20, minimum 10 calls, 60s open, slow-call threshold about 3s. Mirror the `jev` instances into `src/test/resources/application.yaml`, which shadows main.
-- **`@EnableAsync` is absent: don't add it.** Use an explicit named `ThreadPoolTaskExecutor` bean and `executor.execute(...)`, so rejection is visible and a `SyncTaskExecutor` can be swapped in for tests. STACK's "needs `@EnableAsync`" is moot. **Do not** set `spring.threads.virtual.enabled`: it swaps the `TaskScheduler` under `FeedPollingScheduler`. Leave `spring.task.scheduling.pool.size` unchanged in this milestone: the sweep only runs a SELECT and enqueues, and raising the pool size would make feed polls concurrent, an unrelated behavior change.
-- **Pin `jev-1.13.0`** (unanimous). Store `model`, `request_id`, `profile_version` and `topic_version` on each row.
-- **Jev input when the summary is blank [minor USER DECISION].** Many Atom feeds have content but no summary. Recommend falling back to stripped and truncated `content` (≤1,500 characters). PROJECT.md excludes "full article content" as input on cost grounds; a truncated fallback costs about the same as a summary.
+**Minor disagreements:**
+- **Cache on engagement:** ARCHITECTURE invalidates `['articles']`; the other three refresh only the article by id. Lean: by id, plus the Priority patch.
+- **Gap test:** "every topic's hinge is 0" (FEATURES, ARCHITECTURE) or "best noul below a near-miss threshold" (PITFALLS).
 
 ## Implications for Roadmap
 
-Suggested structure: 5 phases plus a short rollout phase. Phases 3 and 4 can run in parallel after Phase 2. (With the user-added dependency-upgrade phase first, these become Phases 2–7.)
+### Phase 8: Engagement Capture
+- **Why first:** everything later needs rows, and the ranking doesn't change. Releasing it early lets prod data build up.
+- **Delivers:**
+  - The V7 migration (both tables), `EngagementKind` and `ArticleEngagementStore`.
+  - Server-side capture of STAR, BOARD and RAINDROP.
+  - The open endpoint, and `useOpenOriginal` wired to the button(s) and `o`.
+- **Addresses:** E1, E2, and the capture side of E3/E10.
+- **Avoids:** Pitfalls 5, 6, 7, 19, 20, 21.
+- **Must settle first:** Open Decisions 3, 4 and 5.
 
-### Phase 1: Jev Client Foundation (optional integration)
-**Rationale:** It retires the only external unknowns first: the key/startup behavior, the resolved classpath and the exception mapping. Everything downstream is plain Spring.
-**Delivers:** Gradle dependency (explicit `0.1.0`); `TypeSafeConfig` (Pattern A); `JevApiClient`/`Impl` with CB + Retry and no fallback; `JevNotConfiguredException`; `application.yaml` (`api-key: ${MYFEEDER_TYPESAFE_API_KEY:}`, `model: jev-1.13.0`, `timeout: 5s`, `retry.max-retries: 0`, Resilience4j `jev` instances in main **and** test YAML); Helm secret + env + `checksum/secret`; `deploy.sh` variable; `/api/interest/status` (configured, breaker state).
-**Tests:** context starts with the key absent and with it blank; `MockRestServiceServer` contract tests (object state, question keys, pinned model; 400/401/403/422/429/500/529 → typed exceptions); breaker opens on 5xx and ignores 422 through the real AOP proxy; resolved-classpath check; live smoke test gated by `@EnabledIfEnvironmentVariable`.
-**Avoids:** Pitfalls 1, 5, 15, 16, 17.
+### Phase 9: Learned Model Extension
+- **Why here:** it is the riskiest SQL, and everything after it reads its output.
+- **Delivers:**
+  - The new CTEs, the thumbs-first split, the config properties, the appended DTO fields and the `LearnedLimit` fix.
+  - In the same plan: the regenerated replay, the psql variables, the drift-guard update, and the yaml keys in both the test yaml and the dev overlay.
+  - Main yaml can keep `engagement.cap: 0`, so prod behavior doesn't change until calibration.
+- **Addresses:** E4 to E7.
+- **Avoids:** Pitfalls 1, 2, 3, 4, 9, 11, 12, 17. Includes the 20k-row latency budget.
+- **Must settle first:** Open Decisions 1 and 2.
 
-### Phase 2: Interest Model, Schema and Rubric Editor
-**Rationale:** Questions can't be built without a profile and topics. Shipping the whole V6 schema now means later phases add no migrations. It needs the R1 weight model locked.
-**Delivers:** `V6__interest_scoring.sql` (all five tables, weight CHECK −50..50, cascades); `InterestProfile`/`InterestTopic` entities, repos and service (≤25 topics, profile ≤2,000 characters, warn on negated topic text, version bumps on text edits only); `InterestController` CRUD; the **question builder** as a pure function (`profile` → 5-level descriptive `Score` with the profile in the instructions; `topic_<id>` → a positively phrased "primarily about" `Noul` with `whenTrue`/`whenFalse`; answers read by key); frontend `InterestSettings` dialog with writing guidance, "applies to newly arriving articles" (or the C1 button), base/learned display placeholders, and the not-configured notice driven by `/status`.
-**Addresses:** T9, T10, T11, T12 (settings side), T13 (gate definition).
-**Avoids:** Pitfalls 7, 8 (IDs and versions), 12, 14, 23.
-**Research flag:** a **calibration spike** at the end: run the question builder against 10–20 real articles with the live key. Check the spread and confidence of profile scores and whether nouls cluster in 0.35–0.65. Iterate the wording before the Priority view depends on it.
+### Phase 10: Explainability and Cache Reactions
+- **Why here:** it needs Phase 9's new fields.
+- **Delivers:**
+  - `Article.engagement`, the WhyBreakdown note, and the LearnedLine split with article counts and the at-cap flag.
+  - The reading-pane engagement line with the Forget or Don't-count control.
+  - The post-engagement reaction, the toast copy, and optionally the `engagedUnscored` status count.
+- **Addresses:** E8 to E11 and D3.
+- **Avoids:** Pitfalls 13, 14, 15.
 
-### Phase 3: Scoring Pipeline and Backfill Sweep
-**Rationale:** This is the core write path. ARCHITECTURE's separate "Backfill" phase is merged in because the sweep *is* the correctness mechanism (R3), not an add-on.
-**Delivers:** `ArticlesIngestedEvent` published from `FeedPollingService` (IDs of new articles only); `InterestScoringListener` (never throws); the `interestScoringExecutor` bean; `ArticleScoringService` (in-flight dedup, eligibility and rubric-empty gates, the **state builder** as a pure TDD'd function: `LinkedHashMap`, jsoup strip, truncation, content fallback, never a scalar; failure classification per R3; NULL-GUID skip); `ArticleScoreWriter` (one transaction, `ON CONFLICT DO NOTHING`); `InterestBackfillJob` (gated on configured, non-empty rubric and breaker not OPEN; capacity-aware; newest-first; windowed); `/status` gains eligible-unscored and failed counts. If C1 is approved, add `POST /api/interest/rescore` here.
-**Addresses:** automatic scoring of new articles, graceful degradation, the launch backfill, cold-start first scoring, T14 data.
-**Avoids:** Pitfalls 2, 3, 4, 6, 9, 18, 19.
-**Tests:** polling duration unchanged with the Jev stub sleeping 30s; a listener exception never increments `feed.errorCount`; a GUID-less fixture polled 3 times produces 0 extra calls; an OPML flood with the stub drains at a bounded pace; `SyncTaskExecutor` swapped in; a mocked `JevApiClient`.
+### Phase 11: Gap Discovery
+- **Why here:** it needs only Phase 8's tables, so it can run in parallel with Phases 9 and 10.
+- **Delivers:**
+  - The suggestions query and endpoints, plus the dismissed/handled state.
+  - A "Suggested topics" section in Interests, with `addDraft(draft)`.
+  - E12: the "matched no topic" notice for engaged articles.
+- **Addresses:** D1, D2, E12.
+- **Avoids:** Pitfalls 10 and 18.
 
-### Phase 4: Blend and Priority View
-**Rationale:** It needs only the V6 schema, so it can be built against seeded `article_score` rows **in parallel with Phase 3**. It carries the highest UX risk (cursor and list stability), so give it a full phase.
-**Delivers:** `InterestScoreQueries` (the single CTE per R1/R2/R6, with the `learned` CTE present and returning 0 until feedback exists); `PriorityService` plus `GET /api/articles/priority` (keyset per R4); `@Transient interestScore`/`feedback` enrichment on every article response; frontend `/priority` route, a FeedPanel entry (`useMatch` active state, excluded from All's active state), `MainLayout` filter alignment so `j`/`k` walk the ranked order, `InterestBadge` (tiers, no badge when unscored), the "Why N?" breakdown and topic chips, the "Not yet scored" separator, the cold-start CTA, "Scoring paused / N waiting" and progress lines, `g p` / `i` shortcuts, `Shift+A` disabled, the **no-invalidate policy** for the Priority query, and client-side dedup.
-**Addresses:** T1–T5, T8, T12–T15, D1, D7.
-**Avoids:** Pitfalls 10, 13, 20, 21.
-**Tests:** keyset ties; crossing the scored→unscored boundary; the cursor article being read between pages; adding a topic leaves old articles' scores unchanged; the breakdown sum equals the sort value.
-
-### Phase 5: Thumbs Feedback
-**Rationale:** The smallest phase. It needs the blend to show its effect and the invalidation policy from Phase 4.
-**Delivers:** `ArticleFeedbackRepository` (upsert/delete); `PUT`/`DELETE /api/articles/{id}/feedback` returning the re-enriched article; the learned CTE active with the cap and sign clamp; `ThumbsButtons` in the reading-pane toolbar (optionally on list-row hover); `u`/`d` toggles; the effect toast and the no-op message; base + learned display and "reset learning" per topic in settings.
-**Addresses:** T6, T7, C2 message (D3 and D2 are v1.x).
-**Avoids:** Pitfall 11.
-**Tests:** up/down/up equals a single up; the effective weight never crosses the base's sign; the list order is unchanged after a vote until refresh.
-
-### Phase 6: Rollout and Calibration (short; can fold into Phase 5's close-out)
-**Rationale:** The launch backfill is the largest flood, and the blend constants are MEDIUM-confidence until they meet real data.
-**Delivers:** A release deploying with the key; observation of backfill pacing, 429s and breaker state; tuning of `η`, `L`, `P` and the badge tiers against the real score distribution (optionally with a hidden `/api/interest/debug/{articleId}` breakdown); a check that a key-only redeploy rolls the pod; CLAUDE.md updates (new key behaviors and gotchas).
-
-### Phase Ordering Rationale
-
-- **The dependency chain is real.** The client (1) → the questions and schema (2) → scoring (3). The Priority view (4) depends only on the schema and can use seeded rows, so it runs alongside 3. Feedback (5) needs the blend in 4.
-- **Put the riskiest unknowns first.** Phase 1 settles every external-library question. The Phase 2 calibration spike settles "are the scores any good" before the UI is built on them.
-- **The weight model (R1) is settled before V6** because the CHECK constraint and feedback semantics depend on it. List stability (R4) ships with the Priority view, not after it.
-- **One formula, one place.** The blend CTE is written once in Phase 4, and Phase 5 only switches on the `learned` input.
-- **One drain loop.** Launch backfill, outage recovery, cold start and the optional re-score are all the Phase 3 sweep; none gets bespoke code.
+### Phase 12: Calibration and Rollout
+- **Why last:** it needs real engagement data. Follow the v0.2.0 to v0.2.1 pattern: ship conservative values, let data build up for 2 to 4 weeks, run the replay, then tune.
+- **Delivers:**
+  - Replay runs over candidate open weight, save weight and engagement cap, reporting at-cap topics and the tier histogram with engagement on and off.
+  - A CALIBRATION note and the tuned yaml.
+  - CLAUDE.md updates: the V7 schema line, the Interest Ranking learned model, the capture rules in Key Behaviors, and the tuning levers.
+  - A minor release.
+- **Avoids:** Pitfalls 4, 11, 16, 23.
 
 ### Research Flags
 
-Phases likely to need `/gsd-plan-phase --research-phase <N>`:
-- **Phase 2:** the question and rubric wording calibration against the live API (Jev reads literally, and wording moves confidence from about 0.82 to 0.60). Needs real articles and a real key.
-- **Phase 4:** the blend constants and badge tiers can only be tuned on data, and the keyset plus TanStack infinite-query invalidation interplay deserves a focused look at `useArticles.ts` and `MainLayout`.
-
-Phases with standard patterns (skip research):
-- **Phase 1:** already verified by STACK's scratch project (Boot 4.0.3 + starter 0.1.0, all key states). It needs only a live-key smoke test, not research.
-- **Phase 3:** event plus executor plus sweep are fully specified, and the codebase already has the event-listener pattern.
-- **Phase 5:** small; formula and table design are settled in R2.
-- **Phase 6:** operational.
+- **Needs `--research-phase`:**
+  - Phase 9: correctness under the combined clamps, exact sums, regenerating the drift guard, and the latency budget. Plan it test-first.
+  - Phase 11: small UX calls (placement, ordering, near-miss threshold, dismissal) and the `addDraft` change.
+- **Standard patterns:** Phase 8 (copies the V6 and `ArticleFeedbackStore` patterns), Phase 10 (appends fields, reuses the vote reaction), Phase 12 (repeats the v0.2.1 calibration workflow).
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Source jars and POMs read; a scratch Gradle project on the repo's exact plugin/BOM set was compiled and tested (all key states, wire round-trip, 429 mapping). Pricing and rate limits are MEDIUM (vendor says they change dynamically). |
-| Features | MEDIUM | Competitor behavior comes from vendor docs and blogs (primary but seam-tagged LOW). Table-stakes calls are reasoned product judgment. Keyboard and cache-invalidation facts were read from source (HIGH). |
-| Architecture | HIGH / MEDIUM | Integration points (single scheduler thread, non-transactional `pollFeed`, full-row `save()`, route-driven smart views, `MainLayout` query) were read from source: HIGH. Blend constants: MEDIUM, need tuning. |
-| Pitfalls | MEDIUM-HIGH | The highest-impact items are verified in code or source (blank key, NULL GUID, lost update, inline listener, stacked retries). Ranking-dynamics items (runaway, filter bubble, drift) are reasoned. |
+| Stack | HIGH | Checked in the code and `node_modules`. The browser facts are MEDIUM, cross-checked against MDN and Chromium/Mozilla sources. |
+| Features | MEDIUM | Competitor behavior comes from vendor docs and blogs. The academic findings are HIGH. The weights are product judgment. |
+| Architecture | HIGH | Read at `8fd4145`. The design choices flagged as decisions are MEDIUM. |
+| Pitfalls | HIGH | The codebase-specific pitfalls are verified. The bias and saturation advice is MEDIUM. |
 
-**Overall confidence:** HIGH that the design is buildable and safe for polling; MEDIUM that the rankings will be useful without a tuning pass.
+**Overall confidence:** HIGH on how to build it; MEDIUM on the values and decisions.
 
 ### Gaps to Address
 
-- **Score quality and question wording:** unknown until the Phase 2 calibration spike runs with a real key.
-- **Blend constants** (`P=100`, default ±20, `η=2`, `L=20`, tiers 70/40): starting values only. Tune in Phase 6. **Topic-only users** (empty profile) get `p = 0`, so their scores cluster at 0–40 and the badge tiers may look uniformly "muted". Consider a neutral baseline for them during tuning.
-- **A 400 caused by the rubric, not the article:** a malformed question (bad topic text) fails *every* article with a 400. Because 400 is ignored by the breaker, articles would burn through their 3 attempts. Mitigate by validating questions on rubric save and surfacing a spike in failures on `/status`. `attempts < 3` plus a manual "retry failed" (or the C1 re-score) is the recovery path.
-- **User decisions pending:** C1 manual re-score (recommended yes); eligibility window size (recommended 14 days); NULL-GUID root fix in the parser (recommended as a separate quick task; the scorer guard is in scope); content fallback when the summary is blank (recommended yes).
-- **jsoup on the classpath** via Readability4J is assumed. Verify, or add it explicitly, in Phase 3.
-- **429 behavior during the launch backfill** is unobserved. If it happens, lower concurrency to 1, or switch to the SDK retry layer to honor `retry-after-ms` (keep exactly one retry layer).
-- **Non-English feeds** have lower Jev accuracy. Surface low confidence; a per-feed scoring opt-out is out of scope unless the user asks for it.
+- The six Open Decisions. Decisions 1 to 3 must be settled before Phases 8 and 9.
+- The starting values (open 0.25, save 0.5, cap 8 to 10) are untested until Phase 12.
+- How often engagement goes dormant in prod is unknown. Measure it before deciding D4.
+- CTE latency at scale is unmeasured.
+- The claim that Feedly Leo learns from opens and skips is unverified. It doesn't affect the design.
+- CLAUDE.md still says "later milestone phases add no migrations", which V7 makes false.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- myfeeder source at HEAD: `FeedPollingService`, `FeedPollingScheduler`, `FeedParser`, `ArticleRepository` (`guid = :guid`, re-verified during synthesis), `ArticleService`, `ArticleController`, `PaginatedResponse`, `RaindropApiClientImpl`, `MyfeederApplication`, main and test `application.yaml`, Helm templates (`replicaCount: 1`, re-verified), `deploy.sh`, V1–V5 migrations, frontend `App.tsx`, `uiStore`, `useArticles`, `useKeyboardShortcuts`, `FeedPanel`, `ArticleList`, `MainLayout`.
-- Maven Central `spring-ai-starter-typesafe` / `typesafe-java-sdk` / `typesafe-spring-ai` / `typesafe-bom` 0.1.0 POMs and source jars (`TypeSafeAutoConfiguration` blank-key `Assert.state`, `TypeSafeProperties`, `TypeSafeClient`, `RetryPolicy`, answers, exceptions); the spring-ai-typesafe v0.1.0 git tag.
-- STACK's scratch Gradle project (Boot 4.0.3, dependency-management 1.1.7, Spring AI BOM 2.0.0-M2, JDK 25): absent, blank, `false` and real key; app-owned bean; stub-server wire and 429 tests.
-- Spring Boot 4.0.3 reference, task execution and scheduling (single-thread default scheduler; the virtual-threads scheduler swap).
+- The codebase at `8fd4145`: `InterestScoreQueries`, `ArticleScoreStore`, `ArticleFeedbackStore`, `ScoreBreakdowns`, the Article/Board/Raindrop services, the V1/V2/V6 migrations, `ReadingPane.tsx`, `useKeyboardShortcuts.ts`, `priorityStore.ts`, `FeedbackNotice.tsx`, `TopicRow.tsx`, `InterestsDialog.tsx`, the replay script and its test, and the build files.
+- The PostgreSQL docs on WITH queries.
+- Joachims 2005; Hu, Koren & Volinsky 2008; Chen et al. (TOIS).
 
 ### Secondary (MEDIUM confidence)
-- Spring blog, "Spring AI TypeSafe: structured judgment" (2026-09-21): no prose output, Score/Noul shapes, confidence, wording guidance, latency.
-- spring-ai-typesafe reference docs (ErrorsAndRetries, SpringBootStarter, Batches, JevCompositeScore, JevConsistency); docs.typesafe.ai (models/pricing/limits, Score and Noul primitives, jev-1.13 jaggedness: literal reading, negation, adversarial state).
-- Feedly, NewsBlur, TT-RSS and Gmail official docs and blogs (competitor ranking, explainability and feedback patterns).
+- MDN: `window.open`, `sendBeacon`, `keepalive`, `auxclick`.
+- Chromium blink-dev (beacon Blob types); Firefox 133 release notes and Bugzilla.
+- NewsBlur, Inoreader, and YouTube/Gmail Help pages; Instagram's posts; coverage of Artifact; unbiased learning-to-rank papers.
 
 ### Tertiary (LOW confidence)
-- Pricing and limits cross-checks (marktechpost, opentweet.io); OSS rankers' READMEs (feeds.fun, PersonalRSS, betternews, rosso); Inoreader 2019 blog; keyset pagination stability article.
+- Third-party reviews saying Feedly Leo learns from opens and skips.
 
 ---
-*Research completed: 2026-09-22*
-*Ready for roadmap: yes (after the user decisions flagged under Reconciliations: C1 re-score, eligibility window size, NULL-GUID parser fix, content fallback)*
+*Research completed: 2026-09-29*
+*Ready for roadmap: once Open Decisions 1 to 3 are settled*

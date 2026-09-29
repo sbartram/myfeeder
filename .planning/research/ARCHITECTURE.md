@@ -1,634 +1,387 @@
 # Architecture Research
 
-**Domain:** Per-article interest scoring (TypeSafe Jev) inside an existing Spring Boot 4 + React feed reader (myfeeder, brownfield)
-**Researched:** 2026-09-22
-**Confidence:** HIGH for integration points (read from the actual myfeeder source and from the `spring-ai-typesafe` v0.1.0 source at its git tag). MEDIUM for the blend formula constants (a design choice that needs tuning against real data).
+**Domain:** Implicit engagement feedback (opens and saves) layered onto myfeeder's existing query-time interest ranking (v0.3.0 Engagement Learning)
+**Researched:** 2026-09-29
+**Confidence:** HIGH for the integration points (read directly from the code at `8fd4145`). MEDIUM for the design recommendations: several of them are product decisions, flagged as **Decision** below.
 
----
+Sources are the codebase itself: `InterestScoreQueries`, `ArticleFeedbackStore`/`ArticleFeedbackService`, `ScoreBreakdowns`, `ArticleService`, `BoardService`, `RaindropService`, `ArticleController`, `V6__interest_scoring.sql`, `scripts/interest-calibration-replay.{sh,sql}`, `InterestCalibrationReplaySqlTest`, and on the frontend `ReadingPane.tsx`, `useKeyboardShortcuts.ts`, `useArticles.ts`, `useBoards.ts`, `useFeedback.ts`, `usePriorityArticles.ts`, `priorityStore.ts`, `WhyBreakdown.tsx`, `TopicRow.tsx`, `FeedbackNotice.tsx` and `InterestsDialog.tsx`. There were no external library questions, because every feature reuses what is already there: Spring Data JDBC `JdbcClient`, Flyway, TanStack Query and Zustand.
 
 ## Standard Architecture
 
 ### System Overview
 
+Existing components are plain. New components are marked `[NEW]`, modified ones `[MOD]`.
+
 ```
-                        ┌──────────────────────────────────────────────────────────────┐
-                        │ React SPA                                                    │
-                        │  /priority route ─ PriorityArticles ─ ArticleList(priority)  │
-                        │  InterestBadge · ThumbsButtons · InterestSettings dialog     │
-                        │  useArticles(priority) · useArticleFeedback · useInterest    │
-                        └───────────────┬──────────────────────────────────────────────┘
-                                        │ HTTP/JSON
-┌───────────────────────────────────────▼──────────────────────────────────────────────────┐
-│ Controllers                                                                              │
-│  ArticleController (+ GET /api/articles/priority, PUT/DELETE /api/articles/{id}/feedback)│
-│  InterestController (/api/interest/profile, /topics, /status)                            │
-└──────────┬───────────────────────────────┬───────────────────────────────┬───────────────┘
-           │ read path                      │ config path                   │
-┌──────────▼───────────┐   ┌────────────────▼────────────┐                  │
-│ ArticleService       │   │ InterestProfileService      │                  │
-│  + PriorityService   │   │  profile/topic CRUD,        │                  │
-│  enrich(interestScore│   │  version bump on text edit  │                  │
-│  , feedback)         │   └─────────────────────────────┘                  │
-└──────────┬───────────┘                                                    │
-           │ SQL (blend at query time)                                      │
-┌──────────▼──────────────────────────────────────────────┐                 │
-│ InterestScoreQueries (NamedParameterJdbcTemplate)       │                 │
-│  one shared CTE: learned deltas → effective weights →   │                 │
-│  blended score; priority page + cursor + enrich         │                 │
-└──────────┬──────────────────────────────────────────────┘                 │
-           │                                                                │
-═══════════╪════════════════════════ WRITE / INGEST PATH ═══════════════════╪═════════════
-           │                                                                │
-  FeedPollingScheduler (1 scheduler thread) ──► FeedPollingService.pollFeed()
-                                                  │ inserts new articles (auto-commit)
-                                                  │ publishEvent(ArticlesIngestedEvent(feedId, newIds))
-                                                  ▼
-                                  InterestScoringListener  (@TransactionalEventListener
-                                   AFTER_COMMIT, fallbackExecution=true; never throws;
-                                   returns in microseconds)
-                                                  │ submit(ids)            ▲ submit(ids)
-                                                  ▼                        │
-                         interestScoringExecutor (2 platform threads,      │
-                          bounded queue, discard-on-full)          InterestBackfillJob
-                                                  │                 (@Scheduled fixedDelay;
-                                                  ▼                  SELECT unscored ids only)
-                                  ArticleScoringService.score(articleId)
-                                   load article+feed+profile+topics → build state/questions
-                                                  │
-                                                  ▼
-                                  JevApiClientImpl  (@CircuitBreaker "jev" outer,
-                                   @Retry "jev" inner; ObjectProvider<TypeSafeClient>)
-                                                  │ systemOne(stateMap, questions)
-                                                  ▼
-                                        TypeSafe Jev API (~300 ms, 1200 req/min)
-                                                  │
-                                  ArticleScoringService persists raw outputs
-                                   (INSERT … ON CONFLICT DO NOTHING, one tx)
-                                                  ▼
-            PostgreSQL: article_score · article_topic_score · interest_profile ·
-                        interest_topic · article_feedback   (Flyway V6)
+┌──────────────────────────────── Frontend (React) ─────────────────────────────────┐
+│ ReadingPane [MOD]          useKeyboardShortcuts [MOD]     InterestsDialog [MOD]   │
+│  ↗ Open Original ─┐         'o' ─┐                        + Suggested topics      │
+│  ★ Star, 📋 Board, 🔖, 💧│         │                        TopicRow LearnedLine [MOD]│
+│                   ▼              ▼                        WhyBreakdown [MOD]      │
+│            useOpenOriginal() [NEW] ── fire-and-forget POST ───────────┐           │
+│            onEngaged(qc) [NEW]: learned/by-id/suggestions invalidate, │           │
+│              Priority row patch + "Ranking changed" hint              │           │
+│ useUpdateArticleState / useAddArticleToBoard / useReadLater /         │           │
+│   useSaveToRaindrop [MOD]: call onEngaged on success                  │           │
+└───────────────────────────────────────────────────────────────────────┼───────────┘
+                                                                        │ HTTP
+┌──────────────────────────────── Backend (Spring MVC) ─────────────────┼───────────┐
+│ ArticleController [MOD]                                               ▼           │
+│   PATCH /{id} (star) ──► ArticleService.updateState [MOD] ──┐  POST /{id}/engagement [NEW]
+│   POST /{id}/raindrop ─► RaindropService.saveToRaindrop [MOD]┤    └► ArticleEngagementService [NEW]
+│ BoardController                                             │         (OPEN_ORIGINAL only, 404,
+│   POST /boards/{id}/articles ─► BoardService.addArticle [MOD]┤          returns article + breakdown)
+│                                                             ▼                     │
+│                                   ArticleEngagementStore [NEW] (JdbcClient,       │
+│                                   INSERT … ON CONFLICT DO NOTHING)                │
+│ InterestController [MOD]: GET /api/interest/suggestions,                          │
+│   POST /api/interest/suggestions/{articleId}/dismiss ─► TopicSuggestionService [NEW]
+│                                                                                   │
+│ InterestScoreQueries [MOD]: LEARNED_CTE gains engaged + eng_learned CTEs and the  │
+│   thumbs/engagement split in eff/eff2/contrib (the single source of sort, badge,  │
+│   Why rows and learned weights, so they stay consistent)                          │
+│ ScoreBreakdowns [MOD] (passes the split through, apportionment unchanged)         │
+│ ArticleFeedbackService.learnedTopics / LearnedLimit / TopicLearned [MOD]          │
+└───────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────── PostgreSQL ───────────────────────────────────────┐
+│ V7 [NEW]: article_engagement (article_id, kind) PK, topic_suggestion_dismissal    │
+│ V6 (unchanged): article_score, article_topic_score, article_feedback(+_topic),    │
+│   interest_topic                                                                  │
+└───────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────── Ops tooling ──────────────────────────────────────┐
+│ scripts/interest-calibration-replay.sql/.sh [MOD] + InterestCalibrationReplaySqlTest [MOD] │
+│ (the replay must copy the new blendCte text byte for byte; the build fails otherwise) │
+└───────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Package | Responsibility | Talks to |
-|-----------|---------|----------------|----------|
-| `ArticlesIngestedEvent(Long feedId, List<Long> articleIds)` | `event/` | Carries the IDs of genuinely new articles out of a poll. IDs only, never entities, so the worker always re-reads current state. | Published by `FeedPollingService`; consumed by `InterestScoringListener` |
-| `FeedPollingService` (modified) | `service/` | Collects `newIds` in the existing dedup loop and publishes one event per poll when the list is non-empty. No other change. | `ApplicationEventPublisher` |
-| `InterestScoringListener` | `service/` (or `scheduler/`) | `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)`. Returns immediately if Jev isn't configured, otherwise hands the IDs to `ArticleScoringService.submit()`. Wraps everything in try/catch so it **never throws**. | `ArticleScoringService` |
-| `interestScoringExecutor` bean | `config/InterestScoringConfig` | Dedicated `ThreadPoolTaskExecutor`: core = max = `myfeeder.interest.concurrency` (default 2), queue capacity around 1000, `DiscardPolicy` with a warning log. Thread prefix `jev-`. | Used only by `ArticleScoringService` |
-| `ArticleScoringService` | `service/` | `submit(ids)` does an in-flight dedup (`ConcurrentHashMap.newKeySet()`) and queues one task per ID. `score(id)` loads the article, feed title, profile and topics, builds the state map and question map, calls the client, classifies failures and persists raw outputs. Idempotent. | `JevApiClient`, `ArticleRepository`, `FeedRepository`, `InterestProfileService`, `ArticleScoreWriter` |
-| `JevApiClient` / `JevApiClientImpl` | `integration/` | The only class that touches `TypeSafeClient`. Carries `@CircuitBreaker(name="jev")` (outer) and `@Retry(name="jev")` (inner). Holds `ObjectProvider<TypeSafeClient>`, exposes `isConfigured()`, and throws `JevNotConfiguredException` when the bean is absent. No fallback method: typed exceptions propagate so the service can classify them. | TypeSafe SDK |
-| `InterestBackfillJob` | `service/` or `scheduler/` | `@Scheduled(fixedDelay)`. Skips when not configured or when the `jev` breaker is OPEN. Otherwise it SELECTs up to N unscored unread IDs (cheap) and calls `submit()`. It **never calls Jev on the scheduler thread**. The same job does the one-time launch backfill. | `ArticleScoringService`, `CircuitBreakerRegistry`, `InterestScoreQueries` |
-| `InterestProfileService` | `service/` | Profile text and topic CRUD with validation (weight range, topic cap). Bumps `version` when profile text or a topic description changes. Weight edits do **not** bump version, because weights apply at query time. | `InterestProfileRepository`, `InterestTopicRepository` |
-| `InterestScoreQueries` | `repository/` | A `@Repository` using `NamedParameterJdbcTemplate`. Owns the single blend CTE and three queries: the priority page (first page and after-cursor), the blended score of one article (for the cursor), and enrichment for a list of IDs (score + feedback vote). | PostgreSQL |
-| `ArticleScoreWriter` | `repository/` | Write-once inserts into `article_score` and `article_topic_score` via `INSERT … ON CONFLICT (…) DO NOTHING` in one `@Transactional` method. | PostgreSQL |
-| `ArticleFeedbackRepository` | `repository/` | `@Modifying @Query` upsert and delete of the thumbs vote. | PostgreSQL |
-| `PriorityService` | `service/` | Resolves the cursor article's (blended score, date), then runs the keyset query. | `InterestScoreQueries` |
-| `ArticleService` (modified) | `service/` | After any list or single-article fetch, calls `enrich(List<Article>)` to fill the `@Transient interestScore` and `@Transient feedback` fields. | `InterestScoreQueries` |
-| `InterestController` | `controller/` | `/api/interest/status` (configured, breaker state, unscored count), `/api/interest/profile` (GET/PUT), `/api/interest/topics` (GET/POST/PUT/DELETE). | `InterestProfileService`, `JevApiClient` |
-| `ArticleController` (modified) | `controller/` | `GET /api/articles/priority?limit&before` → `PaginatedResponse<Article>`; `PUT /api/articles/{id}/feedback {vote: 1\|-1}`; `DELETE /api/articles/{id}/feedback`. | `PriorityService`, `ArticleService` |
-
----
+| Component | Status | Responsibility |
+|-----------|--------|----------------|
+| `V7__article_engagement.sql` | NEW | `article_engagement` table (one row per article and kind, idempotent) and `topic_suggestion_dismissal`, plus an optional backfill from `article.starred` and `board_article` (Decision D-A). All v0.3.0 schema goes in this one migration, following the V6 precedent. |
+| `ArticleEngagementStore` (repository) | NEW | `record(articleId, kind) → boolean inserted` (`INSERT … ON CONFLICT (article_id, kind) DO NOTHING`) and `find(articleId)` (kinds plus timestamps). It has no dependencies other than `JdbcClient`, so it can be injected into `ArticleService`, `BoardService` and `RaindropService` without cycles. It never writes `interest_topic`. |
+| `ArticleEngagementService` | NEW | Backs the client-reported open (`OPEN_ORIGINAL` only). It validates the kind with a fixed-text 400, returns 404 for a missing article, records, and returns `EngagementResult{recorded, article}` with the re-blended badge and breakdown, like `FeedbackResult`. |
+| `ArticleService.updateState` | MOD | When the request's `starred == TRUE`, records `STAR` in the same transaction (add `@Transactional`). `withScores` runs after the insert, so the returned badge already includes the nudge. |
+| `BoardService.addArticle` | MOD | Records `BOARD`. This covers BoardManager, 🔖 Read Later and `b`, because all three go through `POST /api/boards/{id}/articles`. |
+| `RaindropService.saveToRaindrop` | MOD | Records `RAINDROP` only after `raindropApiClient.createBookmark` returns. The breaker, the fallback and the business-rule exceptions all throw before that line, so a failed save never counts. |
+| `InterestScoreQueries.LEARNED_CTE` / `blendCte` | MOD | Adds the `engaged` (strongest kind per article, excluding thumbs-voted articles) and `eng_learned` (per topic) CTEs; `eff` gains `eng_raw`/`eng`; `eff2` gains `w_thumbs`; `contrib` gains `thumbs_applied`/`engagement_applied`. Every consumer (Priority, badges, Why, `topicWeights`, `allTopicWeights`) inherits the change, because they are all built from this one constant. |
+| `TopicContribution` / `TopicWeight` / `TopicLearned` / `InterestBreakdown.Row` / `Article` | MOD | Fields are appended, never renamed (the project convention). Details are in Pattern 3. |
+| `TopicSuggestionService` + endpoints | NEW | Lists gap-discovery suggestions (engaged, SCORED, matched no topic, not voted 👎, not dismissed) and dismisses one. It is read-only apart from the dismissal row and never calls Jev. |
+| `useOpenOriginal` (frontend hook) | NEW | The only way to open an original link: `window.open` runs synchronously, then a fire-and-forget POST follows. Used by ReadingPane's two "Open Original" buttons and the `o` shortcut. |
+| `onEngaged(qc, res?)` (frontend helper) | NEW | One shared reaction to any engagement: invalidate `['interest','learned']`, `['interest','suggestions']`, `['articles']` and the by-id articles; patch the Priority row; set the "Ranking changed" hint. |
+| Replay script, SQL and drift guard | MOD | The regenerated blend lines, new psql variables (`openWeight`, `saveWeight`, `engagementCap`) validated in the driver, and new `engagement` and extended `learned` sections. The test keeps asserting that the file holds the verbatim text. |
 
 ## Recommended Project Structure
 
-This follows the existing layer-first packages (see `.planning/codebase/STRUCTURE.md`). Do **not** add a feature package; every existing integration (Raindrop) is spread across the layer packages.
+Only new or touched files are shown. They follow the existing package layout (see root CLAUDE.md).
 
 ```
-src/main/java/org/bartram/myfeeder/
-├── config/
-│   ├── MyfeederProperties.java          # + Interest nested class (concurrency, queue, backfill, blend constants)
-│   └── InterestScoringConfig.java       # interestScoringExecutor bean
-├── event/
-│   └── ArticlesIngestedEvent.java       # record(Long feedId, List<Long> articleIds)
-├── integration/
-│   ├── JevApiClient.java                # interface: isConfigured(), judge(state, questions)
-│   ├── JevApiClientImpl.java            # @CircuitBreaker + @Retry, ObjectProvider<TypeSafeClient>
-│   └── JevNotConfiguredException.java   # listed in ignore-exceptions (CB + retry)
-├── model/
-│   ├── Article.java                     # + @Transient Double interestScore, @Transient Integer feedback
-│   ├── InterestProfile.java             # singleton row (id = 1)
-│   └── InterestTopic.java
-├── repository/
-│   ├── InterestProfileRepository.java
-│   ├── InterestTopicRepository.java
-│   ├── ArticleFeedbackRepository.java   # @Modifying upsert/delete
-│   ├── ArticleScoreWriter.java          # JdbcTemplate, ON CONFLICT DO NOTHING
-│   └── InterestScoreQueries.java        # the blend CTE + priority/cursor/enrich queries
-├── service/
-│   ├── InterestProfileService.java
-│   ├── ArticleScoringService.java       # submit(), score(), prompt building, failure classification
-│   ├── InterestScoringListener.java
-│   ├── InterestBackfillJob.java
-│   └── PriorityService.java
-└── controller/
-    ├── InterestController.java
-    └── (ArticleController additions) + FeedbackRequest, TopicRequest, ProfileRequest records
-
 src/main/resources/db/migration/
-└── V6__interest_scoring.sql             # all five tables in one migration
+└── V7__article_engagement.sql               # NEW: engagement + suggestion dismissal (+ optional backfill)
+
+src/main/java/org/bartram/myfeeder/
+├── model/
+│   ├── EngagementKind.java                 # NEW enum: OPEN_ORIGINAL, STAR, BOARD, RAINDROP
+│   ├── ArticleEngagement.java              # NEW record: kinds, strongest class, counted/overridden (by-id payload)
+│   ├── InterestBreakdown.java              # MOD: Row appends thumbsLearnedWeight, engagementLearnedWeight
+│   └── Article.java                        # MOD: @Transient engagement (by-id only, like feedback)
+├── repository/
+│   ├── ArticleEngagementStore.java         # NEW
+│   ├── TopicSuggestionQueries.java         # NEW (or a method on InterestScoreQueries; keep it read-only)
+│   └── InterestScoreQueries.java           # MOD: LEARNED_CTE, blendCte, records, binds engagement params
+├── service/
+│   ├── ArticleEngagementService.java       # NEW
+│   ├── EngagementResult.java               # NEW record {recorded, article}
+│   ├── TopicSuggestionService.java         # NEW
+│   ├── ArticleService.java                 # MOD: STAR capture, engagement on findByIdWithBreakdown
+│   ├── BoardService.java                   # MOD: BOARD capture
+│   ├── ScoreBreakdowns.java                # MOD: pass split fields through (no apportionment change)
+│   ├── ArticleFeedbackService.java         # MOD: learnedTopics carries engagement
+│   ├── TopicLearned.java / LearnedLimit.java # MOD
+├── integration/RaindropService.java        # MOD: RAINDROP capture after success
+├── controller/
+│   ├── ArticleController.java              # MOD: POST /{id}/engagement (JSON-only)
+│   ├── EngagementRequest.java              # NEW record {kind}
+│   └── InterestController.java             # MOD (or new TopicSuggestionController): suggestions routes
+└── config/MyfeederProperties.java          # MOD: interest.blend.engagement.{open-weight,save-weight,cap}
 
 src/main/frontend/src/
-├── api/interest.ts                      # profile/topics/status + feedback calls
-├── api/articles.ts                      # list(): priority branch → /articles/priority
-├── hooks/useInterest.ts                 # profile/topic queries + mutations
-├── hooks/useArticles.ts                 # + useArticleFeedback mutation
-├── components/InterestBadge.tsx (+ .test.tsx)
-├── components/ThumbsButtons.tsx (+ .test.tsx)
-├── components/InterestSettings.tsx      # profile textarea + topic table (own dialog/section, not inside the 233-line SettingsDialog)
-└── types/index.ts                       # Article.interestScore, Article.feedback, ArticleFilters.priority
+├── api/articles.ts, api/interest.ts        # MOD: recordOpen, suggestions, dismiss
+├── hooks/useEngagement.ts                  # NEW: useOpenOriginal, onEngaged
+├── hooks/useArticles.ts, useBoards.ts      # MOD: onEngaged in star/board/read-later/raindrop success
+├── hooks/useKeyboardShortcuts.ts           # MOD: 'o' → useOpenOriginal
+├── hooks/useInterest.ts                    # MOD: useTopicSuggestions, useDismissSuggestion
+├── components/ReadingPane.tsx              # MOD: Open Original via hook; engagement line
+├── components/WhyBreakdown.tsx             # MOD: TopicLabel shows votes vs engagement split
+├── components/TopicRow.tsx                 # MOD: LearnedLine shows both parts
+└── components/InterestsDialog.tsx          # MOD: Suggested topics section → draft row
 ```
 
 ### Structure Rationale
 
-- **Put the score tables' SQL in `repository/` and use JdbcTemplate.** The blend is a multi-CTE query that takes configuration parameters (η, clamp, profile weight) and returns a computed column. `@Query` would force four near-duplicate string variants of the CTE. One class holding one CTE constant is the single source of truth for "what is the score".
-- **Keep `JevApiClientImpl` in `integration/`, separate from `ArticleScoringService`.** This mirrors `RaindropApiClientImpl`: only the HTTP call sits inside the breaker, and business logic (already scored? configured? how to classify a failure?) runs outside it. Keeping them in separate beans also avoids the self-invocation AOP bypass that CLAUDE.md warns about.
-- **Put the executor in `config/`.** It is infrastructure, and a named bean is easy to swap in tests for a `SyncTaskExecutor`.
-
----
+- **The store is separate from the service** because three existing services need to write engagement, and none of them should depend on an interest-domain service; each would otherwise risk a dependency cycle through `ArticleService`. `ArticleFeedbackStore` already follows this split.
+- **The SQL model stays in `InterestScoreQueries`.** The class Javadoc says it is "the single source of truth for the Priority sort and the interest badge". Engagement must live inside `LEARNED_CTE` and nowhere else, or the sort, the badge, the Why rows and the Interests line can drift apart.
 
 ## Architectural Patterns
 
-### Pattern 1: Publish after ingest, hand off immediately (the hook point)
+### Pattern 1: Capture at the owning server-side action; only "open original" is client-reported
 
-**What:** `FeedPollingService.pollFeed` collects the new IDs and publishes `ArticlesIngestedEvent`. The listener uses the same annotation the codebase already uses (`@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)`). Its only job is to submit to a dedicated bounded executor.
+**What:** Each save is recorded by the backend service that performs the save. Only the open, which happens entirely in the browser, is reported by the client, through a dedicated endpoint that accepts no other kind.
 
-**Why this and not a direct call:** A direct call from `FeedPollingService` to a scoring service couples ingest to an optional integration. It also invites a future "just call Jev inline" regression.
+**Reliability comparison (the core question):**
 
-**Why this and not `@Async` on the listener:** The app has no `@EnableAsync`. Enabling it globally is a wider change than needed. Explicit `executor.execute(...)` makes rejection handling visible (discard + log) and is trivially testable.
+| Capture point | Frontend event | Backend side effect | Recommendation |
+|---------------|----------------|---------------------|----------------|
+| STAR | Several call sites (toolbar button, `s`, future ones); lost if the tab closes before the extra POST; double-counts if both layers report | One place (`updateState`), atomic with the star write, covers every client path | **Backend** |
+| BOARD | Three paths (BoardManager, Read Later with its two-call `getOrCreateByName` + `addArticle`, `b`) | One place (`BoardService.addArticle`) | **Backend** |
+| RAINDROP | The client can't reliably tell a real save from a fallback | Recorded after `createBookmark` returns, so breaker-open, 503 not-configured, 409 disabled and 400 no-collection all throw first | **Backend** |
+| OPEN_ORIGINAL | The only place it happens (`window.open`) | Only possible with a redirect endpoint (`GET /api/articles/{id}/open` → 302): a side-effecting GET, an open redirect to feed-supplied URLs, and it breaks the codebase's JSON-only-writes rule | **Frontend**, via a JSON-only POST |
 
-**Two codebase facts drive the design (both HIGH confidence, from source):**
+**Trade-offs:** The open signal is best-effort: a failed POST loses one open, and it fails silently with no toast. That is acceptable for a fractional, capped, positive-only signal. The endpoint accepts `OPEN_ORIGINAL` only (400 otherwise), so a save kind can never be counted twice.
 
-1. `pollFeed` is **not** `@Transactional`. Each `articleRepository.save` auto-commits, so with `fallbackExecution = true` the listener runs **synchronously on the polling thread** as soon as the event is published. The listener must return in microseconds.
-2. Spring Boot's auto-configured `ThreadPoolTaskScheduler` has **one thread** unless `spring.task.scheduling.pool.size` is set, and myfeeder sets neither that nor virtual threads. Every feed's polling task and every `@Scheduled` job (Retention, and the new backfill) share one thread. Anything slow on it delays *all* feed polling.
+**Example (frontend):**
+```typescript
+// hooks/useEngagement.ts
+export function useOpenOriginal() {
+  const qc = useQueryClient()
+  const { mutate } = useMutation({
+    mutationKey: ['engagement'],
+    mutationFn: (id: number) => articlesApi.recordOpen(id), // POST {kind:'OPEN_ORIGINAL'}, JSON
+    meta: { inlineError: true },                            // silent: no toast on failure
+    onSuccess: (res) => { if (res.recorded) onEngaged(qc, res.article) },
+  })
+  return useCallback((article: Article) => {
+    if (!article.url) return
+    window.open(article.url, '_blank', 'noopener') // FIRST and synchronous: keeps user activation
+    mutate(article.id)                             // never awaited before window.open
+  }, [mutate])
+}
+```
 
-`publishEvent` sits inside `pollFeed`'s `try`. A listener that throws would land in the `catch`, increment `feed.errorCount`, and eventually trigger polling backoff for a healthy feed. So the listener catches everything.
-
-**Example:**
+**Example (backend):**
 ```java
-// FeedPollingService (inside the existing loop)
-List<Long> newIds = new ArrayList<>();
-...
-Article saved = articleRepository.save(toArticle(parsedArticle, feed.getId()));
-newIds.add(saved.getId());
-...
-feedRepository.save(feed);                       // existing success bookkeeping
-if (!newIds.isEmpty()) {
-    eventPublisher.publishEvent(new ArticlesIngestedEvent(feed.getId(), List.copyOf(newIds)));
+// ArticleService.updateState, now @Transactional
+Article saved = articleRepository.save(article);
+if (Boolean.TRUE.equals(starred)) {
+    engagementStore.record(saved.getId(), EngagementKind.STAR); // idempotent; unstar never deletes (D-C)
 }
-
-// InterestScoringListener
-@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-public void onArticlesIngested(ArticlesIngestedEvent event) {
-    try {
-        if (!jevApiClient.isConfigured()) return;          // optional integration: no key → no-op
-        scoringService.submit(event.articleIds());          // non-blocking enqueue
-    } catch (Exception e) {                                 // never let scoring fail a poll
-        log.warn("Could not enqueue {} articles for scoring", event.articleIds().size(), e);
-    }
-}
+withScores(List.of(saved));
 ```
 
-**Trade-offs:** With a platform pool of 2 plus a bounded queue, a burst (an OPML import of 100 feeds all polling at once) can overflow the queue. That is fine, because discarded IDs have no `article_score` row and the backfill job picks them up later. The backfill is the safety net, so the fast path can afford to drop work. **Do not enable `spring.threads.virtual.enabled` in this milestone.** It silently swaps the `TaskScheduler` implementation under `FeedPollingScheduler` to `SimpleAsyncTaskScheduler`, which is an unrelated behavior change with its own risk. Two platform threads are plenty: around 300 ms per call gives about 6 calls/s, far under the published 1,200 req/min limit.
+### Pattern 2: Engagement as a derived, capped, overridable second learned term in `LEARNED_CTE`
 
-### Pattern 2: Optional integration via `ObjectProvider<TypeSafeClient>` + Resilience4j on the client bean
+**What:** This extends the existing derived model rather than adding a parallel one. Engagement is never stored as a weight, so deleting an engagement row, casting a vote or deleting a topic changes the result on the next read, the same way votes do today.
 
-**What:** `JevApiClientImpl` mirrors `RaindropApiClientImpl`. The auto-configured `TypeSafeClient` bean exists only when an API key is set, so the impl injects `ObjectProvider<TypeSafeClient>` and resolves it once.
+**Rules as SQL:**
+- *One per article, at the strongest kind:* `MAX(CASE kind WHEN 'OPEN_ORIGINAL' THEN :openWeight ELSE :saveWeight END)` grouped by `article_id`.
+- *Thumbs override:* `NOT EXISTS (SELECT 1 FROM article_feedback f WHERE f.article_id = e.article_id)`. Any vote (up, down, narrowed or not) removes the article's whole engagement contribution.
+- *Counts only once scored:* join `article_score … status = 'SCORED'`, as votes do (D-03).
+- *Hinge-weighted per matched topic:* `strength × GREATEST(0, (noul − 0.5) × 2)`, the same shape as a vote.
+- *Own cap, positive only:* `eng = LEAST(:engagementCap, :learnRate × eng_sum)`, which is never negative because strengths and hinges are both non-negative.
+- *Thumbs-first attribution:* `w_thumbs = signclamp(base + learned)`, `w = signclamp(base + learned + eng)`, `thumbs_applied = w_thumbs − base`, `engagement_applied = w − w_thumbs`. The two parts sum exactly to the existing `learned_applied = w − base`. Explicit votes claim room under the sign clamp and the ±50 range first, so engagement never "steals" a vote's effect.
 
-**Starter facts that shape this (read from `spring-ai-typesafe` v0.1.0 source):**
-
-- The auto-config is `@ConditionalOnProperty("spring.ai.typesafe.api-key")` **plus** `Assert.state(hasText(apiKey))`. A **present-but-blank key fails context startup.** It does not skip. The repo's own test is named `declinesToStartOnABlankApiKeyRatherThanBuildingAClientThatCannotCall`.
-  - So **never** write `spring.ai.typesafe.api-key: ${MYFEEDER_TYPESAFE_API_KEY:}` in `application.yaml`.
-  - And **do not copy the Raindrop Helm pattern**, which always renders the env var, possibly as `""`.
-  - Render `SPRING_AI_TYPESAFE_API_KEY` in `app-deployment.yaml` only inside `{{- if .Values.secrets.typesafeApiKey }}`, and have `deploy.sh` default `MYFEEDER_TYPESAFE_API_KEY` to empty with a warning, exactly like Raindrop.
-- The starter clones the context's `RestClient.Builder`, so the existing `RestClientCustomizer` (User-Agent) still applies. It installs its own `JdkClientHttpRequestFactory` with `spring.ai.typesafe.timeout`, so the global `spring.http.client.read-timeout: 30s` does **not** apply. Set `spring.ai.typesafe.timeout: 5s` explicitly.
-- The SDK has **its own retry policy**: 2 retries on 408/429/5xx/connection errors within a 30 s budget. Stacked under `@Retry(max-attempts: 3)` that becomes up to 9 HTTP attempts per article. **Set `spring.ai.typesafe.retry.max-retries: 0`** and let Resilience4j own retries, which keeps the project convention and gives one place to tune. The trade-off is losing the SDK's `retry-after-ms` handling for 429s, which is acceptable at 2-way concurrency.
-- The starter depends only on `typesafe-java-sdk` and `spring-boot-starter`, **not** on Spring AI. The "Spring AI 2.0.1+" requirement applies only to `typesafe-spring-ai` (advisors/RAG), which this milestone doesn't need. The project's `spring-ai 2.0.0-M2` is therefore not a blocker. The starter was built against Boot 4.0.7 and the project runs 4.0.3, so verify in Phase 1.
-
-**Resilience4j configuration:**
-```yaml
-spring:
-  ai:
-    typesafe:
-      timeout: 5s
-      retry:
-        max-retries: 0          # Resilience4j @Retry is the single retry layer
-      # api-key: NOT set here. Supplied only via SPRING_AI_TYPESAFE_API_KEY when present.
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      jev:
-        failure-rate-threshold: 50
-        sliding-window-type: COUNT_BASED
-        sliding-window-size: 20
-        minimum-number-of-calls: 10
-        wait-duration-in-open-state: 60s
-        permitted-number-of-calls-in-half-open-state: 3
-        ignore-exceptions:                         # per-article content problems must not open the breaker
-          - org.bartram.myfeeder.integration.JevNotConfiguredException
-          - org.springaicommunity.typesafe.exception.TypeSafeBadRequestException
-          - org.springaicommunity.typesafe.exception.TypeSafeUnprocessableEntityException
-  retry:
-    instances:
-      jev:
-        max-attempts: 3
-        wait-duration: 1s
-        exponential-backoff-multiplier: 2
-        retry-exceptions:                          # allow-list: only transient failures
-          - org.springaicommunity.typesafe.exception.TypeSafeInternalServerException
-          - org.springaicommunity.typesafe.exception.TypeSafeRateLimitException
-          - org.springaicommunity.typesafe.exception.TypeSafeApiConnectionException
-```
-
-401/403 (bad or missing key at the API) are deliberately **recorded** by the breaker: a broken key opens it, and the backfill then stops hammering the API.
-
-**No fallback method.** Raindrop's fallback exists to translate failures into HTTP status codes for a user-facing request. Scoring has no HTTP caller. `ArticleScoringService` catches and classifies:
-
-| Exception | Classification | Persisted state |
-|-----------|----------------|-----------------|
-| `TypeSafeBadRequestException`, `TypeSafeUnprocessableEntityException` | Permanent for this article | `article_score` row with `status='FAILED'`, `attempts+1`. Retried at most `max-attempts` times by backfill, then left. |
-| `CallNotPermittedException` (breaker open), 5xx, 429, connection/timeout, `JevNotConfiguredException` | Transient, not the article's fault | **No row written.** The backfill retries later. |
-| Success | — | `status='SCORED'` plus topic rows, in one transaction |
-
-### Pattern 3: Write-once raw outputs, blend at query time
-
-**What:** Jev outputs are stored verbatim and never updated. The blended score is a SQL expression evaluated per request. Weight edits and thumbs therefore re-rank instantly with zero Jev calls, and raw data is never lost to a formula change.
-
-**Why separate tables instead of columns on `article` (important):** `ArticleService.updateState` does `findById` → mutate → `articleRepository.save(article)`. Spring Data JDBC's `save` writes **every column**. If score columns lived on `article`, an async scorer writing `article.interest_*` between a user's load and save would have its values overwritten with `NULL`. That is a lost update that is hard to reproduce. Separate tables make the race impossible. They also keep the `Article` aggregate and its `SELECT *` queries unchanged.
-
-**Why not Spring Data JDBC aggregates for the score/feedback tables:** Their primary keys are **assigned** (`article_id`), not generated. Spring Data JDBC's `save()` treats a non-null ID as an UPDATE, which fails on a missing row unless the entity implements `Persistable#isNew`. Write-once and upsert semantics are clearer as explicit SQL (`INSERT … ON CONFLICT`), and they give idempotency for free.
-
-#### Data model: `V6__interest_scoring.sql`
-
+**Sketch (keep `WITH learned AS` as the opening token, because the drift guard's `BLEND_START` regex looks for it):**
 ```sql
--- Singleton profile (single-user app). Seeded so the entity is always UPDATE-able.
-CREATE TABLE interest_profile (
-    id           SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-    profile_text TEXT        NOT NULL DEFAULT '',
-    version      INTEGER     NOT NULL DEFAULT 1,     -- bumped when profile_text changes
-    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-INSERT INTO interest_profile (id) VALUES (1);
-
-CREATE TABLE interest_topic (
-    id          BIGSERIAL PRIMARY KEY,
-    name        TEXT             NOT NULL,
-    description TEXT             NOT NULL,           -- goes into the Noul instruction
-    weight      DOUBLE PRECISION NOT NULL DEFAULT 1.0 CHECK (weight BETWEEN -3 AND 3),
-    version     INTEGER          NOT NULL DEFAULT 1, -- bumped when description changes
-    created_at  TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ      NOT NULL DEFAULT NOW()
-);
-
--- One row per judged article. Write-once on SCORED; FAILED rows count attempts.
-CREATE TABLE article_score (
-    article_id         BIGINT PRIMARY KEY REFERENCES article(id) ON DELETE CASCADE,
-    status             TEXT             NOT NULL CHECK (status IN ('SCORED', 'FAILED')),
-    profile_score      DOUBLE PRECISION,            -- raw Jev Score value, zero-indexed: [0, profile_max_level]
-    profile_max_level  SMALLINT,                    -- rubric levels - 1 at scoring time (normalization)
-    profile_confidence DOUBLE PRECISION,
-    profile_version    INTEGER,
-    model              TEXT,                        -- SystemOneResponse.model
-    request_id         TEXT,                        -- x-typesafe-request-id (support/debug)
-    attempts           SMALLINT         NOT NULL DEFAULT 1,
-    last_error         TEXT,
-    scored_at          TIMESTAMPTZ      NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE article_topic_score (
-    article_id    BIGINT           NOT NULL REFERENCES article(id) ON DELETE CASCADE,
-    topic_id      BIGINT           NOT NULL REFERENCES interest_topic(id) ON DELETE CASCADE,
-    noul          DOUBLE PRECISION NOT NULL CHECK (noul BETWEEN 0 AND 1),
-    topic_version INTEGER          NOT NULL,
-    PRIMARY KEY (article_id, topic_id)
-);
-CREATE INDEX idx_article_topic_score_topic ON article_topic_score(topic_id);
-
-CREATE TABLE article_feedback (
-    article_id BIGINT PRIMARY KEY REFERENCES article(id) ON DELETE CASCADE,
-    vote       SMALLINT    NOT NULL CHECK (vote IN (-1, 1)),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+WITH learned AS (… unchanged thumbs CTE …),
+engaged AS (SELECT e.article_id,
+    MAX(CASE WHEN e.kind = 'OPEN_ORIGINAL' THEN CAST(:openWeight AS float8)
+             ELSE CAST(:saveWeight AS float8) END) AS strength
+  FROM article_engagement e
+  WHERE NOT EXISTS (SELECT 1 FROM article_feedback f WHERE f.article_id = e.article_id)
+  GROUP BY e.article_id),
+eng_learned AS (SELECT ts.topic_id, SUM(g.strength * GREATEST(0, (ts.noul - 0.5) * 2)) AS eng_sum
+  FROM engaged g
+  JOIN article_score gs ON gs.article_id = g.article_id AND gs.status = 'SCORED'
+  JOIN article_topic_score ts ON ts.article_id = g.article_id
+  GROUP BY ts.topic_id),
+eff AS (SELECT t.id, t.name, t.weight AS base,
+    <learned_raw, learned as today>,
+    CAST(:learnRate AS float8) * COALESCE(g.eng_sum, 0) AS eng_raw,
+    LEAST(CAST(:engagementCap AS float8), CAST(:learnRate AS float8) * COALESCE(g.eng_sum, 0)) AS eng
+  FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id LEFT JOIN eng_learned g ON g.topic_id = t.id),
+eff2 AS (SELECT e.*, <signclamp(base + learned)> AS w_thumbs, <signclamp(base + learned + eng)> AS w FROM eff e)
+-- contrib: … e.w - e.base AS learned_applied, e.w_thumbs - e.base AS thumbs_applied, e.w - e.w_thumbs AS engagement_applied …
 ```
 
-Notes:
-- **Profile confidence is stored but not used in the blend** for this milestone. It is cheap to keep and useful for a later "low confidence" indicator.
-- **Per-level probabilities and the legend are not stored.** Nothing in scope consumes them, so they are YAGNI.
-- **`ON DELETE CASCADE` everywhere.** Feed delete → article delete → scores and feedback go too. Topic delete → its nouls vanish, and its contribution disappears from every article instantly, which is the desired behavior.
-- **`profile_version` and `topic_version` are recorded for provenance only.** Re-scoring is out of scope. The versions make a future "rescore stale articles" a pure query.
+**Trade-offs:** The CTE is recomputed on every list, badge and Priority read. That costs one more aggregate over a small table joined to `article_topic_score` by its primary key, which is negligible at single-user scale. The CTE is no longer fully symmetric with votes, and this is intended: engagement is positive-only and cannot be narrowed.
 
-#### Jev request shape (in `ArticleScoringService`)
+**Decision D-B (negative-base topics):** Taken literally, "an engagement is a fractional up-vote" means that opening an article which matched a −30 topic softens that topic, bounded by the engagement cap and never flipping sign. **Lean: keep the literal semantics**, consistent with an un-narrowed 👍. The alternative, one `CASE WHEN t.weight < 0 THEN 0` in `eff`, is trivial if the user wants engagement to affect only topics with base ≥ 0. Settle this in requirements, because it changes the SQL text and therefore the replay.
 
-- **State:** a `Map`, per the SDK's `systemOne(Map<String,?> state, …)`. Keys: `feed` (feed title), `title`, `summary`.
-  - The summary is **plain text**: HTML stripped (jsoup is on the classpath via Readability4J; verify) and truncated to about 1,500 characters.
-  - Omit null keys, since `Map.of` rejects nulls. Never pass a bare number or boolean, which gets a 422.
-- **Questions:** one map per call.
-  - `"profile"` → a `Score` whose instruction embeds the profile text, with a fixed 5-level rubric: "Not relevant", "Slightly", "Somewhat", "Relevant", "Highly relevant". `profile_max_level = 4`.
-  - `"topic_<id>"` → a `Noul` per topic, with instruction = topic description and explicit `whenTrue`/`whenFalse` text.
-  - Parse the IDs back from the keys.
-- **Empty profile text:** omit the `profile` question. With zero topics too, skip the call entirely and write nothing (not configured in the product sense).
-- **Topic cap:** about 25 topics, validated in `InterestProfileService`. Extra questions are cheap, but the rubric should stay legible.
+### Pattern 3: The explainability split lives inside a topic row's weight, never as extra rows
 
-### Pattern 4: The blend (single SQL source of truth)
+**What:** Why rows are profile + matched topics, and their integer points are apportioned by largest remainder so they sum exactly to `total = ROUND(raw)` (D-02). Engagement already flows through `w`, so `points = hinge × w` and the invariant is untouched. The split is a decomposition of the weight, `weight = baseWeight + thumbsLearnedWeight + engagementLearnedWeight`, printed in the row's label and tooltip, the way D-11 prints base + learned today.
 
-**Formula** (MEDIUM confidence; tune on real data, constants in `myfeeder.interest.blend.*`):
+**Field plan (append only):**
+- `TopicContribution` / `InterestBreakdown.Row`: keep `learnedWeight` as the total applied learned part (old clients and the existing `base + learned = weight` tests keep passing), and append `thumbsLearnedWeight` and `engagementLearnedWeight`. **Rounding rule:** compute `engagementLearnedWeight = ROUND(w,6) − base − ROUND(thumbs_applied,6)` rather than rounding the difference independently, so the parts sum exactly at 6 decimals.
+- `TopicWeight` (used by `topicWeights`/`allTopicWeights`, the vote toast and Interests): append `engagementRaw` and `engagement`. `effective` now includes engagement.
+- `TopicLearned`: keep `learned` meaning the capped thumbs part, and append `engagementLearned` and `engagementAtCap`. `LearnedLimit.of` must use `base + learned + engagement` for the SIGN_CLAMP and WEIGHT_RANGE checks, or the Java limit will disagree with the SQL `w`.
+- `Article` (by-id only, like `feedback`): append `engagement: {kinds[], strongest: OPEN|SAVE, counted: boolean, overriddenByVote: boolean}`, so the reading pane can say "Saved: counts as ½ vote" or "Overridden by your 👍".
 
-```
-p        = profile_score / profile_max_level                      ∈ [0, 1]   (0 when no profile question)
-m_i      = GREATEST(0, (noul_i − 0.5) × 2)                         ∈ [0, 1]   (hinge: only "more yes than no" counts)
-w_i      = topic.weight + learned_delta_i                          (clamped to [-3, 3])
-interest = ROUND( profile_weight × p  +  Σ_i m_i × w_i , 6 )
-```
+**Frontend:** `WhyBreakdown.TopicLabel` changes from `(+20 +3.0 learned)` to something like `(+20 · votes +2.0 · engagement +1.0)`. `TopicRow.LearnedLine` changes from "Learned from votes +x · Effective weight +y" to add "· from opens/saves +z (at max)". Neither recomputes anything; both print server values, as today.
 
-Why these choices:
-- **Normalize the Score by its max level.** Jev Score values are zero-indexed expected levels, e.g. `[0, 4]` for 5 levels, so dividing by the max level puts the profile on the same `[0,1]` scale as a fully matched topic. Storing `profile_max_level` per row means a future rubric change can't corrupt old normalizations.
-- **Use a hinge on Noul, not raw Noul.** Noul 0.5 means "undecided" (per TypeSafe's docs). Summing raw nouls lets ten irrelevant topics at around 0.1 each add noise comparable to the entire profile signal. The hinge contributes exactly 0 until the model leans yes. Negative weights penalize only articles that actually match the unwanted topic.
-- **Don't normalize by Σ|w|.** That would make one strongly matched topic weaker every time the user adds an unrelated topic, which is surprising. Additive evidence ("this topic is worth 2 profiles") is easier to explain in the settings UI.
-- **Topics added after scoring** have no `article_topic_score` row. The `LEFT JOIN` + `COALESCE(…, 0)` gives zero contribution, which matches "new articles only". Deleted topics cascade away.
-- **Round to 6 decimals** so the cursor comparison is exact. A float `SUM` over rows is not guaranteed to be bit-identical across two executions if the row order differs, and an off-by-one-ulp cursor score would skip or duplicate an item at a page boundary.
+### Pattern 4: Gap discovery as a read-only derived list plus one dismissal row
 
-**The CTE** is defined once as a Java text-block constant in `InterestScoreQueries`:
+**What:** `GET /api/interest/suggestions` returns engaged articles that are SCORED, have no topic with a hinge above 0 (the same predicate as `matchedTopicIds`), have no 👎 vote, have no dismissal row, and have `created_at` inside a window (for example 30 days). They are sorted by strongest kind, then most recent engagement, and capped at about 10. Each item carries `{articleId, title, feedTitle, strongest, engagedAt}`. Clicking "Create topic" seeds the existing `TopicDraft` (`description = title.trim().slice(0,500)`, `weight: 20`) as a new row in the open Interests dialog, adapting `addDraft` to accept a draft. A successful save, or a "Not a topic" click, posts the dismissal.
 
-```sql
-WITH learned AS (           -- thumbs → per-topic weight delta (see Pattern 5)
-  SELECT ts.topic_id,
-         LEAST(:maxDelta, GREATEST(-:maxDelta,
-               :eta * SUM(f.vote * GREATEST(0, (ts.noul - 0.5) * 2)))) AS delta
-  FROM article_feedback f
-  JOIN article_topic_score ts ON ts.article_id = f.article_id
-  GROUP BY ts.topic_id
-),
-eff AS (
-  SELECT t.id, LEAST(3, GREATEST(-3, t.weight + COALESCE(l.delta, 0))) AS w
-  FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id
-),
-blended AS (
-  SELECT s.article_id,
-         ROUND(( :profileWeight * COALESCE(s.profile_score / NULLIF(s.profile_max_level, 0), 0)
-               + COALESCE(SUM(GREATEST(0, (ts.noul - 0.5) * 2) * eff.w), 0) )::numeric, 6)::float8 AS score
-  FROM article_score s
-  JOIN article a              ON a.id = s.article_id AND a."read" = false   -- scope to unread
-  LEFT JOIN article_topic_score ts ON ts.article_id = s.article_id
-  LEFT JOIN eff               ON eff.id = ts.topic_id
-  WHERE s.status = 'SCORED'
-  GROUP BY s.article_id, s.profile_score, s.profile_max_level
-)
-```
+**Why a dismissal table is needed:** Articles are never re-judged (D-21). An article therefore never gets a noul for a topic created from it, and it would stay "unmatched" forever. Any derived rule that avoids state (for example, "only articles judged against every current topic") would clear *all* suggestions whenever any topic is added. One `topic_suggestion_dismissal(article_id PK → article ON DELETE CASCADE)` table is the smallest correct fix, and it belongs in V7.
 
-For the enrichment variant, replace the `a."read" = false` join with `s.article_id IN (:ids)`, so badges also appear on read articles in normal lists.
-
-**Priority page with a composite keyset cursor, compatible with `PaginatedResponse` (the cursor stays a `Long` article ID):**
-
-```sql
--- sort key: (COALESCE(score, '-Infinity'), COALESCE(published_at, fetched_at), id) DESC
-SELECT a.*, b.score AS interest_score
-FROM article a
-LEFT JOIN blended b ON b.article_id = a.id
-WHERE a."read" = false
-  AND (:cursorId IS NULL OR
-       (COALESCE(b.score, '-Infinity'::float8), COALESCE(a.published_at, a.fetched_at), a.id)
-         < (:cursorScore, :cursorDate, :cursorId))
-ORDER BY COALESCE(b.score, '-Infinity'::float8) DESC,
-         COALESCE(a.published_at, a.fetched_at) DESC,
-         a.id DESC
-LIMIT :limit
-```
-
-- **Unscored articles sort after all scored ones, by date.** Mapping `NULL` to `-Infinity` turns the two-segment ordering into one row-value comparison; all three sort keys are DESC, so the Postgres tuple `<` is correct.
-- **Cursor resolution mirrors the existing `ArticleService.findFiltered` pattern.** `PriorityService` looks up the cursor article's current `(score, date)` with the same CTE (a `WHERE s.article_id = :id` variant, not unread-scoped: the cursor article may have just been auto-marked read), then runs the page query with `limit + 1`. `PaginatedResponse.of(fetched, limit, Article::getId)` needs no change.
-- **Row mapping:** use `BeanPropertyRowMapper<Article>`. `Article` is a Lombok `@Data` bean, and `interest_score` maps onto the `@Transient interestScore` setter.
-- **Score changes between pages** (a thumbs vote, a weight edit) can shift items across a page boundary. That is acceptable because the frontend invalidates `['articles']` on those mutations and refetches from page 1.
-
-### Pattern 5: Thumbs nudge as a derived aggregate, not a mutation
-
-**What:** A thumbs vote writes only `article_feedback(article_id, vote)`. The learned per-topic delta is **computed** in the `learned` CTE:
-
-`delta_t = clamp(η × Σ_feedback vote × m_t(article), ±maxDelta)`
-
-Defaults: `η = 0.1`, `maxDelta = 1.5`. It is applied on top of the user-authored `interest_topic.weight`.
-
-**Why not `UPDATE interest_topic SET weight = weight + …` on each click:**
-- The derived version is exactly **reversible**: un-voting or flipping a vote is a delete/upsert of one row. A mutation approach must remember and subtract the exact deltas it applied, including clamping effects.
-- It is **idempotent** against double-clicks and retried requests.
-- It **never clobbers the user's own weight edits**.
-- It lets η and the clamp be retuned retroactively.
-- It is explainable: the settings UI can show "base 1.0, learned +0.4" per topic from the same CTE.
-
-**Where it lives:** in SQL (`InterestScoreQueries`), not in Java. The Java side (`ArticleService.setFeedback`) only upserts or deletes the vote and returns the re-enriched article.
-
-**Cost:** the `learned` CTE scans feedback rows, at most a few thousand for one user, once per query. That is negligible, and it needs no Jev calls, as required.
-
-**Only articles that were scored can nudge anything.** Thumbs on an unscored article is stored (harmless) and starts contributing once the article is scored.
-
-### Pattern 6: Backfill = the ingest path's safety net + the launch backfill
-
-```java
-@Scheduled(fixedDelayString = "${myfeeder.interest.backfill.interval:PT2M}",
-           initialDelayString = "${myfeeder.interest.backfill.initial-delay:PT1M}")
-public void backfill() {
-    if (!jevApiClient.isConfigured()) return;
-    if (circuitBreakerRegistry.circuitBreaker("jev").getState() == CircuitBreaker.State.OPEN) return;
-    int room = scoringService.remainingCapacity();                // don't overfill the queue
-    if (room <= 0) return;
-    List<Long> ids = interestScoreQueries.findUnscoredIds(
-            Math.min(room, props.getBackfill().getBatchSize()),  // default 100
-            props.getBackfill().getMaxAgeDays(),                 // default 30: cost guard for ancient unread
-            props.getBackfill().getMaxAttempts());               // default 3
-    scoringService.submit(ids);                                  // returns immediately
-}
-```
-
-```sql
-SELECT a.id FROM article a
-LEFT JOIN article_score s ON s.article_id = a.id
-WHERE a."read" = false
-  AND a.fetched_at > NOW() - make_interval(days => :maxAgeDays)
-  AND (s.article_id IS NULL OR (s.status = 'FAILED' AND s.attempts < :maxAttempts))
-ORDER BY a.fetched_at DESC           -- newest first: fresh articles matter most
-LIMIT :limit
-```
-
-- **It runs on the single shared scheduler thread**, so it only runs a cheap indexed SELECT and enqueues. Jev calls happen on `jev-*` threads.
-- **The launch backfill needs no separate code.** On first deploy every unread article lacks a row, and the job drains the backlog at batch/interval (100 per 2 min, about 3,000/hour, around 50 req/min, which is about 4% of the rate limit). A manual `POST /api/interest/backfill` trigger is optional sugar.
-- **Idempotent.** The in-flight set stops the ingest listener and the backfill from scoring the same ID concurrently. `ArticleScoringService.score` re-checks "already SCORED?" before calling. The writer's `ON CONFLICT DO NOTHING` makes a duplicate harmless even if both checks race.
-- **Only unread articles are scored**, because the Priority view shows only unread. The max-age filter bounds the one-time cost.
-
----
+**Anti-scope:** No clustering and no LLM-drafted topic descriptions. Both would need Jev or Anthropic calls, which breaks the milestone goal of no extra Jev calls. See the anti-patterns.
 
 ## Data Flow
 
-### Ingest → score (write path)
+### Request Flow: open original (client-reported)
 
 ```
-FeedPollingScheduler thread
-  pollFeed(feedId) ─ insert new articles (auto-commit each) ─ publish ArticlesIngestedEvent(ids)
-        │  (synchronous, microseconds; no tx so fallbackExecution fires immediately)
-        ▼
-  InterestScoringListener ─ configured? ─ submit(ids) ─► interestScoringExecutor queue
-                                                             │
-jev-1 / jev-2 threads                                        ▼
-  ArticleScoringService.score(id)
-     ├─ already SCORED? → return
-     ├─ load article, feed title, profile(v), topics(v)
-     ├─ build state {feed,title,summary} + questions {profile: Score, topic_<id>: Noul…}
-     ├─ JevApiClient.judge(...)  ──[CB "jev" → Retry "jev" → TypeSafeClient.systemOne]──► Jev
-     └─ ArticleScoreWriter.insert(article_score + article_topic_score)  [one tx, ON CONFLICT DO NOTHING]
+'o' or ↗ button → useOpenOriginal(article)
+   ├─ window.open(url, '_blank', 'noopener')          (synchronous, inside the user gesture)
+   └─ POST /api/articles/{id}/engagement {"kind":"OPEN_ORIGINAL"}  (JSON-only → 415 for simple CSRF)
+        → ArticleEngagementService.recordOpen(id)
+            → 404 if no article; store.record(id, OPEN_ORIGINAL) → inserted?
+            → findByIdWithBreakdown(id)  (badge + Why + engagement, same read path as GET)
+        ← {recorded, article}
+   onSuccess (recorded only) → onEngaged(qc, article)
 ```
 
-### Priority view (read path)
+### Request Flow: save (server-side capture)
 
 ```
-/priority route → useArticles({priority: true}) → GET /api/articles/priority?limit=50&before=<id>
-  → ArticleController → PriorityService
-       ├─ cursor? → InterestScoreQueries.scoreAndDateOf(cursorId)
-       └─ InterestScoreQueries.priorityPage(cursor…, limit+1)   [blend CTE, keyset]
-  → PaginatedResponse.of(rows, limit, Article::getId)
-  → {items:[{…article, interestScore, feedback}], nextCursor}
+★ / 's'            → PATCH /api/articles/{id} {starred:true}  → updateState → record STAR → withScores
+📋 / 🔖 / 'b'       → POST /api/boards/{b}/articles {articleId} → addArticle → record BOARD
+💧 / 'r'?          → POST /api/articles/{id}/raindrop          → saveToRaindrop → createBookmark OK → record RAINDROP
+onSuccess (each existing mutation) → onEngaged(qc)   (star can also patch interestScore from the PATCH response)
 ```
 
-### Thumbs (feedback path)
+### Read flow: every badge, Priority page, Why and Interests line
 
 ```
-ThumbsButtons / 'u' 'd' keys → PUT|DELETE /api/articles/{id}/feedback
-  → ArticleService.setFeedback → ArticleFeedbackRepository upsert/delete
-  → onSuccess: invalidate ['articles'] (Priority re-ranks via learned CTE), ['article', id]
+InterestScoreQueries.blendSql(...) binds profilePoints, learnRate, learnedCap, openWeight, saveWeight, engagementCap
+  LEARNED_CTE (learned → engaged → eng_learned → eff → eff2) → contrib → blended → keyed
 ```
+All the constants are bound in `learnedSql()`, which is already the single binding point. Add the three new parameters there, so `topicWeights()` gets them automatically.
 
-### Enrichment (every article response)
+### State Management (TanStack Query / Zustand reactions)
 
-```
-ArticleService.findFiltered / findById / PriorityService
-  → InterestScoreQueries.enrich(ids) → Map<id, (score, vote)> → set @Transient fields
-```
+| Cache | On engagement | Reason |
+|-------|---------------|--------|
+| `PRIORITY_KEY` (`['priority']`) | **Never invalidated.** `patchPriorityArticle(qc, id, {interestScore})` when the response carries the article; otherwise leave the row alone | Frozen order while triaging (D-06/D-07); any refetch reloads every page and re-ranks |
+| `usePriorityStore.rankingChanged` | `setRankingChanged(true)` on every recorded engagement, set unconditionally rather than route-gated | The store resets the hint on Priority re-entry and refresh, so setting it off-route is harmless. An engagement moves other articles' scores, which is exactly WR-05's "an unserved row can rise past the boundary" case |
+| `['interest','learned']` | invalidate | The Interests learned line now includes engagement |
+| `['interest','suggestions']` [NEW] | invalidate on engagement, vote (👎 removes a suggestion), topic create/delete and dismiss | Derived list |
+| `['articles']` | invalidate (star already does) | Badges in the chronological lists shift; the order is by date, so no reorder |
+| `['article', n]` (length 2) | `setQueryData` for the engaged id from the response; invalidate the others (the same predicate as the vote's D-05, which skips `['article', n, 'extracted']`) | The Why rows and the engagement line are by-id only |
+| `['boardArticles']`, `['boards']` | unchanged | — |
 
-### State management (frontend)
+A `recorded: false` response (repeat open, or an open on an already-saved article) triggers no invalidation or hint, so rapid `o` presses cost nothing. For board and Raindrop saves, which return `void`, call `onEngaged(qc)` without the patch step. It is fine to accept a false "Ranking changed" hint on a repeat save, because saves are rare and deliberate.
 
-```
-Route (/priority)  ──► PriorityArticles ──► ArticleList(filters={priority:true})
-      │                                        ▲
-      └─► MainLayout: same filters object ─────┘  (same TanStack query key → shared cache,
-                                                   so j/k walk the PRIORITY order)
-uiStore: unchanged shape. Handlers call setSelectedFeed(null)/setSelectedFolder(null)
-and navigate('/priority'), exactly like Starred. Do NOT add a "virtual feed id" to uiStore.
-```
+### Key Data Flows
 
-**Frontend facts from the source (HIGH):**
-- **Smart views are route-driven** (`/starred` via `navigate`), not uiStore state. Priority should follow the same pattern: `FeedPanel.handlePriorityClick`, a `/priority` route in `App.tsx`, and a `g p` chord.
-- **The "All Articles" `active` class** is `!selectedFeedId && !selectedFolderId`, so it would also light up on `/priority`, as it already does on `/starred`. Use `useMatch('/priority')` for Priority's active state and exclude it from All's.
-- **`MainLayout` drives keyboard shortcuts from its own `useArticles(...)` call**, keyed by `selectedFeedId`, not by route. On `/priority`, j/k would walk the *All Articles* chronological list, not the ranked one. MainLayout must derive its filters from the route (`useMatch('/priority')` → `{ priority: true }`) with the identical object shape `PriorityArticles` passes, so both hit one cached query.
-- **`ArticleList`'s "preserved selected article" logic** already re-inserts the selected item at its old index after it drops out of an unread-only list. It works unchanged for Priority when auto-mark-read or a thumbs re-rank refetches the list.
-- **Free keys for thumbs:** `j k n p m s o b v r A / g ? Tab Enter Escape + = -` are taken. Recommend `u` (thumbs up) and `d` (thumbs down), both toggles. Add them and `g p` to `ShortcutOverlay`.
-- **`preferencesStore` needs no change.** If a "show interest badge" toggle is added later, remember the CLAUDE.md Zustand-merge gotcha.
-
----
-
-## Suggested Build Order (phase implications)
-
-The dependencies are real: scoring needs the profile/topics schema, the Priority view needs score rows (seedable in tests), and the thumbs nudge needs the blend CTE.
-
-| # | Phase | Delivers | Depends on | Why this position |
-|---|-------|----------|------------|-------------------|
-| 1 | **Jev client foundation** | Gradle dep (explicit version, not BOM), `JevApiClient(Impl)` with CB+Retry, `JevNotConfiguredException`, SDK retries off, `spring.ai.typesafe.timeout`, Helm conditional env + `deploy.sh`, `/api/interest/status`, tests: context starts with **no** key; a live smoke test gated on the key. | — | Retires the biggest unknowns first: Boot 4.0.3 vs 4.0.7 compatibility, Jackson 3 interplay, and the blank-key startup crash. Everything else is plain Spring. |
-| 2 | **Interest model + settings** | V6 migration (all five tables), `InterestProfile`/`InterestTopic` entities + repos, `InterestProfileService`, `InterestController` CRUD, frontend `InterestSettings` + `useInterest`. | 1 (status endpoint drives the "not configured" UI) | Scoring can't build questions without a profile and topics. Ship the whole schema at once so later phases add no migrations. |
-| 3 | **Scoring pipeline** | `ArticlesIngestedEvent`, `FeedPollingService` publish, `InterestScoringListener`, `interestScoringExecutor`, `ArticleScoringService` (state/question building, classification), `ArticleScoreWriter`. | 1, 2 | The core write path. Tests: listener never throws into `pollFeed`; the executor is swapped for `SyncTaskExecutor`; mocked `JevApiClient`. |
-| 4 | **Backfill** | `InterestBackfillJob`, `findUnscoredIds`, breaker-open skip, capacity-aware enqueue, config. | 3 | Reuses the pipeline. Small, so it can merge into Phase 3 if preferred. It is also the launch backfill. |
-| 5 | **Blend + Priority view** | `InterestScoreQueries` (CTE with `learned` returning 0 until Phase 6 data exists), `PriorityService`, `GET /api/articles/priority`, `@Transient` enrichment, frontend `/priority` route, FeedPanel entry, MainLayout filter alignment, `InterestBadge`. | 2 (schema). Testable with seeded `article_score` rows, independent of 3/4. | Can run **in parallel with 3–4** because it reads a table and does not depend on the writer. Keyset cursor tests: ties, unscored segment, cursor article read since. |
-| 6 | **Thumbs feedback** | `article_feedback` repo, PUT/DELETE endpoints, `learned` CTE active, `ThumbsButtons`, `u`/`d` shortcuts, `useArticleFeedback`, learned-delta display in settings. | 5 | Needs the blend to observe its effect. Smallest phase. |
-
-**Research flags:**
-- **Phase 1:** needs a quick spike against the live API (real latency, the 403-on-missing-key behavior, whether 0.1.0 resolves cleanly on Boot 4.0.3 with Gradle).
-- **Phase 5:** needs tuning of the blend constants against the real backlog after Phase 4 has scored some of it. Consider a hidden `/api/interest/debug/{articleId}` breakdown endpoint to support that tuning.
-- **Phases 2, 3, 4, 6:** standard patterns already present in the codebase; no deeper research needed.
-
----
+1. **Thumbs vote on an engaged article:** the vote row appears, the `engaged` CTE drops the article, and the article's engagement contribution disappears in the same read. The vote toast prints the server's before/after, which now includes that removal. For example, a 👍 on a saved article shows +1.5 rather than +2.0. The value is truthful; the copy may need a note (see Pitfalls).
+2. **Removing the vote:** the engagement contribution comes back automatically, because the model is derived.
+3. **Topic deleted:** `article_topic_score` cascades, so engagement on its articles stops counting for that topic. Suggestions are unaffected, since the dismissal table is keyed by article.
+4. **"Re-score unread":** deletes the score rows of unread articles. Engaged articles are usually read (auto-mark-read), so their contribution survives. An engaged-but-unread article stops counting until it is re-scored, the same as votes today.
 
 ## Scaling Considerations
 
-This is a single-user homelab app. Realistic scale is tens to hundreds of feeds, 500 to 3,000 new articles a day, and 1,000 to 20,000 unread.
-
-| Scale | Architecture adjustments |
+| Scale | Architecture Adjustments |
 |-------|--------------------------|
-| ≤ 20k unread (expected) | As designed: blend computed per request over unread scored rows (a hash join on PKs, milliseconds). |
-| 20k–200k unread | Add a partial index `article(id) WHERE read = false` if the planner struggles. If still slow, materialize `article_score.cached_blend` refreshed on weight/feedback change (a single UPDATE … FROM CTE), keeping raw outputs as the source of truth. |
-| Ingest bursts (OPML import of many feeds) | The bounded queue discards overflow and backfill catches up. No change needed. |
+| Single user, now | No change. `article_engagement` grows by roughly tens of rows per day (thousands per year). The engaged and eng_learned CTEs aggregate through the `(article_id, kind)` primary key and the `article_topic_score` primary key |
+| Years of history | The learned model sums all history (as votes already do). If list latency grows, `EXPLAIN` the blend first. The lever is a time window or decay on `engaged` (for example, the last 180 days), which is a query-time change needing no migration. Don't add it speculatively |
 
-### Scaling priorities
+### Scaling Priorities
 
-1. **First bottleneck: the single scheduler thread**, not Jev. Anything added to `@Scheduled` or the polling path that blocks stalls all feeds. That is why the design keeps Jev off that thread entirely.
-2. **Second: Jev rate limit and cost** during the launch backfill. It is bounded by batch size, interval, the 2-thread pool and the max-age filter.
-
----
+1. **First bottleneck:** the whole blend CTE on every Priority and list page, not the engagement part. It is already measured in production as fine.
+2. **Second bottleneck:** none plausible for a single user.
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Calling Jev inline in `pollFeed` or in a `@Scheduled` method
-**What people do:** Score inside the insert loop, or have the backfill loop call Jev directly.
-**Why it's wrong:** The scheduler has one thread. At 300 ms × N articles, all feed polling stalls, and a Jev outage turns into feed-polling latency.
-**Do this instead:** Publish the event, submit to `interestScoringExecutor`, and keep the backfill to "SELECT IDs + enqueue".
+### Anti-Pattern 1: Reporting saves from the frontend
 
-### Anti-Pattern 2: Letting a scoring exception escape into `pollFeed`
-**What people do:** A listener without try/catch, or `submit` throwing `RejectedExecutionException`.
-**Why it's wrong:** `publishEvent` runs inside `pollFeed`'s `try`, so the exception increments `feed.errorCount` and eventually backs off polling for a healthy feed.
-**Do this instead:** The listener catches everything; the executor uses `DiscardPolicy` + log.
+**What people do:** Add `POST /engagement {kind:'STAR'}` next to the star PATCH.
+**Why it's wrong:** A save then has two writers (double capture or a missed path), a failed Raindrop save can be counted, and every new save path has to remember to report.
+**Do this instead:** Record the save in the service that performs it. The engagement endpoint accepts `OPEN_ORIGINAL` only.
 
-### Anti-Pattern 3: Blank API key property (copying the Raindrop env pattern)
-**What people do:** `spring.ai.typesafe.api-key: ${MYFEEDER_TYPESAFE_API_KEY:}`, or a Helm env var always rendered from a possibly-empty secret.
-**Why it's wrong:** The starter's `Assert.state(hasText(apiKey))` **fails application startup** on a present-but-blank key, so the pod crash-loops.
-**Do this instead:** Leave the key out of `application.yaml`, render `SPRING_AI_TYPESAFE_API_KEY` only when the value is non-empty, and add a context test with no key.
+### Anti-Pattern 2: Awaiting the engagement POST before `window.open`
 
-### Anti-Pattern 4: Score columns on the `article` table
-**What people do:** `ALTER TABLE article ADD interest_score …`.
-**Why it's wrong:** `ArticleService.updateState` saves the full row loaded earlier and silently wipes scores written by the async worker in between.
-**Do this instead:** Use separate `article_score` and `article_topic_score` tables with explicit INSERTs.
+**What people do:** Use `await recordOpen(id); window.open(url)` so the record "surely happens".
+**Why it's wrong:** Browsers only allow popups during transient user activation, and Safari especially rejects a `window.open` that follows an await. The open silently fails, which is worse than losing one engagement.
+**Do this instead:** Call `window.open` first and synchronously, then fire and forget. `fetch(..., {keepalive: true})` is optional hardening; the page doesn't unload, because the link opens in a new tab.
 
-### Anti-Pattern 5: Storing only the blended number
-**What people do:** Compute the blend at ingest and store one `interest` value.
-**Why it's wrong:** Weight edits and thumbs could not re-rank without re-calling Jev, which violates a core requirement and the cost constraint.
-**Do this instead:** Store raw Score and Noul values; blend in SQL at query time.
+### Anti-Pattern 3: Storing or writing learned engagement points
 
-### Anti-Pattern 6: Double retry layers
-**What people do:** Keep the SDK's default 2 retries *and* add `@Retry(max-attempts: 3)`.
-**Why it's wrong:** Up to 9 HTTP attempts per article, retry storms against a rate-limited API, and breaker statistics that lag reality.
-**Do this instead:** `spring.ai.typesafe.retry.max-retries: 0`, with Resilience4j as the only retry layer and an allow-list of transient exceptions.
+**What people do:** Add `engagement_points` to `interest_topic`, or bump `weight` on each open.
+**Why it's wrong:** It breaks "every learned point stays explainable and reversible", "a vote never writes a topic's weight", and exact undo by vote or delete.
+**Do this instead:** Keep engagement a derived term in `LEARNED_CTE`. The only stored facts are "article X was engaged with kind K at time T" and "suggestion X was dismissed".
 
-### Anti-Pattern 7: Priority as a "virtual feed id" in uiStore
-**What people do:** Encode Priority as `selectedFeedId = -1` or add a `selectedView` field.
-**Why it's wrong:** It breaks `feedId`-based API calls, `n`/`p` unread-feed navigation and mark-all-read-in-feed, and diverges from how Starred works.
-**Do this instead:** Use a route (`/priority`) plus a filter flag (`ArticleFilters.priority`).
+### Anti-Pattern 4: Separate "Engagement" rows in Why N
 
----
+**What people do:** Add a row per topic for engagement points, or one global "Learned from engagement" row.
+**Why it's wrong:** Those points are already inside each topic's `hinge × w`. Extra rows double-count, or force a rework of the largest-remainder apportionment, and the rows would stop summing to the badge.
+**Do this instead:** Split the topic row's *weight* into base, votes and engagement in its label and tooltip (Pattern 3).
+
+### Anti-Pattern 5: Counting noisy signals
+
+**What people do:** Record selection, auto-mark-read, reader view, dwell time, Copy Link, or clicks on links inside the article body (`handleContentClick`).
+**Why it's wrong:** The PROJECT.md scope excludes them: j/k skimming and auto-enabled reader view are noise, and in-body links point elsewhere.
+**Do this instead:** Capture only the two "Open Original" buttons, `o`, and the three save actions. Leave `handleContentClick` untouched.
+
+### Anti-Pattern 6: Invalidating the Priority query on engagement
+
+**What people do:** Call `invalidateQueries(['priority'])` so the new ranking shows up.
+**Why it's wrong:** It re-ranks under the user and reloads every loaded page (research Pattern 5, D-07/D-09).
+**Do this instead:** Patch the row and set the hint; the user refreshes when ready.
+
+### Anti-Pattern 7: Changing `LEARNED_CTE` without regenerating the replay in the same commit
+
+**What people do:** Edit the Java CTE and plan to "update the script later".
+**Why it's wrong:** `InterestCalibrationReplaySqlTest.replaysTheAppsUnreadBlendVerbatim` asserts that the SQL file contains `blendCte(UNREAD_SCOPE)` byte for byte, so `./gradlew test` goes red. Also, `WRITE_KEYWORD` rejects the words insert, update, delete, create, drop, alter, truncate, grant, copy and into anywhere in replay statements, so no kind name or CTE alias may contain those words (`COPY_LINK` would trip it).
+**Do this instead:** Put the CTE change, the regenerated replay lines, the new psql `-v` variables with regex validation in the driver, and the extended test in one plan.
+
+### Anti-Pattern 8: Using an LLM for gap discovery
+
+**What people do:** Cluster engaged titles, or draft topic descriptions, with Jev or the (unused) Anthropic starter.
+**Why it's wrong:** It breaks the "no extra Jev calls" goal and the cost model, and adds a failure mode to a feature that should be a pure read.
+**Do this instead:** List articles and reuse the title-as-description draft; the user edits it in the dialog.
 
 ## Integration Points
 
-### External services
+### External Services
 
-| Service | Integration pattern | Notes |
+| Service | Integration Pattern | Notes |
 |---------|---------------------|-------|
-| TypeSafe Jev (`systemOne`) | `spring-ai-starter-typesafe` 0.1.0 auto-config → `TypeSafeClient` bean (only when the key is set) → `JevApiClientImpl` (CB+Retry) | ~300 ms/call, no streaming, 1,200 req/min published limit. State must be a string, object, array or null. 403 means a missing key at the API; 401 a rejected key. Score values are zero-indexed expected levels (max 10 levels). Noul is a single probability in `[0,1]`. Store `requestId` for support. |
+| Jev (TypeSafe) | **None new.** Engagement reuses the stored nouls | An engaged article that is not yet scored counts once it is scored, same as votes |
+| Raindrop.io | Capture after `RaindropApiClient.createBookmark` returns | The breaker fallback rethrows, so no row is recorded on failure. Keep the capture in the service, outside the `@CircuitBreaker`-annotated client bean |
 
-### Internal boundaries
+### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| `FeedPollingService` → scoring | Domain event (`ArticlesIngestedEvent`), AFTER_COMMIT with fallback | Same contract style as `FeedSavedEvent`. Ingest never references scoring classes. |
-| Listener/backfill → `ArticleScoringService` | Direct call to `submit()` (non-blocking) | The service owns the executor and the in-flight set. |
-| `ArticleScoringService` → `JevApiClient` | Direct call through the AOP proxy (separate bean) | Business checks outside the breaker; only the HTTP call inside it. |
-| Read path → scores | SQL only (`InterestScoreQueries`) | Nothing in the read path calls Jev. The blend formula exists in exactly one place. |
-| `ArticleService` ↔ `Article` API shape | `@Transient interestScore`, `@Transient feedback` filled by enrichment | Avoids a parallel DTO hierarchy. `@WebMvcTest` JSON assertions gain two nullable fields. |
-| Backend ↔ Frontend | REST: `/api/articles/priority`, `/api/articles/{id}/feedback`, `/api/interest/*` | `PaginatedResponse` unchanged (`items`, `nextCursor: Long`). |
+| ArticleService / BoardService / RaindropService → ArticleEngagementStore | Direct call (idempotent INSERT) | An `ArticleEngagedEvent` + `@TransactionalEventListener` would work but adds indirection for no gain here. Events in this codebase exist to decouple scheduling from transactions, which is not the problem being solved |
+| ArticleController → ArticleEngagementService | Direct | JSON-only `consumes`, like `/feedback` and `/rescore` (a simple cross-site POST gets 415) |
+| ArticleFeedbackService ↔ engagement | Implicit, through the SQL only | No Java coupling. The override lives in the CTE's `NOT EXISTS` |
+| InterestScoreQueries ↔ replay script | Byte-for-byte text contract, test-enforced | Extend the driver with `OPEN_WEIGHT`, `SAVE_WEIGHT` and `ENGAGEMENT_CAP` env vars (decimal regex) and pass them via `-v` |
+| MyfeederProperties ↔ yaml ↔ DevProfileConfigTest | Config | New keys `myfeeder.interest.blend.engagement.{open-weight,save-weight,cap}` must resolve in the test yaml plus the dev overlay to main's values (`DevProfileConfigTest`). Pin the test yaml to fixed values that `InterestScoreQueriesTest` fixtures assume. Tune only in committed yaml (D-14), never with Helm `--set` |
+| TopicDraft (FeedbackNotice ↔ InterestsDialog) | Existing prop | The suggestions section needs a way to add a draft row after the dialog has seeded (today the draft is seeded once, at open). Widen `addDraft` to accept a `TopicDraft` |
+
+### Decisions to settle in requirements (they change schema or SQL text)
+
+- **D-A: backfill in V7?** Insert `STAR` from `article.starred` and `BOARD` from `board_article` (`MIN(added_at)`). **Lean: yes.** It is idempotent, only SCORED articles count, and it gives the calibration replay real save data from day one. Opens and Raindrop saves have no history to backfill.
+- **D-B: do engagement nudges apply to negative-base topics?** Lean: yes, the literal fractional up-vote (Pattern 2).
+- **D-C: do unstarring and removing from a board retract the engagement?** **Lean: no.** Emptying Read Later after reading is the normal workflow, and deleting the row would erase the signal exactly when interest was confirmed. Reversal is through a thumbs vote (override). Optionally add `DELETE /api/articles/{id}/engagement` as an explicit "forget", but it can be deferred.
+- **D-D: separate caps.** Thumbs keep ±`learned-cap` (20); engagement gets its own cap in `[0, +cap)` (a provisional 10), so total learned can reach 30 before the sign clamp and ±50 bound it. The alternative, one shared cap, contradicts "its own cap below the thumbs cap". Add a startup check or test that `engagement.cap < learned-cap` and `save-weight > open-weight ≥ 0`.
+- **D-E: provisional weights.** Open 0.25 and save 0.5 (as fractions of one vote, scaled by the existing `learn-rate` 2) mean +0.5 and +1.0 points per full-match engagement. Calibration sets the final values.
+
+## Suggested Build Order
+
+The dependencies set the order. Phase numbers are left to the roadmapper.
+
+1. **Engagement capture (backend + frontend, ranking unchanged).** V7 (both tables, plus the D-A backfill if chosen), `EngagementKind`, `ArticleEngagementStore`, capture in `updateState`/`addArticle`/`saveToRaindrop`, `POST /{id}/engagement`, `useOpenOriginal` wired to both buttons and `o`. Tests: a V7 migration test (the `V4StripRaindropApiTokenMigrationTest` pattern if backfilling), store idempotency, "no row on Raindrop failure", the controller's 415/400/404. *Ship this as its own release if possible:* the ranking doesn't change, and every day it runs in production accumulates the real data that step 5 needs. The replay cannot calibrate against a table that doesn't exist in prod yet.
+2. **Learned model extension.** `LEARNED_CTE`/`blendCte`/`contrib` split, the new config props bound in `learnedSql()`, the `TopicContribution`/`TopicWeight`/`TopicLearned`/`LearnedLimit`/`Row` fields, `ScoreBreakdowns` pass-through, and **in the same plan** the regenerated replay SQL, driver variables and drift guard. Tests: `InterestScoreQueriesTest` cases for strongest-kind, override, the cap, thumbs-first attribution under the sign clamp, parts summing exactly, and Why rows still summing to the badge. If step 1 shipped alone, main yaml can keep `engagement.cap: 0` until step 5, so this step is behavior-neutral in production. The dev overlay sets provisional values for UAT.
+3. **Explainability + cache reactions (frontend + by-id payload).** `Article.engagement`, the WhyBreakdown label split, the TopicRow LearnedLine, the reading-pane engagement line, `onEngaged` wired into star, board, Read Later, Raindrop and open, the Priority patch plus hint, and vote-toast copy for the override case. This depends on step 2's fields.
+4. **Gap discovery.** The suggestions query, endpoints, dismissal, the Interests "Suggested topics" section and `addDraft(draft)`. It depends only on step 1 (the tables) plus the existing matched-topic predicate, so it can be planned in parallel with steps 2–3. Order it after them only if a single stream of work is preferred.
+5. **Calibration + rollout.** Replay candidate `OPEN_WEIGHT:SAVE_WEIGHT:ENGAGEMENT_CAP` sets against the engagement accumulated in production, then record the result in a calibration note like `07-CALIBRATION.md`. Put the tuned values in main `application.yaml` and `application-dev.yaml`, update CLAUDE.md (the Interest Ranking section, V7, and the throttle/tuning levers), and release a minor version (new schema): `./gradlew release -Prelease.versionIncrementer=incrementMinor`.
+
+**Research flags:** Step 2 is the risky one: SQL correctness, the drift guard, and exact 6-decimal sums. It deserves a careful plan-phase with TDD fixtures. Step 4 needs a small UX decision (where suggestions appear, and the dismissal copy). Steps 1, 3 and 5 follow established patterns.
 
 ---
-
-## Sources
-
-- myfeeder source (HIGH, read directly): `service/FeedPollingService.java`, `scheduler/FeedPollingScheduler.java`, `repository/ArticleRepository.java`, `service/ArticleService.java`, `controller/ArticleController.java`, `controller/PaginatedResponse.java`, `integration/RaindropApiClientImpl.java`, `application.yaml`, `helm/myfeeder/templates/app-deployment.yaml`, `deploy.sh`, `db/migration/V1..V5`, frontend `App.tsx`, `stores/uiStore.ts`, `hooks/useArticles.ts`, `hooks/useKeyboardShortcuts.ts`, `components/FeedPanel.tsx`, `components/ArticleList.tsx`, `api/articles.ts`, `types/index.ts`
-- spring-ai-typesafe v0.1.0 source at the git tag (HIGH): `TypeSafeAutoConfiguration.java` (blank-key `Assert.state`, cloned `RestClient.Builder`), `TypeSafeProperties.java` (timeout, retry props), `TypeSafeAutoConfigurationTests.java`, `TypeSafeClient.java` (`systemOne(Map,…)` overloads), `SystemOneResponse.java`, `ScoreAnswer.java`, `NoulAnswer.java`, `docs/client/ErrorsAndRetries.md`, `docs/client/Batches.md`, starter `pom.xml` (no Spring AI dependency) — https://github.com/spring-ai-community/spring-ai-typesafe
-- Spring blog, "Spring AI and TypeSafe Jev: Fast, Cheap, Structured Decisions" (2026-09-21) — https://spring.io/blog/2026/09/21/spring-ai-typesafe-structured-judgment/
-- TypeSafe docs, Score primitive (zero-indexed levels, expected-value computation, ≤10 levels) — https://docs.typesafe.ai/primitives/score ; Noul primitive — https://docs.typesafe.ai/primitives/noul
-- Spring Boot 4.0.3 reference, Task Execution and Scheduling (default `ThreadPoolTaskScheduler` with one thread; the virtual-threads switch to `SimpleAsyncTaskScheduler`), via Context7 `/spring-projects/spring-boot/v4.0.3`, cross-checked against the Boot source (`TaskExecutorConfigurations`, `Threading`)
-
----
-*Architecture research for: Jev interest scoring integration into myfeeder*
-*Researched: 2026-09-22*
+*Architecture research for: implicit engagement learning on myfeeder's query-time interest ranking*
+*Researched: 2026-09-29*

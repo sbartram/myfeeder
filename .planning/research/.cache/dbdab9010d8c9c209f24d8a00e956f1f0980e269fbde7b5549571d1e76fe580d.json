@@ -1,0 +1,1 @@
+{"content":"auxclick fires for non-primary buttons (middle, and right in some browsers) after mouseup on same element; Baseline 2024; filter event.button===1 for middle-click. Context-menu Open in new tab is not observable.","source":"web","provider":"webfetch","confidence":"MEDIUM","fetched_at":"2026-09-29T18:43:24.677Z","ttl":86400000,"kind":"web"}

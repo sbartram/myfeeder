@@ -1,264 +1,150 @@
-# Stack Research: TypeSafe Jev interest ranking
+# Stack Research: v0.3.0 Engagement Learning
 
-**Domain:** Adding LLM-free "judgment model" scoring (TypeSafe Jev) to an existing Spring Boot 4 feed reader
-**Researched:** 2026-09-22
-**Confidence:** HIGH for library compatibility and behavior. The published source jars were read and a scratch Gradle project using this repo's exact plugin/BOM setup was compiled and tested against a local stub server. MEDIUM for pricing and rate limits, which come from the vendor docs and change often.
+**Domain:** Implicit-feedback (engagement) learning added to an existing query-time interest blend in a self-hosted, single-user feed reader
+**Researched:** 2026-09-29
+**Confidence:** HIGH for the verdict (zero new dependencies) and the integration points. Both come from reading this repo's code, `package.json`, `node_modules` and `build.gradle.kts`. MEDIUM for the browser-API facts. Those come from MDN plus Chromium and Mozilla tracker posts that agree with each other. The research-plan seam rates single web sources LOW, so each browser fact below was checked against a second source.
 
-> Scope: this covers only what is new for the Jev milestone. The existing stack is in `.planning/codebase/STACK.md` and is not repeated here.
+> Scope: this covers only what is new for engagement learning. The existing stack (Boot 4.0.8, Spring AI 2.0.1, Spring Cloud 2025.1.3, TypeSafe starter 0.1.0, React 19.3, TanStack Query 5.103, Zustand 5.0.15, Vite 8, Vitest 4.1, jsdom 29.1) is in `.planning/codebase/STACK.md` and in the v0.2.1 archive. It is not re-researched here.
 
 ## Verdict (read this first)
 
-1. **Compatible: YES.** `org.springaicommunity:spring-ai-starter-typesafe:0.1.0` works on Spring Boot 4.0.3, Java 25, and the project's Spring AI 2.0.0-M2 BOM. **Verified by test:** context startup, request serialization, and parsing of all answer types (Noul, Choice, Score, plus an unknown future type) against a stub HTTP server, on Boot 4.0.3.
-2. **The starter does not use Spring AI at all.** Its only dependencies are `typesafe-java-sdk` and `spring-boot-starter`. The Spring AI version in `build.gradle.kts` does not matter for it. The separate module `typesafe-spring-ai` (advisors, RAG, JevJudge) does need Spring AI **2.0.1**. That module is out of scope for this milestone, so do not add it.
-3. **Version downgrades happen, and they work.** The starter was built against Boot 4.0.7, Spring Framework 7.0.8, and Jackson 3.1.4. The `io.spring.dependency-management` plugin pins them to what Boot 4.0.3 manages: Spring **7.0.5** and Jackson **3.0.4**. The SDK's Jackson code paths ran correctly on 3.0.4 (verified).
-4. **CRITICAL: a blank API key crashes startup.** The auto-configuration uses `@ConditionalOnProperty(spring.ai.typesafe.api-key)`, then runs `Assert.state(hasText(apiKey))`. Results:
-   - Property **absent**: no `TypeSafeClient` bean, and the app starts (verified).
-   - Property **present but blank**: `IllegalStateException: No API key configured`, and **the application context fails** (verified). This covers `${MYFEEDER_TYPESAFE_API_KEY:}` with the variable unset, and a Helm `secretKeyRef` to an empty secret value. The source comment says it "declines", but in fact it throws.
-   - Property `=false`: no bean, and the app starts (verified). This is an accidental escape hatch; do not rely on it.
+1. **Zero new dependencies: YES.** Backend, frontend and tests all need nothing new: no Maven artifact, no npm package, no dev tool, no BOM change and no version bump. Every capability maps onto something already on the classpath or in `node_modules`:
+   - storage: a Flyway V7 migration plus a `JdbcClient` store
+   - learning: an extra CTE in `InterestScoreQueries.LEARNED_CTE` with extra named params
+   - capture: a plain `fetch` through `src/api/client.ts` plus server-side hooks in existing services
+   - tests: Vitest, RTL, user-event 14.6 and Testcontainers
+2. **Most engagement is captured server-side, with no frontend change.** Every save path already ends in one backend method:
+   - star: `s` key and ★ button both call `PATCH /api/articles/{id}` → `ArticleService.updateState`
+   - board add: 📋 Board, 🔖 Read Later and `b` all call `POST /api/boards/{id}/articles` → `BoardService.addArticle`
+   - Raindrop: `v` and 💧 both call `POST /api/articles/{id}/raindrop` → `RaindropService.saveToRaindrop`
 
-   **Recommendation: keep the starter, but have myfeeder own the `TypeSafeClient` bean** (Pattern A below). The auto-config's bean method is `@ConditionalOnMissingBean`, so it steps aside and its `Assert` never runs. Verified: absent, blank, and real keys all start cleanly. This lets the Raindrop convention (`${MYFEEDER_..._TOKEN:}` + `requireConfigured()` → `*NotConfiguredException`) carry over unchanged.
+   Record the engagement in those three methods. **Only "opened the original" needs a new endpoint**, because it happens entirely in the browser.
+3. **Every "open original" path is a programmatic `window.open` today, so capture can be complete.** The frontend has no `<a>` elements at all (checked with `grep '<a '` over `src/components`). There are exactly three open sites:
+   - `ReadingPane.handleOpenOriginal` (the ↗ Open Original button)
+   - `useKeyboardShortcuts` case `'o'`
+   - `ReadingPane.handleContentClick`, which intercepts links inside the article body. Those links usually point elsewhere; see Stack Patterns.
+
+   Because they are `<button>`s, middle-click, Cmd/Ctrl-click and the context menu's "Open link in new tab" don't open anything. So no uncapturable path exists. **Keep it that way.** Don't turn the Open Original control into an `<a href>`, because that adds the context-menu path, which can't be observed.
+4. **Use a plain JSON `fetch` (optionally `keepalive: true`), not `navigator.sendBeacon`.** `window.open(..., '_blank', 'noopener')` opens a new tab and does not unload the reader page. The unload problem that sendBeacon solves therefore doesn't arise. sendBeacon would also break the project's JSON-only anti-CSRF convention: Chrome throws `SecurityError` for a Blob of type `application/json`. jsdom 29.1.1 doesn't implement it either.
 
 ## Recommended Stack
 
-### Core Technologies
+### Core Technologies (all existing; new usage only)
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| `org.springaicommunity:spring-ai-starter-typesafe` | **0.1.0** (only release, published to Maven Central 2026-09-20) | Brings in the Jev SDK, `TypeSafeProperties` (`spring.ai.typesafe.*` binding plus IDE metadata), and the auto-config | This is the milestone's chosen integration. Its property binding gives timeout, model, and retry knobs without custom `@ConfigurationProperties`. It adds no Spring AI dependency, so it has no conflict with 2.0.0-M2. | HIGH (POM and source read; tested) |
-| `org.springaicommunity:typesafe-java-sdk` | 0.1.0 (transitive) | `TypeSafeClient`, question types, answer records, typed exceptions | Built on Spring `RestClient` and Jackson 3, which the project already uses. A `RestClient.Builder` from the application context picks up the existing User-Agent `RestClientCustomizer` and Micrometer observation. | HIGH |
-| Jev model | Pin **`jev-1.13.0`** (`spring.ai.typesafe.model`) | The judgment model | Raw scores are stored once per article and blended at query time. If the model is left on `jev-latest`, that alias can move and change score distributions midstream, so old and new articles would stop being comparable. Store `response.model()` with each score. | MEDIUM (aliases currently both point to 1.13.0 per docs.typesafe.ai/models) |
+| Technology | Version (current in repo) | New usage in v0.3.0 | Why this, not something new |
+|------------|---------------------------|---------------------|-----------------------------|
+| PostgreSQL + Flyway | `postgres:latest` (Testcontainers/compose), Flyway via Boot 4.0.8 | `V7__article_engagement.sql`: `article_engagement(article_id BIGINT REFERENCES article(id) ON DELETE CASCADE, kind VARCHAR(16) NOT NULL CHECK (kind IN ('OPEN','STAR','BOARD','RAINDROP')), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (article_id, kind))` | Mirrors the `article_feedback` shape and cascade in V6. With the composite PK, `INSERT … ON CONFLICT DO NOTHING` is idempotent and race-safe on its own, needing no read-then-write. Keeping one row per kind (instead of one row per article with `GREATEST`) keeps "opened and saved" explainable and lets an un-star remove just the STAR row if requirements want that. "Strongest engagement counts once" is a `MAX(weight)` per article in the CTE; it is not a storage rule. Retention never deletes articles (it only strips content), so rows survive until a feed is deleted, which matches how votes behave. |
+| Spring `JdbcClient` | Spring Framework 7 (Boot 4.0.8) | `ArticleEngagementStore` (`record(articleId, kind)`, `delete(articleId, kind)`, `find(articleId)`) | This is the same idiom as `ArticleFeedbackStore`. Spring Data JDBC repositories handle composite keys and upserts poorly. The project already uses `JdbcClient` stores for everything under interest scoring. |
+| `InterestScoreQueries.LEARNED_CTE` | existing SQL constant | Add an `engaged` CTE: per article, `MAX(CASE kind WHEN 'OPEN' THEN :openWeight ELSE :saveWeight END)`, `WHERE NOT EXISTS (SELECT 1 FROM article_feedback f WHERE f.article_id = e.article_id)` (thumbs override). Join to SCORED `article_topic_score` with the same hinge. `eff` gets separate `thumbs_learned` and `engagement_learned` columns, each clamped by its own cap, then combined before the existing sign clamp and ±50 range. | The whole learned model is derived at query time. Engagement is just another row source with a fractional vote. No scheduler, no event, no write to `interest_topic`. The existing `learnedSql(...)` binder gains `openWeight`, `saveWeight` and `engagementCap`. |
+| `MyfeederProperties.Interest.Blend` | existing `@ConfigurationProperties` | New `engagement.open-weight`, `engagement.save-weight`, `engagement.cap` next to `learn-rate` and `learned-cap` | Same query-time tuning model (D-14): the values live in committed yaml, the replay script tunes them, and there are no Helm or env overrides. Starting values are for calibration to set; only the ordering constraints are fixed: `0 < open < save < 1` (fractions of one thumbs vote) and `engagement.cap < learned-cap` (20). |
+| Spring MVC | Boot 4.0.8 | One new endpoint for opens. Recommended: `PUT /api/articles/{id}/engagement/open`, no body, 204. PUT is never a CORS simple request, so it needs no content-type guard (the same reasoning as the existing `DELETE /feedback`). Alternative: `POST /api/articles/{id}/engagement` with `consumes = APPLICATION_JSON_VALUE` and `{kind:"OPEN"}`, following the `PUT /feedback` convention. | A bodyless idempotent PUT fits an idempotent insert. A plain same-origin `fetch` works either way. A form-POST or sendBeacon-style request is exactly what the JSON-only or non-simple-method rule is there to block. |
 
 ### Supporting Libraries
 
-No new libraries. Everything else is already on the classpath:
+**None added.** The browser APIs involved are all built in:
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| Resilience4j (via `spring-cloud-starter-circuitbreaker-resilience4j`) | BOM 2025.1.0 (existing) | `@CircuitBreaker` (outer) + `@Retry` (inner) on `JevApiClientImpl` | Every Jev call. Turn **off** the SDK's own retry so attempts don't multiply (see config). |
-| Spring `@Async` / `@TransactionalEventListener` / `@Scheduled` | Boot 4.0.3 (existing) | Scoring after ingest without blocking the poll; a backfill job | Scoring must happen after commit and off the polling thread. Needs `@EnableAsync` (the project currently has only `@EnableScheduling`). |
-| Flyway | existing | V6 migration for profile, topics, and per-article Jev results | Schema work only. |
-| `MockRestServiceServer` (spring-test) / JDK `HttpServer` | existing | Wire-level tests of the Jev client | `TypeSafeClient.builder().restClientBuilder(...)` is the SDK's documented test hook. |
+| API | Where | Purpose | When to Use |
+|-----|-------|---------|-------------|
+| `window.open(url, '_blank', 'noopener')` | existing, 3 call sites | Opens the original | Put it behind one shared helper, `openOriginal(article)`. The button and `o` call it; it calls `window.open` **synchronously first**, which keeps the user-activation gesture, then fires the record call. Never `await` the POST before opening, or the popup blocker kills the open. |
+| `fetch(..., { method: 'PUT', keepalive: true })` | new `articlesApi.recordOpen(id)` in `src/api/articles.ts`, via a `client.ts` helper | Records the open | `keepalive` is optional insurance for the rare case where the user closes the reader tab within milliseconds. It has shipped in Chrome and Safari for years and in Firefox since 133 (Nov 2024). The body limit is 64 KiB (ours is ~0 bytes). |
+| TanStack Query `useMutation` | existing | `useRecordOpen()` in `hooks/useArticles.ts` (or a new `useEngagement.ts`) | On success, invalidate only `['article', id]` so the badge and "Why N?" refresh. Do **not** invalidate the Priority list query: Priority is frozen while triaging (Phase 5). Follow the thumbs-vote pattern, which sets the "Ranking changed" hint (WR-05). Swallow errors silently; there's no toast, because an open should never nag. |
+| React `onAuxClick` | React DOM 19.3 (supported) | Only if an `<a>` is ever introduced | Not needed with the current `<button>` UI. If a link is added later, handle `onClick` (any modifiers) plus `onAuxClick` with `e.button === 1`. Right-click also fires `auxclick` in some browsers, so filter on the button. Accept that context-menu opens are invisible. |
 
-Frontend: no new npm dependencies. The score badge and Priority view use existing React, TanStack Query, and Zustand.
-
-### Development Tools
+### Development Tools (all existing)
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| `TYPESAFE_API_KEY` / `MYFEEDER_TYPESAFE_API_KEY` in `.envrc` | Local real-API testing | The starter reads **only** `spring.ai.typesafe.api-key`. It does **not** read `TYPESAFE_API_KEY` by itself, despite what the blog implies. Only `TypeSafeClient.builder()` with no `apiKey(..)` falls back to that environment variable. Map it explicitly in `application.yaml`. |
+| Vitest 4.1 + RTL 16.3 + user-event 14.6.7 | Frontend tests for capture | `vi.spyOn(window, 'open').mockImplementation(() => null)` is already used in `useKeyboardShortcuts.test.ts`; `vi.spyOn(globalThis, 'fetch')` is already used in `FeedbackBar.test.tsx` and others. Assert the call order: open first, then fetch. `@testing-library/dom` 10.4.2 has **no** `fireEvent.auxClick`. If auxclick is ever needed, use `user.pointer({ keys: '[MouseMiddle]', target })` (user-event dispatches `auxclick` for non-primary buttons, verified in `system/pointer/mouse.js`) or `fireEvent(el, new MouseEvent('auxclick', { bubbles: true, button: 1 }))`. |
+| Testcontainers Postgres | `@DataJdbcTest` for `ArticleEngagementStore` and the extended CTE | Unchanged. Flyway runs V7 at startup. |
+| `InterestScoreQueriesTest` fixtures | Blend and learned model tests | The test yaml keeps its fixed values; add fixed engagement values in the test yaml, and add the matching keys to `application-dev.yaml`, so `DevProfileConfigTest` parity holds. |
+| `scripts/interest-calibration-replay.sh` / `.sql` + `InterestCalibrationReplaySqlTest` | Calibration and the drift guard | Bash plus psql only. Extend the verbatim SQL and the drift guard to the new CTE and params. No new tooling. |
 
-## Installation (Gradle Kotlin DSL)
+## Installation
 
-```kotlin
-// build.gradle.kts: next to the existing extra[...] entries
-extra["typesafeVersion"] = "0.1.0"
-
-dependencies {
-    // Not in the Spring AI BOM; needs an explicit version.
-    // Pulls in typesafe-java-sdk only (no Spring AI artifacts).
-    implementation("org.springaicommunity:spring-ai-starter-typesafe:${property("typesafeVersion")}")
-    // Do NOT add org.springaicommunity:typesafe-spring-ai. It needs Spring AI 2.0.1, and the
-    // project's 2.0.0-M2 BOM would silently downgrade its spring-ai-client-chat dependency.
-}
+```bash
+# Nothing to install.
+# Backend: no build.gradle.kts change.
+# Frontend: no package.json change.
 ```
 
-A BOM alternative exists (`mavenBom("org.springaicommunity:typesafe-bom:0.1.0")` in `dependencyManagement.imports`). It isn't worth adding for a single artifact.
-
-### Configuration (`application.yaml`)
-
-```yaml
-spring:
-  ai:
-    typesafe:
-      # Safe to default to blank ONLY because myfeeder defines its own TypeSafeClient bean
-      # (Pattern A). With the starter's own bean, a blank value fails startup.
-      api-key: ${MYFEEDER_TYPESAFE_API_KEY:}
-      model: jev-1.13.0          # pin; see rationale above
-      timeout: 5s                # per-attempt read timeout (SDK default 10s; median call ~275-310ms)
-      retry:
-        max-retries: 0           # Resilience4j @Retry owns retries (project convention)
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      jev:
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 60s
-        sliding-window-type: COUNT_BASED
-        sliding-window-size: 20
-        minimum-number-of-calls: 5
-        ignore-exceptions:
-          - org.bartram.myfeeder.integration.JevNotConfiguredException
-  retry:
-    instances:
-      jev:
-        max-attempts: 3
-        wait-duration: 1s
-        exponential-backoff-multiplier: 2
-        retry-exceptions:        # retry only transient failures; 400/401/403/422 are permanent
-          - org.springaicommunity.typesafe.exception.TypeSafeRateLimitException       # 429
-          - org.springaicommunity.typesafe.exception.TypeSafeInternalServerException  # 5xx incl. 529 Overloaded
-          - org.springaicommunity.typesafe.exception.TypeSafeApiConnectionException   # incl. TypeSafeApiTimeoutException
-        ignore-exceptions:
-          - org.bartram.myfeeder.integration.JevNotConfiguredException
-```
-
-Test `src/test/resources/application.yaml`: add nothing for TypeSafe. With Pattern A, a missing key means "not configured", and tests stub `JevApiClient`.
-
-Helm/deploy: add `secrets.typesafeApiKey: ""` → secret key `myfeeder-typesafe-api-key` → container env `MYFEEDER_TYPESAFE_API_KEY`, following Raindrop exactly, including the empty-default warning in `deploy.sh`. Pattern A makes an empty secret value harmless.
-
-## Pattern A (recommended): app-owned `TypeSafeClient` bean
-
-This was verified in a scratch project: the app starts with the key absent, blank, or set.
-
-```java
-@Configuration
-@EnableConfigurationProperties(TypeSafeProperties.class) // bind even when the auto-config's class condition is off
-public class TypeSafeConfig {
-
-    @Bean
-    TypeSafeClient typeSafeClient(TypeSafeProperties props, RestClient.Builder builder) {
-        // Explicit connect timeout: the starter's `new JdkClientHttpRequestFactory()` sets none,
-        // and it replaces the factory, so spring.http.client.connect-timeout does not apply to Jev.
-        var http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
-        var rf = new JdkClientHttpRequestFactory(http);
-        rf.setReadTimeout(props.getTimeout());
-        return TypeSafeClient.builder()
-                // Supplier form does not assert hasText, so a blank key is legal at build time.
-                // JevApiClientImpl.requireConfigured() throws JevNotConfiguredException before any call.
-                .apiKey(() -> Objects.requireNonNullElse(props.getApiKey(), ""))
-                .baseUrl(props.getBaseUrl())
-                .defaultModel(props.getModel())
-                .timeout(props.getTimeout())
-                .retryPolicy(props.toRetryPolicy())          // max-retries: 0 from yaml
-                .restClientBuilder(builder.clone().requestFactory(rf)) // keeps the User-Agent customizer + observations
-                .build();
-    }
-}
-```
-
-`JevApiClientImpl` (a separate bean, so the AOP proxy applies) follows `RaindropApiClientImpl`. It checks `StringUtils.hasText(props.getApiKey())` and otherwise throws `JevNotConfiguredException`. It carries `@CircuitBreaker(name="jev", fallbackMethod=...)` + `@Retry(name="jev")`, and its fallback rethrows `JevNotConfiguredException` as-is. Callers in the scoring path catch everything and leave the article unscored; the backfill job retries it later.
-
-## TypeSafeClient API surface (0.1.0, from source)
-
-**Calls**
-
-| Method | Notes |
-|--------|-------|
-| `SystemOneResponse systemOne(String state, Map<String, ? extends Question> questions)` | Plain-text state |
-| `systemOne(Map<String, ?> state, Map<...> questions)` | **Use this.** Named fields (`title`, `summary`, `feed`) let questions refer to them. Use a `LinkedHashMap`: `Map.of` randomizes field order on the wire (observed), and it rejects null values, so drop null fields or use `""`. |
-| `systemOne(List<?> state, ...)` / `systemOne(JsonContent state, ...)` / `systemOne(SystemOneRequest)` | `SystemOneRequest.builder().state(..).model(..).question(name, q).build()` |
-| `List<JevBatchResult<SystemOneResponse>> systemOneAll(List<SystemOneRequest>[, JevBatchOptions])` | **Client-side** concurrency only; there is no server batch endpoint. The default width is 4. Each slot holds either a value or a `TypeSafeException` (`succeeded()`, `orThrow()`, `orElse()`). `JevBatchOptions.ofConcurrency(n).withExecutor(virtualThreadExecutor)`. |
-| `List<ModelMetadata> listModels()` | `GET /v1/models`. Could serve as a "test connection" check for a settings UI. |
-| `defaultModel()`, `timeout()`, `retryPolicy()` | Introspection |
-
-**Questions** (`org.springaicommunity.typesafe.question`, sealed `Question`)
-
-- `Noul.of("Is this about X?")` or `Noul.builder().instructions(..).whenTrue(..).whenFalse(..).build()`. Wire format: `criteria: {"true":..,"false":..}`. Use `whenTrue`/`whenFalse` for each topic's description; it sharpens the yes/no boundary.
-- `Score.of(instructions, "lowest level", ..., "highest level")` or `Score.builder().instructions(..).level(..)...build()`. Requires at least 2 levels. The answer is **continuous in [0, levels-1]**, so normalize by `maxLevel()` before blending.
-- `Choice.of(instructions, "a","b")` or `Choice.builder().option(label, description)`, with at most 255 options (API docs). Not needed for this milestone.
-- Instructions and criteria take String, Map, or List (`JsonContent`). The top-level state must be string, object, array, or null. Bare numbers or booleans get a 422.
-
-**Answers** (`SystemOneResponse(model, answers, usage, requestId)`)
-
-| Accessor | Returns |
-|----------|---------|
-| `noulValue(name)` / `noul(name).value()`, `.isTrue()`, `.isTrue(threshold)` | double in [0,1]. Nouls have **no confidence field**; the value itself expresses certainty. |
-| `scoreValue(name)` / `score(name)` → `ScoreAnswer(value, legend, probabilities, confidence)` + `nearestLevel()`, `nearestLabel()`, `maxLevel()` | `confidence` in [0,1] measures how concentrated the per-level distribution is |
-| `choiceValue(name)` / `choice(name)` → `ChoiceAnswer(value, probabilities, confidence)` + `probabilityOf()`, `optionsAbove()` | |
-| `nouls()`, `scores()`, `choices()`, `answer(name)` | Typed maps. `answer()` returns the sealed `Answer` (`UnknownAnswer` for future types, so the call doesn't fail). |
-| `usage().inputTokens()/outputTokens()/totalTokens()`, `model()`, `requestId()` | Log `requestId` (from the `x-typesafe-request-id` header) at WARN on failures |
-
-**Exceptions** (all unchecked, rooted at `TypeSafeException extends RuntimeException`)
+The only new files are a migration, a store, maybe an enum, and a hook or API function:
 
 ```
-TypeSafeException
-├── TypeSafeApiException (status(), body(), requestId(), errorType(), errorMessage(), validationErrors())
-│   ├── TypeSafeBadRequestException          400  unknown model / malformed question   (permanent)
-│   ├── TypeSafeAuthenticationException      401  rejected key                         (permanent)
-│   ├── TypeSafePermissionDeniedException    403  missing key                          (permanent)
-│   ├── TypeSafeNotFoundException            404
-│   ├── TypeSafeUnprocessableEntityException 422  bad state/body (e.g. bare number)    (permanent, per-article)
-│   ├── TypeSafeRateLimitException           429  retryAfter()/retryAfterMs()          (transient)
-│   ├── TypeSafeInternalServerException      5xx                                       (transient)
-│   │   └── TypeSafeOverloadedException      529                                       (transient)
-│   └── TypeSafeApiResponseValidationException  empty body / no answers / non-JSON
-├── TypeSafeApiConnectionException           no HTTP response                          (transient)
-│   └── TypeSafeApiTimeoutException
-├── TypeSafeMissingAnswerException           response lacks a named answer
-└── TypeSafeAnswerTypeException              e.g. score() on a noul answer
+src/main/resources/db/migration/V7__article_engagement.sql
+src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java
+src/main/java/org/bartram/myfeeder/model/EngagementKind.java        (OPEN, STAR, BOARD, RAINDROP)
+src/main/frontend/src/api/articles.ts                                (+ recordOpen)
+src/main/frontend/src/hooks/useArticles.ts or useEngagement.ts       (+ useRecordOpen)
 ```
 
-**Timeouts and retries** (SDK defaults, overridable under `spring.ai.typesafe.*`): `timeout` 10s per attempt. `retry.max-retries` 2, `initial-backoff` 500ms, `max-backoff` 5s, `jitter` 0.25. Retryable statuses are {408, 429} plus every 5xx. `respect-retry-after` is true (honors `retry-after-ms`), `retry-connection-errors` is true, and `total-timeout` is 30s. With `max-retries: 0` the SDK makes a single attempt and Resilience4j handles retries.
+## Integration Points (where engagement is recorded)
 
-## Pricing, limits, batching
+| Signal | Hook point | Notes |
+|--------|------------|-------|
+| STAR | `ArticleService.updateState` when `starred` is `TRUE` | This method is not `@Transactional` today. Add `@Transactional` if the star write and the engagement insert must be atomic; otherwise insert after the save. Re-starring is a no-op (`ON CONFLICT DO NOTHING`). Un-star: requirements must decide between "keep" (positive-only, sticky) and "delete the STAR row" (reversible). The composite PK supports both. |
+| BOARD | `BoardService.addArticle` | Covers 📋 Board, 🔖 Read Later (`getOrCreateByName` + `addArticle`) and `b`. The existing `existsByBoardIdAndArticleId` early return doesn't matter, because the engagement insert is idempotent anyway. |
+| RAINDROP | `RaindropService.saveToRaindrop`, **after** `raindropApiClient.createBookmark` returns | Record only on success, so a breaker-open, not-configured or disabled failure never counts. Keep the insert outside the Resilience4j-annotated client bean. |
+| OPEN | New `ArticleController` endpoint → `ArticleEngagementStore.record(id, OPEN)` | 404 via `NotFoundException` for a missing article. It is called from the shared `openOriginal` helper used by the ↗ button and `o`. |
 
-| Item | Value | Confidence |
-|------|-------|------------|
-| Price | $0.042 per 1M **input** tokens; output tokens free; no free tier documented | MEDIUM (docs.typesafe.ai/models, cross-checked with search results) |
-| What counts as input | State **and** questions. The interest profile text and every topic description are billed on every call. | HIGH (SDK `Usage` javadoc) |
-| Rough cost for myfeeder | ~0.5–2k tokens per article call → 1,000 articles ≈ $0.02–0.08. Backfilling a 5k-article backlog costs well under $1. | MEDIUM (estimate) |
-| Rate limits | 1,200 requests/min, 250k tokens/s; 429 when exceeded. The vendor says limits "adjust dynamically" and may change without notice. | MEDIUM |
-| Request size | 64k tokens per request; 32k for state plus the longest question. Strip HTML from summaries and truncate (e.g. ~2k chars). | MEDIUM |
-| Latency | Median ~275ms (1 question), ~310ms (3 questions); no streaming | MEDIUM (Spring blog) |
-| Batching | No server batch endpoint. Pack all questions about **one** article into **one** `systemOne` call; the server answers them in parallel. `systemOneAll` is only client-side fan-out across articles. | HIGH (source) |
-
-For backfill, don't use `systemOneAll`. It runs N calls inside one method invocation, which bypasses the per-call `@CircuitBreaker`/`@Retry` on `JevApiClientImpl`, and it creates its own platform-thread pool. Instead, loop through the annotated client bean sequentially, or with small bounded concurrency (≤4 in flight ≈ ≤800 req/min at 300ms). Stop the batch when the breaker opens.
+None of these touch Jev, the scoring queue, the sweep or `interest_topic`. Articles are not cached in Redis (the only `@Cacheable` is `raindrop-collections`), so there's no cache to evict.
 
 ## Alternatives Considered
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| **A: Starter + app-owned `TypeSafeClient` bean** | **B: Starter's auto-configured bean + `ObjectProvider<TypeSafeClient>`**, with the key supplied only through env var `SPRING_AI_TYPESAFE_API_KEY` | Needs zero Java config, but it has three fragile requirements. (1) `application.yaml` must never declare `spring.ai.typesafe.api-key`. (2) The Helm template must add the env var only `{{- if .Values.secrets.typesafeApiKey }}`, which differs from the Raindrop/Anthropic pattern that always renders a `secretKeyRef`. (3) Anyone who copies the Raindrop `${...:}` idiom crashes startup. Choose B only if you accept those rules and add a context test for them. |
-| A | **C: `typesafe-java-sdk` only (no starter)** | Same code as A, minus the `spring.ai.typesafe.*` property binding and IDE metadata. Choose C if you'd rather keep all config under `myfeeder.jev.*` in `MyfeederProperties`. Functionally equivalent. |
-| A | **D: Raw `RestClient` call to `POST https://api.typesafe.ai/v1/systemone`** | Only if the SDK turns out to be broken. You would lose the typed questions, the polymorphic answer deserializer, and the exception mapping for about 300 lines of hand-written DTOs. Not justified: the SDK works on this stack (verified). |
-| Resilience4j `@Retry` (SDK retries off) | SDK `RetryPolicy` (keeps `retry-after-ms` handling), with `@CircuitBreaker` only | If 429s actually show up during backfill. The SDK's policy honors the server-stated wait precisely, and Resilience4j's fixed backoff does not. Keep exactly one retry layer in either case. |
+| Plain `fetch` (with optional `keepalive`) after a synchronous `window.open` | `navigator.sendBeacon` | Only if the reader page itself navigated away on open, which it never does here. Even then it would need a `text/plain` or form endpoint, because Chrome rejects `application/json` Blobs. That weakens the JSON-only CSRF rule. |
+| Server-side capture of saves inside existing services | Client-side "engagement" calls after each save mutation | Never. It duplicates every save path, can drift from the real save outcome (e.g. a failed Raindrop call), and needs frontend work for signals the backend already sees. |
+| Server-side capture of saves (direct store call) | Spring `ApplicationEvent` (`ArticleSavedEvent` + `@TransactionalEventListener`) | Only if a second consumer of "saved" events appears. The project uses events for feed scheduling because the scheduler is a separate lifecycle. Engagement is a single idempotent insert, so direct calls are simpler (CLAUDE.md §2). |
+| One row per (article, kind) | One row per article, `kind = GREATEST(kind, EXCLUDED.kind)` | If "explain which engagements happened" and "un-star removes the save" are both dropped. It saves a `MAX()` in the CTE but loses information. |
+| `<button>` + `window.open` for Open Original (unchanged) | `<a href target="_blank" rel="noopener noreferrer">` with `onClick` + `onAuxClick` | If native middle-click or Cmd-click on Open Original is wanted. The cost is that context-menu opens become uncapturable and `onClick` must not `preventDefault` modified clicks. |
+| Derived engagement nudge in the existing `LEARNED_CTE` | Materialized per-topic engagement totals (a table or view refreshed on write) | Only at data sizes this single-user app won't reach. The derived model is what keeps every learned point reversible and explainable (Key Decision, Phase 6). |
 
 ## What NOT to Use
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `spring.ai.typesafe.api-key: ${MYFEEDER_TYPESAFE_API_KEY:}` **combined with the starter's own bean** | A blank key fails context startup (`IllegalStateException`, verified). This breaks "runs normally without a key." | Pattern A (app-owned bean) |
-| `org.springaicommunity:typesafe-spring-ai` | Out of scope (advisors, RAG, tool index, JevJudge). It is compiled against Spring AI 2.0.1, and the project's 2.0.0-M2 BOM would downgrade it at runtime: an untested combination. | Call `TypeSafeClient` directly. If you ever want `JevJudge`, first upgrade `springAiVersion` to 2.0.1 GA (released) as its own change. |
-| `TypeSafeClient.builder().build()` with no `apiKey(..)` | Reads the `TYPESAFE_API_KEY` env var and **asserts** it is set, so it throws at bean creation when unset | `apiKey(Supplier)` as in Pattern A |
-| `apiKey(String)` with a possibly blank value | `Assert.hasText` throws | `apiKey(Supplier)` |
-| SDK retries **and** Resilience4j `@Retry` both enabled | Attempts multiply (3 × 3 = 9 per article) and blow the latency budget | `spring.ai.typesafe.retry.max-retries: 0` |
-| `jev-latest` for stored scores | The alias can move to a new model version, making stored raw scores incomparable across time | Pin `jev-1.13.0`; store `response.model()` |
-| `Map.of(...)` for state | Random field order on the wire; rejects null summaries | `LinkedHashMap`, dropping null or blank fields |
-| Overriding Boot's managed Jackson/Spring versions to match the SDK's 3.1.4/7.0.8 | Unnecessary (it works on 3.0.4/7.0.5) and risks breaking the rest of Boot 4.0.3 | Let `io.spring.dependency-management` pin them |
+| `navigator.sendBeacon` | It solves unload, which doesn't happen here (new tab). A JSON Blob throws `SecurityError` in Chrome. It exposes no response. It isn't implemented in jsdom 29.1.1, so tests would need a mock. | `fetch` via `src/api/client.ts` (optionally `keepalive: true`) |
+| `await`ing the record call before `window.open` | Once the async gap loses transient user activation, the popup blocker blocks the tab. `window.open` with `noopener` always returns `null`, so the failure can't even be detected. | Open synchronously, then fire and forget the record |
+| Analytics or telemetry SDKs (PostHog, Plausible, OpenTelemetry web, `react-ga`, etc.) | This is one idempotent row per article per kind in the app's own Postgres. An SDK adds third-party traffic, bundle weight and a second data store for a single-user homelab app. | `article_engagement` + one endpoint |
+| `visibilitychange`, `blur`, `pagehide` or dwell-time heuristics to infer "opened" | Dwell and selection were explicitly rejected as noise (PROJECT.md, v0.3.0). Tab-blur also fires on alt-tab. | Record only the explicit open action |
+| Counting `handleContentClick` (in-body links) as opening the original | These links usually point to other pages (sources, related posts), not to the article | Count only the ↗ button and `o`. If the requirements want in-body links counted, count only `link.href === article.url` (normalized). |
+| Capturing reader-view toggles or `GET /extracted-content` as engagement | Explicitly out of scope: reader view auto-enables for empty feed items | Nothing |
+| Writing learned deltas into `interest_topic.weight` | Breaks the derived, reversible model and the "never writes topic weights" invariant (`ArticleFeedbackStore` javadoc) | Derive in `LEARNED_CTE` |
+| Helm `--set` or env overrides for engagement weights and cap | D-14: tune only through committed yaml after a replay | `application.yaml` + `application-dev.yaml` |
+| A Spring Data JDBC `CrudRepository<ArticleEngagement, …>` | Composite key plus upsert semantics are awkward. `JdbcClient` stores are the established interest-scoring idiom. | `ArticleEngagementStore` on `JdbcClient` |
 
 ## Stack Patterns by Variant
 
-**If the TypeSafe key is not configured** (local dev, tests, a deploy without the secret):
-- `JevApiClientImpl` throws `JevNotConfiguredException`; the scoring hook catches it, and the article stays unscored.
-- The backfill job should skip entirely when the key isn't configured, so it doesn't spin.
+**If Jev is unconfigured or in cold start:**
+- Still record engagement, because the rows are cheap and help once scoring starts. The learned CTE already joins only SCORED `article_topic_score`, so unscored engaged articles contribute nothing until they are scored. No special casing is needed.
 
-**If the circuit is open or Jev is slow:**
-- Ingest never waits. Scoring runs `@Async` after commit, the per-attempt timeout is 5s, and there is at most 1 SDK attempt with ≤3 Resilience4j attempts.
-- Unscored articles get picked up by the scheduled backfill.
+**If an article has a thumbs vote:**
+- The `NOT EXISTS article_feedback` filter in the `engaged` CTE drops its engagement contribution entirely, so the vote overrides it. Removing the vote (DELETE `/feedback`) brings the engagement contribution back automatically. That falls out of the derived model.
 
-**If 429s appear during the one-time backlog backfill:**
-- Lower the concurrency to 1–2, or switch to the SDK retry layer for the honored `retry-after-ms` (see Alternatives).
+**Gap discovery (engaged articles that matched no topic):**
+- It is a read-only query: engaged, SCORED articles where no `article_topic_score.noul` exceeds 0.5 (hinge = 0), or which have zero topic rows. It feeds the existing "Create topic from article" draft. No new library; it's a new `JdbcClient` query and a reuse of the existing frontend draft component.
 
 ## Version Compatibility
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| `spring-ai-starter-typesafe:0.1.0` | Spring Boot 4.0.3 (built on 4.0.7) | Verified: auto-config loads; the `spring.ai.typesafe.*` binding works |
-| `typesafe-java-sdk:0.1.0` | Spring Framework 7.0.5 (built on 7.0.8), Jackson databind 3.0.4 (built on 3.1.4), jackson-annotations 2.x | Verified: request serialization, polymorphic answer deserialization, and 429 → `TypeSafeRateLimitException` with `retryAfter()`. Targets Java 17+, so it runs on 25. |
-| `typesafe-java-sdk:0.1.0` | Spring AI 2.0.0-M2 | No interaction; the SDK has no Spring AI dependency |
-| `typesafe-spring-ai:0.1.0` | Spring AI **≥ 2.0.1** | Not compatible in practice with the project's 2.0.0-M2 BOM. Do not add it. |
-| Starter auto-config | App's `RestClientCustomizer` (User-Agent) | Applies: the starter and Pattern A both clone the context `RestClient.Builder`. The starter replaces the request factory, so `spring.http.client.*` timeouts do **not** apply to Jev; configure `spring.ai.typesafe.timeout` instead. |
+| `INSERT … ON CONFLICT DO NOTHING` | PostgreSQL ≥ 9.5 | The repo uses `postgres:latest`; prod is external `pg.bartram.org`. The idiom is already used in V6-era stores. |
+| `fetch` `keepalive` | Chrome/Edge, Safari, Firefox ≥ 133 | Optional. Where it's unsupported the flag is ignored, and the request still completes because the page doesn't unload. |
+| React `onAuxClick` | React DOM 19.3.0 | Supported (`auxclick` is in React's event list). Only relevant if an `<a>` is introduced. |
+| `auxclick` event | Baseline 2024 | Filter `button === 1`; right-click can also fire it. |
+| `@testing-library/dom` 10.4.2 | — | No `fireEvent.auxClick` helper; use user-event `[MouseMiddle]` or a raw `MouseEvent`. |
+| jsdom 29.1.1 | — | No `navigator.sendBeacon` (another reason not to use it). `window.open` exists and is already spied on in tests. |
 
 ## Sources
 
-- Maven Central POMs, metadata, and `-sources.jar` for `spring-ai-starter-typesafe`, `typesafe-java-sdk`, `typesafe-spring-ai`, and `typesafe-bom` 0.1.0 (`repo1.maven.org/maven2/org/springaicommunity/`): dependency versions, `TypeSafeAutoConfiguration`, `TypeSafeProperties`, `TypeSafeClient`, `RetryPolicy`, `JevBatchOptions`, questions, answers, exceptions. **HIGH**
-- Scratch Gradle project (Boot 4.0.3 plugin, dependency-management 1.1.7, Spring AI BOM 2.0.0-M2, starter 0.1.0, JDK 25). `ApplicationContextRunner` tests covered absent, blank, `false`, and real keys, plus the app-owned bean variant; a JDK `HttpServer` stub covered the wire round-trip and 429 mapping; `gradle dependencies` confirmed the resolved versions. **HIGH (executed)**
-- Spring blog, "Spring AI TypeSafe: structured judgment" (2026-09-21): https://spring.io/blog/2026/09/21/spring-ai-typesafe-structured-judgment. **MEDIUM**
-- Reference docs: https://spring-ai-community.github.io/spring-ai-typesafe/latest/ (the starter needs Boot 4.x; `typesafe-spring-ai` needs Spring AI 2.0.1). **MEDIUM**
-- TypeSafe models, pricing, and limits: https://docs.typesafe.ai/models. API errors: https://docs.typesafe.ai/api. **MEDIUM** (vendor says limits change dynamically)
-- Search cross-check for pricing and limits: https://www.marktechpost.com/2026/09/19/typesafe-ai-releases-jev/, https://opentweet.io/jev/limits. **LOW alone; MEDIUM when combined with the vendor docs**
+- **Codebase (HIGH, read directly):** `build.gradle.kts`, `src/main/frontend/package.json`, `ReadingPane.tsx` (open, star, board, Read Later and Raindrop handlers), `useKeyboardShortcuts.ts` (`o`, `s`, `v`, `b`), `hooks/useBoards.ts` (`useReadLater`), `api/client.ts`, `ArticleController`, `BoardService.addArticle`, `RaindropService.saveToRaindrop`, `ArticleService.updateState`, `ArticleFeedbackStore`, `InterestScoreQueries.LEARNED_CTE`, `MyfeederProperties` (`learnRate`, `learnedCap`), `V6__interest_scoring.sql`, `application.yaml` (retention only strips content), and `node_modules` checks for user-event `auxclick`, testing-library `auxClick` (absent) and jsdom `sendBeacon` (absent)
+- [MDN: Navigator.sendBeacon()](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon): POST only, 64 KiB, boolean return, prefer `fetch` keepalive when properties or a response are needed. Seam tier LOW (single web source); cross-checked with the Chromium thread below, so MEDIUM
+- [blink-dev: sendBeacon() with a non-CORS-safelisted Blob type](https://groups.google.com/a/chromium.org/g/blink-dev/c/dAfYF2gauw4) and [cypress#7115](https://github.com/cypress-io/cypress/issues/7115): Chrome throws for `application/json` Blobs. MEDIUM
+- [MDN: RequestInit keepalive](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit) + [Firefox 133 release notes for developers](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/133) + [Bugzilla 1923044](https://bugzilla.mozilla.org/show_bug.cgi?id=1923044): keepalive semantics, 64 KiB, Firefox 133 support. MEDIUM
+- [MDN: Window.open()](https://developer.mozilla.org/en-US/docs/Web/API/Window/open): `noopener` returns `null`, and opening requires a user gesture. MEDIUM
+- [MDN: auxclick event](https://developer.mozilla.org/en-US/docs/Web/API/Element/auxclick_event): non-primary buttons, Baseline 2024. MEDIUM
+- [tmobile jest-jsdom-browser-compatibility](https://github.com/tmobile/jest-jsdom-browser-compatibility): jsdom lacks sendBeacon, confirmed by grepping jsdom 29.1.1 in `node_modules`. HIGH
 
 ---
-*Stack research for: TypeSafe Jev interest ranking in myfeeder*
-*Researched: 2026-09-22*
+*Stack research for: engagement-based implicit feedback in myfeeder (v0.3.0)*
+*Researched: 2026-09-29*

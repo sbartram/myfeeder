@@ -1,0 +1,1 @@
+{"content":"jsdom does not implement navigator.sendBeacon; tests must mock it. Plain fetch is already mocked in the Vitest suite.","source":"web","provider":"websearch","confidence":"MEDIUM","fetched_at":"2026-09-29T18:43:24.852Z","ttl":86400000,"kind":"web"}
