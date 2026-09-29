@@ -172,3 +172,7 @@ None. All four deploy secrets were already exported (checked with `test -n` only
 ---
 *Phase: 07-rollout-calibration*
 *Completed: 2026-09-29*
+
+## Self-Check: PASSED
+
+All four key files exist; commits 49b9e54, 93d19fd, 9019e3d (sbartram/main) and 5461d0a (main merge) are present.

@@ -3,17 +3,17 @@ gsd_state_version: "1.0"
 milestone: v0.1.24
 current_phase: 07
 current_phase_name: Rollout & Calibration
-status: executing
-stopped_at: Completed 07-08-PLAN.md
-last_updated: "2026-09-29T00:06:02.380Z"
+status: verifying
+stopped_at: Completed 07-09-PLAN.md
+last_updated: "2026-09-29T00:44:44.820Z"
 last_activity: 2026-09-28
 last_activity_desc: Phase 07 execution started
-state_head: b460075dd5c2f1badf4e72853cae1dc8fdab0603
+state_head: 9019e3dffad95ba536c9403289c00767dc4ad04d
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 49
-  completed_plans: 48
+  completed_plans: 49
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-27)
 
 Phase: 07 (Rollout & Calibration) — EXECUTING
 Plan: 9 of 9
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-28 — Phase 07 execution started
 
 Progress: [█████████░] 86%
@@ -111,6 +111,7 @@ Progress: [█████████░] 86%
 | Phase 07 P06 | 14 min | 3 tasks | 2 files |
 | Phase 07 P07 | 1h 13m | 3 tasks | 1 files |
 | Phase 07 P08 | 10 min | 3 tasks | 1 files |
+| Phase 07 P09 | 37 min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -198,6 +199,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-07: launch backfill D-05 Overall PASS (183 legacy drained in 6m54s, 192 SCORED, 0 FAILED, breaker CLOSED, 0 retries); no D-08 throttle, so 07-09 has no override to remove
 - [Phase 07]: 07-08: user approved calibrated constants 100/70/22 (verbatim: approve), learn-rate 2, learned-cap 20; only tiers.neutral moves 40->22 so the Priority order is unchanged; no title redaction
 - [Phase 07]: 07-08: replay matched the app 5/5 at 100/70/40; D-10 met at 100/70/22 (high 14.1%, neutral 34.9% of 192 scored unread); pp above 100 rejected (18/30 badges saturate at 100)
+- [Phase 07]: 07-09: user approved publishing 0.2.1 (verbatim: approve); v0.2.1 = main 5461d0a, image sha256:42fcdc5b, Helm rev 19, rollback rev 18 (0.2.0); failure path not run
+- [Phase 07]: 07-09: prod serves tiers 70/22 (configured, CLOSED, not cold start); replay at 100/70/22 matched the app 5/5; no MYFEEDER_INTEREST_* override existed, so none was removed
 
 ### Pending Todos
 
@@ -230,6 +233,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-29T00:06:02.319Z
-Stopped at: Completed 07-08-PLAN.md
+Last session: 2026-09-29T00:44:44.759Z
+Stopped at: Completed 07-09-PLAN.md
 Resume file: None
