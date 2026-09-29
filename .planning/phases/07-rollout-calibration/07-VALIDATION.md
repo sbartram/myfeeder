@@ -60,6 +60,8 @@ Backend commands use the proven prefix `DOCKER_HOST=unix:///Users/scottb/.docker
 | 07-08-T2 | 07-08 | 5 | OPS-02 | T-07-29 | no personal data in 07-CALIBRATION.md | doc | structure + `grep -F -f` privacy checks (07-08 Task 2) | ops | ⬜ pending |
 | 07-09-T1 | 07-09 | 6 | OPS-02 | T-07-33 | yaml parity; local /status serves approved tiers | unit + local | `GT --tests 'org.bartram.myfeeder.DevProfileConfigTest' ...` + bootTestRun `local-status.json` | ✅ | ⬜ pending |
 | 07-09-T3 | 07-09 | 6 | OPS-02 | T-07-32 | prod tiers equal approved; replay equals app | ops smoke | status tiers check + `crosscheck-0.2.1.json` | ops | ⬜ pending |
+| 07-10-T1 | 07-10 | 1 (gap) | OPS-02 | T-07-38 | every `WITH learned AS` line verbatim; one-byte drift of any blend copy fails | unit (no Docker) | `GT --tests 'org.bartram.myfeeder.repository.InterestCalibrationReplaySqlTest'` | ✅ extend | ⬜ pending |
+| 07-10-T2 | 07-10 | 1 (gap) | OPS-02 | T-07-39 | `INTEREST_SCORE` exactly 4; missing/extra copy fails; tracked SQL untouched | unit (no Docker) | `GT --tests 'org.bartram.myfeeder.repository.InterestCalibrationReplaySqlTest' --tests 'org.bartram.myfeeder.DevProfileConfigTest'` | ✅ extend | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
