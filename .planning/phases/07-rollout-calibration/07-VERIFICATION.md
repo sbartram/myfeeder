@@ -1,8 +1,8 @@
 ---
 phase: 07-rollout-calibration
-verified: 2026-09-29T00:58:00Z
+verified: 2026-09-29T02:35:00Z
 status: gaps_found
-score: 10/11 must-haves verified
+score: 16/18 must-haves verified
 covered_files:
   - .planning/phases/07-rollout-calibration/07-01-PLAN.md
   - .planning/phases/07-rollout-calibration/07-01-SUMMARY.md
@@ -22,6 +22,8 @@ covered_files:
   - .planning/phases/07-rollout-calibration/07-08-SUMMARY.md
   - .planning/phases/07-rollout-calibration/07-09-PLAN.md
   - .planning/phases/07-rollout-calibration/07-09-SUMMARY.md
+  - .planning/phases/07-rollout-calibration/07-10-PLAN.md
+  - .planning/phases/07-rollout-calibration/07-10-SUMMARY.md
   - .planning/phases/07-rollout-calibration/07-BACKFILL.md
   - .planning/phases/07-rollout-calibration/07-CALIBRATION.md
   - CLAUDE.md
@@ -48,28 +50,39 @@ covered_files:
   - src/test/java/org/bartram/myfeeder/service/InterestStatusServiceTest.java
   - src/test/resources/application-dev.yaml
   - src/test/resources/application.yaml
-covered_digest: "v2:sha256:5165697303069e6fb753f928833b95442f15477e8edc63a51654363c38b44262"
+covered_digest: "v2:sha256:8f38ebaf1978cf7270d14e868dc21de042b5f0a3cee63bc3364251612f1d8c02"
 behavior_unverified: 0
 overrides_applied: 0
+re_verification:
+  previous_status: gaps_found
+  previous_score: 10/11
+  gaps_closed:
+    - "Every 'WITH learned AS' line is checked by exact equality, in file order (unread x3, window, learned), exactly 5 lines (prior gap missing item 1)"
+    - "A one-byte drift of any single existing copy (5 blend lines, 4 badge copies) now fails the guard, and a missing or extra copy fails (the scenario the prior gap described: hand-editing the top or bottom copy, or 3 of the 4 badge copies)"
+  gaps_remaining:
+    - "07-04 'fails on any drift' is still not fully met for the badge copies: a drifted badge copy passes when the verbatim text is also present in a trailing -- comment, a /* */ block comment, or a new section (07-REVIEW WR-04)"
+  regressions: []
 gaps:
-  - truth: "07-04: InterestCalibrationReplaySqlTest fails on any drift of a blend or badge copy in scripts/interest-calibration-replay.sql (the drift guard fails on a single-byte difference)"
+  - truth: "07-04: InterestCalibrationReplaySqlTest fails on any drift of a blend or badge copy in scripts/interest-calibration-replay.sql; and 07-10: a copy pasted into a -- comment cannot hide a drifted statement copy"
     status: partial
-    reason: "The replay SQL holds 3 copies of the unread blend CTE (summary, top, bottom) and 4 copies of the INTEREST_SCORE badge expression, but the test only asserts sql.contains(...) for each expected text, which proves at least ONE copy matches. A hand edit to the top or bottom copy, or to 3 of the 4 badge copies, leaves the test green. Today all copies ARE byte-identical (checked directly: the 3 unread 'WITH learned AS' lines are identical over all 1614 chars, and all 4 badge CASE expressions equal InterestScoreQueries.INTEREST_SCORE), and the prod cross-checks matched 5/5 twice, so the shipped calibration is sound; only the stated future-drift guarantee is not delivered. Same finding as 07-REVIEW WR-02 (disposition: open)."
+    reason: "07-10 closed the prior gap for single-copy drift. The badge check is still occurrences(withoutComments(sql), INTEREST_SCORE) == 4. withoutComments drops only whole lines that start with '--', and the count never checks which statement holds each copy. An in-memory re-implementation of assertEveryCopyIsVerbatim, run against the real SQL file (baseline passes, and a lone drift of the top badge fails, which matches the Java test), shows that these still pass: (a) the top badge drifted to ROUND(b.raw_n, 1) with the old text kept in a trailing '-- was ...' comment on the same line; (b) the same drift with the old text in a /* */ block comment; (c) the same drift plus a new appended section that uses the verbatim badge. In each case the top-20 calibration rows would no longer match the app's badge while the guard stays green. The 07-10 must-have's own claim ('a copy pasted into a -- comment cannot hide a drifted statement copy') is false for trailing comments. The prior gap's missing item said 'exactly 4 times in the SQL', a raw count that would have caught (a) and (b); 07-10 narrowed it to the non-comment text. Blend lines are not affected: every existing copy is pinned by equality and order."
     artifacts:
       - path: "src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java"
-        issue: "replaysTheAppsUnreadBlendVerbatim / replaysTheWindowCrossCheckVerbatim use contains(); no count or every-copy assertion"
+        issue: "assertEveryCopyIsVerbatim (lines 180-182) counts INTEREST_SCORE in withoutComments(sql), which removes only whole-line -- comments, and does not pin each badge copy to its statement; the Javadoc at lines 163-165 overstates the guarantee"
     missing:
-      - "Assert every 'WITH learned AS' line in the SQL is one of the allowed verbatim blendCte(scope)/LEARNED_CTE texts and that the line count is 5"
-      - "Assert INTEREST_SCORE occurs exactly 4 times in the SQL"
+      - "Count INTEREST_SCORE over the raw file text (comments included) and require exactly 4, so a copy in any comment form becomes a fifth copy and fails"
+      - "Pin each badge copy to its statement: the line after each unread or window blend line (SQL lines 31, 53, 59, 66) holds exactly one INTEREST_SCORE"
+      - "Add mutation cases to aMissingOrExtraCopyFails: drift one badge copy and keep the verbatim text in a trailing -- comment, in a /* */ comment, and in an added section; each must fail. Correct the Javadoc claim"
+      - "Recommended in the same edit (07-REVIEW IN-07, not blocking on its own): find blend lines leniently ((?im)^\\s*with\\s+learned\\s+as\\b outside comments, exactly 5) before the strict label check, so an extra indented or lower-case drifted blend line is not skipped"
 behavior_unverified_items: []
 human_verification:
   - test: "Open http://192.168.44.204/priority, then Settings > Interests"
-    expected: "Priority lists scored articles with badges (the cold-start call to action from the 07-06 check is superseded now that a rubric exists); the Interests dialog shows no 'not configured' notice; reader, feed tree and article list behave as before"
-    why_human: "Visual confirmation of the prod UI; API checks cannot show rendering"
+    expected: "Priority lists scored articles with badges; the Interests dialog shows no 'not configured' notice; reader, feed tree and article list behave as before"
+    why_human: "Visual confirmation of the prod UI; API checks cannot show rendering (carried forward from the initial verification; not re-checked because prod was out of scope for this re-verification)"
   - test: "In the prod Priority and article lists, look at badges scored 22-39 and 70+"
     expected: "22-39 render in the neutral colour, 70+ in the high colour, below 22 low (served tiers 70/22). A brief low-colour flash for 22-39 on first paint is the known 70/40 fallback (07-REVIEW IN-01)"
-    why_human: "Tier colours are CSS rendering; the served tiers are verified by API but colour is visual"
-  - test: "Confirm the judgment-tier prohibitions of 07-06..07-09 (approve-before-release gates, no prod writes by hand, no force-push/no-verify/disableChecks, no rubric text or key in committed files, no SDK retry / concurrency > 1)"
+    why_human: "Tier colours are CSS rendering"
+  - test: "Confirm the judgment-tier prohibitions of 07-06..07-10 (approve-before-release gates, no prod writes by hand, no force-push/no-verify/disableChecks, no rubric text or key in committed files, no SDK retry / concurrency > 1, 07-10 test-only with no push or merge)"
     expected: "Each holds; the verifier's non-authoritative LLM judgment found supporting evidence for all (see Prohibitions)"
     why_human: "Judgment-tier prohibitions require explicit human resolution (ADR-550 D4)"
 ---
@@ -77,9 +90,15 @@ human_verification:
 # Phase 7: Rollout & Calibration Verification Report
 
 **Phase Goal:** Interest ranking is live in production with a real key, the backlog is scored, and the scores are tuned so they mean something
-**Verified:** 2026-09-29T00:58:00Z
-**Status:** gaps_found (one plan-level must-have partial; all three roadmap success criteria verified against the codebase and live prod)
-**Re-verification:** No, initial verification
+**Verified:** 2026-09-29T02:35:00Z
+**Status:** gaps_found (the three roadmap success criteria remain verified; the replay drift guard is tighter but still misses one class of badge drift)
+**Re-verification:** Yes, after gap-closure plan 07-10 (commits 08185bf, 7ede686, 1531fac; merged in d0d06fa)
+
+## Re-verification Scope
+
+- **Carried-forward gap (truth 8):** full re-check against the test source, the SQL, a forced re-run of the test class and an in-memory mutation probe.
+- **Previously verified truths 1-7 and 9-11:** regression check. Since the prior verification (`aa2069f`), the only change outside `.planning/` is `InterestCalibrationReplaySqlTest.java` (`git diff --stat aa2069f HEAD -- . ':!.planning'`). `scripts/interest-calibration-replay.sql` and `InterestScoreQueries.java` have a 0-line diff against `aa2069f`. No production, frontend, yaml, Helm or CLAUDE.md file changed, so no code path behind truths 1-7 and 9-11 could regress. Prod was not contacted (per instructions), so the live facts in truths 1, 2, 9 and 11 are carried forward from the initial run. They cannot have changed through this phase's commits because nothing was built, pushed or deployed: `1531fac` is only on `sbartram/main`, and `origin/main` = `main` = `5461d0a`.
+- **07-10 must-haves (truths 12-18):** new in this run.
 
 ## Goal Achievement
 
@@ -87,124 +106,134 @@ human_verification:
 
 | # | Truth | Status | Evidence |
 |---|---|---|---|
-| 1 | SC1: released and deployed with a live key; the launch backfill drained the eligible backlog with no 429 storms and without opening the circuit (per `/api/interest/status` and logs) | ✓ VERIFIED | Live: `/api/version` = 0.2.1; `/api/interest/status` = configured true, coldStart false, CLOSED, eligibleUnscored 0, failed 0. Deployment env holds `MYFEEDER_TYPESAFE_API_KEY` (name only read). Read-only prod query: `article_score` SCORED 199, max attempts 1, model jev-1.13.0, 0 FAILED rows, 0 `TypeSafeRateLimit%` failures; Flyway latest V6 success. Raw watch evidence re-read (not the summary): `status.log` 53/53 samples `"breakerState":"CLOSED"`, `backfill.log` 0 `Jev ` lines, 0 ERROR lines; current pod log (3h) 0 `Jev retry/retries/circuit` lines. `JevEventLogging` is present in tag v0.2.0, so a zero count is meaningful. Tags v0.2.0 and v0.2.1 are on origin. |
-| 2 | SC2: blend constants (profile weight, learn rate, cap, tier thresholds) are configurable and tuned against the real distribution, so badges spread across tiers | ✓ VERIFIED | `MyfeederProperties.Interest.Blend` binds profilePoints/learnRate/learnedCap/tiers.high/neutral; `InterestScoreQueries` params and `ArticleFeedbackService` read them; `InterestStatusService` serves tiers. main `application.yaml` has tiers 70/22 with a 07-CALIBRATION.md comment (also in `v0.2.1:application.yaml`). 07-CALIBRATION.md records 22 replayed candidates against 192 real scored articles and a verbatim `approve`. Independent live check: paging `/api/articles/priority` gives 187 scored unread badges at the served 70/22 -> high 15.5%, neutral 33.7%, low 50.8% (vs 15.5/20.3/64.2 at the old 70/40); inside the D-10 bands |
-| 3 | SC3: CLAUDE.md documents Jev behaviors and gotchas: app-owned client bean, single retry layer, scoring executor, eligibility window | ✓ VERIFIED | `## Jev Scoring and Resilience` appears once in committed CLAUDE.md (HEAD and origin/main). Facts cross-checked against source: `TypeSafeConfig` (Supplier key, explicit baseUrl, `clone()` builder, `MAX_RETRY_AFTER_MS = 10_000L`, not-configured log text), yaml `max-retries: 0`, jev retry `max-attempts: 3` + retry-exceptions, `InterestScoringConfig` (`interestScoringExecutor`, `defaultCandidate = false`, `jev-score-`, queue capacity), `ArticleScoreStore.MAX_ATTEMPTS = 3`. Architecture Jev bullet, V6 in the Flyway list, deploy key optional and `incrementMinor` all present |
-| 4 | 07-01: tiers bind from `myfeeder.interest.blend.tiers.*`, `tiers` is appended last on `InterestStatus`, and retuning is config-only | ✓ VERIFIED | `record InterestStatus(..., long failed, TierThresholds tiers)`; `getBlend().getTiers()` + `new TierThresholds(` in the service; InterestStatusServiceTest 7/7 incl. `tiersBindFromTheBlendTiersKeys` (run here); live prod serves `{70,22}` from yaml alone |
-| 5 | 07-02: every InterestBadge classifies with served tiers, falls back to DEFAULT_TIERS 70/40, one non-polling root observer | ✓ VERIFIED | `useInterestTiers` (staleTime Infinity, `select: (s) => s.tiers`, `?? DEFAULT_TIERS`); `TierContext.Provider value={tiers}` in App.tsx; InterestBadge uses `useContext(TierContext)` + `tierOf(score, tiers)` (no query observer); tierOf has no numeric literals; used by ArticleList, PriorityList, BoardArticleList, ScoreRow. vitest useInterest/InterestBadge/interest: 19/19 pass (run here). Prod bundle `index-C8-FoLkO.js` contains `{high:70,neutral:40}` + createContext |
-| 6 | 07-03: JevEventLogging logs retry / exhausted / breaker-transition lines with class names and numbers only | ✓ VERIFIED | Class subscribes to `retry("jev")` and `circuitBreaker("jev")`, uses `getStateTransition().name()`; JevResilienceTest 20/20 pass (run here) incl. `rateLimitRetryIsLoggedWithoutLeaking`, `exhaustedRetriesAreLogged`, `breakerTransitionsAreLogged`, `perArticleErrorsLogNoRetryLine` |
-| 7 | 07-04: read-only replay driver reproduces the app blend verbatim, validates inputs, needs the password | ✓ VERIFIED | Driver exports `PGOPTIONS='-c default_transaction_read_only=on'`, rejects bad candidates with `invalid candidate:`; SQL has no DML/DDL keyword or backslash meta-command; `blendCte` is package-private with SQL unchanged. All current copies byte-identical to the app (checked directly). Prod cross-check 5/5 at 100/70/40 and 5/5 at 100/70/22 |
-| 8 | 07-04: `InterestCalibrationReplaySqlTest` fails on any drift (single-byte difference) of a blend/badge copy | ✗ FAILED (partial) | Test passes (6/6), but it asserts `contains()` only. 3 unread blend copies and 4 badge copies exist; drift in the non-matching copies is not caught. See Gaps |
-| 9 | 07-06: 0.2.0 released (merge, tag, image, pre-deploy dump, Flyway V6, key authenticated, clean soak) | ✓ VERIFIED | Tag v0.2.0 on origin -> 687217f; prod Flyway V6 success; dump file present in cache; 07-BACKFILL facts table consistent with raw `status.log` first sample (coldStart true, tiers 70/40, eligibleUnscored 183) |
-| 10 | 07-08: calibration ran after the drain against the real distribution, with top/bottom 20 titles and an explicit user approval line | ✓ VERIFIED | 07-CALIBRATION.md: baseline and 22 candidates, stability cross-check, learned model (0 votes), top/bottom 20, `approved-constants: profile-points=100 tiers.high=70 tiers.neutral=22 learn-rate=2 learned-cap=20`; replay TSVs present in `$HOME/.cache/myfeeder-phase07/replay/` |
-| 11 | 07-09: approved constants shipped via source control as 0.2.1; test yaml pinned at 100/70/40; no Helm/env override | ✓ VERIFIED | `49b9e54` is an ancestor of v0.2.1; test yaml tiers 70/40 with comment; dev overlay `tiers.neutral: 22`; `helm/` has no profile-points/tiers/INTEREST key; live deployment env has no `MYFEEDER_INTEREST_*` var; prod serves 0.2.1 with tiers 70/22 |
+| 1 | SC1: released and deployed with a live key; backfill drained with no 429 storms and without opening the circuit | ✓ VERIFIED (regression: no change) | Initial-run evidence stands (0.2.1 live, 199 SCORED / 0 FAILED, 53/53 CLOSED samples, 0 `Jev ` retry lines). No release, image or deploy since |
+| 2 | SC2: blend constants configurable and tuned against the real distribution; badges spread across tiers | ✓ VERIFIED (regression: no change) | `application.yaml`, `MyfeederProperties`, `InterestScoreQueries`, `InterestStatusService` unchanged since `aa2069f`; 07-CALIBRATION.md approval unchanged |
+| 3 | SC3: CLAUDE.md documents the Jev behaviors and gotchas | ✓ VERIFIED (regression: no change) | Committed CLAUDE.md unchanged since `aa2069f` (the modified file in the working tree is `.claude/CLAUDE.md`, a separate GSD file) |
+| 4 | 07-01: tiers bind from yaml, `tiers` appended last, config-only retune | ✓ VERIFIED (regression: no change) | Source unchanged |
+| 5 | 07-02: InterestBadge uses served tiers via TierContext, 70/40 fallback | ✓ VERIFIED (regression: no change) | Frontend unchanged; caller reports vitest 322/322 after the merge |
+| 6 | 07-03: JevEventLogging lines with class names and numbers only | ✓ VERIFIED (regression: no change) | Source unchanged |
+| 7 | 07-04: read-only replay driver reproduces the blend verbatim, validates inputs, needs the password | ✓ VERIFIED | SQL and driver unchanged; `replayIsReadOnly`, `driverRejectsANonNumericCandidate`, `driverRequiresThePassword` pass in the forced re-run |
+| 8 | 07-04: `InterestCalibrationReplaySqlTest` fails on any drift (single-byte difference) of a blend or badge copy | ✗ FAILED (partial, narrowed) | Single-byte drift of any one existing copy now fails (5 blend lines + 4 badge copies; test and probe agree). Drift of a badge copy still passes when the verbatim text survives in a trailing `--` comment, a `/* */` comment or a new section. See Gaps and "Judgment on WR-04" |
+| 9 | 07-06: 0.2.0 released (tag, image, dump, Flyway V6, key, soak) | ✓ VERIFIED (regression: no change) | Tags and 07-BACKFILL.md unchanged |
+| 10 | 07-08: calibration after the drain with top/bottom 20 and explicit approval | ✓ VERIFIED (regression: no change) | 07-CALIBRATION.md unchanged |
+| 11 | 07-09: approved constants shipped as 0.2.1 via source control; test yaml at 100/70/40; no Helm/env override | ✓ VERIFIED (regression: no change) | yaml and helm unchanged since `aa2069f` |
+| 12 | 07-10: every `WITH learned AS` line equals its Java text, in order unread x3, window, learned, exactly 5 lines | ✓ VERIFIED | `assertEveryCopyIsVerbatim` labels each column-0 `WITH learned AS` line by `equals` (unread, window) or `startsWith(LEARNED_SECTION)` and asserts `containsExactly("unread","unread","unread","window","learned")`. Probe: a one-byte drift at the middle of SQL lines 30, 52, 58, 65 and 90 each fails |
+| 13 | 07-10: the test fails unless INTEREST_SCORE occurs exactly 4 times in the non-comment text, and a copy pasted into a `--` comment cannot hide a drifted statement copy | ✗ FAILED (partial) | Exact count 4 is enforced over `withoutComments(sql)`, which drops only whole-line `--` comments. Probe: top badge drifted + verbatim text in a trailing `-- was ...` on the same line passes; the same with `/* */` passes. The truth's second clause is falsified. Same root cause as truth 8 |
+| 14 | 07-10: a one-byte drift at the middle of any of the nine copies throws AssertionError, after a passing baseline | ✓ VERIFIED | `driftInAnySingleBlendCopyFails` and `driftInAnySingleBadgeCopyFails` assert the baseline passes first, then loop every occurrence; both pass in the forced re-run |
+| 15 | 07-10: 4/6 blend lines and 3/5 badge copies fail; 5 and 4 pass | ✓ VERIFIED | `aMissingOrExtraCopyFails` (4 variants) and `everyCopyInTheReplayIsVerbatim` pass |
+| 16 | 07-10: the six existing tests are unchanged and pass | ✓ VERIFIED | `git diff aa2069f HEAD` on the test removes only two Javadoc lines; all six methods present and passing (10/10 total) |
+| 17 | 07-10: test-only fix; SQL and InterestScoreQueries byte-identical to `aa2069f`; mutations in memory only | ✓ VERIFIED | 0-line diff for both files; every variant is a `String`; no `Files.write` in the test |
+| 18 | 07-10: 07-REVIEW-DISPOSITION.md records WR-02 fixed by 07-10; others stay open | ✓ VERIFIED | `\| WR-02 \| warning \| fixed \| 07-10 \|`; WR-01, WR-03, WR-04, IN-01..IN-09 open |
 
-**Score:** 10/11 truths verified (0 present, behavior-unverified)
+**Score:** 16/18 truths verified (0 present, behavior-unverified). Truths 8 and 13 share one root cause.
+
+### Judgment on WR-04: gap or advisory?
+
+The caller asked whether the WR-04 residual keeps the 07-04 must-have open or is an advisory outside its literal scope. My judgment is that **it keeps the must-have open (partial)**, for four reasons.
+
+1. **The must-have's words cover it.** 07-04 says the test "fails on any drift" of a badge copy, "so identical constants give identical scores to the running app". In the probe cases the `top` statement's badge is drifted, so the replay's top-20 rows (the evidence behind the shipped 100/70/22) would differ from the app, and the test stays green. That is a drift of a badge copy that is not caught. The extra condition (verbatim text elsewhere) is not an exotic attack: keeping the old expression in a `-- was ...` comment while editing is an ordinary habit, and adding a section is the normal way the replay grows.
+2. **The gap-closure plan's own truth is falsified.** 07-10 truth 2 states that "a copy pasted into a -- comment cannot hide a drifted statement copy". A trailing `--` comment does hide one. The claim is false as written, independent of how broadly 07-04 is read.
+3. **The prior gap prescribed a stronger check than was built.** Missing item 2 said "INTEREST_SCORE occurs exactly 4 times in the SQL", which is a raw count that would have caught the trailing and block comment cases (they make 5). 07-10 narrowed it to non-comment text. So the carried-forward gap is not fully closed by its own prescription either.
+4. **Evidence gate (#3304).** This is the carried-forward gap, and the flagged file was modified after the prior `verified:` timestamp. It also has deterministic evidence: a reproducible in-memory probe that mirrors `assertEveryCopyIsVerbatim`, agrees with the Java test on the baseline (pass) and on a lone drift (fail), and passes the three WR-04 variants. So it stays blocking rather than dropping to advisory.
+
+What argues the other way, recorded for the human decision: every existing copy is byte-identical today; the blend part of the guarantee is fully met; the shipped calibration numbers are sound (prod cross-checks matched 5/5 twice); and the remaining hole needs two coincident edits. If you read "drift" as "a copy differs and nothing else changes", the must-have is met and WR-04 is hardening. The fix is small (a raw count plus a per-statement placement check), which is why I recommend closing it over accepting an override.
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |---|---|---|---|
-| `service/TierThresholds.java` | `record TierThresholds(int high, int neutral)` | ✓ VERIFIED | wired into InterestStatus/InterestStatusService |
-| `service/InterestStatus.java` | tiers appended last | ✓ VERIFIED | |
-| `config/MyfeederProperties.java` | `Blend.Tiers` defaults 70/40 | ✓ VERIFIED | |
-| `config/JevEventLogging.java` | jev retry/breaker logging | ✓ VERIFIED | shipped in v0.2.0 and v0.2.1 |
-| `scripts/interest-calibration-replay.{sh,sql}` | read-only replay | ✓ VERIFIED | used for 07-08/07-09 evidence |
-| `InterestCalibrationReplaySqlTest.java` | drift guard | ⚠️ PARTIAL | guards one copy per text only (gap) |
-| frontend `utils/interest.ts`, `hooks/useInterest.ts`, `api/interest.ts`, `InterestBadge.tsx`, `App.tsx` | served tiers path | ✓ VERIFIED | |
-| `CLAUDE.md` | `## Jev Scoring and Resilience` | ✓ VERIFIED | |
-| `07-BACKFILL.md` | `## Release 0.2.0`, `## Verdict` | ✓ VERIFIED | numbers match raw cache files |
-| `07-CALIBRATION.md` | `approved-constants:`, `## Shipped in 0.2.1` | ✓ VERIFIED | |
-| main `application.yaml` | tuned values + 07-CALIBRATION.md comment | ✓ VERIFIED | |
+| `InterestCalibrationReplaySqlTest.java` | every-copy drift guard with in-memory proofs | ⚠️ PARTIAL | blend guard complete; badge guard is count-only over whole-line-comment-stripped text (WR-04) |
+| `07-REVIEW-DISPOSITION.md` | `\| WR-02 \| warning \| fixed \| 07-10 \|` | ✓ VERIFIED | |
+| `scripts/interest-calibration-replay.{sh,sql}` | unchanged, read-only | ✓ VERIFIED | 0-line diff vs `aa2069f` |
+| All other phase artifacts | as in the initial report | ✓ VERIFIED | unchanged since `aa2069f` |
 
 ### Key Link Verification
 
 | From | To | Via | Status |
 |---|---|---|---|
-| InterestStatusService | MyfeederProperties | `getBlend().getTiers()` | WIRED |
-| application.yaml | prod `/api/interest/status` | 0.2.1 image binding | WIRED (live `{70,22}`) |
-| useInterestTiers | `/api/interest/status` | `select: (s) => s.tiers` | WIRED |
-| App.tsx MainLayout | InterestBadge | `TierContext.Provider value={tiers}` -> `useContext` | WIRED |
-| JevEventLogging | jev RetryRegistry / CircuitBreakerRegistry | `retry("jev")`, `circuitBreaker("jev")` | WIRED |
-| replay driver | replay SQL | `$(dirname "$0")/interest-calibration-replay.sql` | WIRED |
-| drift test | InterestScoreQueries | `blendCte(InterestScoreQueries.UNREAD_SCOPE)` | PARTIAL (one copy) |
+| drift test | InterestScoreQueries | `blendCte(UNREAD_SCOPE)` / `blendCte(WINDOW_SCOPE)` by equality, `LEARNED_CTE` by prefix, `INTEREST_SCORE` counted | WIRED for blend lines; PARTIAL for badge placement |
+| drift test | replay SQL | `Files.readString(SQL)`, `line.startsWith("WITH learned AS")` | WIRED (column-0, case-sensitive discovery; IN-07) |
+| All other links | | | unchanged from the initial report (WIRED) |
 
 ### Data-Flow Trace (Level 4)
 
-| Artifact | Data | Source | Real data | Status |
-|---|---|---|---|---|
-| InterestBadge | tier thresholds | yaml -> MyfeederProperties -> InterestStatusService -> `/status` -> useInterestTiers -> TierContext | yes (prod serves 70/22) | ✓ FLOWING |
-| InterestBadge | score | `/api/articles/priority` interestScore from the SQL blend | yes (187 scored in prod) | ✓ FLOWING |
+Unchanged from the initial report: tier thresholds and scores flow from yaml and the SQL blend to the badge (✓ FLOWING). No data-path file changed.
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |---|---|---|---|
-| Prod version / status | `curl /api/version`, `/api/interest/status` | 0.2.1; configured, CLOSED, coldStart false, 0/0, tiers 70/22 | ✓ PASS |
-| Tier spread in prod | page `/api/articles/priority`, bucket by served tiers | 15.5 / 33.7 / 50.8 % | ✓ PASS |
-| Score rows | read-only psql on `article_score` | SCORED 199, 0 FAILED, max attempts 1 | ✓ PASS |
-| Backend named tests | `./gradlew test --tests InterestCalibrationReplaySqlTest --tests JevResilienceTest --tests InterestStatusServiceTest` | 6/6, 20/20, 7/7 | ✓ PASS |
-| Frontend tier tests | `npx vitest run useInterest.test.tsx InterestBadge.test.tsx interest.test.ts` | 19/19 | ✓ PASS |
-| Deployment overrides | `kubectl get deploy myfeeder` env names | no `MYFEEDER_INTEREST_*` | ✓ PASS |
+| Drift guard class | `./gradlew test --tests "org.bartram.myfeeder.repository.InterestCalibrationReplaySqlTest" --rerun` | BUILD SUCCESSFUL; XML: tests=10 failures=0 errors=0, timestamp 2026-09-29T02:30:31Z | ✓ PASS |
+| Single-copy drift caught | in-memory probe (Python mirror of `assertEveryCopyIsVerbatim`, SQL read-only) | one-byte drift of lines 30/52/58/65/90 fails; lone top-badge drift fails | ✓ PASS |
+| Compound badge drift caught | same probe | drift + trailing `--` copy: passes; drift + `/* */` copy: passes; drift + new verbatim section: passes | ✗ FAIL (gap) |
+| Extra non-column-0 blend line caught | same probe | an indented drifted extra blend line passes (IN-07) | ⚠️ (recommended fix) |
+| Production files untouched | `git diff aa2069f HEAD -- scripts/interest-calibration-replay.sql .../InterestScoreQueries.java \| wc -l` | 0 | ✓ PASS |
+| 07-10 not pushed or merged | `git branch -r --contains 1531fac`; `git rev-parse origin/main main` | no remote branch; both 5461d0a | ✓ PASS |
 
 ### Probe Execution
 
-Step 7c: SKIPPED (no `scripts/*/tests/probe-*.sh` exist and no plan declares one).
+Step 7c: SKIPPED (no `scripts/*/tests/probe-*.sh` exist and no plan declares one). The in-memory probe above is a verifier spot-check, not a project probe.
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 |---|---|---|---|---|
 | OPS-01 | 07-03, 07-06, 07-07 | Released and deployed with a live key; backfill without 429 storms or open circuit | ✓ SATISFIED | Truths 1, 6, 9 |
-| OPS-02 | 07-01, 07-02, 07-04, 07-08, 07-09 | Blend constants configurable and tuned against the real distribution | ✓ SATISFIED | Truths 2, 4, 5, 7, 10, 11 (truth 8 is a tooling guard gap, not a tuning gap) |
+| OPS-02 | 07-01, 07-02, 07-04, 07-08, 07-09, 07-10 | Blend constants configurable and tuned against the real distribution | ✓ SATISFIED | Truths 2, 4, 5, 7, 10, 11, 12, 14-18. Truths 8 and 13 are a durability gap in the tuning tool's guard, not a gap in the tuning itself |
 | OPS-03 | 07-05 | CLAUDE.md documents Jev behaviors and gotchas | ✓ SATISFIED | Truth 3 |
 
-No orphaned requirements: REQUIREMENTS.md maps exactly OPS-01..03 to Phase 7 and every one is claimed by a plan.
+No orphaned requirements: REQUIREMENTS.md maps exactly OPS-01..03 to Phase 7, and plans claim all three. (The REQUIREMENTS.md traceability rows currently read "Gaps Found"; the orchestrator owns those.)
 
 ### Prohibitions (judgment tier, non-authoritative LLM verdict, flagged for human confirmation)
 
 | Plan | Prohibition | LLM verdict | Evidence |
 |---|---|---|---|
-| 07-06/07-09 | no release action before `approve` | holds (unverifiable ordering from code) | approvals recorded in SUMMARY/CALIBRATION |
-| 07-06/07-07/07-08 | no prod writes by hand; read-only evidence | holds | driver enforces `default_transaction_read_only=on`; only Flyway V6 in history |
-| 07-06/07-09 | no force-push, --no-verify, disableChecks, moved tag | holds | origin/main = 5461d0a (merge commit), tags annotated on origin |
-| 07-06/07-07/07-08 | no key, profile text or topic descriptions in committed files | holds | profile text and all topic descriptions: 0 matches across tracked `.planning`, `src`, `scripts`, CLAUDE.md. Topic names: 0 in 07-BACKFILL.md; one 4-letter topic name appears in 07-CALIBRATION.md only inside two article titles (allowed content) |
-| 07-07 | no SDK retry, concurrency stays 1 | holds | yaml `max-retries: 0`, `concurrency: 1`, no env override |
+| 07-06/07-09 | no release action before `approve` | holds | as in the initial report |
+| 07-06/07-07/07-08 | no prod writes by hand | holds | as in the initial report |
+| 07-06/07-09 | no force-push, --no-verify, disableChecks, moved tag | holds | as in the initial report |
+| 07-06/07-07/07-08 | no key or rubric text in committed files | holds | as in the initial report; the 07-10 commits touch only the test and the disposition |
+| 07-07 | no SDK retry, concurrency stays 1 | holds | yaml unchanged |
+| 07-10 | must not edit the replay SQL, InterestScoreQueries or any production file | holds | 0-line diff |
+| 07-10 | must not weaken, rename or delete the six existing tests; no DB or network | holds | only Javadoc lines removed; the driver tests use 127.0.0.1:1 as before |
+| 07-10 | no merge to main, push, tag, image, deploy or prod access | holds | `1531fac` only on `sbartram/main`; `main` = `origin/main` = `5461d0a` |
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |---|---|---|---|---|
-| (all phase files) | - | TBD/FIXME/XXX | none | 0 debt markers |
-| `InterestCalibrationReplaySqlTest.java` | 35-40, 57-59 | contains()-only drift guard (07-REVIEW WR-02) | ⚠️ Warning -> gap | future drift of 2/3 blend and 3/4 badge copies is undetected |
-| `JevEventLogging.java` | breaker lambda | recovery transitions print `-1.0%` rates (WR-01) | ⚠️ Warning | cosmetic in logs; transitions still logged |
-| `MyfeederProperties` / `TierThresholds` | - | tier pair not validated (WR-03) | ⚠️ Warning | a swapped or typo pair would mis-colour badges silently |
-| `utils/interest.ts` | 32 | fallback 70/40 vs shipped 70/22 (IN-01) | ℹ️ Info | brief colour flash for 22-39 until status loads |
-| `CLAUDE.md` | tier-tuning bullet | attributes the tier pin to InterestScoreQueriesTest (IN-06) | ℹ️ Info | minor doc inaccuracy; the four OPS-03 topics are accurate |
+| `InterestCalibrationReplaySqlTest.java` | 180-190 | badge count over whole-line-comment-stripped text, no placement check (WR-04) | 🛑 Blocker (carried-forward gap) | compound badge drift is undetected |
+| `InterestCalibrationReplaySqlTest.java` | 163-165 | Javadoc claims a comment copy cannot hide a drift | ⚠️ Warning | false claim; fix with the code |
+| `InterestCalibrationReplaySqlTest.java` | 170-171 | column-0, case-sensitive blend discovery (IN-07) | ⚠️ Warning | an extra indented or lower-case drifted blend line is skipped |
+| (07-10 files) | - | TBD/FIXME/XXX/TODO/HACK | none | 0 markers |
+| `JevEventLogging.java` | breaker lambda | `-1.0%` rates on recovery transitions (WR-01) | ⚠️ Warning | carried forward, still open |
+| `MyfeederProperties` / `TierThresholds` | - | tier pair not validated (WR-03) | ⚠️ Warning | carried forward, still open |
+| `utils/interest.ts` | 32 | 70/40 fallback vs shipped 70/22 (IN-01) | ℹ️ Info | carried forward |
 
 ### Human Verification Required
 
-1. **Prod UI loads with a configured rubric**: open `/priority`, then Settings > Interests. Expected: badges on scored articles, no "not configured" notice, the rest of the UI unchanged. Why human: visual.
-2. **Badge tier colours at 70/22**: 22-39 neutral colour, 70+ high, under 22 low. A brief first-paint low flash for 22-39 is the known fallback (IN-01). Why human: CSS rendering.
-3. **Judgment-tier prohibitions**: confirm the table above. Why human: ADR-550 D4.
+1. **Prod UI loads with a configured rubric:** open `/priority`, then Settings > Interests. Expected: badges on scored articles, no "not configured" notice, the rest of the UI unchanged. Why human: visual.
+2. **Badge tier colours at 70/22:** 22-39 neutral, 70+ high, under 22 low; a brief first-paint low flash for 22-39 is the known fallback (IN-01). Why human: CSS rendering.
+3. **Judgment-tier prohibitions:** confirm the table above, including the three 07-10 items. Why human: ADR-550 D4.
 
 ### Gaps Summary
 
-The phase goal is achieved in production and the evidence is independent of the SUMMARYs: 0.2.1 runs with a live key, the 183-article legacy backlog drained in about 7 minutes with the breaker CLOSED in every sample and no Jev retry, exhausted or transition line, 199 articles are now SCORED with no FAILED rows, and the served 70/22 tiers spread live badges at 15.5 / 33.7 / 50.8 %. CLAUDE.md documents the Jev behaviors.
+The phase goal is still achieved in production, and nothing behind the three roadmap success criteria changed in this round: the only non-planning change is the test file, and nothing was built, pushed or deployed.
 
-One plan-level must-have is only partly delivered. 07-04 promised that `InterestCalibrationReplaySqlTest` fails on any drift of the replay's blend or badge copies. It checks only that at least one copy matches (07-REVIEW WR-02, still open). All copies are identical today, so no shipped number is wrong. The gap is a durability guard for the documented tuning workflow. The fix is two test assertions (every-copy match and exact counts).
+Gap-closure plan 07-10 fixed the defect the prior verification found. The guard now checks every blend line by exact equality and in order, requires exactly four badge copies, and proves by in-memory mutation that a one-byte drift of any single existing copy fails. The forced re-run passes 10/10.
 
-**If you accept this deviation**, add to this file's frontmatter instead of planning a gap-closure:
+One residual remains, with the same root cause behind truths 8 and 13 (07-REVIEW WR-04). The badge check counts copies after stripping only whole-line `--` comments and does not check which statement holds each copy. A drifted `top` badge passes if the old verbatim text survives in a trailing `--` comment, a `/* */` comment or a new section. I reproduced all three in memory. I judge this a remaining partial gap rather than an advisory, because it contradicts both the 07-04 "fails on any drift" guarantee and 07-10's explicit claim about comment copies, and because the prior gap's prescribed raw count would have caught the comment cases. The fix is a raw-text count of exactly 4, a per-statement placement check, three mutation cases and a Javadoc correction; lenient blend-line discovery (IN-07) can go in the same edit.
+
+**If you judge WR-04 to be hardening beyond the must-have**, accept it with an override instead of another gap-closure plan:
 
 ```yaml
 overrides:
-  - must_have: "07-04: InterestCalibrationReplaySqlTest fails on any drift of a blend or badge copy in scripts/interest-calibration-replay.sql"
-    reason: "All copies verified byte-identical at ship time and prod cross-checks matched 5/5 twice; the every-copy assertion is tracked as 07-REVIEW WR-02"
+  - must_have: "07-04: InterestCalibrationReplaySqlTest fails on any drift of a blend or badge copy in scripts/interest-calibration-replay.sql; and 07-10: a copy pasted into a -- comment cannot hide a drifted statement copy"
+    reason: "Single-copy drift of every existing blend and badge copy is caught (07-10). The residual needs a drift plus a verbatim copy kept in a trailing/block comment or a new section; tracked as 07-REVIEW WR-04 for /gsd-code-review 07 --fix"
     accepted_by: "<name>"
     accepted_at: "<ISO timestamp>"
 ```
 
 ---
 
-_Verified: 2026-09-29T00:58:00Z_
+_Verified: 2026-09-29T02:35:00Z_
 _Verifier: Claude (gsd-verifier)_
