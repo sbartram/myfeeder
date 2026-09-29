@@ -14,15 +14,18 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 **Codebase:** ~5.4k lines of main Java, ~11.6k of test Java and ~12.5k of TypeScript/TSX. Spring Boot 4.0.8, Spring AI 2.0.1, Spring Cloud 2025.1.3, spring-ai-starter-typesafe 0.1.0 (jev-1.13.0), Flyway through V6.
 
-## Next Milestone Goals
+## Current Milestone: v0.3.0 Engagement Learning
 
-Not yet defined. Start with `/gsd-new-milestone`. Candidates carried forward from v0.2.1:
+**Goal:** Opening or saving an article teaches the ranking what I care about, with no extra Jev calls, and every learned point stays explainable and reversible.
 
-- Frontend ESLint cleanup (7 `react-hooks` errors; `npm run build` doesn't run eslint)
-- InterestsDialog help text still says "primarily about" (should match the shipped v2 "substantially about" wording)
-- Raindrop resilience tuning (`retry-exceptions`, the inert backoff multiplier)
-- Open review advisories: 05 WR-01 (two-statement breakdown read), 05 WR-03 (topic edits don't invalidate article caches), 07 WR-05 / IN-10 (replay drift-guard hardening), IN-01 (70/40 tier fallback flash)
-- Previously out of scope and now unblocked: CONCERNS.md fixes (JSON Feed dates, SSRF DNS rebinding), sort-by-interest on other lists, react-router v7 (clears the two accepted advisories)
+**Target features:**
+- Engagement capture: a V7 `article_engagement` table records, idempotently, opening the original link (`o` or a click) and saving an article (star, board, Raindrop)
+- Topic nudge: an engagement is an implicit, fractional up-vote in the derived `learned` CTE; a save weighs more than an open; each article counts once, at its strongest engagement; an explicit thumbs vote on the article overrides it; engagement has its own cap below the thumbs cap
+- Explainability: "Why N?" and the Interests learned line separate engagement-learned points from thumbs-learned points
+- Gap discovery: opened or saved articles that matched no topic are surfaced as topic suggestions, reusing the "Create topic from article" draft
+- Calibration: engagement weights and cap are tuned by the read-only blend replay, and its drift guard is extended to the new CTE
+
+**Key context:** Positive-only: an article I don't open never counts against it. Selection, auto-mark-read and dwell time are not signals (skimming with j/k would be noise), and neither is reader view. Feed affinity is deferred. Carried-forward cleanup (ESLint, Raindrop tuning, review advisories) stays out of this milestone.
 
 ## Requirements
 
@@ -53,7 +56,11 @@ Not yet defined. Start with `/gsd-new-milestone`. Candidates carried forward fro
 
 ### Active
 
-(none; defined by the next milestone's `/gsd-new-milestone`, see Next Milestone Goals)
+- [ ] Opening an article's original link or saving it (star, board, Raindrop) is recorded as engagement
+- [ ] Engagement nudges topic weights as a fractional, capped, thumbs-overridable implicit up-vote, derived at query time with no Jev calls
+- [ ] "Why N?" and Interests show engagement-learned points separately from thumbs-learned points
+- [ ] Engaged articles that matched no topic are suggested as new topics
+- [ ] Engagement weights and cap are calibrated by the read-only replay with an extended drift guard
 
 ### Out of Scope
 
@@ -64,6 +71,9 @@ Not yet defined. Start with `/gsd-new-milestone`. Candidates carried forward fro
 - CONCERNS.md fixes (JSON Feed dates, SSRF DNS rebinding) and FeedPanel refactor — milestone kept focused on Jev ranking
 - Jev advisors (self-refine, guardrails), RAG reranking, tool index — not relevant to feed ranking
 - Multi-user profiles — single-user app
+- Negative signal from skipped (not opened) articles — skipping is usually lack of time, not disinterest (v0.3.0 decision: positive-only)
+- Dwell time, selection or reader view as engagement — j/k skimming and auto-enabled reader view make them noisy (v0.3.0)
+- Feed affinity (per-feed bonus from open rate) — deferred; topic nudge + gap discovery first (v0.3.0)
 - Spring Boot 4.1 / react-router 7 / frontend major upgrades — Spring Cloud has no GA line for Boot 4.1 yet; router major is unrelated churn
 
 ## Context
@@ -135,4 +145,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-29 after v0.2.1 milestone*
+*Last updated: 2026-09-29 after starting v0.3.0 Engagement Learning milestone*
