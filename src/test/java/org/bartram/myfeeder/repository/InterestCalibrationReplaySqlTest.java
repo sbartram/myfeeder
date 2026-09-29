@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -13,11 +14,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Drift guard for the calibration replay (Phase 7, D-09): the replay SQL must hold the app's blend and
- * badge text byte for byte, so identical constants give the badge the running app serves. It must also
- * stay read-only. Plain JUnit, no Spring and no Docker; paths are relative to the project root.
+ * badge text byte for byte, so identical constants give the badge the running app serves. Every blend
+ * line and every badge copy must match, not just one. It must also stay read-only. Plain JUnit, no
+ * Spring and no Docker; paths are relative to the project root.
  */
 class InterestCalibrationReplaySqlTest {
 
@@ -27,6 +30,9 @@ class InterestCalibrationReplaySqlTest {
     /** The window cross-check scope (Pitfall 9): every SCORED article inside the window, read or unread. */
     private static final String WINDOW_SCOPE =
             "COALESCE(a.published_at, a.fetched_at) > now() - :windowDays * interval '1 day'";
+
+    /** The learned section's opening text, as {@code replaysTheLearnedModelVerbatim} builds it. */
+    private static final String LEARNED_SECTION = InterestScoreQueries.LEARNED_CTE + " SELECT 'learned' AS section";
 
     private static final Pattern WRITE_KEYWORD = Pattern.compile(
             "(?i)\\b(insert|update|delete|create|drop|alter|truncate|grant|copy|into)\\b");
@@ -77,6 +83,80 @@ class InterestCalibrationReplaySqlTest {
 
         assertThat(run.exitCode()).isEqualTo(2);
         assertThat(run.stderr()).contains("MYFEEDER_PG_PASSWORD is required");
+    }
+
+    @Test
+    void everyCopyInTheReplayIsVerbatim() throws IOException {
+        assertEveryCopyIsVerbatim(Files.readString(SQL));
+    }
+
+    @Test
+    void driftInAnySingleBlendCopyFails() throws IOException {
+        String sql = Files.readString(SQL);
+        assertThatCode(() -> assertEveryCopyIsVerbatim(sql)).doesNotThrowAnyException();
+
+        record Copy(String label, String needle, int expected) {}
+        List<Copy> copies = List.of(
+                new Copy("unread", InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE), 3),
+                new Copy("window", InterestScoreQueries.blendCte(WINDOW_SCOPE), 1),
+                new Copy("learned", LEARNED_SECTION, 1));
+        for (Copy copy : copies) {
+            assertThat(occurrences(sql, copy.needle())).as(copy.label() + " copies").isEqualTo(copy.expected());
+            for (int i = 0; i < copy.expected(); i++) {
+                String drifted = driftOneByte(sql, copy.needle(), i);
+                assertThatCode(() -> assertEveryCopyIsVerbatim(drifted))
+                        .as(copy.label() + " copy " + i)
+                        .isInstanceOf(AssertionError.class);
+            }
+        }
+    }
+
+    /**
+     * Every statement line that starts with {@code WITH learned AS} must be one of the allowed Java texts, in
+     * file order: the unread blend three times (summary, top, bottom), the window blend, then the learned
+     * section. The raw line is tested, so the {@code --} header comment that mentions the phrase is never
+     * counted. The blend kinds use equality, so text appended to a line also fails. On failure only the
+     * label list is shown, never a 1.6k-character SQL line.
+     */
+    private static void assertEveryCopyIsVerbatim(String sql) {
+        String unread = InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE);
+        String window = InterestScoreQueries.blendCte(WINDOW_SCOPE);
+        List<String> labels = sql.lines()
+                .filter(line -> line.startsWith("WITH learned AS"))
+                .map(line -> line.equals(unread) ? "unread"
+                        : line.equals(window) ? "window"
+                        : line.startsWith(LEARNED_SECTION) ? "learned"
+                        : "drifted")
+                .toList();
+
+        assertThat(labels).as("kind of each 'WITH learned AS' line, in file order")
+                .containsExactly("unread", "unread", "unread", "window", "learned");
+    }
+
+    /** Non-overlapping count of {@code needle} in {@code haystack}. */
+    private static int occurrences(String haystack, String needle) {
+        int count = 0;
+        for (int i = haystack.indexOf(needle); i >= 0; i = haystack.indexOf(needle, i + needle.length())) {
+            count++;
+        }
+        return count;
+    }
+
+    /**
+     * Returns {@code text} with one character changed in the middle of the 0-based {@code occurrence}-th
+     * match of {@code needle}. In memory only.
+     */
+    private static String driftOneByte(String text, String needle, int occurrence) {
+        int start = text.indexOf(needle);
+        for (int n = 0; n < occurrence && start >= 0; n++) {
+            start = text.indexOf(needle, start + needle.length());
+        }
+        if (start < 0) {
+            throw new IllegalArgumentException("no occurrence " + occurrence);
+        }
+        int at = start + needle.length() / 2;
+        char replacement = text.charAt(at) == '#' ? '%' : '#';
+        return text.substring(0, at) + replacement + text.substring(at + 1);
     }
 
     private record DriverRun(int exitCode, String stderr) {}
