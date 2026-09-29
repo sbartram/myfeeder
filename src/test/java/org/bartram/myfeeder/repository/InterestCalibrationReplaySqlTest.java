@@ -1,17 +1,21 @@
 package org.bartram.myfeeder.repository;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +41,14 @@ class InterestCalibrationReplaySqlTest {
 
     private static final Pattern WRITE_KEYWORD = Pattern.compile(
             "(?i)\\b(insert|update|delete|create|drop|alter|truncate|grant|copy|into)\\b");
+
+    /** The select-list item every badge line carries. */
+    private static final String BADGE_ITEM = ", " + InterestScoreQueries.INTEREST_SCORE + " AS interest_score";
+
+    private static final Pattern SCORE_NAME = Pattern.compile("(?i)\\binterest_score\\b");
+
+    /** A block-comment span, or an unclosed {@code /*} through the end of the line. */
+    private static final Pattern COMMENT_SPAN = Pattern.compile("/\\*.*?(?:\\*/|$)");
 
     @Test
     void replaysTheAppsUnreadBlendVerbatim() throws IOException {
@@ -157,12 +169,68 @@ class InterestCalibrationReplaySqlTest {
     }
 
     /**
-     * Every statement line that starts with {@code WITH learned AS} must be one of the allowed Java texts, in
-     * file order: the unread blend three times (summary, top, bottom), the window blend, then the learned
-     * section. The raw line is tested, so the {@code --} header comment that mentions the phrase is never
-     * counted. The blend kinds use equality, so text appended to a line also fails. The badge expression
-     * must occur exactly 4 times outside comments, so a copy pasted into a comment cannot hide a drifted
-     * statement copy. On failure only labels and counts are shown, never a 1.6k-character SQL line.
+     * A one-token drift of the top badge fails whatever verbatim copy survives: in a comment on the same line,
+     * in an appended section, or in code on the same line. Cases 1-6 keep 4 raw copies, so only the
+     * per-statement check can catch them; case 7 adds a fifth copy with no drift.
+     */
+    @Test
+    void aDriftedBadgeFailsDespiteAVerbatimDecoy() throws IOException {
+        String sql = Files.readString(SQL);
+        assertThatCode(() -> assertEveryCopyIsVerbatim(sql)).doesNotThrowAnyException();
+
+        String verbatim = InterestScoreQueries.INTEREST_SCORE;
+        String drifted = verbatim.replace("ROUND(b.raw_n)", "ROUND(b.raw_n, 1)");
+        assertThat(drifted).isNotEqualTo(verbatim);
+
+        Map<String, String> variants = new LinkedHashMap<>();
+        variants.put("verbatim kept in a trailing -- comment",
+                editTopBadgeLine(sql, line -> line.replace(verbatim, drifted) + " -- was " + verbatim));
+        variants.put("verbatim kept in a block comment",
+                editTopBadgeLine(sql, line -> line.replace(verbatim + " AS interest_score",
+                        drifted + " /* was " + verbatim + " */ AS interest_score")));
+        variants.put("verbatim badge used by an appended section",
+                editTopBadgeLine(sql, line -> line.replace(verbatim, drifted))
+                        + "\nSELECT 'extra' AS section" + BADGE_ITEM + " FROM blended b;\n");
+        variants.put("verbatim kept as another column",
+                editTopBadgeLine(sql, line -> line.replace(verbatim + " AS interest_score",
+                        drifted + " AS interest_score, " + verbatim + " AS old_score")));
+        variants.put("verbatim wrapped in an expression",
+                editTopBadgeLine(sql, line -> line.replace(BADGE_ITEM, ", 100 - " + verbatim + " AS interest_score")));
+        variants.put("a second interest_score column",
+                editTopBadgeLine(sql, line -> line.replace(BADGE_ITEM, BADGE_ITEM + ", " + drifted + " interest_score")));
+        String extraCopy = "an extra verbatim copy on a comment line";
+        variants.put(extraCopy, sql + "\n-- " + verbatim + "\n");
+
+        variants.forEach((name, variant) -> {
+            if (name.equals(extraCopy)) {
+                assertThat(occurrences(variant, verbatim)).as(name + " holds 5 raw copies").isEqualTo(5);
+            } else {
+                assertThat(occurrences(variant, verbatim)).as(name + " keeps 4 raw copies").isEqualTo(4);
+            }
+        });
+
+        SoftAssertions.assertSoftly(softly -> variants.forEach((name, variant) -> softly
+                .assertThatCode(() -> assertEveryCopyIsVerbatim(variant))
+                .as(name)
+                .isInstanceOf(AssertionError.class)));
+    }
+
+    /**
+     * Checks, and only checks, the following:
+     * <ol>
+     * <li>The lines that start with {@code WITH learned AS} are, in file order, the unread blend three times
+     * (summary, top, bottom), the window blend, then the learned section. The blend lines are compared with
+     * the Java text by equality, so text appended to a line also fails.</li>
+     * <li>{@code INTEREST_SCORE} occurs exactly 4 times in the whole file, comments included, so a copy in any
+     * comment form is a fifth copy and fails.</li>
+     * <li>The code of the line after each unread or window blend line (the badge line of summary, top, bottom
+     * and window-summary) holds {@code INTEREST_SCORE} once and the item
+     * {@code , <INTEREST_SCORE> AS interest_score} once, and names {@code interest_score} once.</li>
+     * <li>"Code" means the line as {@link #codeOf(String)} returns it: {@code /* *}{@code /} spans removed and
+     * any {@code --} tail cut, per line.</li>
+     * </ol>
+     * Not checked: the rest of each statement (such as FILTERs, ORDER BY and other columns) and any statement
+     * that opens no learned CTE. On failure only labels, counts and line numbers are shown, never an SQL line.
      */
     private static void assertEveryCopyIsVerbatim(String sql) {
         String unread = InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE);
@@ -177,16 +245,42 @@ class InterestCalibrationReplaySqlTest {
 
         assertThat(labels).as("kind of each 'WITH learned AS' line, in file order")
                 .containsExactly("unread", "unread", "unread", "window", "learned");
-        assertThat(occurrences(withoutComments(sql), InterestScoreQueries.INTEREST_SCORE))
-                .as("verbatim INTEREST_SCORE copies outside comments")
+        assertThat(occurrences(sql, InterestScoreQueries.INTEREST_SCORE))
+                .as("verbatim INTEREST_SCORE copies anywhere in the file, comments included")
                 .isEqualTo(4);
+
+        List<String> lines = sql.lines().toList();
+        int badgeLines = 0;
+        for (int i = 0; i < lines.size(); i++) {
+            if (!lines.get(i).equals(unread) && !lines.get(i).equals(window)) {
+                continue;
+            }
+            String where = "the line after blend line " + (i + 1);
+            String badgeLine = i + 1 < lines.size() ? codeOf(lines.get(i + 1)) : "";
+            assertThat(occurrences(badgeLine, InterestScoreQueries.INTEREST_SCORE))
+                    .as("INTEREST_SCORE copies in the code of " + where)
+                    .isEqualTo(1);
+            assertThat(occurrences(badgeLine, BADGE_ITEM))
+                    .as("', <INTEREST_SCORE> AS interest_score' items in the code of " + where)
+                    .isEqualTo(1);
+            assertThat(SCORE_NAME.matcher(badgeLine).results().count())
+                    .as("interest_score names in the code of " + where)
+                    .isEqualTo(1);
+            badgeLines++;
+        }
+        assertThat(badgeLines).as("badge lines checked").isEqualTo(4);
     }
 
-    /** The statement text: drops {@code --} lines, the same filter as {@code replayIsReadOnly}. */
-    private static String withoutComments(String sql) {
-        return sql.lines()
-                .filter(line -> !line.strip().startsWith("--"))
-                .collect(Collectors.joining("\n"));
+    /**
+     * The code of one line: every {@code /* *}{@code /} span is removed (an unclosed {@code /*} runs to the end
+     * of the line), then the line is cut at the first {@code --}. It works per line, with no string-literal or
+     * nesting awareness, so a block comment that spans lines counts as code. The four badge lines and five
+     * blend lines hold no {@code --} or {@code /*} today, so it never cuts real SQL on them.
+     */
+    private static String codeOf(String line) {
+        String code = COMMENT_SPAN.matcher(line).replaceAll(" ");
+        int dashes = code.indexOf("--");
+        return dashes < 0 ? code : code.substring(0, dashes);
     }
 
     /** Non-overlapping count of {@code needle} in {@code haystack}. */
@@ -213,6 +307,22 @@ class InterestCalibrationReplaySqlTest {
         int at = start + needle.length() / 2;
         char replacement = text.charAt(at) == '#' ? '%' : '#';
         return text.substring(0, at) + replacement + text.substring(at + 1);
+    }
+
+    /** Returns {@code sql} with its one {@code SELECT 'top' AS section} line replaced by {@code edit}. In memory only. */
+    private static String editTopBadgeLine(String sql, UnaryOperator<String> edit) {
+        List<String> lines = new ArrayList<>(sql.lines().toList());
+        List<Integer> top = IntStream.range(0, lines.size())
+                .filter(i -> lines.get(i).startsWith("SELECT 'top' AS section"))
+                .boxed()
+                .toList();
+        assertThat(top).as("top badge lines").hasSize(1);
+
+        int at = top.get(0);
+        String edited = edit.apply(lines.get(at));
+        assertThat(edited).as("edit changed the top badge line").isNotEqualTo(lines.get(at));
+        lines.set(at, edited);
+        return String.join("\n", lines) + "\n";
     }
 
     private record DriverRun(int exitCode, String stderr) {}
