@@ -240,3 +240,25 @@ The replay output for these constants is `$HOME/.cache/myfeeder-phase07/replay/r
 07-09 reads the line below as its precondition.
 
 approved-constants: profile-points=100 tiers.high=70 tiers.neutral=22 learn-rate=2 learned-cap=20
+
+## Shipped in 0.2.1
+
+The approved constants shipped through source control (D-14) as release 0.2.1 on 2026-09-29, after the
+user answered `approve` at the 07-09 Task 2 checkpoint.
+
+| | Value |
+|---|---|
+| Yaml commit | `49b9e54` (main `application.yaml` tiers.neutral 40 to 22; the dev overlay mirrors it; the test yaml keeps 100 / 70 / 40) |
+| Merge commit on main | `5461d0a` (`--no-ff` merge of sbartram/main, pushed to origin) |
+| Tag | `v0.2.1` (patch increment from v0.2.0, on `5461d0a`) |
+| Image | `registry.bartram.org/bartram/myfeeder:0.2.1`, digest `sha256:42fcdc5bd7542cdda55aee68e7080555d21c261ab3c55dbaab80b13620c041e2` |
+| Helm revision | 19 (rollback target: revision 18, 0.2.0) |
+| Deployed | 2026-09-29T00:41:46Z; one clean roll, `Started MyfeederApplication` in 13.6s, 0 ERROR lines, 46 feeds registered |
+| `/api/version` | 0.2.1 |
+| Served `/api/interest/status` | configured true, coldStart false, breakerState CLOSED, tiers high 70 / neutral 22 |
+| Replay cross-check at 100 / 70 / 22 | 5 of 5 matched (articles 25988, 26032, 25873, 26016, 26025; replay badge equals the app's `interestScore`) |
+| Removed env overrides | none (07-07 applied no D-08 throttle; the deployment carries no `MYFEEDER_INTEREST_*` env var) |
+| Failure path | not run |
+
+At deploy time the replay over 199 scored unread articles gave high 14.6%, neutral 35.2% and low 50.3%,
+still inside the D-10 bands. The raw replay is `$HOME/.cache/myfeeder-phase07/replay/0.2.1/`.
