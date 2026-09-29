@@ -39,6 +39,7 @@ Requirements: CAPT-01..CAPT-07.
 - **D-07:** Engagement writes on the star and board paths are best-effort. The user's star or board add always succeeds. An engagement insert failure is caught and logged at WARN with ids and exception class only. Because a failing statement aborts a Postgres transaction, the engagement write must not share a transaction with the user's save; the planner verifies there is no enclosing `@Transactional`, or isolates the write.
 - **D-08:** Raindrop is best-effort too. Once `createBookmark` has returned, the save reports success even if the engagement insert fails, which is logged at WARN. Surfacing an error would invite a retry that creates a duplicate bookmark.
 - **D-09:** `BoardService.addArticle` records BOARD even when the article is already on that board. The engagement insert happens before the existing early return and relies on `ON CONFLICT DO NOTHING`. As a result, boards filled before V7 earn credit when an article is re-added.
+  - *Amended 2026-09-29 (user-approved at plan-phase):* BOARD is recorded after the save-or-already-present branch rather than before the early return. If the article is not on the board it is saved first, then BOARD is recorded either way. A board add that throws (for example an unknown board id failing the FK on board_article) records nothing, while re-adds, including articles on boards filled before V7, still earn credit. `ON CONFLICT DO NOTHING` still makes a repeat a no-op. Implemented by 08-03 Task 2.
 
 ### Open-capture edges
 - **D-10:** Every Open Original entry point uses one helper (e.g. `useOpenOriginal`) and records `OPEN_ORIGINAL`: the toolbar button (`ReadingPane.tsx:215`), the reader-view extraction-error fallback button (`ReadingPane.tsx:184`) and the `o` shortcut (`useKeyboardShortcuts.ts:173`). In-body link clicks (`handleContentClick`) and Copy Link record nothing (CAPT-07).
@@ -96,7 +97,7 @@ Requirements: CAPT-01..CAPT-07.
 ### Established Patterns
 - Feedback tables cascade from `article(id)`, and engagement should too (CAPT-05 delete behaviour).
 - `ArticleService.updateState` loads the article before mutating, so the previous `starred` value is available for the unstarred→starred check. It has no `@Transactional`.
-- `BoardService.addArticle` returns early when the article is already on the board (`existsByBoardIdAndArticleId`); per D-09, engagement goes before that return.
+- `BoardService.addArticle` returns early when the article is already on the board (`existsByBoardIdAndArticleId`); per D-09, engagement goes before that return. (Superseded by the D-09 amendment of 2026-09-29: BOARD is recorded after the save-or-already-present branch.)
 - `useReadLater` calls `getOrCreateByName('Read Later')` then `addArticle`, so it is captured server-side through `BoardService.addArticle` with no separate client call.
 - `RaindropService.saveToRaindrop` calls `raindropApiClient.createBookmark(...)` at line 43; RAINDROP is recorded after it returns. A thrown exception or an open breaker records nothing.
 - Frontend: `npx tsc -b` for type-checking. Vitest + RTL, with fetch mocked via `globalThis.fetch`.

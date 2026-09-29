@@ -554,14 +554,14 @@ assertThat(Files.readString(Path.of("src/main/java/org/bartram/myfeeder/reposito
 | A3 | Returning early (no tab, no record) on a blank `url` is acceptable product behavior | Pattern 3 | Low: `url` is `NOT NULL`, so blank is rare; the planner may keep the old always-open behavior and skip only the record |
 | A4 | Kind label wording ("opened, starred, on a board, saved to Raindrop") | Pattern 4 | Cosmetic; this is a discretion item |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **The D-09 ordering refinement (Pitfall 3).**
+1. **The D-09 ordering refinement (Pitfall 3).** — RESOLVED: adopted by 08-03 Task 2 and approved by the user at plan-phase on 2026-09-29; 08-CONTEXT.md D-09 now carries the amendment.
    - What we know: literal D-09 (insert before the early return) records BOARD even when the board add then fails its FK.
    - Recommendation: use `if (!exists) save; recordQuietly(BOARD)`, which honors D-09's intent (credit on a re-add). Record it as an interpretation in the plan rather than asking the user again.
-2. **Where the Forget control lives for unscored articles (Pitfall 1).**
+2. **Where the Forget control lives for unscored articles (Pitfall 1).** — RESOLVED: adopted by 08-04 Task 1, which widens the `ScoreRow` guard to "scored or engaged".
    - Recommendation: widen `ScoreRow`'s guard so `.score-row` renders when the article is scored or engaged. That keeps D-01's "beside the badge" when scored and a single small line when not.
-3. **Prod "ranking unchanged" check.** Priority order drifts on its own as feeds poll.
+3. **Prod "ranking unchanged" check.** Priority order drifts on its own as feeds poll. — RESOLVED: adopted by 08-05 in a stricter form. Task 1 takes the pre-deploy snapshot (Priority top 50 plus the top-5 scored breakdowns), Task 3 compares order, badges and Why breakdowns after the rollout, and the read-only `GROUP BY kind` count is the human check after at least a day.
    - Recommendation: before deploy, capture `GET /api/articles/priority?limit=20` (ids and badges) with `/usr/bin/curl http://192.168.44.204/...`. Capture it again right after the rollout, and check that the ids present in both captures have identical badges. Rely on the static guard and the unchanged replay drift test for exactness. Then, a day or more later, check `SELECT kind, count(*) FROM article_engagement GROUP BY kind` via `psql -h pg.bartram.org`.
 
 ## Environment Availability
