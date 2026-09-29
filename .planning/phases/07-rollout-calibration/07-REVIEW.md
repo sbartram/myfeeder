@@ -1,11 +1,11 @@
 ---
 phase: 07-rollout-calibration
 reviewed: 2026-09-28T00:00:00Z
-re_reviewed: 2026-09-29T02:27:29Z
+re_reviewed: 2026-09-29T03:21:25Z
 re_review_scope:
-  diff_base: e0baa69ce321d1775d097b2f619d2c581a4531de
-  head: 91ee2a9
-  plan: 07-10
+  diff_base: d806f7d51172bc599064e4809571f8933348fbd9
+  head: 3069fba
+  plan: 07-11
   files:
     - src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java
 depth: standard
@@ -40,15 +40,15 @@ findings:
   warning: 3
   info: 9
   total: 12
-  resolved: 1
+  resolved: 3
 status: issues_found
 ---
 
 # Phase 7: Code Review Report
 
-**Reviewed:** 2026-09-28 (full phase); re-reviewed 2026-09-29T02:27:29Z (incremental, plan 07-10)
+**Reviewed:** 2026-09-28 (full phase). Re-reviewed 2026-09-29T02:27:29Z (incremental, plan 07-10) and 2026-09-29T03:21:25Z (incremental, plan 07-11)
 **Depth:** standard
-**Files Reviewed:** 24 (re-review: 1)
+**Files Reviewed:** 24 (each re-review: 1)
 **Status:** issues_found
 
 ## Summary
@@ -67,23 +67,39 @@ Main concerns:
 Scope: `InterestCalibrationReplaySqlTest.java` only. `scripts/interest-calibration-replay.sql` and `InterestScoreQueries.java` are unchanged since `e0baa69` (`git diff --stat` is empty).
 
 What I verified:
-- **WR-02 is resolved.** `assertEveryCopyIsVerbatim` (lines 167-183) labels every column-0 `WITH learned AS` line by exact equality and requires `unread, unread, unread, window, learned`. I checked this against the SQL: lines 30, 52 and 58 are `blendCte(UNREAD_SCOPE)`, line 65 is `blendCte(WINDOW_SCOPE)`, and line 90 starts with `LEARNED_CTE + " SELECT 'learned' AS section"`. The line-4 header comment starts with `--`, so it is not counted. `INTEREST_SCORE` appears on lines 31, 53, 59 and 66 and nowhere in `blendCte`, so the exact count of 4 is right. I ran the class through Gradle: 10 tests, 0 failures, 0 errors.
+- **WR-02 is resolved.** `assertEveryCopyIsVerbatim` labels every column-0 `WITH learned AS` line by exact equality and requires `unread, unread, unread, window, learned`. I checked this against the SQL: lines 30, 52 and 58 are `blendCte(UNREAD_SCOPE)`, line 65 is `blendCte(WINDOW_SCOPE)`, and line 90 starts with `LEARNED_CTE + " SELECT 'learned' AS section"`. The line-4 header comment starts with `--`, so it is not counted. `INTEREST_SCORE` appears on lines 31, 53, 59 and 66 and nowhere in `blendCte`, so the exact count of 4 is right. I ran the class through Gradle: 10 tests, 0 failures, 0 errors.
 - **No vacuous pass for the nine copies.** Each drift test first asserts that the unmodified file passes and that the needle occurs the expected number of times (3/1/1 blend, 4 badge). Only then does it mutate the middle character of each occurrence. `driftOneByte` always writes a character that differs from the one it replaces. Blend lines are compared by equality, and the badge is counted as an exact substring, so each of the nine mutations must throw. `assertThatCode(...).isInstanceOf(AssertionError.class)` fails when nothing is thrown.
-- **The six pre-existing tests are unchanged.** The diff since `e0baa69` only adds lines (imports, `LEARNED_SECTION`, four tests, four helpers) plus one Javadoc sentence.
-- **No disk, database or network access from the new tests.** Every variant is an in-memory string. The two driver tests are pre-existing, and the driver exits on validation before `mkdir "$OUT_DIR"` or `psql`.
-- **Comment stripping.** `withoutComments` drops only lines whose stripped text starts with `--`. Over-stripping (a `--` line inside a multi-line string literal) cannot happen in this file, which has no multi-line literals. Under-stripping is real: trailing `--` comments and `/* */` block comments survive. So the Javadoc claim that "a copy pasted into a comment cannot hide a drifted statement copy" is false (WR-04).
+- **The six pre-existing tests are unchanged.**
+- **No disk, database or network access from the new tests.** Every variant is an in-memory string.
+- **Comment stripping.** Under-stripping was real: trailing `--` comments and `/* */` block comments survived, so the Javadoc claim that "a copy pasted into a comment cannot hide a drifted statement copy" was false (WR-04, now resolved by 07-11).
 
-I confirmed the new findings with an in-memory probe that reuses the guard's exact logic against the real SQL file:
+### Incremental re-review (plan 07-11, `d806f7d..3069fba`)
+
+Scope: `InterestCalibrationReplaySqlTest.java` only. `git diff --stat d806f7d..HEAD -- scripts src/main` is empty, so the replay SQL, the driver and `InterestScoreQueries.java` are byte-identical. The shipped SQL has no `/*` anywhere, and its only literals are `' '`, `'\n'`, `'\t'`, `'1 day'`, `'SCORED'` and the section labels.
+
+What I verified:
+- **The suite is green.** `./gradlew test --tests "...InterestCalibrationReplaySqlTest"` ran 12 tests with 0 failures and 0 errors.
+- **WR-04 is resolved.** `assertEveryCopyIsVerbatim` (lines 261-303) now does three things. It counts `INTEREST_SCORE` over the raw file, comments included (exactly 4). It requires that the per-line code (`codeOf`: `/* */` spans removed, `--` tail cut) of the line after each unread or window blend line holds `INTEREST_SCORE` once, `BADGE_ITEM` once and the name `interest_score` once. It also requires exactly 4 such badge lines. `aDriftedBadgeFailsDespiteAVerbatimDecoy` covers the three WR-04 decoys: the trailing `--` comment, the `/* */` comment and the appended section. It also covers three same-line decoys and the extra-copy-on-a-comment-line case, and it first proves each variant keeps 4 (or 5) raw copies, so no count alone can reject it. I reran the same logic outside the test with an in-memory probe. The trailing `--` decoy fails at "badge V line 53", which matches the intended check.
+- **IN-07 is resolved as scoped.** `BLEND_START` (`(?i)\bwith\s+learned\s+as\b`, unanchored) runs over the code of the whole file and must match exactly 5 times. The indented, lower-case and mid-line forms named in IN-07 each make it 6, and `anExtraBlendStatementInAnyFormFails` proves all three. `blendCte` contains neither `INTEREST_SCORE` nor the name `interest_score`, so these three variants can only be caught by the new count, and the test is not vacuous. Other spellings of a learned CTE still slip past (WR-05).
+- **The Javadoc overclaims.** Item 1 says the lenient count plus the label check "means no statement anywhere in the code opens a learned CTE other than the five verbatim lines". The probe below shows that this is false.
+
+Probe output. It is a verbatim mirror of `assertEveryCopyIsVerbatim`, run in memory against the real SQL and the compiled `InterestScoreQueries`. The blend is drifted by changing the `contrib` hinge from `0.5` to `0.4`, and the badge by changing `ROUND(b.raw_n)` to `ROUND(b.raw_n, 1)`:
 
 ```
-baseline passes: true
-drifted top badge + trailing -- comment copy passes: true
-drifted top badge + block comment copy passes: true
-extra indented drifted blend statement passes: true
-extra lowercase drifted blend statement passes: true
-indented \! passes replayIsReadOnly sql checks: true
-mid-line \g file passes replayIsReadOnly sql checks: true
+PASSES : shipped
+PASSES : extra WITH RECURSIVE learned AS stmt
+PASSES : extra WITH "learned" AS stmt
+PASSES : extra WITH learned (topic_id, vote_sum) AS stmt
+PASSES : extra WITH x AS (SELECT 1), learned AS stmt
+PASSES : top stmt: verbatim blend in multi-line /* */, real blend WITH RECURSIVE + drifted
+PASSES : top stmt: verbatim blend in multi-line /* */, real blend WITH "learned" + drifted
+PASSES : top badge drifted, verbatim item in a string literal
+fails (blend-start count) : CONTROL indented drifted blend
+fails (badge V line 53) : CONTROL trailing -- decoy
+fails (blend-start count) : CONTROL multi-line /* */ with normal WITH learned AS
 ```
+
+The three controls fail at the expected checks, which confirms that the probe mirrors the guard.
 
 ## Warnings
 
@@ -99,8 +115,8 @@ HALF_OPEN_TO_OPEN fr=50.0 sr=0.0
 HALF_OPEN_TO_CLOSED fr=-1.0 sr=-1.0
 ```
 
-As a result, prod logs `Jev circuit breaker HALF_OPEN_TO_CLOSED (failure rate -1.0%, slow-call rate -1.0%)`. These lines are documented as the D-05/D-06 launch evidence channel, which the CLAUDE.md "Jev event log lines" bullet and the 07-07 rollout watch grep. A negative percentage is misleading there. `breakerTransitionsAreLogged` checks only the transition name, so the test never saw this.
-**Fix:** Only print rates when they are meaningful. Print them on transitions into OPEN, where resilience4j carries the previous window's metrics over, and never print a negative value:
+As a result, prod logs `Jev circuit breaker HALF_OPEN_TO_CLOSED (failure rate -1.0%, slow-call rate -1.0%)`. These lines are the D-05/D-06 launch evidence channel, which the CLAUDE.md "Jev event log lines" bullet and the 07-07 rollout watch grep for. A negative percentage there is misleading. `breakerTransitionsAreLogged` checks only the transition name, so the test never caught this.
+**Fix:** Only print rates when they mean something. Print them on transitions into OPEN, where resilience4j carries the previous window's metrics over, and never print a negative value:
 
 ```java
 breaker.getEventPublisher().onStateTransition(e -> {
@@ -136,44 +152,48 @@ public record TierThresholds(int high, int neutral) {
 
 Alternatively, add `@Validated` and a `@AssertTrue` method on `Tiers`. In the driver, after `IFS=: read -r pp high neutral`, add `(( neutral <= high && high <= 100 )) || { echo "invalid candidate: $candidate" >&2; exit 2; }`, and move it into the pre-connection validation loop.
 
-### WR-04: The badge guard counts copies without checking where they are, and its comment filter only removes whole-line `--` comments, so a drifted badge copy can still pass
+### WR-05: A learned CTE spelled any other way escapes the blend-opening count, so a commented-out verbatim blend can stand in for a drifted real statement
 
-**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:163-165, 180-182, 186-190`
-**Issue:** The badge check is `occurrences(withoutComments(sql), INTEREST_SCORE) == 4`. It has two gaps:
-1. `withoutComments` drops only lines whose stripped text starts with `--`. A trailing `--` comment on a statement line (`... AS title -- was CASE WHEN ...`) and a `/* ... */` block comment are both kept, so a verbatim copy inside them is counted. The Javadoc says that "a copy pasted into a comment cannot hide a drifted statement copy", and that is false for both comment forms. I confirmed both: drift the `top` badge to `LEAST(100, GREATEST(0, ROUND(b.raw_n, 1)))::int`, keep the old expression in a trailing `--` or a `/* */` comment, and the guard still passes.
-2. The count ignores position. It never checks that each of the four statements (`summary`, `top`, `bottom`, `window-summary`) carries its own copy. If a new section that uses the verbatim badge is added in the same change that drifts one of the four existing copies, the count stays at 4 and the guard stays green. The top and bottom rows are the calibration evidence for the shipped 100/70/22, so a drifted copy there matters.
+**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:53-54, 241-246, 264-267, 305-315`
+**Issue:** The drift guard relies on `BLEND_START` = `(?i)\bwith\s+learned\s+as\b` to find every statement that opens a learned CTE. Postgres accepts other spellings of the same CTE, and none of them match:
+- `WITH RECURSIVE learned AS` (RECURSIVE is legal on non-recursive CTEs)
+- `WITH "learned" AS` (the quoted identifier is the same name)
+- `WITH learned (topic_id, vote_sum) AS` (a column list)
+- `WITH x AS (...), learned AS` (learned is not the first CTE)
 
-The nine mutation tests only prove that removing a copy is caught. They never test drift that is balanced by a copy added elsewhere. The guarantee that 07-10 recorded ("a one-byte change to any of the nine copies ... fails") therefore depends on no copy being added at the same time.
-**Fix:** Count the raw text, so a copy in any comment form becomes a fifth copy and fails. Also pin each copy to its statement: every badge sits on the line right after its blend line (SQL lines 31, 53, 59 and 66).
+`codeOf` is per line, so a verbatim blend line inside a multi-line `/* ... */` block still counts as code, both for `BLEND_START` and for the column-0 label check. Put the two together and one of the four real statements can be replaced:
 
-```java
-List<String> lines = sql.lines().toList();
-for (int i = 0; i < lines.size(); i++) {
-    String line = lines.get(i);
-    if (line.startsWith("WITH learned AS") && !line.startsWith(LEARNED_SECTION)) {
-        assertThat(i + 1 < lines.size() ? occurrences(lines.get(i + 1), InterestScoreQueries.INTEREST_SCORE) : 0)
-                .as("badge copies on the line after blend line " + (i + 1))
-                .isEqualTo(1);
-    }
-}
-assertThat(occurrences(sql, InterestScoreQueries.INTEREST_SCORE))
-        .as("verbatim INTEREST_SCORE copies anywhere in the file, comments included")
-        .isEqualTo(4);
+```
+/*
+WITH learned AS <verbatim unread blend>
+*/ WITH RECURSIVE learned AS <drifted blend> SELECT 'top' AS section, ..., <INTEREST_SCORE> AS interest_score, ...
 ```
 
-Add a mutation case to `aMissingOrExtraCopyFails` that drifts one copy and puts the verbatim text in a trailing `--` comment, then correct the Javadoc claim.
+This version still has 5 blend openings and the labels `unread, unread, unread, window, learned`. It holds 4 raw badge copies, and the line after the commented-out blend carries the badge item and name exactly once. So the guard passes, while psql runs a `top` statement with a drifted blend. The probe above confirms this with both `RECURSIVE` and `"learned"`, and it also confirms that an extra drifted statement passes in each of the four spellings. This is the WR-04 failure class again, now for blend lines: a verbatim decoy kept in a comment hides a drifted statement. It also makes Javadoc item 1 false ("no statement anywhere in the code opens a learned CTE other than the five verbatim lines"). The `codeOf` Javadoc presents "a block comment that spans lines counts as code" as a harmless limit, when it is the gap. The `top` and `bottom` rows are the calibration evidence for the shipped 100/70/22.
+**Fix:** The shipped SQL has no `/*` at all, so fail closed on block comments, and widen the discovery to every spelling of the CTE name followed by `AS (`:
+
+```java
+private static final Pattern BLEND_START = Pattern.compile(
+        "(?i)(?<![\\w\"])\"?learned\"?\\s*(?:\\([^)]*\\)\\s*)?as\\s*(?:(?:not\\s+)?materialized\\s*)?\\(");
+
+// first line of assertEveryCopyIsVerbatim
+assertThat(sql).as("block comments in the replay (only whole-line -- comments are allowed)")
+        .doesNotContain("/*");
+```
+
+The widened pattern matches every `learned AS (` wherever it appears (after `WITH`, after `RECURSIVE`, or after a comma), so the count of 5 still holds for the shipped file. Once `/*` is banned, `COMMENT_SPAN` can go, and `codeOf` only needs to cut `--` tails. Add the four spellings and the commented-out-verbatim replacement to `anExtraBlendStatementInAnyFormFails`, and change Javadoc item 1 to name the forms the pattern actually covers.
 
 ## Info
 
 ### IN-01: Client fallback tiers (70/40) disagree with the shipped tiers (70/22)
 
 **File:** `src/main/frontend/src/utils/interest.ts:32`, `src/main/frontend/src/hooks/useInterest.ts:45`
-**Issue:** Prod serves `neutral: 22` (`application.yaml:496`). Until `/api/interest/status` resolves, and permanently if it errors until a reload or a focus refetch, every badge scored 22-39 renders `tier-low` instead of `tier-neutral`. This is a visible color flash on first paint of every list.
+**Issue:** Prod serves `neutral: 22` (`application.yaml:496`). Until `/api/interest/status` resolves, every badge scored 22-39 renders `tier-low` instead of `tier-neutral`. If the request errors, this lasts until a reload or a focus refetch. The result is a visible color flash on first paint of every list.
 **Fix:** Either accept this and document it as a known flash, or remove it: persist the last served tiers (for example as `initialData` from a `localStorage` copy written in `select`'s consumer), or render badges uncolored (`tier-pending`) until tiers load.
 
 ### IN-02: `window-summary` reuses the `scored_unread` column label for a read-and-unread population
 
-**File:** `scripts/interest-calibration-replay.sql:149`
+**File:** `scripts/interest-calibration-replay.sql:68`
 **Issue:** The window cross-check counts every SCORED article in the window, read or unread, but its column is still named `scored_unread`. Anyone comparing the two TSV rows could misread the population.
 **Fix:** Alias it `scored_in_window` in the `window-summary` statement. This is outside the verbatim blend line, so the drift guard is unaffected.
 
@@ -185,7 +205,7 @@ Add a mutation case to `aMissingOrExtraCopyFails` that drifts one copy and puts 
 
 ### IN-04: Replay sections read different snapshots of a live database
 
-**File:** `scripts/interest-calibration-replay.sql:110-171`
+**File:** `scripts/interest-calibration-replay.sql:29-90`
 **Issue:** psql runs each statement in its own autocommit transaction while the app keeps scoring and ingesting. So `summary`, `top`, `bottom`, `window-summary`, `votes` and `learned` can each reflect a different population, and `votes` and `learned` may not match the blend that `summary` used.
 **Fix:** Wrap the file in `BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;` … `COMMIT;`. Neither keyword trips `WRITE_KEYWORD`.
 
@@ -197,77 +217,69 @@ Add a mutation case to `aMissingOrExtraCopyFails` that drifts one copy and puts 
 
 ### IN-06: CLAUDE.md misattributes the test-yaml tier pin
 
-**File:** `CLAUDE.md:166` (the "Tier thresholds and tuning" bullet)
-**Issue:** It says to keep the test yaml at "profile-points 100 / tiers 70 / 40, because `InterestScoreQueriesTest` fixtures assume them". Tiers are never read by `InterestScoreQueries`. The 70/40 pin is asserted by `InterestApiIntegrationTest.statusServesTheConfiguredTierThresholds`, and only profile-points is a fixture assumption of `InterestScoreQueriesTest`.
+**File:** `CLAUDE.md` (the "Tier thresholds and tuning" bullet)
+**Issue:** It says to keep the test yaml at "profile-points 100 / tiers 70 / 40, because `InterestScoreQueriesTest` fixtures assume them". `InterestScoreQueries` never reads tiers. The 70/40 pin is asserted by `InterestApiIntegrationTest.statusServesTheConfiguredTierThresholds`, and only profile-points is a fixture assumption of `InterestScoreQueriesTest`.
 **Fix:** Change the sentence to "profile-points 100 (`InterestScoreQueriesTest` fixtures) and tiers 70/40 (`InterestApiIntegrationTest`)".
 
-### IN-07: Blend lines are found by a case-sensitive, column-0 prefix, so an extra blend statement that is indented or lower-cased and drifted is never checked
+### IN-08: `replayIsReadOnly` only catches psql meta-commands at column 0 (pre-existing, unchanged by 07-10 and 07-11)
 
-**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:170-178`
-**Issue:** `assertEveryCopyIsVerbatim` only inspects lines where `line.startsWith("WITH learned AS")`. A sixth statement whose blend line starts with whitespace, or with `with learned AS`, is invisible to the label check. It can hold a hand-edited blend and the guard stays green. I confirmed both forms with a changed `contrib` term. An extra *correct* column-0 copy is rejected (6 labels), but a new section formatted differently slips past. Postgres runs either form the same way, and the SQL header's "never hand-edit those lines" contract is only as strong as this discovery rule. The five existing copies are not affected, because moving any of them off column 0 drops the label count to 4 and fails.
-**Fix:** Discover blend lines leniently and check them strictly. Count every non-comment line that matches `(?i)^\s*with\s+learned\s+as\b` and require exactly 5 before the labels are compared:
-
-```java
-private static final Pattern BLEND_START = Pattern.compile("(?im)^\\s*with\\s+learned\\s+as\\b");
-...
-assertThat(BLEND_START.matcher(withoutComments(sql)).results().count())
-        .as("statement lines that open a learned/blend CTE, in any case or indentation")
-        .isEqualTo(5);
-```
-
-### IN-08: `replayIsReadOnly` only catches psql meta-commands at column 0 (pre-existing, unchanged by 07-10)
-
-**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:56`
-**Issue:** `noneMatch(line -> line.startsWith("\\"))` misses a backslash command after leading whitespace (`  \! cmd`) and one mid-line (`FROM scored \g /tmp/out.tsv`, `\o file`, `\w file`). psql runs all of these from a `-f` file, and they run on the client, so `default_transaction_read_only=on` does not stop them: they can write local files or run a shell. I confirmed that both forms pass the test's SQL checks. The risk is low because the file is hand-maintained by the owner, but the test's stated contract is "It must also stay read-only".
-**Fix:** Reject any backslash outside a quoted literal. The file legitimately uses `E'\t'` and `E'\n'` (line 53), so strip literals first:
+**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:71`
+**Issue:** `noneMatch(line -> line.startsWith("\\"))` misses a backslash command after leading whitespace (`  \! cmd`) and one mid-line (`FROM scored \g /tmp/out.tsv`, `\o file`, `\w file`). psql runs all of these from a `-f` file, and they run on the client, so `default_transaction_read_only=on` does not stop them: they can write local files or run a shell. I confirmed that both forms pass the test's SQL checks. The risk is low because the owner maintains the file by hand, but the test's stated contract is "It must also stay read-only".
+**Fix:** Reject any backslash outside a quoted literal. The file legitimately uses `E'\t'` and `E'\n'` (lines 53 and 59), so strip literals first:
 
 ```java
 String outsideLiterals = statements.replaceAll("'(?:[^']|'')*'", "''");
 assertThat(outsideLiterals).doesNotContain("\\");
 ```
 
-### IN-09: `runDriver` inherits the developer's driver and libpq env, and its 30s timeout cannot fire (pre-existing, unchanged by 07-10)
+### IN-09: `runDriver` inherits the developer's driver and libpq env, and its 30s timeout cannot fire (pre-existing, unchanged by 07-10 and 07-11)
 
-**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:224-238`
-**Issue:** Only `MYFEEDER_PG_PASSWORD` is removed from the environment. A developer shell that exports `LEARN_RATE`, `LEARNED_CAP` or `WINDOW_DAYS` with a non-integer value makes `driverRequiresThePassword` fail with `invalid candidate: ...`. The failure depends on the environment, not the code. `PGHOSTADDR` and `PGSERVICE` override the forced `PGHOST=127.0.0.1`/`PGPORT=1`, so a future validation regression could let psql connect to a real host rather than the dead local port the Javadoc promises. `readAllBytes()` on stderr (line 235) blocks until the process exits, so `waitFor(30, SECONDS)` never bounds a hung driver, and no path calls `destroyForcibly()`.
+**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:365-379`
+**Issue:** `runDriver` removes only `MYFEEDER_PG_PASSWORD` from the environment. If a developer shell exports `LEARN_RATE`, `LEARNED_CAP` or `WINDOW_DAYS` with a non-integer value, `driverRequiresThePassword` fails with `invalid candidate: ...`. The failure then depends on the environment, not the code. `PGHOSTADDR` and `PGSERVICE` override the forced `PGHOST=127.0.0.1`/`PGPORT=1`. So a future validation regression could let psql connect to a real host, not the dead local port the Javadoc promises. `readAllBytes()` on stderr (line 376) blocks until the process exits, so `waitFor(30, SECONDS)` (line 377) never bounds a hung driver, and no path calls `destroyForcibly()`.
 **Fix:** Scrub before putting: `environment.keySet().removeIf(k -> k.startsWith("PG") || Set.of("LEARN_RATE", "LEARNED_CAP", "WINDOW_DAYS", "OUT_DIR").contains(k));`. Read stderr on a `CompletableFuture.supplyAsync(...)`, call `waitFor` with the timeout first, and `destroyForcibly()` it when the wait times out.
+
+### IN-10: `codeOf` does not strip string literals, so a verbatim badge item in a literal can stand in for a drifted, renamed badge column
+
+**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:291-299, 311-315`
+**Issue:** The per-badge-line check counts `INTEREST_SCORE`, `BADGE_ITEM` and `interest_score` in the line's "code", and that code still includes single-quoted literals. Suppose the top line becomes `..., a.id AS article_id, <drifted> AS score, ', <INTEREST_SCORE> AS interest_score' AS note, ...`. It then holds each needle exactly once, and the file still has 4 raw copies, so the guard passes (probe case "top badge drifted, verbatim item in a string literal"). The decoy has to rename the real column, which makes this contrived, but it contradicts the 07-11 precision truth that a one-token badge drift "fails whatever verbatim copy survives elsewhere". The `codeOf` Javadoc mentions "no string-literal ... awareness" only as a risk of cutting real SQL. It never says a literal can hide a decoy.
+**Fix:** Blank single-quoted literals before counting. The badge lines' only literals are the section labels, `E'\t'`, `E'\n'` and `' '`, none of which holds a needle:
+
+```java
+private static String codeOf(String line) {
+    String code = line.replaceAll("'(?:[^']|'')*'", "''");
+    code = COMMENT_SPAN.matcher(code).replaceAll(" ");
+    int dashes = code.indexOf("--");
+    return dashes < 0 ? code : code.substring(0, dashes);
+}
+```
+
+Stripping literals first also stops a `'--'` literal from cutting real SQL. Add the literal decoy to `aDriftedBadgeFailsDespiteAVerbatimDecoy`.
 
 ## Resolved
 
 ### WR-02: Replay drift guard passes when only one of several blend and badge copies matches the app
 
-**Status:** Resolved by 07-10 (commits `08185bf`, `7ede686`), confirmed in the 2026-09-29 re-review. All five `WITH learned AS` lines are now checked by exact equality, in order, and the badge count is exact (4). Two weaknesses remain in the replacement guard and are tracked separately: WR-04 (the badge count ignores position, and trailing or block comments are not stripped) and IN-07 (blend-line discovery is case-sensitive and column-0 only).
+**Status:** Resolved by 07-10 (commits `08185bf`, `7ede686`), confirmed in the 2026-09-29 re-review. All five `WITH learned AS` lines are checked by exact equality, in order, and the badge count is exact (4). The follow-up gaps WR-04 and IN-07 are resolved by 07-11 (below). WR-05 and IN-10 track what 07-11 still leaves open.
 
-**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:35-40, 57-59`
-**Issue:** The SQL file repeats the unread blend three times (the `summary`, `top` and `bottom` statements) and the `INTEREST_SCORE` expression four times. `grep` shows 3 occurrences of `a."read" = false` and 4 of the badge CASE. `assertThat(sql).contains(...)` only proves that at least one copy is identical. If someone hand-edits the `top` or `bottom` copy, the test still passes, which breaks the stated guarantee: "InterestCalibrationReplaySqlTest fails on any drift" (`interest-calibration-replay.sql:89`, and the "drift-guarded" claim in CLAUDE.md). Calibration decisions such as the shipped 100/70/22 depend on those rows matching what the app serves.
-**Fix:** Assert the exact number of verbatim copies. Better still, assert that every `WITH learned AS` line is one of the allowed expected texts:
+**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java`
+**Issue (original):** The SQL file repeats the unread blend three times and the `INTEREST_SCORE` expression four times. `assertThat(sql).contains(...)` only proved that at least one copy was identical, so a hand-edit to the `top` or `bottom` copy passed.
 
-```java
-private static int count(String haystack, String needle) {
-    int n = 0;
-    for (int i = haystack.indexOf(needle); i >= 0; i = haystack.indexOf(needle, i + needle.length())) n++;
-    return n;
-}
+### WR-04: The badge guard counts copies without checking where they are, and its comment filter only removes whole-line `--` comments, so a drifted badge copy can still pass
 
-@Test
-void everyBlendCopyIsVerbatim() throws IOException {
-    String sql = Files.readString(SQL);
-    Set<String> allowed = Set.of(
-            InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE),
-            InterestScoreQueries.blendCte(WINDOW_SCOPE));
-    List<String> withLines = sql.lines().filter(l -> l.startsWith("WITH learned AS")).toList();
-    assertThat(withLines).hasSize(5);
-    for (String line : withLines) {
-        assertThat(allowed.stream().anyMatch(line::startsWith)
-                || line.startsWith(InterestScoreQueries.LEARNED_CTE + " SELECT 'learned'"))
-                .as(line).isTrue();
-    }
-    assertThat(count(sql, InterestScoreQueries.INTEREST_SCORE)).isEqualTo(4);
-}
-```
+**Status:** Resolved by 07-11 (commits `04aef6c`, `615d7a5`), confirmed in the 2026-09-29T03:21:25Z re-review. The raw count of 4 now includes comments. Each of the four badge lines must hold `INTEREST_SCORE`, the `, <INTEREST_SCORE> AS interest_score` item and the `interest_score` name exactly once in its code. `aDriftedBadgeFailsDespiteAVerbatimDecoy` proves that the trailing `--`, `/* */` and appended-section decoys all fail, along with three same-line decoys and a fifth copy on a comment line. The suite is green (12 tests). The literal-decoy gap that remains is tracked as IN-10.
+
+**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:261-303`
+**Issue (original):** The badge check counted `INTEREST_SCORE` over text with only whole-line `--` comments removed, and it never tied a copy to its statement. A drifted badge passed when its verbatim text survived in a trailing or block comment, or in an added section.
+
+### IN-07: Blend lines are found by a case-sensitive, column-0 prefix, so an extra blend statement that is indented or lower-cased and drifted is never checked
+
+**Status:** Resolved by 07-11 (commit `615d7a5`) for the forms it named. `BLEND_START` runs unanchored and case-insensitive over the code of the whole file, and the count must be exactly 5. `anExtraBlendStatementInAnyFormFails` proves that the indented, lower-case and mid-line forms fail. Other spellings of a learned CTE (`RECURSIVE`, a quoted name, a column list, a non-first CTE) still escape, and they are tracked as WR-05.
+
+**File:** `src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java:53-54, 264-267`
+**Issue (original):** `assertEveryCopyIsVerbatim` only inspected lines that start with `WITH learned AS` at column 0, so an extra drifted blend statement that was indented or lower-cased was never checked.
 
 ---
 
-_Reviewed: 2026-09-28; re-reviewed 2026-09-29T02:27:29Z (07-10 gap closure)_
+_Reviewed: 2026-09-28; re-reviewed 2026-09-29T02:27:29Z (07-10 gap closure) and 2026-09-29T03:21:25Z (07-11 gap closure)_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
