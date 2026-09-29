@@ -38,6 +38,7 @@ myfeeder:
     # PT1H keeps @SpringBootTest contexts from sweeping during the suite (research Pitfall 12).
     sweep-initial-delay: PT1H
     # Blend constants (R1); the profile contributes profile_score / max level x profile-points. Phase 7 tunes these.
+    # The suite pins the pre-calibration constants (InterestScoreQueriesTest fixtures assume profile-points 100); application-dev.yaml carries main's tuned values (D-14).
     blend:
       profile-points: 100
       learn-rate: 2
