@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -49,8 +50,9 @@ class EngagementApiIntegrationTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
-        // Articles and their engagement rows cascade from the feed
+        // Articles and their engagement rows cascade from the feed; boards do not, so they go by name
         jdbcTemplate.update("DELETE FROM feed WHERE url = ?", ENGAGEMENT_FEED_URL);
+        jdbcTemplate.update("DELETE FROM board WHERE name LIKE 'engagement-it-%'");
     }
 
     @AfterEach
@@ -122,6 +124,83 @@ class EngagementApiIntegrationTest {
     void openWithANonNumericIdIs400() throws Exception {
         mockMvc.perform(put("/api/articles/{id}/engagement/open", "abc"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void forgetDeletesEveryKindAndReturns204() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+        putOpen(a);
+        insertEngagement(a, "STAR");
+        insertEngagement(a, "BOARD");
+        assertThat(kinds(a)).containsExactly("BOARD", "OPEN_ORIGINAL", "STAR");
+
+        mockMvc.perform(delete("/api/articles/{id}/engagement", a))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        assertThat(kinds(a)).isEmpty();
+        List<String> engagement = JsonPath.read(getArticle(a), "$.engagement");
+        assertThat(engagement).isEmpty();
+    }
+
+    @Test
+    void forgetLeavesStarBoardAndVoteAlone() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+        jdbcTemplate.update("UPDATE article SET starred = true WHERE id = ?", a);
+        long board = jdbcTemplate.queryForObject(
+                "INSERT INTO board (name) VALUES ('engagement-it-keep') RETURNING id", Long.class);
+        jdbcTemplate.update("INSERT INTO board_article (board_id, article_id) VALUES (?, ?)", board, a);
+        jdbcTemplate.update("INSERT INTO article_feedback (article_id, vote) VALUES (?, 1)", a);
+        putOpen(a);
+        insertEngagement(a, "STAR");
+        insertEngagement(a, "BOARD");
+
+        mockMvc.perform(delete("/api/articles/{id}/engagement", a))
+                .andExpect(status().isNoContent());
+
+        assertThat(kinds(a)).isEmpty();
+        assertThat(jdbcTemplate.queryForObject("SELECT starred FROM article WHERE id = ?", Boolean.class, a))
+                .isTrue();
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM board_article WHERE board_id = ? AND article_id = ?", Integer.class, board, a))
+                .isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT vote FROM article_feedback WHERE article_id = ?", Integer.class, a))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void openAfterForgetRecordsAgain() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+        putOpen(a);
+        mockMvc.perform(delete("/api/articles/{id}/engagement", a))
+                .andExpect(status().isNoContent());
+        assertThat(kinds(a)).isEmpty();
+
+        putOpen(a);
+
+        assertThat(kinds(a)).containsExactly("OPEN_ORIGINAL");
+    }
+
+    @Test
+    void forgetWithoutEngagementIs204() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+
+        mockMvc.perform(delete("/api/articles/{id}/engagement", a))
+                .andExpect(status().isNoContent());
+
+        assertThat(kinds(a)).isEmpty();
+    }
+
+    @Test
+    void forgetOnAnUnknownArticleIs404() throws Exception {
+        mockMvc.perform(delete("/api/articles/{id}/engagement", 999_999_999L))
+                .andExpect(status().isNotFound());
+    }
+
+    /** Seeds a row directly: STAR and BOARD capture only arrives with the save paths (08-03). */
+    private void insertEngagement(long articleId, String kind) {
+        jdbcTemplate.update("INSERT INTO article_engagement (article_id, kind) VALUES (?, ?)", articleId, kind);
     }
 
     private void putOpen(long articleId) throws Exception {
