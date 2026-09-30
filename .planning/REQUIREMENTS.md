@@ -19,11 +19,11 @@
 
 ### Learning
 
-- [ ] **LRN-01**: Each engaged, SCORED article counts once, at its strongest kind (save > open), as a fractional up-vote on the topics it matched. This is derived at query time, with no Jev calls and no writes to topic weights.
+- [x] **LRN-01**: Each engaged, SCORED article counts once, at its strongest kind (save > open), as a fractional up-vote on the topics it matched. This is derived at query time, with no Jev calls and no writes to topic weights.
 - [x] **LRN-02**: A thumbs vote on an article replaces its engagement contribution, and removing the vote restores it
 - [ ] **LRN-03**: Engagement only nudges topics whose base weight is ≥ 0
 - [x] **LRN-04**: Engagement learning has its own cap, below the thumbs cap and added on top of the thumbs-learned adjustment. The effective weight stays within the existing sign clamp and ±50.
-- [ ] **LRN-05**: Open weight, save weight and engagement cap are committed yaml constants. Zero disables engagement learning, and startup rejects inconsistent values (save ≤ open, or cap ≥ thumbs cap).
+- [x] **LRN-05**: Open weight, save weight and engagement cap are committed yaml constants. Zero disables engagement learning, and startup rejects inconsistent values (save ≤ open, or cap ≥ thumbs cap).
 - [ ] **LRN-06**: The Priority order, badge and "Why N?" reflect engagement consistently. Engagement never re-sorts an open Priority list; it sets the "Ranking changed" hint instead.
 
 ### Explainability
@@ -40,7 +40,7 @@
 
 ### Calibration
 
-- [ ] **CAL-01**: The replay SQL and its drift guard are regenerated for the extended CTE in the same change
+- [x] **CAL-01**: The replay SQL and its drift guard are regenerated for the extended CTE in the same change
 - [ ] **CAL-02**: The replay reports dormant (engaged-but-unscored) engagement, topics at the cap, the tier histogram with engagement on and off, and a simulated backfill
 - [ ] **CAL-03**: The engagement weights and cap are tuned from prod data, committed in yaml and documented in CLAUDE.md
 
@@ -83,11 +83,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAPT-05 | Phase 8 | Complete |
 | CAPT-06 | Phase 8 | Complete |
 | CAPT-07 | Phase 8 | Complete |
-| LRN-01 | Phase 9 | Pending |
+| LRN-01 | Phase 9 | Complete |
 | LRN-02 | Phase 9 | Complete |
 | LRN-03 | Phase 9 | Pending |
 | LRN-04 | Phase 9 | Complete |
-| LRN-05 | Phase 9 | Pending |
+| LRN-05 | Phase 9 | Complete |
 | LRN-06 | Phase 10 | Pending |
 | EXPL-01 | Phase 10 | Pending |
 | GAP-01 | Phase 11 | Pending |
@@ -95,7 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GAP-03 | Phase 11 | Pending |
 | GAP-04 | Phase 11 | Pending |
 | GAP-05 | Phase 11 | Pending |
-| CAL-01 | Phase 9 | Pending |
+| CAL-01 | Phase 9 | Complete |
 | CAL-02 | Phase 12 | Pending |
 | CAL-03 | Phase 12 | Pending |
 
