@@ -49,6 +49,11 @@ Out of this phase: the "Why N?" / Interests UI split and the Priority "Ranking c
 - **D-13:** Latency uses **record + generous guard**. A Testcontainers test seeds about 20k `article_engagement` rows (a realistic mix of kinds, scored and unscored, with and without votes) and measures the Priority page query, the per-article breakdown and the topic-weights query against a no-engagement baseline. The numbers and an `EXPLAIN (ANALYZE)` go into the phase's VERIFICATION. The automated assertion catches only catastrophic plans (for example < 3× baseline) so that it does not flake. An index is added only if EXPLAIN shows it is needed; that would need a new migration and is a planner decision flagged to the user.
 - **D-14:** **No release in Phase 9.** Work happens on a feature branch and merges to main with `--no-ff`, with no tag, image or deploy. Prod stays on v0.3.0 (capturing engagement) until Phase 12 ships calibrated v0.3.1. Phase 12 calibrates by read-only replay, which needs no deploy.
 
+### Planning-time resolutions (research open questions, confirmed by the user 2026-09-30)
+- **D-15:** The existing `learned` field on `TopicLearned` and `TopicEffect` keeps its "capped, before the clamp" meaning and becomes combined: `learned = thumbs capped + engagement capped`. This is byte-identical to v0.2.1 at zero engagement, and it is the same sum `LearnedLimit` judges (D-11). Append the capped parts (thumbs learned and engagement learned) next to it. D-10's "(w − base)" describes only the `learnedWeight` fields (`TopicContribution`, `InterestBreakdown.Row`), which already hold `w − base`. (Research Open Question 1, Pitfall 5.)
+- **D-16:** `InterestBreakdown.Row` also gets the thumbs-applied and engagement-applied split fields in Phase 9, appended with `NON_NULL` so PROFILE rows omit them. Phase 10 only renders them. (Research Open Question 2.)
+- **D-17:** The latency guard refines D-13's "for example < 3× baseline". For each query (Priority first page, per-article breakdown, topic weights), assert `extendedMedian ≤ 10 × baselineMedian + 250 ms`, using the median of 5 warm runs after 3 warm-ups. The measured numbers and an `EXPLAIN (ANALYZE)` still go into the phase VERIFICATION. (Research Open Question 3, Pitfall 2.)
+
 ### Claude's Discretion
 - Exact yaml key names, `MyfeederProperties.Blend` nesting and how validation is wired (e.g. `@Validated` + a custom check, or an `InitializingBean`), provided startup fails with a clear fixed-text message.
 - CTE names (`engaged`, `eng_learned`, …) and new DTO field names, within the replay keyword constraint.
@@ -117,6 +122,7 @@ Out of this phase: the "Why N?" / Interests UI split and the Priority "Ranking c
 - The Interests learned line split with contributing-article counts and an at-cap flag (ENG-F6): future; Phase 9 only appends backend fields.
 - Engagement decay / rate normalization (ENG-F8): future.
 - User-facing wording for `ENGAGEMENT_CAP` in toasts and Interests: Phase 10.
+- `contrib AS NOT MATERIALIZED` in the breakdown topics query (research Pitfall 9, Open Question 5): a pre-existing inefficiency that the latency budget does not need. It is deferred by user decision on 2026-09-30. Phase 9 records it as an observation in VERIFICATION and does not change the CTE or the replay for it.
 
 ### Reviewed Todos (not folded)
 - `2026-09-23-tune-raindrop-resilience-and-fix-claude-md-aspectj-note.md` (Tune Raindrop resilience): it matched only on keywords, and PROJECT.md keeps carried-forward cleanup out of this milestone.
