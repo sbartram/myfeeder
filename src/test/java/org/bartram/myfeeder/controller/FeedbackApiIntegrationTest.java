@@ -339,9 +339,67 @@ class FeedbackApiIntegrationTest {
 
         assertThat(entries).extracting(e -> ((Number) e.get("topicId")).longValue()).containsExactly(rust, go);
         assertLearned(entries.get(0), 20.0, 1.8, 21.8, "NONE");
+        assertLearnedParts(entries.get(0), 1.8, 0.0);
         assertLearned(entries.get(1), 10.0, 0.0, 10.0, "NONE");
+        assertLearnedParts(entries.get(1), 0.0, 0.0);
         assertThat(topicWeight(rust)).isEqualTo(20);
         assertThat(topicWeight(go)).isEqualTo(10);
+    }
+
+    @Test
+    void learnedEndpointReportsTheEngagementCap() throws Exception {
+        long feedId = insertFeed();
+        long engcap = insertTopic(FEEDBACK_TOPIC_PREFIX + "engcap", 20);
+        for (int i = 0; i < 8; i++) {
+            long id = insertMatchingArticle(feedId, "eng" + i, engcap, 1.0);
+            insertEngagement(id, "STAR");
+        }
+
+        List<Map<String, Object>> entries = learnedEntries(List.of(engcap));
+
+        assertThat(entries).hasSize(1);
+        assertLearned(entries.get(0), 20.0, 8.0, 28.0, "ENGAGEMENT_CAP");
+        assertLearnedParts(entries.get(0), 0.0, 8.0);
+        assertThat(topicWeight(engcap)).isEqualTo(20);
+    }
+
+    @Test
+    void learnedEndpointSplitsVotesAndEngagement() throws Exception {
+        long feedId = insertFeed();
+        long mixed = insertTopic(FEEDBACK_TOPIC_PREFIX + "mixed", 20);
+        long voted = insertMatchingArticle(feedId, "voted", mixed, 0.95);
+        long saved = insertMatchingArticle(feedId, "saved", mixed, 0.95);
+        putVote(voted, "{\"vote\":1}");
+        insertEngagement(saved, "STAR");
+
+        List<Map<String, Object>> entries = learnedEntries(List.of(mixed));
+
+        assertThat(entries).hasSize(1);
+        assertLearned(entries.get(0), 20.0, 2.7, 22.7, "NONE");
+        assertLearnedParts(entries.get(0), 1.8, 0.9);
+        assertThat(topicWeight(mixed)).isEqualTo(20);
+    }
+
+    @Test
+    void voteEffectBeforeIncludesTheEngagementItReplaces() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+        insertEngagement(a, "STAR");
+
+        // The vote replaces the save's 0.9 with the vote's 1.8
+        String put = putVote(a, "{\"vote\":1}");
+
+        assertEffect(put, 0, rust, 20.9, 21.8);
+        assertEffectParts(put, 0, 1.8, 1.8, 0.0, "NONE");
+
+        // Removing the vote brings the save back
+        String deleted = deleteVote(a);
+
+        assertEffect(deleted, 0, rust, 21.8, 20.9);
+        assertEffectParts(deleted, 0, 0.9, 0.0, 0.9, "NONE");
+        assertThat(topicWeight(rust)).isEqualTo(20);
+        verify(jevApiClient, never()).judge(any(), any());
     }
 
     @Test
@@ -372,6 +430,11 @@ class FeedbackApiIntegrationTest {
         assertThat(((Number) entry.get("learned")).doubleValue()).isEqualTo(learned);
         assertThat(((Number) entry.get("effectiveWeight")).doubleValue()).isEqualTo(effective);
         assertThat(entry.get("limit")).isEqualTo(limit);
+    }
+
+    private static void assertLearnedParts(Map<String, Object> entry, double thumbs, double engagement) {
+        assertThat(((Number) entry.get("thumbsLearned")).doubleValue()).isEqualTo(thumbs);
+        assertThat(((Number) entry.get("engagementLearned")).doubleValue()).isEqualTo(engagement);
     }
 
     /** Article N: rust noul 0.95 (m 0.9), politics 0.8 (m 0.6), go 0.6 (m 0.2). */
@@ -407,6 +470,15 @@ class FeedbackApiIntegrationTest {
         assertThat(((Number) effect.get("topicId")).longValue()).isEqualTo(topicId);
         assertThat(((Number) effect.get("before")).doubleValue()).isEqualTo(before);
         assertThat(((Number) effect.get("after")).doubleValue()).isEqualTo(after);
+    }
+
+    private static void assertEffectParts(String body, int index, double learned, double thumbs, double engagement,
+                                          String limit) {
+        Map<String, Object> effect = JsonPath.read(body, "$.effects[" + index + "]");
+        assertThat(((Number) effect.get("learned")).doubleValue()).isEqualTo(learned);
+        assertThat(((Number) effect.get("thumbsLearned")).doubleValue()).isEqualTo(thumbs);
+        assertThat(((Number) effect.get("engagementLearned")).doubleValue()).isEqualTo(engagement);
+        assertThat(effect.get("limit")).isEqualTo(limit);
     }
 
     private String deleteVote(long articleId) throws Exception {
@@ -468,6 +540,10 @@ class FeedbackApiIntegrationTest {
         jdbcTemplate.update(
                 "INSERT INTO article_topic_score (article_id, topic_id, noul, topic_version) VALUES (?, ?, ?, 1)",
                 articleId, topicId, noul);
+    }
+
+    private void insertEngagement(long articleId, String kind) {
+        jdbcTemplate.update("INSERT INTO article_engagement (article_id, kind) VALUES (?, ?)", articleId, kind);
     }
 
     private void insertScored(long articleId, double profileScore, int profileMaxLevel) {

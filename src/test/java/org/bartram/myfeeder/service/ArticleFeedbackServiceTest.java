@@ -154,44 +154,89 @@ class ArticleFeedbackServiceTest {
 
         assertThat(result.article()).isSameAs(article);
         assertThat(result.effects()).containsExactly(
-                new TopicEffect(10, "Rust", 20, 21.8, 20, 1.8, LearnedLimit.NONE),
-                new TopicEffect(11, "Politics", -10, -10, -30, 20, LearnedLimit.LEARNED_CAP));
+                new TopicEffect(10, "Rust", 20, 21.8, 20, 1.8, LearnedLimit.NONE, 1.8, 0),
+                new TopicEffect(11, "Politics", -10, -10, -30, 20, LearnedLimit.LEARNED_CAP, 20, 0));
     }
 
     @Test
     void learnedAtExactlyTheCapIsLearnedCap() {
-        assertThat(LearnedLimit.of(weight(10, 20.0, 20.0), 20)).isEqualTo(LearnedLimit.LEARNED_CAP);
-        assertThat(LearnedLimit.of(weight(10, -20.0, -20.0), 20)).isEqualTo(LearnedLimit.LEARNED_CAP);
-        assertThat(LearnedLimit.of(weight(10, 19.999999, 19.999999), 20)).isEqualTo(LearnedLimit.NONE);
+        assertThat(LearnedLimit.of(weight(10, 20.0, 20.0), 20, 8)).isEqualTo(LearnedLimit.LEARNED_CAP);
+        assertThat(LearnedLimit.of(weight(10, -20.0, -20.0), 20, 8)).isEqualTo(LearnedLimit.LEARNED_CAP);
+        assertThat(LearnedLimit.of(weight(10, 19.999999, 19.999999), 20, 8)).isEqualTo(LearnedLimit.NONE);
     }
 
     @Test
     void sumCrossingZeroIsSignClamp() {
-        assertThat(LearnedLimit.of(weight(5, -10, -10), 20)).isEqualTo(LearnedLimit.SIGN_CLAMP);
-        assertThat(LearnedLimit.of(weight(-5, 10, 10), 20)).isEqualTo(LearnedLimit.SIGN_CLAMP);
+        assertThat(LearnedLimit.of(weight(5, -10, -10), 20, 8)).isEqualTo(LearnedLimit.SIGN_CLAMP);
+        assertThat(LearnedLimit.of(weight(-5, 10, 10), 20, 8)).isEqualTo(LearnedLimit.SIGN_CLAMP);
         // The cap outranks the clamp
-        assertThat(LearnedLimit.of(weight(5, -24, -20), 20)).isEqualTo(LearnedLimit.LEARNED_CAP);
+        assertThat(LearnedLimit.of(weight(5, -24, -20), 20, 8)).isEqualTo(LearnedLimit.LEARNED_CAP);
     }
 
     @Test
     void sumExactlyZeroIsNotSignClamp() {
-        assertThat(LearnedLimit.of(weight(10, -10, -10), 20)).isEqualTo(LearnedLimit.NONE);
+        assertThat(LearnedLimit.of(weight(10, -10, -10), 20, 8)).isEqualTo(LearnedLimit.NONE);
     }
 
     @Test
     void sumBeyondFiftyIsWeightRange() {
-        assertThat(LearnedLimit.of(weight(45, 10, 10), 20)).isEqualTo(LearnedLimit.WEIGHT_RANGE);
-        assertThat(LearnedLimit.of(weight(-45, -10, -10), 20)).isEqualTo(LearnedLimit.WEIGHT_RANGE);
+        assertThat(LearnedLimit.of(weight(45, 10, 10), 20, 8)).isEqualTo(LearnedLimit.WEIGHT_RANGE);
+        assertThat(LearnedLimit.of(weight(-45, -10, -10), 20, 8)).isEqualTo(LearnedLimit.WEIGHT_RANGE);
     }
 
     @Test
     void sumExactlyFiftyIsNone() {
-        assertThat(LearnedLimit.of(weight(40, 10, 10), 20)).isEqualTo(LearnedLimit.NONE);
+        assertThat(LearnedLimit.of(weight(40, 10, 10), 20, 8)).isEqualTo(LearnedLimit.NONE);
+    }
+
+    @Test
+    void learnedCapOutranksEngagementCap() {
+        assertThat(LearnedLimit.of(weight(10, 24, 20, 9, 8), 20, 8)).isEqualTo(LearnedLimit.LEARNED_CAP);
+    }
+
+    @Test
+    void engagementAtExactlyItsCapIsEngagementCap() {
+        assertThat(LearnedLimit.of(weight(20, 0, 0, 8.0, 8.0), 20, 8)).isEqualTo(LearnedLimit.ENGAGEMENT_CAP);
+        assertThat(LearnedLimit.of(weight(20, 0, 0, 7.999999, 7.999999), 20, 8)).isEqualTo(LearnedLimit.NONE);
+    }
+
+    @Test
+    void engagementCapOutranksClampAndRange() {
+        // Sum 45 + 5 + 8 = 58 would be WEIGHT_RANGE
+        assertThat(LearnedLimit.of(weight(45, 5, 5, 10, 8), 20, 8)).isEqualTo(LearnedLimit.ENGAGEMENT_CAP);
+        // Sum 10 - 19 + 8 = -1 would be SIGN_CLAMP
+        assertThat(LearnedLimit.of(weight(10, -19, -19, 8, 8), 20, 8)).isEqualTo(LearnedLimit.ENGAGEMENT_CAP);
+    }
+
+    @Test
+    void capZeroNeverReportsEngagementCap() {
+        assertThat(LearnedLimit.of(weight(20, 0, 0, 5, 0), 20, 0)).isEqualTo(LearnedLimit.NONE);
+    }
+
+    @Test
+    void engagementIsPartOfTheSum() {
+        // 10 - 12 + 3 = +1: engagement keeps the sum above zero
+        assertThat(LearnedLimit.of(weight(10, -12, -12, 3, 3), 20, 8)).isEqualTo(LearnedLimit.NONE);
+        // 45 + 3 + 3 = 51: engagement pushes the sum beyond 50
+        assertThat(LearnedLimit.of(weight(45, 3, 3, 3, 3), 20, 8)).isEqualTo(LearnedLimit.WEIGHT_RANGE);
+    }
+
+    @Test
+    void negativeBaseNeverReportsEngagementCap() {
+        // SQL zeroes engagementRaw for a negative base
+        assertThat(LearnedLimit.of(weight(-5, 0, 0, 0, 0), 20, 8)).isEqualTo(LearnedLimit.NONE);
     }
 
     /** A topic weight; the effective value is irrelevant to {@link LearnedLimit#of}. */
     private static TopicWeight weight(double base, double learnedRaw, double learned) {
-        return new TopicWeight(1, "t", base, learnedRaw, learned, 0, learned, 0, 0, 0);
+        return weight(base, learnedRaw, learned, 0, 0);
+    }
+
+    /** A topic weight with engagement; {@code learned} is the combined thumbs + engagement value, as in SQL. */
+    private static TopicWeight weight(double base, double learnedRaw, double thumbsLearned, double engagementRaw,
+                                      double engagementLearned) {
+        return new TopicWeight(1, "t", base, learnedRaw, thumbsLearned + engagementLearned, 0, thumbsLearned,
+                engagementRaw, engagementLearned, 0);
     }
 
     private void givenArticle() {

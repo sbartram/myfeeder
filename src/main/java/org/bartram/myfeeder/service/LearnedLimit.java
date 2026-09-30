@@ -3,25 +3,32 @@ package org.bartram.myfeeder.service;
 import org.bartram.myfeeder.repository.InterestScoreQueries.TopicWeight;
 
 /**
- * Why a topic's weight change is smaller than the nominal nudge (FDBK-03, D-07). Judged on the
+ * Why a topic's weight change is smaller than the nominal nudge (FDBK-03, D-07, D-11). Judged on the
  * 6-decimal values {@link org.bartram.myfeeder.repository.InterestScoreQueries#topicWeights} returns,
  * in this precedence:
  * <ol>
- *   <li>{@link #LEARNED_CAP}: the uncapped learned points reach the cap in either direction
- *       ({@code |learnedRaw| >= cap}; exactly the cap counts).</li>
+ *   <li>{@link #LEARNED_CAP}: the uncapped thumbs points reach the learned cap in either direction
+ *       ({@code |learnedRaw| >= learnedCap}; exactly the cap counts).</li>
+ *   <li>{@link #ENGAGEMENT_CAP}: the uncapped engagement points reach the engagement cap
+ *       ({@code engagementRaw >= engagementCap}; exactly the cap counts). A cap of 0 disables engagement
+ *       and this check. A negative-base topic never reaches it, because the SQL zeroes its
+ *       {@code engagementRaw}.</li>
  *   <li>{@link #SIGN_CLAMP}: {@code base + learned} crosses zero, so the effective weight is held at 0
- *       (a sum of exactly 0 is not a clamp).</li>
+ *       (a sum of exactly 0 is not a clamp); {@code learned} is thumbs + engagement (D-15).</li>
  *   <li>{@link #WEIGHT_RANGE}: {@code |base + learned|} is beyond {@link InterestService#MAX_WEIGHT}
  *       (exactly 50 is not).</li>
  *   <li>{@link #NONE}: otherwise.</li>
  * </ol>
  */
 public enum LearnedLimit {
-    NONE, LEARNED_CAP, SIGN_CLAMP, WEIGHT_RANGE;
+    NONE, LEARNED_CAP, SIGN_CLAMP, WEIGHT_RANGE, ENGAGEMENT_CAP;
 
-    public static LearnedLimit of(TopicWeight w, double cap) {
-        if (Math.abs(w.learnedRaw()) >= cap) {
+    public static LearnedLimit of(TopicWeight w, double learnedCap, double engagementCap) {
+        if (Math.abs(w.learnedRaw()) >= learnedCap) {
             return LEARNED_CAP;
+        }
+        if (engagementCap > 0 && w.engagementRaw() >= engagementCap) {
+            return ENGAGEMENT_CAP;
         }
         double sum = w.base() + w.learned();
         if ((w.base() > 0 && sum < 0) || (w.base() < 0 && sum > 0)) {
