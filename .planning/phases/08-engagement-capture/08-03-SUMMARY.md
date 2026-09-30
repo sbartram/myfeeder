@@ -210,3 +210,9 @@ None. No external service configuration is required.
 ---
 *Phase: 08-engagement-capture*
 *Completed: 2026-09-30*
+
+## Self-Check: PASSED
+
+- The created file (V7EngagementMigrationTest.java) and the SUMMARY exist on disk.
+- Commits a6c956c, 400816d, bc0b59b, 7d30646 and 1863b40 exist on the worktree branch, along with the SUMMARY commit.
+- The full backend suite `./gradlew test -x npmBuild -x npmInstall` is green (599 tests, 0 failures). Every acceptance-criteria grep passes. RaindropApiClientImpl.java is not in any commit of this plan.
