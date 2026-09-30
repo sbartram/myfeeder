@@ -73,10 +73,13 @@ export function useMarkRead() {
 }
 
 export function useSaveToRaindrop() {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => articlesApi.saveToRaindrop(id),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       useToastStore.getState().addToast('Saved to Raindrop', 'success')
+      // The save is recorded as engagement: refresh only the by-id article (D-06).
+      void qc.invalidateQueries({ queryKey: ['article', id], exact: true })
     },
   })
 }
