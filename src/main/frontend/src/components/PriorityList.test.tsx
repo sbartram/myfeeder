@@ -5,6 +5,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { PriorityList } from './PriorityList'
 import { useUpdateArticleState } from '../hooks/useArticles'
 import { useSaveInterestProfile } from '../hooks/useInterest'
+import { useOpenOriginal } from '../hooks/useEngagement'
 import { useUIStore } from '../stores/uiStore'
 import { usePriorityStore } from '../stores/priorityStore'
 import type { Article } from '../types'
@@ -124,6 +125,12 @@ function MarkReadHarness({ id }: { id: number }) {
 function SaveProfileHarness() {
   const save = useSaveInterestProfile()
   return <button onClick={() => save.mutate('I like compilers')}>harness save profile</button>
+}
+
+/** A button that opens one article through the app's Open Original path. */
+function OpenOriginalHarness({ id, url }: { id: number; url: string }) {
+  const open = useOpenOriginal()
+  return <button onClick={() => open({ id, url })}>harness open</button>
 }
 
 const waiting = (eligibleUnscored: number) => () => ({
@@ -565,5 +572,49 @@ describe('PriorityList', () => {
     renderPriority()
     expect(await screen.findByRole('button', { name: REFRESH })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: HINT_LABEL })).not.toBeInTheDocument()
+  })
+
+  it('openingLightsTheHintAndPatchesTheBadgeWithoutReordering', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    route('GET', PAGE_1, () => page(scored(90, 82, 70)))
+    route('PUT', '/api/articles/2/engagement/open', () => ({ status: 204 }))
+    route('GET', '/api/articles/2', () => ({ status: 200, body: article(2, { interestScore: 95 }) }))
+
+    const { container } = renderPriority({}, <OpenOriginalHarness id={2} url="https://example.com/2" />)
+    await screen.findByText('Article 3')
+    fireEvent.click(screen.getByRole('button', { name: 'harness open' }))
+
+    const hint = await screen.findByRole('button', { name: HINT_LABEL })
+    expect(hint).toHaveTextContent(HINT_TEXT)
+    expect(titles(container)).toEqual(['Article 1', 'Article 2', 'Article 3'])
+    await waitFor(() =>
+      expect(container.querySelectorAll('.article-item')[1].querySelector('.interest-badge')).toHaveTextContent('95'),
+    )
+    expect(priorityGets()).toHaveLength(1)
+    expect(openSpy).toHaveBeenCalledWith('https://example.com/2', '_blank', 'noopener')
+  })
+
+  it('aRepeatOpenWithTheSameScoreLightsNothing', async () => {
+    vi.spyOn(window, 'open').mockImplementation(() => null)
+    route('GET', PAGE_1, () => page(scored(90, 82, 70)))
+    route('PUT', '/api/articles/2/engagement/open', () => ({ status: 204 }))
+    route('GET', '/api/articles/2', () => ({ status: 200, body: article(2, { interestScore: 82 }) }))
+
+    const { container } = renderPriority({}, <OpenOriginalHarness id={2} url="https://example.com/2" />)
+    await screen.findByText('Article 3')
+    fireEvent.click(screen.getByRole('button', { name: 'harness open' }))
+    fireEvent.click(screen.getByRole('button', { name: 'harness open' }))
+
+    await waitFor(() => expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(2))
+    await waitFor(() =>
+      expect(calls.filter((c) => c.method === 'GET' && c.url === '/api/articles/2').length).toBeGreaterThan(0),
+    )
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(usePriorityStore.getState().rankingChanged).toBe(false)
+    expect(screen.getByRole('button', { name: REFRESH })).toBeInTheDocument()
+    expect(container.querySelectorAll('.article-item')[1].querySelector('.interest-badge')).toHaveTextContent('82')
+    expect(priorityGets()).toHaveLength(1)
   })
 })
