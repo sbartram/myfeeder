@@ -247,11 +247,21 @@ class ArticleFeedbackServiceTest {
     }
 
     @Test
-    void engagementCapOutranksClampAndRange() {
-        // Sum 45 + 5 + 8 = 58 would be WEIGHT_RANGE
-        assertThat(LearnedLimit.of(weight(45, 5, 5, 10, 8), 20, 8)).isEqualTo(LearnedLimit.ENGAGEMENT_CAP);
-        // Sum 10 - 19 + 8 = -1 would be SIGN_CLAMP
-        assertThat(LearnedLimit.of(weight(10, -19, -19, 8, 8), 20, 8)).isEqualTo(LearnedLimit.ENGAGEMENT_CAP);
+    void clampAndRangeOutrankEngagementCap() {
+        // Sum 45 + 5 + 8 = 58: the range holds the weight at +50, not the engagement cap (D-10)
+        assertThat(LearnedLimit.of(weight(45, 5, 5, 10, 8), 20, 8)).isEqualTo(LearnedLimit.WEIGHT_RANGE);
+        // Sum 10 - 19 + 8 = -1: the clamp holds the weight at 0, not the engagement cap (D-10)
+        assertThat(LearnedLimit.of(weight(10, -19, -19, 8, 8), 20, 8)).isEqualTo(LearnedLimit.SIGN_CLAMP);
+    }
+
+    @Test
+    void engagementAtCapIgnoresPrecedence() {
+        TopicWeight heldByRange = weight(45, 5, 5, 10, 8);
+        assertThat(LearnedLimit.of(heldByRange, 20, 8)).isEqualTo(LearnedLimit.WEIGHT_RANGE);
+        assertThat(LearnedLimit.engagementAtCap(heldByRange, 8)).isTrue();
+        assertThat(LearnedLimit.engagementAtCap(weight(20, 0, 0, 7.999999, 7.999999), 8)).isFalse();
+        // Cap 0 disables engagement
+        assertThat(LearnedLimit.engagementAtCap(weight(20, 0, 0, 5, 0), 0)).isFalse();
     }
 
     @Test

@@ -5,7 +5,7 @@ titles: json
 findings:
   - id: WR-01
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "ENGAGEMENT_CAP outranks, and hides, the limit that actually holds a vote back"
   - id: WR-02
     severity: warning
@@ -31,7 +31,7 @@ findings:
     severity: info
     disposition: open
     title: "Engagement makes Priority scores change on every open or star, so rows can be skipped between pages"
-open: 6
+open: 5
 total: 7
 recorded: 2026-09-30T16:58:00.000Z
 ---
@@ -40,7 +40,7 @@ recorded: 2026-09-30T16:58:00.000Z
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | open | - |
+| WR-01 | warning | fixed | Phase 10 plan 10-02: LearnedLimit.of precedence LEARNED_CAP → SIGN_CLAMP → WEIGHT_RANGE → ENGAGEMENT_CAP (D-10) |
 | WR-02 | warning | open | - |
 | WR-03 | warning | fixed | Phase 10 plan 10-02: TopicEffect.engagementReplaced marks a replaced or restored engagement share (D-11) |
 | IN-01 | info | open | - |

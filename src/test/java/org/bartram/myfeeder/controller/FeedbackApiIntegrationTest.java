@@ -364,6 +364,24 @@ class FeedbackApiIntegrationTest {
     }
 
     @Test
+    void bindingRangeOutranksTheEngagementCap() throws Exception {
+        long feedId = insertFeed();
+        long rangecap = insertTopic(FEEDBACK_TOPIC_PREFIX + "rangecap", 45);
+        for (int i = 0; i < 8; i++) {
+            long id = insertMatchingArticle(feedId, "range" + i, rangecap, 1.0);
+            insertEngagement(id, "STAR");
+        }
+
+        List<Map<String, Object>> entries = learnedEntries(List.of(rangecap));
+
+        // 45 + 8 = 53 is held at +50 by the range, which outranks the engagement cap (D-10)
+        assertThat(entries).hasSize(1);
+        assertLearned(entries.get(0), 45.0, 8.0, 50.0, "WEIGHT_RANGE");
+        assertLearnedParts(entries.get(0), 0.0, 8.0);
+        assertThat(topicWeight(rangecap)).isEqualTo(45);
+    }
+
+    @Test
     void learnedEndpointSplitsVotesAndEngagement() throws Exception {
         long feedId = insertFeed();
         long mixed = insertTopic(FEEDBACK_TOPIC_PREFIX + "mixed", 20);
