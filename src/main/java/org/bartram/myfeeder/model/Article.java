@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
+import java.util.List;
 
 @Data
 @Table("article")
@@ -36,4 +37,8 @@ public class Article {
     @Transient
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private ArticleFeedback feedback;
+    // The engagement kinds; only set on GET /api/articles/{id} and the feedback responses ([] when none), omitted from JSON elsewhere
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<EngagementKind> engagement;
 }

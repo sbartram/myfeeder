@@ -2,7 +2,9 @@ package org.bartram.myfeeder.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.model.EngagementKind;
 import org.bartram.myfeeder.model.UnreadCount;
+import org.bartram.myfeeder.repository.ArticleEngagementStore;
 import org.bartram.myfeeder.repository.ArticleFeedbackStore;
 import org.bartram.myfeeder.repository.ArticleRepository;
 import org.bartram.myfeeder.repository.InterestScoreQueries;
@@ -21,6 +23,7 @@ public class ArticleService {
     private final ArticleRepository articleRepository;
     private final InterestScoreQueries interestScoreQueries;
     private final ArticleFeedbackStore articleFeedbackStore;
+    private final ArticleEngagementStore engagementStore;
 
     public Optional<Article> findById(Long id) {
         return articleRepository.findById(id);
@@ -29,8 +32,9 @@ public class ArticleService {
     /**
      * The article with its badge and exact "Why N?" breakdown (PRIO-04), both from the blend CTE; an
      * unscored article gets a null badge and no breakdown. The stored thumbs vote rides along (FDBK-01),
-     * null when there is none, scored or not. Only GET /api/articles/{id} and the feedback responses use
-     * this, so lists never carry the vote (D-02); the Raindrop path keeps {@link #findById(Long)}.
+     * null when there is none, scored or not. The engagement kinds ride along too (D-05), [] when there
+     * are none. Only GET /api/articles/{id} and the feedback responses use this, so lists never carry the
+     * vote (D-02) or the engagement; the Raindrop path keeps {@link #findById(Long)}.
      */
     public Optional<Article> findByIdWithBreakdown(Long id) {
         return articleRepository.findById(id).map(article -> {
@@ -42,8 +46,33 @@ public class ArticleService {
                 article.setInterestBreakdown(null);
             });
             article.setFeedback(articleFeedbackStore.find(id).orElse(null));
+            article.setEngagement(engagementStore.kinds(id));
             return article;
         });
+    }
+
+    /**
+     * Records that the user opened the article's original link (CAPT-01). Idempotent: a repeated open keeps
+     * the first row. A missing article is a 404 (D-12). A database failure propagates as a 5xx rather than a
+     * 204 that would claim a row was stored; the fire-and-forget client ignores it.
+     */
+    public void recordOpen(Long id) {
+        if (!articleRepository.existsById(id)) {
+            throw new NotFoundException("Article not found: " + id);
+        }
+        engagementStore.record(id, EngagementKind.OPEN_ORIGINAL);
+    }
+
+    /**
+     * Forgets the article's engagement (CAPT-06): deletes its engagement rows and nothing else. It is not an
+     * undo of the save, so the star, board memberships and thumbs vote stay, and no tombstone is kept, so a
+     * later open records again. A missing article is a 404.
+     */
+    public void forgetEngagement(Long id) {
+        if (!articleRepository.existsById(id)) {
+            throw new NotFoundException("Article not found: " + id);
+        }
+        engagementStore.deleteAll(id);
     }
 
     public Article updateState(Long id, Boolean read, Boolean starred) {
