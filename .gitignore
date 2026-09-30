@@ -69,4 +69,5 @@ pub.sh
 .claude/scripts/
 .gsd/
 .planning/state.json
+.planning/milestone.lock
 .playwright-mcp/
