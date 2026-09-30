@@ -65,12 +65,16 @@ public class ArticleFeedbackService {
 
     /**
      * Every topic's base, learned and effective weight with its limit, in ascending id order (FDBK-07),
-     * read from the same learned model as the ranking and the badge. No transaction and no write.
+     * read from the same learned model as the ranking and the badge. {@code learned} combines votes and
+     * engagement, and its capped thumbs and engagement parts follow the limit (D-15). No transaction and
+     * no write.
      */
     public List<TopicLearned> learnedTopics() {
         int cap = properties.getInterest().getBlend().getLearnedCap();
+        double engagementCap = properties.getInterest().getBlend().getEngagement().getCap();
         return queries.allTopicWeights().stream()
-                .map(w -> new TopicLearned(w.topicId(), w.base(), w.learned(), w.effective(), LearnedLimit.of(w, cap)))
+                .map(w -> new TopicLearned(w.topicId(), w.base(), w.learned(), w.effective(),
+                        LearnedLimit.of(w, cap, engagementCap), w.thumbsLearned(), w.engagementLearned()))
                 .toList();
     }
 
@@ -98,12 +102,14 @@ public class ArticleFeedbackService {
         write.run();
         Map<Long, TopicWeight> after = queries.topicWeights(matched);
         int cap = properties.getInterest().getBlend().getLearnedCap();
+        double engagementCap = properties.getInterest().getBlend().getEngagement().getCap();
         List<TopicEffect> effects = matched.stream()
                 .filter(id -> before.containsKey(id) && after.containsKey(id))
                 .map(id -> {
                     TopicWeight a = after.get(id);
                     return new TopicEffect(id, a.name(), before.get(id).effective(), a.effective(), a.base(),
-                            a.learned(), LearnedLimit.of(a, cap));
+                            a.learned(), LearnedLimit.of(a, cap, engagementCap), a.thumbsLearned(),
+                            a.engagementLearned());
                 })
                 .toList();
         return new FeedbackResult(articleService.findByIdWithBreakdown(articleId).orElseThrow(), scored, effects);

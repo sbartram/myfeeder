@@ -2,18 +2,38 @@ package org.bartram.myfeeder.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
 
 import java.time.Duration;
 import java.time.Instant;
 
 @Data
 @ConfigurationProperties(prefix = "myfeeder")
-public class MyfeederProperties {
+public class MyfeederProperties implements Validator {
+
+    /** Fixed startup-refusal text for the engagement constants (D-02, D-03); it never echoes a bound value. */
+    static final String ENGAGEMENT_INVALID = "myfeeder.interest.blend.engagement must be cap 0 (disabled), "
+            + "or 0 <= open-weight < save-weight < 1 and 0 < cap < learned-cap";
 
     private Polling polling = new Polling();
     private Retention retention = new Retention();
     private Raindrop raindrop = new Raindrop();
     private Interest interest = new Interest();
+
+    /** Boot's binder uses a bound {@link Validator} as its own validator, so every context that binds this checks it. */
+    @Override
+    public boolean supports(Class<?> type) {
+        return MyfeederProperties.class.isAssignableFrom(type);
+    }
+
+    @Override
+    public void validate(Object target, Errors errors) {
+        Interest.Blend blend = ((MyfeederProperties) target).getInterest().getBlend();
+        if (!blend.getEngagement().isValid(blend.getLearnedCap())) {
+            errors.reject("engagement", ENGAGEMENT_INVALID);
+        }
+    }
 
     @Data
     public static class Polling {
@@ -59,6 +79,27 @@ public class MyfeederProperties {
             private int learnedCap = 20;
             /** Badge tier thresholds served on /api/interest/status (D-13). */
             private Tiers tiers = new Tiers();
+            /** Engagement learning constants (LRN-05, D-01). Phase 12 calibrates them. */
+            private Engagement engagement = new Engagement();
+
+            @Data
+            public static class Engagement {
+                /** Strength of an OPEN_ORIGINAL engagement, as a fraction of one vote. */
+                private double openWeight = 0.25;
+                /** One strength for every save kind (STAR, BOARD and RAINDROP), as a fraction of one vote. */
+                private double saveWeight = 0.5;
+                /** Bound on the engagement points one topic can gain; 0 disables engagement learning. */
+                private double cap = 8;
+
+                /**
+                 * D-02/D-03: cap 0 disables engagement learning whatever the weights are, so it is always
+                 * valid; otherwise 0 <= open < save < 1 and 0 < cap < learnedCap. NaN and negative values fail.
+                 */
+                public boolean isValid(int learnedCap) {
+                    return cap == 0 || (0 <= openWeight && openWeight < saveWeight && saveWeight < 1
+                            && 0 < cap && cap < learnedCap);
+                }
+            }
 
             @Data
             public static class Tiers {

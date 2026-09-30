@@ -55,13 +55,13 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Interest ranking live in production (v0.2.0 with a real TypeSafe key, v0.2.1 calibrated): launch backfill drained 183 legacy articles in 6m54s with 0 FAILED rows and the breaker CLOSED; blend constants tuned by a read-only prod replay (profile-points 100, tiers 70/22, learn-rate 2, learned-cap 20) and served to the badge via `/status` `tiers`; Jev retry/breaker log lines; CLAUDE.md documents the Jev config, throttle levers and tuning procedure — v0.2.1 (Phase 7)
 
 - ✓ Engagement capture: opening the original link (`o`/Open Original, fire-and-forget, tab always opens) and saving (star, board, Raindrop) record sticky, idempotent `article_engagement` rows (V7); a reading-pane "Engaged: … · Forget" line deletes them; ranking unchanged — v0.3.0 (Phase 8)
+- ✓ Engagement nudges topic weights as a fractional, capped, thumbs-overridable implicit up-vote, derived at query time in `LEARNED_CTE` with no Jev calls (open 0.25 / save 0.5 / cap 8, cap 0 = exactly v0.2.1); the backend split fields and `ENGAGEMENT_CAP` limit are served; replay and drift guard extended (CAL-01) — Phase 9 (merged to the feature branch, no release per D-14)
 
 ### Active
 
-- [ ] Engagement nudges topic weights as a fractional, capped, thumbs-overridable implicit up-vote, derived at query time with no Jev calls
-- [ ] "Why N?" and Interests show engagement-learned points separately from thumbs-learned points
+- [ ] "Why N?" and Interests show engagement-learned points separately from thumbs-learned points (Phase 9 serves the split; Phase 10 renders it)
 - [ ] Engaged articles that matched no topic are suggested as new topics
-- [ ] Engagement weights and cap are calibrated by the read-only replay with an extended drift guard
+- [ ] Engagement weights and cap are calibrated by the read-only replay with an extended drift guard (replay + guard extended in Phase 9; tuning waits for Phase 12)
 
 ### Out of Scope
 
@@ -129,6 +129,9 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | Keep a single retry layer (Resilience4j) and concurrency 1 for launch backfill (D-07) | Two retry layers multiply 429s | ✓ Good — 183-article backfill drained with 0 retries, 0 FAILED, breaker CLOSED; no D-08 throttle needed (Phase 7) |
 | Record engagement outside any transaction via `recordQuietly` (Phase 8 D-07) | A failed engagement insert must never abort the user's star/board/Raindrop save | ✓ Good — shipped in v0.3.0; residual: a process stop right after `createBookmark` loses that RAINDROP row (D-08, accepted in 08-UAT) |
 | Ship capture (V7) as v0.3.0 with ranking unchanged, before the learning model (Phase 8) | Prod accumulates engagement before calibration | ✓ Good — V7 applied to prod, Priority scores and Why unchanged, smoke PASS (Phase 8) |
+| Engagement = fractional vote through `learnRate`, own cap below thumbs cap, zero floor, one sign/±50 clamp on base + thumbs + engagement (Phase 9 D-06/D-09) | Explicit thumbs must dominate; engagement must never lower a weight or lift a negative-base topic | ✓ Good — exact split proven on a 1,456-cell grid; cap 0 bit-identical to frozen v0.2.1 SQL |
+| Self-validating `MyfeederProperties` (cap 0 disables; else 0 ≤ open < save < 1 and 0 < cap < learned-cap), yaml-only tuning (Phase 9 D-02/D-03) | Bad constants must refuse startup, not silently mis-rank | ✓ Good — fixed-text `ENGAGEMENT_INVALID`; no Helm/env keys (09-UAT) |
+| No release in Phase 9 (D-14); latency guarded at 10 × baseline + 250 ms with ~20k rows (D-17) | Uncalibrated weights stay off prod until Phase 12 | ✓ Good — no index or migration needed |
 
 ## Evolution
 
@@ -148,4 +151,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-30 after Phase 8*
+*Last updated: 2026-09-30 after Phase 9*

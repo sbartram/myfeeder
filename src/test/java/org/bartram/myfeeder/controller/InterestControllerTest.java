@@ -152,8 +152,8 @@ class InterestControllerTest {
     @Test
     void learnedTopicsAreServed() throws Exception {
         when(articleFeedbackService.learnedTopics()).thenReturn(List.of(
-                new TopicLearned(10, 20, 4, 24, LearnedLimit.NONE),
-                new TopicLearned(11, 5, -20, 0, LearnedLimit.LEARNED_CAP)));
+                new TopicLearned(10, 20, 4, 24, LearnedLimit.NONE, 4, 0),
+                new TopicLearned(11, 5, -20, 0, LearnedLimit.LEARNED_CAP, -20, 0)));
 
         mockMvc.perform(get("/api/interest/topics/learned"))
                 .andExpect(status().isOk())
@@ -163,6 +163,8 @@ class InterestControllerTest {
                 .andExpect(jsonPath("$[0].learned").value(4.0))
                 .andExpect(jsonPath("$[0].effectiveWeight").value(24.0))
                 .andExpect(jsonPath("$[0].limit").value("NONE"))
+                .andExpect(jsonPath("$[0].thumbsLearned").value(4.0))
+                .andExpect(jsonPath("$[0].engagementLearned").value(0.0))
                 .andExpect(jsonPath("$[1].topicId").value(11))
                 .andExpect(jsonPath("$[1].limit").value("LEARNED_CAP"));
     }

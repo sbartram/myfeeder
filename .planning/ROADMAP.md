@@ -38,7 +38,7 @@ Full phase details: [milestones/v0.2.1-ROADMAP.md](milestones/v0.2.1-ROADMAP.md)
 **Milestone Goal:** Opening or saving an article teaches the ranking what I care about, with no extra Jev calls, and every learned point stays explainable and reversible.
 
 - [x] **Phase 8: Engagement Capture** - V7 schema; record opens (`o`/Open Original) and saves (star, board, Raindrop) as sticky, forgettable engagement; release to prod with ranking unchanged (completed 2026-09-30)
-- [ ] **Phase 9: Engagement Learning Model** - Engagement becomes a fractional, capped, thumbs-overridable up-vote in the derived learned CTE, with the replay and drift guard regenerated in the same change
+- [x] **Phase 9: Engagement Learning Model** - Engagement becomes a fractional, capped, thumbs-overridable up-vote in the derived learned CTE, with the replay and drift guard regenerated in the same change (completed 2026-09-30)
 - [ ] **Phase 10: Explainable Engagement in the UI** - "Why N?" splits each topic's weight into base + votes + engagement; engaging never re-sorts an open Priority list
 - [ ] **Phase 11: Gap Discovery** - "Suggested topics" in Interests from engaged, unmatched articles, with a near-miss filter, create-from-draft and permanent dismissal
 - [ ] **Phase 12: Calibration & Release** - Tune open/save weights and the engagement cap from prod data by read-only replay, release, and document
@@ -96,22 +96,22 @@ Plans:
   4. Open weight, save weight and engagement cap come from committed yaml; with engagement set to zero, scores and Priority order match v0.2.1 exactly, and the app refuses to start when save ≤ open or the cap is at or above the thumbs cap
   5. The calibration replay, regenerated in the same change, reproduces the app's scores with engagement present, the drift-guard test fails on any divergence between the replay and the CTE, and the extended learned CTE stays within a measured latency budget with about 20k seeded engagement rows
 
-**Plans**: 6 plans
+**Plans**: 6/6 plans complete
 
 Plans:
 **Wave 1**
-- [ ] 09-01-PLAN.md — Backend tracer: extended LEARNED_CTE end to end over HTTP, replay .sql/.sh regenerated and Phase 8 guards inverted in one commit (CAL-01); D-01 yaml constants and startup validation; driver drift checks (wave 1)
-- [ ] 09-02-PLAN.md — Frontend type parity: LearnedLimit ENGAGEMENT_CAP, optional split fields, fall-through pinned for Phase 10 (wave 1)
+- [x] 09-01-PLAN.md — Backend tracer: extended LEARNED_CTE end to end over HTTP, replay .sql/.sh regenerated and Phase 8 guards inverted in one commit (CAL-01); D-01 yaml constants and startup validation; driver drift checks (wave 1)
+- [x] 09-02-PLAN.md — Frontend type parity: LearnedLimit ENGAGEMENT_CAP, optional split fields, fall-through pinned for Phase 10 (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 09-03-PLAN.md — Exact split, test-first: 1,456-cell real-Postgres grid, split columns on topic weights and breakdown, appended TopicWeight/TopicContribution/Row fields (wave 2)
-- [ ] 09-04-PLAN.md — Behavior proofs (LRN-01..03) and zero-equals-v0.2.1 against SQL frozen from the v0.2.1 tag (D-05) (wave 2)
+- [x] 09-03-PLAN.md — Exact split, test-first: 1,456-cell real-Postgres grid, split columns on topic weights and breakdown, appended TopicWeight/TopicContribution/Row fields (wave 2)
+- [x] 09-04-PLAN.md — Behavior proofs (LRN-01..03) and zero-equals-v0.2.1 against SQL frozen from the v0.2.1 tag (D-05) (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 09-05-PLAN.md — LearnedLimit ENGAGEMENT_CAP, TopicLearned/TopicEffect split fields, vote effect before includes engagement (D-11, D-12, D-15) (wave 3)
+- [x] 09-05-PLAN.md — LearnedLimit ENGAGEMENT_CAP, TopicLearned/TopicEffect split fields, vote effect before includes engagement (D-11, D-12, D-15) (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 09-06-PLAN.md — Latency budget with ~20k engagement rows (D-13, D-17), CLAUDE.md, full gate, no release (D-14) (wave 4)
+- [x] 09-06-PLAN.md — Latency budget with ~20k engagement rows (D-13, D-17), CLAUDE.md, full gate, no release (D-14) (wave 4)
 
 **Notes**:
 
@@ -197,7 +197,7 @@ Phases execute in numeric order: 8 → 9 → 10 → 11 → 12 (Phase 11 depends 
 | 6. Thumbs Feedback | v0.2.1 | 7/7 | Complete | 2026-09-27 |
 | 7. Rollout & Calibration | v0.2.1 | 11/11 | Complete | 2026-09-29 |
 | 8. Engagement Capture | v0.3.0 | 5/5 | Complete    | 2026-09-30 |
-| 9. Engagement Learning Model | v0.3.0 | 0/TBD | Not started | - |
+| 9. Engagement Learning Model | v0.3.0 | 6/6 | Complete    | 2026-09-30 |
 | 10. Explainable Engagement in the UI | v0.3.0 | 0/TBD | Not started | - |
 | 11. Gap Discovery | v0.3.0 | 0/TBD | Not started | - |
 | 12. Calibration & Release | v0.3.0 | 0/TBD | Not started | - |

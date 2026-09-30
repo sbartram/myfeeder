@@ -316,18 +316,22 @@ class EngagementApiIntegrationTest {
                 .isZero();
     }
 
+    /**
+     * SC-1 / LRN-01: engagement on a SCORED article raises its badge and its "Why N?" topic weight over
+     * HTTP, derived at query time: no topic weight is written and Jev is never called. Open, star and board
+     * count once, at the strongest kind (a save): learnRate 2 x save 0.5 x hinge 0.9 = 0.9 points, so the
+     * base-20 topic goes to 20.9 and the badge from 68 (50 + 18) to 69 (50 + 18.81).
+     */
     @Test
-    void engagementLeavesTheRankingUnchanged() throws Exception {
+    void engagementRaisesTheRankingWithoutWritingWeightsOrCallingJev() throws Exception {
         long topicId = insertTopic("engagement-it-rust", 20);
         long a = insertArticle(insertFeed(), "a");
         insertScored(a, 2.0, 4);
         insertTopicScore(a, topicId, 0.95);
 
         String before = getArticle(a);
-        Object scoreBefore = JsonPath.read(before, "$.interestScore");
-        Object breakdownBefore = JsonPath.read(before, "$.interestBreakdown");
-        assertThat(scoreBefore).isNotNull();
-        assertThat(breakdownBefore).isNotNull();
+        assertThat((Object) JsonPath.read(before, "$.interestScore")).isEqualTo(68);
+        assertThat(topicRowWeight(before, topicId)).isEqualTo(20.0);
 
         putOpen(a);
         patchState(a, "{\"starred\":true}");
@@ -335,10 +339,49 @@ class EngagementApiIntegrationTest {
         assertThat(kinds(a)).containsExactly("BOARD", "OPEN_ORIGINAL", "STAR");
 
         String after = getArticle(a);
-        assertThat((Object) JsonPath.read(after, "$.interestScore")).isEqualTo(scoreBefore);
-        assertThat((Object) JsonPath.read(after, "$.interestBreakdown")).isEqualTo(breakdownBefore);
+        assertThat((Object) JsonPath.read(after, "$.interestScore")).isEqualTo(69);
+        assertThat(topicRowWeight(after, topicId)).isEqualTo(20.9);
         assertThat(topicWeight(topicId)).isEqualTo(20);
         verify(jevApiClient, never()).judge(any(), any());
+    }
+
+    /**
+     * D-16: the "Why N?" TOPIC row splits the learned part into votes and engagement. Starring a SCORED
+     * article that matched a base-20 topic at noul 0.95 adds learnRate 2 x save 0.5 x hinge 0.9 = 0.9
+     * engagement points and no vote points; the PROFILE row carries neither split key.
+     */
+    @Test
+    void whyBreakdownCarriesTheEngagementPart() throws Exception {
+        long topicId = insertTopic("engagement-it-split", 20);
+        long a = insertArticle(insertFeed(), "a");
+        insertScored(a, 2.0, 4);
+        insertTopicScore(a, topicId, 0.95);
+
+        patchState(a, "{\"starred\":true}");
+
+        String article = getArticle(a);
+        List<Map<String, Object>> topicRows = JsonPath.read(article,
+                "$.interestBreakdown.rows[?(@.kind == 'TOPIC' && @.topicId == " + topicId + ")]");
+        assertThat(topicRows).hasSize(1);
+        Map<String, Object> row = topicRows.get(0);
+        assertThat(((Number) row.get("baseWeight")).doubleValue()).isEqualTo(20.0);
+        assertThat(((Number) row.get("learnedWeight")).doubleValue()).isEqualTo(0.9);
+        assertThat(((Number) row.get("thumbsWeight")).doubleValue()).isEqualTo(0.0);
+        assertThat(((Number) row.get("engagementWeight")).doubleValue()).isEqualTo(0.9);
+        assertThat(((Number) row.get("weight")).doubleValue()).isEqualTo(20.9);
+
+        List<Map<String, Object>> profileRows = JsonPath.read(article,
+                "$.interestBreakdown.rows[?(@.kind == 'PROFILE')]");
+        assertThat(profileRows).hasSize(1);
+        assertThat(profileRows.get(0)).doesNotContainKeys("thumbsWeight", "engagementWeight");
+    }
+
+    /** The effective weight of the breakdown's TOPIC row for {@code topicId}. */
+    private static double topicRowWeight(String article, long topicId) {
+        List<Number> weights = JsonPath.read(article,
+                "$.interestBreakdown.rows[?(@.kind == 'TOPIC' && @.topicId == " + topicId + ")].weight");
+        assertThat(weights).hasSize(1);
+        return weights.get(0).doubleValue();
     }
 
     /** Seeds a row directly, bypassing the save paths that capture STAR and BOARD. */

@@ -644,6 +644,19 @@ describe('TopicRow', () => {
           { baseWeight: 45, learned: 5, effectiveWeight: 50, limit: 'NONE' },
           'Learned from votes +5.0 · Effective weight +50.0',
         ],
+        // D-11: ENGAGEMENT_CAP falls through with no suffix, and the "votes" label now covers
+        // engagement too; Phase 10 rewords both.
+        [
+          {
+            baseWeight: 20,
+            learned: 8,
+            effectiveWeight: 28,
+            limit: 'ENGAGEMENT_CAP',
+            thumbsLearned: 0,
+            engagementLearned: 8,
+          },
+          'Learned from votes +8.0 · Effective weight +28.0',
+        ],
       ]
       for (const [overrides, expected] of cases) {
         const view = renderRow({ initial: savedRow(), learned: learned(overrides) })
