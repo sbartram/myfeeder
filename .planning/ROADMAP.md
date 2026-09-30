@@ -96,7 +96,23 @@ Plans:
   4. Open weight, save weight and engagement cap come from committed yaml; with engagement set to zero, scores and Priority order match v0.2.1 exactly, and the app refuses to start when save ≤ open or the cap is at or above the thumbs cap
   5. The calibration replay, regenerated in the same change, reproduces the app's scores with engagement present, the drift-guard test fails on any divergence between the replay and the CTE, and the extended learned CTE stays within a measured latency budget with about 20k seeded engagement rows
 
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+**Wave 1**
+- [ ] 09-01-PLAN.md — Backend tracer: extended LEARNED_CTE end to end over HTTP, replay .sql/.sh regenerated and Phase 8 guards inverted in one commit (CAL-01); D-01 yaml constants and startup validation; driver drift checks (wave 1)
+- [ ] 09-02-PLAN.md — Frontend type parity: LearnedLimit ENGAGEMENT_CAP, optional split fields, fall-through pinned for Phase 10 (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 09-03-PLAN.md — Exact split, test-first: 1,456-cell real-Postgres grid, split columns on topic weights and breakdown, appended TopicWeight/TopicContribution/Row fields (wave 2)
+- [ ] 09-04-PLAN.md — Behavior proofs (LRN-01..03) and zero-equals-v0.2.1 against SQL frozen from the v0.2.1 tag (D-05) (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 09-05-PLAN.md — LearnedLimit ENGAGEMENT_CAP, TopicLearned/TopicEffect split fields, vote effect before includes engagement (D-11, D-12, D-15) (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 09-06-PLAN.md — Latency budget with ~20k engagement rows (D-13, D-17), CLAUDE.md, full gate, no release (D-14) (wave 4)
+
 **Notes**:
 
   - Settled: engagement skips topics with a negative base weight, and its cap is separate and additive (thumbs take their share first; engagement fills its own cap on top), below the thumbs cap of 20.

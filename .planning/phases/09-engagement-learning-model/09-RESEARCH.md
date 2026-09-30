@@ -562,16 +562,18 @@ Worked cells from the scratch run (base, thumbs raw, eng raw → w_thumbs, w, th
 | A7 | Replay env var names `ENGAGEMENT_OPEN_WEIGHT` / `ENGAGEMENT_SAVE_WEIGHT` / `ENGAGEMENT_CAP` with D-01 defaults | Code Examples | Cosmetic; Phase 12 may move them into the candidate string |
 | A8 | The prod data volume is far below the 20k-row seed (7 topics and about 200 SCORED at 07-CALIBRATION; weeks of engagement since v0.3.0) | Latency | If prod is much larger, re-measure in Phase 12 with the replay (read-only) |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **What do the existing `learned` fields of `TopicLearned` and `TopicEffect` mean after Phase 9?**
+All resolved on 2026-09-30. The user confirmed questions 1–3 and 5 during `/gsd-plan-phase 9` (see 09-CONTEXT.md D-15..D-17 and Deferred Ideas), and question 4 belongs to Phase 12.
+
+1. **RESOLVED → D-15.** **What do the existing `learned` fields of `TopicLearned` and `TopicEffect` mean after Phase 9?**
    - What we know: today they hold the capped thumbs value before the clamp, not `w − base` (Pitfall 5). `Row.learnedWeight` / `TopicContribution.learnedWeight` already hold `w − base`.
    - What's unclear: D-10's parenthetical "(w − base)" applies literally to the contribution fields, but it would change the other two fields' values even with no engagement.
    - Recommendation: keep "capped, before the clamp" semantics and make it combined: `learned = thumbsLearned + engagementLearned`. Append `thumbsLearned` and `engagementLearned` (both capped), plus `thumbsApplied` / `engagementApplied` if Phase 10 wants them. Confirm with the user during planning. The planner can treat D-10's "(w − base)" as describing `learnedWeight` only.
-2. **Should `InterestBreakdown.Row` get `thumbsWeight` / `engagementWeight` now?** Recommendation: yes. They are appended with `NON_NULL`, so PROFILE rows omit them. That keeps D-10's "Phase 10 only renders".
-3. **The latency guard formula.** D-13 gave 3× only "for example", and the measurements rule it out for topic weights. Recommendation: `≤ 10 × baseline + 250 ms`, with the numbers recorded in VERIFICATION.
-4. **Prod volumes.** These were not measured (no prod access, by constraint). Phase 12's read-only replay can report `count(*)` of engagement rows and SCORED-engaged articles. The seeded budget test is deliberately larger than prod today.
-5. **Optional `contrib AS NOT MATERIALIZED`.** Pre-existing, and not needed for the budget. Planner/user decision; default is to not do it in Phase 9 and to record it as a deferred item.
+2. **RESOLVED → D-16.** **Should `InterestBreakdown.Row` get `thumbsWeight` / `engagementWeight` now?** Recommendation: yes. They are appended with `NON_NULL`, so PROFILE rows omit them. That keeps D-10's "Phase 10 only renders".
+3. **RESOLVED → D-17.** **The latency guard formula.** D-13 gave 3× only "for example", and the measurements rule it out for topic weights. Recommendation: `≤ 10 × baseline + 250 ms`, with the numbers recorded in VERIFICATION.
+4. **RESOLVED → deferred to Phase 12 (read-only replay).** **Prod volumes.** These were not measured (no prod access, by constraint). Phase 12's read-only replay can report `count(*)` of engagement rows and SCORED-engaged articles. The seeded budget test is deliberately larger than prod today.
+5. **RESOLVED → deferred (09-CONTEXT.md Deferred Ideas).** **Optional `contrib AS NOT MATERIALIZED`.** Pre-existing, and not needed for the budget. Planner/user decision; default is to not do it in Phase 9 and to record it as a deferred item.
 
 ## Environment Availability
 
