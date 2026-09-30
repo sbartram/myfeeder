@@ -29,9 +29,9 @@ findings:
     title: "The replay's `learned` column means something different from the API's `learned`"
   - id: IN-04
     severity: info
-    disposition: open
+    disposition: fixed
     title: "Engagement makes Priority scores change on every open or star, so rows can be skipped between pages"
-open: 4
+open: 3
 total: 7
 recorded: 2026-09-30T16:58:00.000Z
 ---
@@ -46,6 +46,6 @@ recorded: 2026-09-30T16:58:00.000Z
 | IN-01 | info | fixed | Phase 10 plan 10-03: Interests line reads Learned … (votes …, engaged …) (D-14, D-15) |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
-| IN-04 | info | open | - |
+| IN-04 | info | fixed | Phase 10 plan 10-04: priorityPageAfter Javadoc states the skip limit; hint covers it (D-09) |
 
 Dispositions default to `open`. Set `fixed`, `skipped` or `deferred` by hand, with the reason in the Source column.
