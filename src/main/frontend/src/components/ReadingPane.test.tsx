@@ -362,3 +362,35 @@ describe('ReadingPane Open Original', () => {
     expect(mockOpenOriginal).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }))
   })
 })
+
+describe('ReadingPane unreported opens (CAPT-07)', () => {
+  it('inBodyLinkOpensButIsNotReported', () => {
+    mockArticle = article({ content: '<p><a href="https://example.com/inner">inner link</a></p>' })
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    renderPane()
+
+    fireEvent.click(screen.getByText('inner link'))
+
+    expect(openSpy).toHaveBeenCalledWith('https://example.com/inner', '_blank', 'noopener')
+    expect(mockOpenOriginal).not.toHaveBeenCalled()
+    openSpy.mockRestore()
+  })
+
+  it('copyLinkIsNotReported', () => {
+    mockArticle = article({ content: '<p>Body</p>' })
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    try {
+      renderPane()
+      fireEvent.click(screen.getByRole('button', { name: '🔗 Copy Link' }))
+
+      expect(writeText).toHaveBeenCalledWith('https://example.com/post')
+      expect(mockOpenOriginal).not.toHaveBeenCalled()
+      expect(fetchSpy).not.toHaveBeenCalled()
+    } finally {
+      fetchSpy.mockRestore()
+      delete (navigator as { clipboard?: unknown }).clipboard
+    }
+  })
+})
