@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { articlesApi } from '../api/articles'
 import type { Article } from '../types'
 
@@ -29,4 +29,18 @@ export function useOpenOriginal(): (article: Pick<Article, 'id' | 'url'>) => voi
     },
     [qc]
   )
+}
+
+/**
+ * Forget engagement (CAPT-06): deletes every engagement kind recorded for the article at once,
+ * with no confirm dialog, no undo and no success toast (D-03). A failure falls through to the
+ * global MutationCache error toast. On success only the exact by-id article query refreshes
+ * (D-06), so the Engaged line disappears; the lists and Priority are never refetched.
+ */
+export function useForgetEngagement() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => articlesApi.forgetEngagement(id),
+    onSuccess: (_data, id) => qc.invalidateQueries({ queryKey: ['article', id], exact: true }),
+  })
 }

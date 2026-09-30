@@ -525,6 +525,8 @@ html, body, #root {
 
 .why-toggle:hover { color: var(--text-primary); }
 
+.engagement-label { color: var(--text-muted); }
+
 /* "Why N?" breakdown: label column wraps, points column stays right-aligned. */
 .why-breakdown {
   display: grid;
