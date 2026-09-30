@@ -93,6 +93,38 @@ class InterestCalibrationReplaySqlTest {
         assertThat(run.stderr()).contains("invalid candidate: 100:70:4x");
     }
 
+    /** Named parameters of the app blend; the lookbehind skips {@code ::} casts. */
+    private static final Pattern BIND = Pattern.compile("(?<![:\\w]):([A-Za-z]\\w*)");
+
+    /** CAL-01: every named parameter of the app blend is passed by the driver under the same psql -v name. */
+    @Test
+    void driverPassesEveryBlendParameter() throws IOException {
+        String driver = Files.readString(DRIVER);
+        List<String> names = BIND.matcher(InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE)).results()
+                .map(m -> m.group(1))
+                .distinct()
+                .toList();
+
+        assertThat(names).containsExactlyInAnyOrder("profilePoints", "learnRate", "learnedCap",
+                "engagementOpenWeight", "engagementSaveWeight", "engagementCap");
+        names.forEach(name -> assertThat(driver).as(name).contains("-v " + name + "="));
+    }
+
+    /** T-09-01: a non-numeric or negative engagement value is refused before any connection. */
+    @Test
+    void driverRejectsANonNumericEngagementValue() throws Exception {
+        Map<String, String> cases = new LinkedHashMap<>();
+        cases.put("ENGAGEMENT_OPEN_WEIGHT", "0.2x");
+        cases.put("ENGAGEMENT_SAVE_WEIGHT", "-0.5");
+        cases.put("ENGAGEMENT_CAP", "8;x");
+        for (Map.Entry<String, String> c : cases.entrySet()) {
+            DriverRun run = runDriver(Map.of("MYFEEDER_PG_PASSWORD", "x", c.getKey(), c.getValue()), "100:70:40");
+
+            assertThat(run.exitCode()).as(c.getKey()).isEqualTo(2);
+            assertThat(run.stderr()).as(c.getKey()).contains("invalid candidate: " + c.getValue());
+        }
+    }
+
     @Test
     void driverRequiresThePassword() throws Exception {
         DriverRun run = runDriver(Map.of(), "100:70:40");

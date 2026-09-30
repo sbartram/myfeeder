@@ -10,6 +10,10 @@ import java.time.Instant;
 @ConfigurationProperties(prefix = "myfeeder")
 public class MyfeederProperties {
 
+    /** Fixed startup-refusal text for the engagement constants (D-02, D-03); it never echoes a bound value. */
+    static final String ENGAGEMENT_INVALID = "myfeeder.interest.blend.engagement must be cap 0 (disabled), "
+            + "or 0 <= open-weight < save-weight < 1 and 0 < cap < learned-cap";
+
     private Polling polling = new Polling();
     private Retention retention = new Retention();
     private Raindrop raindrop = new Raindrop();
