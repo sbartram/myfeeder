@@ -9,10 +9,12 @@ let mockArticle: Article
 const mockUseExtractedArticle = vi.fn()
 const mockPress = vi.fn()
 const mockOpenOriginal = vi.fn()
+const mockForget = vi.fn()
 
 // The pane renders without a QueryClientProvider, so the real hook would throw (Pitfall 2).
 vi.mock('../hooks/useEngagement', () => ({
   useOpenOriginal: () => mockOpenOriginal,
+  useForgetEngagement: () => ({ mutate: mockForget, isPending: false }),
 }))
 
 vi.mock('../hooks/useFeedback', () => ({
@@ -111,6 +113,7 @@ const mockRows = (): BreakdownRow[] => [
 beforeEach(() => {
   mockPress.mockReset()
   mockOpenOriginal.mockReset()
+  mockForget.mockReset()
   usePriorityStore.setState({ whyOpen: false })
   mockUseExtractedArticle
     .mockReset()
@@ -272,6 +275,21 @@ describe('ReadingPane score row', () => {
 
     const chips = Array.from(container.querySelectorAll('.topic-chip'))
     expect(chips.map((c) => c.getAttribute('title'))).toEqual([long, 'Rust'])
+  })
+})
+
+describe('ReadingPane engagement line', () => {
+  it('unscoredButEngagedShowsTheForgetLineInThePane', () => {
+    mockArticle = article({ interestScore: null, engagement: ['OPEN_ORIGINAL'] })
+
+    const { container } = renderPane()
+
+    const order = Array.from(
+      container.querySelectorAll('.article-title, .score-row, .article-meta')
+    ).map((el) => el.className)
+    expect(order).toEqual(['article-title', 'score-row', 'article-meta'])
+    fireEvent.click(screen.getByRole('button', { name: 'Forget engagement' }))
+    expect(mockForget).toHaveBeenCalledWith(1)
   })
 })
 
