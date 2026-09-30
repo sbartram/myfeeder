@@ -37,7 +37,7 @@ Full phase details: [milestones/v0.2.1-ROADMAP.md](milestones/v0.2.1-ROADMAP.md)
 
 **Milestone Goal:** Opening or saving an article teaches the ranking what I care about, with no extra Jev calls, and every learned point stays explainable and reversible.
 
-- [ ] **Phase 8: Engagement Capture** - V7 schema; record opens (`o`/Open Original) and saves (star, board, Raindrop) as sticky, forgettable engagement; release to prod with ranking unchanged
+- [x] **Phase 8: Engagement Capture** - V7 schema; record opens (`o`/Open Original) and saves (star, board, Raindrop) as sticky, forgettable engagement; release to prod with ranking unchanged (completed 2026-09-30)
 - [ ] **Phase 9: Engagement Learning Model** - Engagement becomes a fractional, capped, thumbs-overridable up-vote in the derived learned CTE, with the replay and drift guard regenerated in the same change
 - [ ] **Phase 10: Explainable Engagement in the UI** - "Why N?" splits each topic's weight into base + votes + engagement; engaging never re-sorts an open Priority list
 - [ ] **Phase 11: Gap Discovery** - "Suggested topics" in Interests from engaged, unmatched articles, with a near-miss filter, create-from-draft and permanent dismissal
@@ -58,7 +58,7 @@ Full phase details: [milestones/v0.2.1-ROADMAP.md](milestones/v0.2.1-ROADMAP.md)
   4. The reading pane shows a small "Forget engagement" control only when the open article has engagement; using it deletes that article's engagement and hides the control, and a later open or save records again
   5. The capture release runs in production and engagement rows accumulate from real use, while the Priority order, badges and "Why N?" are unchanged from v0.2.1
 
-**Plans**: 5/5 plans executed
+**Plans**: 5/5 plans complete
 
 Plans:
 **Wave 1**
@@ -180,7 +180,7 @@ Phases execute in numeric order: 8 → 9 → 10 → 11 → 12 (Phase 11 depends 
 | 5. Blend & Priority View | v0.2.1 | 8/8 | Complete | 2026-09-26 |
 | 6. Thumbs Feedback | v0.2.1 | 7/7 | Complete | 2026-09-27 |
 | 7. Rollout & Calibration | v0.2.1 | 11/11 | Complete | 2026-09-29 |
-| 8. Engagement Capture | v0.3.0 | 5/5 | In Progress|  |
+| 8. Engagement Capture | v0.3.0 | 5/5 | Complete    | 2026-09-30 |
 | 9. Engagement Learning Model | v0.3.0 | 0/TBD | Not started | - |
 | 10. Explainable Engagement in the UI | v0.3.0 | 0/TBD | Not started | - |
 | 11. Gap Discovery | v0.3.0 | 0/TBD | Not started | - |

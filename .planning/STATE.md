@@ -2,45 +2,45 @@
 gsd_state_version: "1.0"
 milestone: v0.3.0
 milestone_name: Engagement Learning
-current_phase: 08
-current_phase_name: Engagement Capture
-status: executing
-stopped_at: Completed 08-05-PLAN.md
-last_updated: "2026-09-30T04:10:13.973Z"
-last_activity: 2026-09-29
-last_activity_desc: Phase 08 execution started
-state_head: 3a3ac8ba1e89f9f6a0231bbc842ffc2d78e8b92f
+current_phase: 9
+current_phase_name: Engagement Learning Model
+status: planning
+stopped_at: Phase 08 complete, ready to plan Phase 9
+last_updated: "2026-09-30T13:26:46.242Z"
+last_activity: 2026-09-30
+last_activity_desc: Phase 08 complete, transitioned to Phase 9
+state_head: 8f4674a9170cedb9757500a415e1e937c64d5133
 progress:
   total_phases: 5
-  completed_phases: 7
+  completed_phases: 1
   total_plans: 5
   completed_plans: 5
-  percent: 100
+  percent: 20
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-29)
+See: .planning/PROJECT.md (updated 2026-09-30)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 08 — Engagement Capture
+**Current focus:** Phase 9 — Engagement Learning Model
 
 ## Current Position
 
-Phase: 08 (Engagement Capture) — EXECUTING
-Plan: 2 of 5
-Status: Ready to execute
-Last activity: 2026-09-29 — Phase 08 execution started
+Phase: 9 — Engagement Learning Model
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-30 — Phase 08 complete, transitioned to Phase 9
 
-Progress: [██████████] 100%
+Progress: [██░░░░░░░░] 20% (v0.3.0: 1 of 5 phases)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 51 (all in v0.2.1, Phases 1–7)
+- Total plans completed: 56 (51 in v0.2.1 Phases 1–7, 5 in Phase 8)
 - Average duration: -
 - Total execution time: -
 
@@ -48,7 +48,7 @@ Progress: [██████████] 100%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 08 | 5 | - | - |
 
 **Recent Trend:**
 
@@ -85,7 +85,8 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 
 ### Blockers/Concerns
 
-- [Phase 8] Release version RESOLVED at roadmap approval (2026-09-29): capture (V7) ships as v0.3.0 (`incrementMinor`), the calibrated build (Phase 12) as v0.3.1 — the v0.2.0→v0.2.1 pattern
+- [Phase 8] 08-REVIEW.md WR-01 open: `recordQuietly` swallows only `DataAccessException`, so a non-DB failure after `createBookmark` could surface an error and invite a duplicate-bookmark retry; IN-01..IN-06 open (non-blocking)
+- [Phase 8] 08-UI-REVIEW.md 19/24: Forget styled like the "Why N?" toggle (no danger hover), no "Forgetting…" pending label, Open Original buttons stay enabled for URL-less articles
 - [Phase 9] LRN-05's startup rules collide at zero (0 ≤ 0 trips "save > open"), so validation must accept the disabled setting; highest-risk SQL of the milestone, plan test-first with `--research-phase`
 - [Phase 12] Waits on several weeks of prod engagement collected after the Phase 8 release
 - [Phase 2] 02-REVIEW WR-04 (Raindrop createBookmark POST retried) and WR-05 (helm --set secret mangling) still deferred; WR-01..03 closed in Phase 4
@@ -120,10 +121,10 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-30T04:10:13.955Z
-Stopped at: Completed 08-05-PLAN.md
+Last session: 2026-09-30
+Stopped at: Phase 08 complete (UAT 4/4, Nyquist compliant, threats_open 0, UI 19/24), ready to plan Phase 9
 Resume file: None
 
 ## Operator Next Steps
 
-- Discuss the first v0.3.0 phase with /gsd-discuss-phase 8
+- Discuss Phase 9 with /gsd-discuss-phase 9 (plan test-first with `--research-phase`; highest-risk SQL of the milestone)

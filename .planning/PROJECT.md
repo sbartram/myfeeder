@@ -10,9 +10,9 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 ## Current State
 
-**Shipped:** v0.2.1 Interest Ranking (2026-09-29), in production on k3s (Helm revision 19). The milestone went out as three releases: v0.1.24 (dependency upgrade), v0.2.0 (interest ranking with a live TypeSafe key) and v0.2.1 (calibrated tiers 70/22). Archive: `.planning/milestones/v0.2.1-ROADMAP.md`, `.planning/MILESTONES.md`.
+**Shipped:** v0.2.1 Interest Ranking (2026-09-29), in production on k3s (Helm revision 19). The milestone went out as three releases: v0.1.24 (dependency upgrade), v0.2.0 (interest ranking with a live TypeSafe key) and v0.2.1 (calibrated tiers 70/22). Archive: `.planning/milestones/v0.2.1-ROADMAP.md`, `.planning/MILESTONES.md`. v0.3.0 (Phase 8 engagement capture, V7) is in production since 2026-09-30 (Helm revision 20); ranking unchanged.
 
-**Codebase:** ~5.4k lines of main Java, ~11.6k of test Java and ~12.5k of TypeScript/TSX. Spring Boot 4.0.8, Spring AI 2.0.1, Spring Cloud 2025.1.3, spring-ai-starter-typesafe 0.1.0 (jev-1.13.0), Flyway through V6.
+**Codebase:** ~5.4k lines of main Java, ~11.6k of test Java and ~12.5k of TypeScript/TSX. Spring Boot 4.0.8, Spring AI 2.0.1, Spring Cloud 2025.1.3, spring-ai-starter-typesafe 0.1.0 (jev-1.13.0), Flyway through V7.
 
 ## Current Milestone: v0.3.0 Engagement Learning
 
@@ -54,9 +54,10 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Thumbs up/down (buttons + `u`/`d`, Shift+D narrow picker) stores one reversible `article_feedback` row; the learned adjustment (capped ±20, sign-clamped, within ±50) is derived in SQL on every read, so the badge, Why row and Priority order update with no Jev call and no write to topic weights; effect toast, no-match "Create topic from article" draft, learned line per topic in Interests — v0.2.1 (Phase 6)
 - ✓ Interest ranking live in production (v0.2.0 with a real TypeSafe key, v0.2.1 calibrated): launch backfill drained 183 legacy articles in 6m54s with 0 FAILED rows and the breaker CLOSED; blend constants tuned by a read-only prod replay (profile-points 100, tiers 70/22, learn-rate 2, learned-cap 20) and served to the badge via `/status` `tiers`; Jev retry/breaker log lines; CLAUDE.md documents the Jev config, throttle levers and tuning procedure — v0.2.1 (Phase 7)
 
+- ✓ Engagement capture: opening the original link (`o`/Open Original, fire-and-forget, tab always opens) and saving (star, board, Raindrop) record sticky, idempotent `article_engagement` rows (V7); a reading-pane "Engaged: … · Forget" line deletes them; ranking unchanged — v0.3.0 (Phase 8)
+
 ### Active
 
-- [ ] Opening an article's original link or saving it (star, board, Raindrop) is recorded as engagement
 - [ ] Engagement nudges topic weights as a fractional, capped, thumbs-overridable implicit up-vote, derived at query time with no Jev calls
 - [ ] "Why N?" and Interests show engagement-learned points separately from thumbs-learned points
 - [ ] Engaged articles that matched no topic are suggested as new topics
@@ -126,6 +127,8 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | Badge tier thresholds are server config served on `/status` (D-13), tuned only via committed yaml (D-14) | One source for the badge colours; no Helm/env drift | ✓ Good — prod serves 70/22; frontend falls back to 70/40 until status loads (brief first-paint flash, IN-01) (Phase 7) |
 | Calibrate by read-only replay of the verbatim blend SQL against prod, drift-guarded by a test (Phase 7) | Tune without re-scoring or writing prod | ✓ Good — replay matched the app 5/5; only tiers.neutral moved 40→22, so Priority order was unchanged; guard hardened in 07-10/07-11 (WR-05/IN-10 advisories remain) |
 | Keep a single retry layer (Resilience4j) and concurrency 1 for launch backfill (D-07) | Two retry layers multiply 429s | ✓ Good — 183-article backfill drained with 0 retries, 0 FAILED, breaker CLOSED; no D-08 throttle needed (Phase 7) |
+| Record engagement outside any transaction via `recordQuietly` (Phase 8 D-07) | A failed engagement insert must never abort the user's star/board/Raindrop save | ✓ Good — shipped in v0.3.0; residual: a process stop right after `createBookmark` loses that RAINDROP row (D-08, accepted in 08-UAT) |
+| Ship capture (V7) as v0.3.0 with ranking unchanged, before the learning model (Phase 8) | Prod accumulates engagement before calibration | ✓ Good — V7 applied to prod, Priority scores and Why unchanged, smoke PASS (Phase 8) |
 
 ## Evolution
 
@@ -145,4 +148,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-29 after starting v0.3.0 Engagement Learning milestone*
+*Last updated: 2026-09-30 after Phase 8*
