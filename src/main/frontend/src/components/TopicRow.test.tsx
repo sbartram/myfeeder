@@ -594,7 +594,16 @@ describe('TopicRow', () => {
 
   describe('learned line', () => {
     function learned(overrides: Partial<TopicLearned> = {}): TopicLearned {
-      return { topicId: 7, baseWeight: 20, learned: 4, effectiveWeight: 24, limit: 'NONE', ...overrides }
+      return {
+        topicId: 7,
+        baseWeight: 20,
+        learned: 4,
+        effectiveWeight: 24,
+        limit: 'NONE',
+        thumbsLearned: 4,
+        engagementLearned: 0,
+        ...overrides,
+      }
     }
 
     function learnedLine(container: HTMLElement) {
@@ -604,9 +613,44 @@ describe('TopicRow', () => {
     it('learnedLineShowsLearnedAndEffective', () => {
       const { container } = renderRow({ initial: savedRow(), learned: learned() })
 
-      expect(learnedLine(container)?.textContent).toBe('Learned from votes +4.0 · Effective weight +24.0')
+      expect(learnedLine(container)?.textContent).toBe('Learned +4.0 (votes +4.0) · Effective weight +24.0')
       expect(screen.getByRole('spinbutton', { name: 'Topic weight value' })).toHaveValue(20)
       expect(container.querySelector('.interests-weight-sign')).toHaveTextContent('+20')
+    })
+
+    it('learnedLineSplitsVotesAndEngagement', () => {
+      const { container } = renderRow({
+        initial: savedRow(),
+        learned: learned({
+          baseWeight: 10,
+          learned: 3.5,
+          thumbsLearned: 2.0,
+          engagementLearned: 1.5,
+          effectiveWeight: 13.5,
+        }),
+      })
+
+      expect(learnedLine(container)?.textContent).toBe(
+        'Learned +3.5 (votes +2.0, engaged +1.5) · Effective weight +13.5',
+      )
+    })
+
+    it('engagedOnlyLine', () => {
+      const { container } = renderRow({
+        initial: savedRow(),
+        learned: learned({ learned: 1.5, thumbsLearned: 0, engagementLearned: 1.5, effectiveWeight: 21.5 }),
+      })
+
+      expect(learnedLine(container)?.textContent).toBe('Learned +1.5 (engaged +1.5) · Effective weight +21.5')
+    })
+
+    it('zeroPartsAreOmitted', () => {
+      const { container } = renderRow({
+        initial: savedRow(),
+        learned: learned({ learned: 0.08, thumbsLearned: 0.04, engagementLearned: 0.04, effectiveWeight: 20.1 }),
+      })
+
+      expect(learnedLine(container)?.textContent).toBe('Learned +0.1 · Effective weight +20.1')
     })
 
     it('noLearnedAdjustmentYet', () => {
@@ -621,31 +665,30 @@ describe('TopicRow', () => {
     it('limitSuffixes', () => {
       const cases: [Partial<TopicLearned>, string][] = [
         [
-          { learned: 20, effectiveWeight: 40, limit: 'LEARNED_CAP' },
-          'Learned from votes +20.0 (at max) · Effective weight +40.0',
+          { learned: 20, thumbsLearned: 20, effectiveWeight: 40, limit: 'LEARNED_CAP' },
+          'Learned +20.0 (votes +20.0 at max) · Effective weight +40.0',
         ],
         [
-          { learned: -20, effectiveWeight: 0, limit: 'LEARNED_CAP' },
-          'Learned from votes −20.0 (at min) · Effective weight 0.0',
+          { learned: -20, thumbsLearned: -20, effectiveWeight: 0, limit: 'LEARNED_CAP' },
+          'Learned −20.0 (votes −20.0 at min) · Effective weight 0.0',
         ],
         [
-          { learned: -20, effectiveWeight: 0, limit: 'SIGN_CLAMP' },
-          "Learned from votes −20.0 · Effective weight 0.0 (can't cross 0)",
+          { learned: -20, thumbsLearned: -20, effectiveWeight: 0, limit: 'SIGN_CLAMP' },
+          "Learned −20.0 (votes −20.0) · Effective weight 0.0 (can't cross 0)",
         ],
         [
-          { baseWeight: 45, learned: 5, effectiveWeight: 50, limit: 'WEIGHT_RANGE' },
-          'Learned from votes +5.0 · Effective weight +50.0 (at the +50 limit)',
+          { baseWeight: 45, learned: 5, thumbsLearned: 5, effectiveWeight: 50, limit: 'WEIGHT_RANGE' },
+          'Learned +5.0 (votes +5.0) · Effective weight +50.0 (at the +50 limit)',
         ],
         [
-          { baseWeight: -45, learned: -5, effectiveWeight: -50, limit: 'WEIGHT_RANGE' },
-          'Learned from votes −5.0 · Effective weight −50.0 (at the −50 limit)',
+          { baseWeight: -45, learned: -5, thumbsLearned: -5, effectiveWeight: -50, limit: 'WEIGHT_RANGE' },
+          'Learned −5.0 (votes −5.0) · Effective weight −50.0 (at the −50 limit)',
         ],
         [
-          { baseWeight: 45, learned: 5, effectiveWeight: 50, limit: 'NONE' },
-          'Learned from votes +5.0 · Effective weight +50.0',
+          { baseWeight: 45, learned: 5, thumbsLearned: 5, effectiveWeight: 50, limit: 'NONE' },
+          'Learned +5.0 (votes +5.0) · Effective weight +50.0',
         ],
-        // D-11: ENGAGEMENT_CAP falls through with no suffix, and the "votes" label now covers
-        // engagement too; Phase 10 rewords both.
+        // D-15: engagement at its cap reads "at max" on the engaged part, never as votes.
         [
           {
             baseWeight: 20,
@@ -655,7 +698,31 @@ describe('TopicRow', () => {
             thumbsLearned: 0,
             engagementLearned: 8,
           },
-          'Learned from votes +8.0 · Effective weight +28.0',
+          'Learned +8.0 (engaged +8.0 at max) · Effective weight +28.0',
+        ],
+        [
+          {
+            baseWeight: 45,
+            learned: 8,
+            effectiveWeight: 50,
+            limit: 'WEIGHT_RANGE',
+            thumbsLearned: 0,
+            engagementLearned: 8,
+            engagementAtCap: true,
+          },
+          'Learned +8.0 (engaged +8.0 at max) · Effective weight +50.0 (at the +50 limit)',
+        ],
+        [
+          {
+            baseWeight: 45,
+            learned: 5,
+            effectiveWeight: 50,
+            limit: 'WEIGHT_RANGE',
+            thumbsLearned: 0,
+            engagementLearned: 5,
+            engagementAtCap: false,
+          },
+          'Learned +5.0 (engaged +5.0) · Effective weight +50.0 (at the +50 limit)',
         ],
       ]
       for (const [overrides, expected] of cases) {
@@ -673,7 +740,7 @@ describe('TopicRow', () => {
       })
 
       expect(learnedLine(container)?.textContent).toBe(
-        'Learned from votes +4.0 · Effective weight updates when you save',
+        'Learned +4.0 (votes +4.0) · Effective weight updates when you save',
       )
     })
 

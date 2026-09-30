@@ -21,6 +21,7 @@ function effect(
     limit?: LearnedLimit
     thumbsLearned?: number
     engagementLearned?: number
+    engagementReplaced?: boolean
   } = {}
 ): TopicEffect {
   const baseWeight = opts.baseWeight ?? 10
@@ -34,6 +35,7 @@ function effect(
     limit: opts.limit ?? 'NONE',
     ...(opts.thumbsLearned !== undefined && { thumbsLearned: opts.thumbsLearned }),
     ...(opts.engagementLearned !== undefined && { engagementLearned: opts.engagementLearned }),
+    ...(opts.engagementReplaced !== undefined && { engagementReplaced: opts.engagementReplaced }),
   }
 }
 
@@ -163,8 +165,8 @@ describe('formatVoteToast', () => {
     expect(formatVoteToast('down', result(bottom))).toBe('👎 Deep +0.0 (weight at min −50)')
   })
 
-  it('engagementCapFallsThroughToNoNote', () => {
-    // D-11: Phase 9 has no ENGAGEMENT_CAP wording, so effectNote's default branch applies.
+  it('engagementCapIsNeverWorded', () => {
+    // D-13: the toast never words ENGAGEMENT_CAP, so effectNote's default branch applies.
     const capped = [
       effect('Rust', 28, 29.8, {
         baseWeight: 20,
@@ -177,14 +179,69 @@ describe('formatVoteToast', () => {
     expect(formatVoteToast('up', result(capped))).toBe('👍 Rust +1.8')
   })
 
-  it('engagementCapWithNoChangeIsStillListed', () => {
-    // Research Pitfall 6: any non-NONE limit is listed, so an engagement-capped topic the vote
-    // did not move reads "+0.0" with no note. Phase 10 changes this deliberately.
+  it('engagementCapAloneIsNotListed', () => {
+    // D-13: an engagement-capped topic the vote did not move is not listed (Phase 9 read "+0.0").
     const effects = [
       effect('Rust', 20, 21.8),
       effect('Go', 28, 28, { baseWeight: 20, learned: 8, limit: 'ENGAGEMENT_CAP' }),
     ]
-    expect(formatVoteToast('up', result(effects))).toBe('👍 Rust +1.8 · Go +0.0')
+    expect(formatVoteToast('up', result(effects))).toBe('👍 Rust +1.8')
+    const lone = [effect('Go', 28, 28, { baseWeight: 20, learned: 8, limit: 'ENGAGEMENT_CAP' })]
+    expect(formatVoteToast('up', result(lone))).toBe('👍 Saved · Effect under 0.1 points')
+  })
+
+  it('replacedEngagementIsNamed', () => {
+    // D-11: the vote replaced the article's engagement share on the topic.
+    const upVote = [effect('Rust', 20.9, 21.8, { engagementReplaced: true })]
+    expect(formatVoteToast('up', result(upVote))).toBe('👍 Rust +0.9 (replaces engagement)')
+    const downVote = [effect('Rust', 20.9, 18.2, { engagementReplaced: true })]
+    expect(formatVoteToast('down', result(downVote))).toBe('👎 Rust −2.7 (replaces engagement)')
+    expect(formatVoteToast('narrowed', result(downVote))).toBe(
+      '👎 Narrowed · Rust −2.7 (replaces engagement)'
+    )
+    expect(formatVoteToast('all-matched', result(downVote))).toBe(
+      '👎 All matched topics · Rust −2.7 (replaces engagement)'
+    )
+  })
+
+  it('restoredEngagementOnRemoval', () => {
+    const removed = [effect('Rust', 21.8, 20.9, { engagementReplaced: true })]
+    expect(formatVoteToast('removed', result(removed))).toBe(
+      'Vote removed · Rust −0.9 (engagement restored)'
+    )
+  })
+
+  it('aBindingLimitWinsOverTheReplacedNote', () => {
+    // D-12: one note per topic, and a binding limit's note wins.
+    const capped = [
+      effect('Rust', 40, 40, { baseWeight: 20, learned: 20, limit: 'LEARNED_CAP', engagementReplaced: true }),
+    ]
+    expect(formatVoteToast('up', result(capped))).toBe('👍 Rust +0.0 (learned at max +20)')
+    const clamped = [
+      effect('Small', 0, 0, { baseWeight: -10, learned: 10, limit: 'SIGN_CLAMP', engagementReplaced: true }),
+    ]
+    expect(formatVoteToast('up', result(clamped))).toBe("👍 Small +0.0 (can't cross 0)")
+    const top = [
+      effect('Big', 50, 50, { baseWeight: 45, learned: 5, limit: 'WEIGHT_RANGE', engagementReplaced: true }),
+    ]
+    expect(formatVoteToast('up', result(top))).toBe('👍 Big +0.0 (weight at max +50)')
+  })
+
+  it('engagementCapWithReplacementReadsReplaced', () => {
+    const effects = [
+      effect('Rust', 28.9, 29.8, {
+        baseWeight: 20,
+        learned: 9.8,
+        limit: 'ENGAGEMENT_CAP',
+        engagementReplaced: true,
+      }),
+    ]
+    expect(formatVoteToast('up', result(effects))).toBe('👍 Rust +0.9 (replaces engagement)')
+  })
+
+  it('aReplacedShareIsListedEvenWhenItRoundsAway', () => {
+    const effects = [effect('Rust', 20.02, 20.04, { engagementReplaced: true })]
+    expect(formatVoteToast('up', result(effects))).toBe('👍 Rust +0.0 (replaces engagement)')
   })
 
   it('zeroChangeWithoutLimitIsOmitted', () => {

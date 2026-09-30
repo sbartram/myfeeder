@@ -17,7 +17,7 @@ findings:
     title: "A vote that replaces engagement gets a smaller effect but `limit` stays `NONE`"
   - id: IN-01
     severity: info
-    disposition: open
+    disposition: fixed
     title: "Engagement is shown as \"Learned from votes\" on main until Phase 10"
   - id: IN-02
     severity: info
@@ -31,7 +31,7 @@ findings:
     severity: info
     disposition: open
     title: "Engagement makes Priority scores change on every open or star, so rows can be skipped between pages"
-open: 5
+open: 4
 total: 7
 recorded: 2026-09-30T16:58:00.000Z
 ---
@@ -43,7 +43,7 @@ recorded: 2026-09-30T16:58:00.000Z
 | WR-01 | warning | fixed | Phase 10 plan 10-02: LearnedLimit.of precedence LEARNED_CAP → SIGN_CLAMP → WEIGHT_RANGE → ENGAGEMENT_CAP (D-10) |
 | WR-02 | warning | open | - |
 | WR-03 | warning | fixed | Phase 10 plan 10-02: TopicEffect.engagementReplaced marks a replaced or restored engagement share (D-11) |
-| IN-01 | info | open | - |
+| IN-01 | info | fixed | Phase 10 plan 10-03: Interests line reads Learned … (votes …, engaged …) (D-14, D-15) |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
 | IN-04 | info | open | - |

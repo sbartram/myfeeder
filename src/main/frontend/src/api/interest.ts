@@ -20,8 +20,9 @@ export interface InterestTopic {
 
 /**
  * One topic's learned adjustment from GET /api/interest/topics/learned (FDBK-07). The server
- * computes every number; the client prints them and never adds base and learned. learned combines
- * votes and engagement until Phase 10 splits the line (ENG-F6 stays deferred).
+ * computes every number; the client prints them and never adds base and learned. learned is
+ * votes plus engagement, and the Interests line shows the two parts (D-14); ENG-F6 keeps only
+ * the contributing-article counts and a richer layout.
  */
 export interface TopicLearned {
   topicId: number
@@ -33,6 +34,8 @@ export interface TopicLearned {
   thumbsLearned?: number
   /** The capped engagement part; it and thumbsLearned sum to learned (D-15). */
   engagementLearned?: number
+  /** True when engagement reached its cap, whichever limit is reported (plan 10-02, D-15). */
+  engagementAtCap?: boolean
 }
 
 /**

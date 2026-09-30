@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { InterestTopic, TopicLearned } from '../api/interest'
 import { ApiError } from '../api/client'
+import { formatDelta } from '../utils/feedback'
 import {
   useCreateInterestTopic,
   useDeleteInterestTopic,
@@ -213,13 +214,27 @@ interface TopicRowProps {
 }
 
 /**
- * The read-only learned line under a saved row's weight (FDBK-07). It prints the server's learned
- * and effective values; the only client arithmetic is rounding. While the base weight has an
- * unsaved edit, the effective weight isn't known, so the line says it updates on save.
+ * The read-only learned line under a saved row's weight (FDBK-07, D-14, D-15). It prints the
+ * server's learned value split into its votes and engaged parts, then the effective weight; the
+ * only client arithmetic is rounding. A part that rounds to zero tenths is omitted, and so are the
+ * parentheses when both are. The votes part reads "at max" / "at min" at the learned cap; the
+ * engaged part reads "at max" when engagement is at its cap, whichever limit is reported. While
+ * the base weight has an unsaved edit, the effective weight isn't known, so the line says it
+ * updates on save.
  */
 function LearnedLine({ learned, baseEdited }: { learned: TopicLearned; baseEdited: boolean }) {
-  const capSuffix =
-    learned.limit === 'LEARNED_CAP' ? (learned.learned > 0 ? ' (at max)' : ' (at min)') : ''
+  const votes = learned.thumbsLearned ?? 0
+  const engaged = learned.engagementLearned ?? 0
+  const engagedAtMax = learned.engagementAtCap ?? learned.limit === 'ENGAGEMENT_CAP'
+  const parts: string[] = []
+  if (Math.round(votes * 10) !== 0) {
+    const cap = learned.limit === 'LEARNED_CAP' ? (votes > 0 ? ' at max' : ' at min') : ''
+    parts.push(`votes ${formatDelta(votes)}${cap}`)
+  }
+  if (Math.round(engaged * 10) !== 0) {
+    parts.push(`engaged ${formatDelta(engaged)}${engagedAtMax ? ' at max' : ''}`)
+  }
+  const split = parts.length > 0 ? ` (${parts.join(', ')})` : ''
   const effSuffix =
     learned.limit === 'SIGN_CLAMP'
       ? " (can't cross 0)"
@@ -233,8 +248,8 @@ function LearnedLine({ learned, baseEdited }: { learned: TopicLearned; baseEdite
   if (baseEdited) {
     return (
       <p className="interests-learned">
-        Learned from votes {value(formatSigned(learned.learned, 1))}
-        {capSuffix} · Effective weight updates when you save
+        Learned {value(formatSigned(learned.learned, 1))}
+        {split} · Effective weight updates when you save
       </p>
     )
   }
@@ -248,8 +263,8 @@ function LearnedLine({ learned, baseEdited }: { learned: TopicLearned; baseEdite
   }
   return (
     <p className="interests-learned">
-      Learned from votes {value(formatSigned(learned.learned, 1))}
-      {capSuffix} · Effective weight {value(formatSigned(learned.effectiveWeight, 1))}
+      Learned {value(formatSigned(learned.learned, 1))}
+      {split} · Effective weight {value(formatSigned(learned.effectiveWeight, 1))}
       {effSuffix}
     </p>
   )

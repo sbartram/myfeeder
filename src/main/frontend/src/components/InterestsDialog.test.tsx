@@ -1130,7 +1130,7 @@ describe('InterestsDialog', () => {
 
   describe('learned adjustments', () => {
     function learnedEntry(topicId: number, learned: number, effectiveWeight: number, baseWeight = 20) {
-      return { topicId, baseWeight, learned, effectiveWeight, limit: 'NONE' }
+      return { topicId, baseWeight, learned, effectiveWeight, limit: 'NONE', thumbsLearned: learned, engagementLearned: 0 }
     }
 
     function learnedGets() {
@@ -1159,10 +1159,10 @@ describe('InterestsDialog', () => {
         rows.map((row) => (within(row).getByRole('textbox', { name: 'Topic name' }) as HTMLInputElement).value),
       ).toEqual(['Rust', 'Go'])
       expect(rows[0].querySelector('.interests-learned')?.textContent).toBe(
-        'Learned from votes +4.0 · Effective weight +24.0',
+        'Learned +4.0 (votes +4.0) · Effective weight +24.0',
       )
       expect(rows[1].querySelector('.interests-learned')?.textContent).toBe(
-        'Learned from votes −3.0 · Effective weight +17.0',
+        'Learned −3.0 (votes −3.0) · Effective weight +17.0',
       )
     })
 
