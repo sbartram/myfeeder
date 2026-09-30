@@ -3,9 +3,9 @@ phase: "8"
 slug: "engagement-capture"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: validated
+nyquist_compliant: true
+wave_0_complete: true
 created: "2026-09-29"
 ---
 
@@ -42,15 +42,15 @@ Filled in from the PLAN.md task IDs during execution / validate-phase. Requireme
 
 | Requirement | Behavior | Test Type | Automated Command | File Exists | Status |
 |-------------|----------|-----------|-------------------|-------------|--------|
-| CAPT-01 | Helper opens before recording, records once per call, swallows errors; all three entry points use it; blank URL skipped | unit (Vitest) | `cd src/main/frontend && npx vitest run src/hooks/useEngagement.test.ts src/components/ReadingPane.test.tsx src/hooks/useKeyboardShortcuts.test.ts` | ❌ W0 (`useEngagement.test.ts`); others extend | ⬜ pending |
-| CAPT-01 | PUT open → 204; repeat → 204 with one row; unknown id → 404 | integration | `./gradlew test --tests "*EngagementApiIntegrationTest"` | ❌ W0 | ⬜ pending |
-| CAPT-02 | STAR only on false→true; already-starred / read-only PATCH records nothing; store failure doesn't fail the star | unit | `./gradlew test --tests "*ArticleServiceTest"` | ✅ extend | ⬜ pending |
-| CAPT-03 | BOARD on add and re-add; not when save throws; two boards → one row | unit + integration | `./gradlew test --tests "*BoardServiceTest" --tests "*EngagementApiIntegrationTest"` | ✅ extend / ❌ W0 | ⬜ pending |
-| CAPT-04 | RAINDROP after `createBookmark` returns; none on not-configured, disabled, no-collection or client throw | unit | `./gradlew test --tests "*RaindropServiceTest"` | ✅ extend | ⬜ pending |
-| CAPT-05 | Unstar, board remove, board delete keep rows; feed delete cascades and succeeds | integration + migration | `./gradlew test --tests "*V7EngagementMigrationTest" --tests "*EngagementApiIntegrationTest"` | ❌ W0 | ⬜ pending |
-| CAPT-06 | By-id carries `engagement` (`[]` when none); DELETE → 204, rows gone, later open records again; control shows only when engaged (incl. unscored) | integration + controller + Vitest | `./gradlew test --tests "*ArticleControllerTest" --tests "*EngagementApiIntegrationTest"`; `cd src/main/frontend && npx vitest run src/components/ReadingPane.test.tsx` | ✅ extend / ❌ W0 | ⬜ pending |
-| CAPT-07 | In-body link and Copy Link don't call the helper/API; auto-mark-read records nothing | Vitest + unit | `cd src/main/frontend && npx vitest run src/components/ReadingPane.test.tsx`; `./gradlew test --tests "*ArticleServiceTest"` | ✅ extend | ⬜ pending |
-| SC-5 ranking unchanged | `InterestScoreQueries` never mentions the new tables; badge identical before/after open+star+board; replay drift test green | static + integration | `./gradlew test --tests "*ArticleEngagementStoreTest" --tests "*EngagementApiIntegrationTest" --tests "*InterestCalibrationReplaySqlTest"` | ❌ W0 / ✅ | ⬜ pending |
+| CAPT-01 | Helper opens before recording, records once per call, swallows errors; all three entry points use it; blank URL skipped | unit (Vitest) | `cd src/main/frontend && npx vitest run src/hooks/useEngagement.test.ts src/components/ReadingPane.test.tsx src/hooks/useKeyboardShortcuts.test.ts` | ✅ | ✅ green |
+| CAPT-01 | PUT open → 204; repeat → 204 with one row; unknown id → 404 | integration | `./gradlew test --tests "*EngagementApiIntegrationTest"` | ✅ | ✅ green |
+| CAPT-02 | STAR only on false→true; already-starred / read-only PATCH records nothing; store failure doesn't fail the star | unit | `./gradlew test --tests "*ArticleServiceTest"` | ✅ | ✅ green |
+| CAPT-03 | BOARD on add and re-add; not when save throws; two boards → one row | unit + integration | `./gradlew test --tests "*BoardServiceTest" --tests "*EngagementApiIntegrationTest"` | ✅ | ✅ green |
+| CAPT-04 | RAINDROP after `createBookmark` returns; none on not-configured, disabled, no-collection or client throw | unit | `./gradlew test --tests "*RaindropServiceTest"` | ✅ | ✅ green |
+| CAPT-05 | Unstar, board remove, board delete keep rows; feed delete cascades and succeeds | integration + migration | `./gradlew test --tests "*V7EngagementMigrationTest" --tests "*EngagementApiIntegrationTest"` | ✅ | ✅ green |
+| CAPT-06 | By-id carries `engagement` (`[]` when none); DELETE → 204, rows gone, later open records again; control shows only when engaged (incl. unscored) | integration + controller + Vitest | `./gradlew test --tests "*ArticleControllerTest" --tests "*EngagementApiIntegrationTest"`; `cd src/main/frontend && npx vitest run src/components/ReadingPane.test.tsx` | ✅ | ✅ green |
+| CAPT-07 | In-body link and Copy Link don't call the helper/API; auto-mark-read records nothing | Vitest + unit | `cd src/main/frontend && npx vitest run src/components/ReadingPane.test.tsx`; `./gradlew test --tests "*ArticleServiceTest"` | ✅ | ✅ green |
+| SC-5 ranking unchanged | `InterestScoreQueries` never mentions the new tables; badge identical before/after open+star+board; replay drift test green | static + integration | `./gradlew test --tests "*ArticleEngagementStoreTest" --tests "*EngagementApiIntegrationTest" --tests "*InterestCalibrationReplaySqlTest"` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -58,11 +58,11 @@ Filled in from the PLAN.md task IDs during execution / validate-phase. Requireme
 
 ## Wave 0 Requirements
 
-- [ ] `src/test/java/org/bartram/myfeeder/repository/V7EngagementMigrationTest.java` — CHECKs, PKs, cascades (template: `V6InterestScoringMigrationTest`)
-- [ ] `src/test/java/org/bartram/myfeeder/repository/ArticleEngagementStoreTest.java` — idempotency, kinds order, deleteAll count, quiet-record swallows FK failure, static "ranking SQL doesn't read engagement" guard
-- [ ] `src/test/java/org/bartram/myfeeder/controller/EngagementApiIntegrationTest.java` — `@SpringBootTest`, no test transaction, cleanup by feed delete + board-name prefix, `@MockitoBean JevApiClient` with `verify(never())`
-- [ ] `src/main/frontend/src/hooks/useEngagement.test.ts`
-- [ ] `@Mock ArticleEngagementStore` added to `ArticleServiceTest`, `BoardServiceTest`, `RaindropServiceTest`; new mocks added to `ReadingPane.test.tsx` and `useKeyboardShortcuts.test.ts`
+- [x] `src/test/java/org/bartram/myfeeder/repository/V7EngagementMigrationTest.java` — CHECKs, PKs, cascades (template: `V6InterestScoringMigrationTest`)
+- [x] `src/test/java/org/bartram/myfeeder/repository/ArticleEngagementStoreTest.java` — idempotency, kinds order, deleteAll count, quiet-record swallows FK failure, static "ranking SQL doesn't read engagement" guard
+- [x] `src/test/java/org/bartram/myfeeder/controller/EngagementApiIntegrationTest.java` — `@SpringBootTest`, no test transaction, cleanup by feed delete + board-name prefix, `@MockitoBean JevApiClient` with `verify(never())`
+- [x] `src/main/frontend/src/hooks/useEngagement.test.ts`
+- [x] `@Mock ArticleEngagementStore` added to `ArticleServiceTest`, `BoardServiceTest`, `RaindropServiceTest`; new mocks added to `ReadingPane.test.tsx` and `useKeyboardShortcuts.test.ts`
 
 ---
 
@@ -78,11 +78,23 @@ Filled in from the PLAN.md task IDs during execution / validate-phase. Requireme
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 180s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 180s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-09-30
+
+---
+
+## Validation Audit 2026-09-30
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+All nine requirement rows are COVERED. Backend: 130 tests across `EngagementApiIntegrationTest`, `V7EngagementMigrationTest`, `ArticleEngagementStoreTest`, `ArticleServiceTest`, `BoardServiceTest`, `RaindropServiceTest`, `ArticleControllerTest` and `InterestCalibrationReplaySqlTest`, 0 failed. Frontend: 57 tests across `useEngagement.test.ts`, `ReadingPane.test.tsx` and `useKeyboardShortcuts.test.ts`, 0 failed. The three Manual-Only rows passed human UAT (08-UAT.md tests 1 and 2).
