@@ -43,6 +43,11 @@ myfeeder:
       profile-points: 100
       learn-rate: 2
       learned-cap: 20
+      # D-01: engagement learning (LRN-05). cap 0 disables; otherwise 0 <= open-weight < save-weight < 1 and 0 < cap < learned-cap, checked at startup. Phase 12 calibrates.
+      engagement:
+        open-weight: 0.25
+        save-weight: 0.5
+        cap: 8
       # D-13: badge tier thresholds served on /api/interest/status (display score >= high is high, >= neutral is neutral). Phase 7 tunes them (07-CALIBRATION.md).
       tiers:
         high: 70

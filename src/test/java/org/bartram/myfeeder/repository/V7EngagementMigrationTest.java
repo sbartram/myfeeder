@@ -202,18 +202,19 @@ class V7EngagementMigrationTest {
     }
 
     /**
-     * Engagement does not touch the ranking in Phase 8 (SC-5). Phase 9 (LRN-01, CAL-01) deliberately feeds
-     * engagement into the learned CTE and the calibration replay, so it removes or inverts this test there.
+     * Phase 9 (LRN-01, CAL-01) feeds engagement into the learned CTE and the calibration replay, so both
+     * read {@code article_engagement}. Neither reads {@code topic_suggestion_dismissal}: Phase 11 reads that
+     * table from its own service.
      */
     @Test
-    void rankingSqlDoesNotReadTheV7TablesYet() throws IOException {
+    void rankingSqlReadsEngagementButNotDismissals() throws IOException {
         String queries = Files.readString(Path.of("src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java"));
         String replay = Files.readString(Path.of("scripts/interest-calibration-replay.sql"));
 
-        for (String table : List.of("article_engagement", "topic_suggestion_dismissal")) {
-            assertThat(queries).doesNotContain(table);
-            assertThat(replay).doesNotContain(table);
-        }
+        assertThat(queries).contains("article_engagement");
+        assertThat(replay).contains("article_engagement");
+        assertThat(queries).doesNotContain("topic_suggestion_dismissal");
+        assertThat(replay).doesNotContain("topic_suggestion_dismissal");
     }
 
     private List<String> columns(String table) {
