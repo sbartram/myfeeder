@@ -100,6 +100,16 @@ public class ArticleController {
         return articleFeedbackService.clear(id);
     }
 
+    /**
+     * Records that the user opened the article's original link. Bodyless and idempotent. PUT is never a
+     * CORS simple request, so no content-type guard is needed.
+     */
+    @PutMapping("/{id}/engagement/open")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void recordOpen(@PathVariable Long id) {
+        articleService.recordOpen(id);
+    }
+
     @PostMapping("/{id}/raindrop")
     public ResponseEntity<Void> saveToRaindrop(@PathVariable Long id) {
         Article article = articleService.findById(id)

@@ -2,7 +2,9 @@ package org.bartram.myfeeder.service;
 
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.ArticleFeedback;
+import org.bartram.myfeeder.model.EngagementKind;
 import org.bartram.myfeeder.model.UnreadCount;
+import org.bartram.myfeeder.repository.ArticleEngagementStore;
 import org.bartram.myfeeder.repository.ArticleFeedbackStore;
 import org.bartram.myfeeder.repository.ArticleRepository;
 import org.bartram.myfeeder.repository.InterestScoreQueries;
@@ -26,6 +28,7 @@ class ArticleServiceTest {
     @Mock private ArticleRepository articleRepository;
     @Mock private InterestScoreQueries interestScoreQueries;
     @Mock private ArticleFeedbackStore articleFeedbackStore;
+    @Mock private ArticleEngagementStore engagementStore;
     @InjectMocks private ArticleService articleService;
 
     @Test
@@ -123,6 +126,54 @@ class ArticleServiceTest {
 
         assertThat(result).isPresent();
         assertThat(result.get().getFeedback()).isNull();
+    }
+
+    @Test
+    void findByIdWithBreakdownCarriesEngagement() {
+        var article = new Article();
+        article.setId(1L);
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(interestScoreQueries.breakdownInputs(1L)).thenReturn(Optional.empty());
+        when(articleFeedbackStore.find(1L)).thenReturn(Optional.empty());
+        when(engagementStore.kinds(1L)).thenReturn(List.of(EngagementKind.OPEN_ORIGINAL, EngagementKind.STAR));
+
+        var result = articleService.findByIdWithBreakdown(1L);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getEngagement()).containsExactly(EngagementKind.OPEN_ORIGINAL, EngagementKind.STAR);
+    }
+
+    @Test
+    void findByIdWithBreakdownWithoutEngagementHasAnEmptyList() {
+        var article = new Article();
+        article.setId(1L);
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(interestScoreQueries.breakdownInputs(1L)).thenReturn(Optional.empty());
+        when(articleFeedbackStore.find(1L)).thenReturn(Optional.empty());
+        when(engagementStore.kinds(1L)).thenReturn(List.of());
+
+        var result = articleService.findByIdWithBreakdown(1L);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getEngagement()).isNotNull().isEmpty();
+    }
+
+    @Test
+    void recordOpenStoresOpenOriginal() {
+        when(articleRepository.existsById(5L)).thenReturn(true);
+
+        articleService.recordOpen(5L);
+
+        verify(engagementStore).record(5L, EngagementKind.OPEN_ORIGINAL);
+    }
+
+    @Test
+    void recordOpenOnAMissingArticleThrowsNotFoundAndStoresNothing() {
+        when(articleRepository.existsById(5L)).thenReturn(false);
+
+        org.junit.jupiter.api.Assertions.assertThrows(NotFoundException.class, () -> articleService.recordOpen(5L));
+
+        verifyNoInteractions(engagementStore);
     }
 
     @Test
