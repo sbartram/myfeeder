@@ -54,7 +54,8 @@ export type EngagementKind = 'OPEN_ORIGINAL' | 'STAR' | 'BOARD' | 'RAINDROP'
 
 /**
  * Which bound, if any, held a topic's learned adjustment back on the last vote, including the
- * engagement cap (D-11).
+ * engagement cap (D-11). The vote toast never words ENGAGEMENT_CAP (D-13); the Interests line
+ * reads it as "at max" on the engaged part (D-15).
  */
 export type LearnedLimit = 'NONE' | 'LEARNED_CAP' | 'SIGN_CLAMP' | 'WEIGHT_RANGE' | 'ENGAGEMENT_CAP'
 
@@ -78,6 +79,11 @@ export interface TopicEffect {
   thumbsLearned?: number
   /** The capped engagement part of learned; learned is thumbsLearned plus this (D-15). */
   engagementLearned?: number
+  /**
+   * True when the vote replaced this article's engagement share on the topic, or a removal
+   * restored it (D-11); optional so existing fixtures still type-check.
+   */
+  engagementReplaced?: boolean
 }
 
 /** The PUT/DELETE /api/articles/{id}/feedback response; effects are in ascending topicId order. */
