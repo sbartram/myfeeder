@@ -254,6 +254,31 @@ class EngagementApiIntegrationTest {
         assertThat(kinds(a)).isEmpty();
     }
 
+    @Test
+    void boardAddRecordsOneBoardRowAcrossTwoBoards() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+        long boardA = createBoard("engagement-it-a");
+        long boardB = createBoard("engagement-it-b");
+
+        addToBoard(boardA, a);
+        addToBoard(boardB, a);
+
+        assertThat(kinds(a)).containsExactly("BOARD");
+    }
+
+    @Test
+    void reAddingAnArticleAlreadyOnABoardEarnsBoard() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+        long board = createBoard("engagement-it-pre-v7");
+        // The pre-V7 shape: on the board, with no engagement row
+        jdbcTemplate.update("INSERT INTO board_article (board_id, article_id) VALUES (?, ?)", board, a);
+        assertThat(kinds(a)).isEmpty();
+
+        addToBoard(board, a);
+
+        assertThat(kinds(a)).containsExactly("BOARD");
+    }
+
     /** Seeds a row directly, bypassing the save paths that capture STAR and BOARD. */
     private void insertEngagement(long articleId, String kind) {
         jdbcTemplate.update("INSERT INTO article_engagement (article_id, kind) VALUES (?, ?)", articleId, kind);
@@ -264,6 +289,22 @@ class EngagementApiIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());
+    }
+
+    private long createBoard(String name) throws Exception {
+        String body = mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"" + name + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return ((Number) JsonPath.read(body, "$.id")).longValue();
+    }
+
+    private void addToBoard(long boardId, long articleId) throws Exception {
+        mockMvc.perform(post("/api/boards/{id}/articles", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"articleId\":" + articleId + "}"))
+                .andExpect(status().isCreated());
     }
 
     private void putOpen(long articleId) throws Exception {
