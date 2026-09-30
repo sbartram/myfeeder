@@ -345,6 +345,22 @@ class FeedbackApiIntegrationTest {
     }
 
     @Test
+    void learnedEndpointReportsTheEngagementCap() throws Exception {
+        long feedId = insertFeed();
+        long engcap = insertTopic(FEEDBACK_TOPIC_PREFIX + "engcap", 20);
+        for (int i = 0; i < 8; i++) {
+            long id = insertMatchingArticle(feedId, "eng" + i, engcap, 1.0);
+            insertEngagement(id, "STAR");
+        }
+
+        List<Map<String, Object>> entries = learnedEntries(List.of(engcap));
+
+        assertThat(entries).hasSize(1);
+        assertLearned(entries.get(0), 20.0, 8.0, 28.0, "ENGAGEMENT_CAP");
+        assertThat(topicWeight(engcap)).isEqualTo(20);
+    }
+
+    @Test
     void learnedEntryDisappearsWithItsTopic() throws Exception {
         long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
         long go = insertTopic(FEEDBACK_TOPIC_PREFIX + "go", 10);
@@ -468,6 +484,10 @@ class FeedbackApiIntegrationTest {
         jdbcTemplate.update(
                 "INSERT INTO article_topic_score (article_id, topic_id, noul, topic_version) VALUES (?, ?, ?, 1)",
                 articleId, topicId, noul);
+    }
+
+    private void insertEngagement(long articleId, String kind) {
+        jdbcTemplate.update("INSERT INTO article_engagement (article_id, kind) VALUES (?, ?)", articleId, kind);
     }
 
     private void insertScored(long articleId, double profileScore, int profileMaxLevel) {

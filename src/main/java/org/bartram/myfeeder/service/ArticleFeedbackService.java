@@ -69,8 +69,10 @@ public class ArticleFeedbackService {
      */
     public List<TopicLearned> learnedTopics() {
         int cap = properties.getInterest().getBlend().getLearnedCap();
+        double engagementCap = properties.getInterest().getBlend().getEngagement().getCap();
         return queries.allTopicWeights().stream()
-                .map(w -> new TopicLearned(w.topicId(), w.base(), w.learned(), w.effective(), LearnedLimit.of(w, cap)))
+                .map(w -> new TopicLearned(w.topicId(), w.base(), w.learned(), w.effective(),
+                        LearnedLimit.of(w, cap, engagementCap)))
                 .toList();
     }
 
@@ -98,12 +100,13 @@ public class ArticleFeedbackService {
         write.run();
         Map<Long, TopicWeight> after = queries.topicWeights(matched);
         int cap = properties.getInterest().getBlend().getLearnedCap();
+        double engagementCap = properties.getInterest().getBlend().getEngagement().getCap();
         List<TopicEffect> effects = matched.stream()
                 .filter(id -> before.containsKey(id) && after.containsKey(id))
                 .map(id -> {
                     TopicWeight a = after.get(id);
                     return new TopicEffect(id, a.name(), before.get(id).effective(), a.effective(), a.base(),
-                            a.learned(), LearnedLimit.of(a, cap));
+                            a.learned(), LearnedLimit.of(a, cap, engagementCap));
                 })
                 .toList();
         return new FeedbackResult(articleService.findByIdWithBreakdown(articleId).orElseThrow(), scored, effects);
