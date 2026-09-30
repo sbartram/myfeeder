@@ -340,8 +340,10 @@ class FeedbackApiIntegrationTest {
         assertThat(entries).extracting(e -> ((Number) e.get("topicId")).longValue()).containsExactly(rust, go);
         assertLearned(entries.get(0), 20.0, 1.8, 21.8, "NONE");
         assertLearnedParts(entries.get(0), 1.8, 0.0);
+        assertEngagementAtCap(entries.get(0), false);
         assertLearned(entries.get(1), 10.0, 0.0, 10.0, "NONE");
         assertLearnedParts(entries.get(1), 0.0, 0.0);
+        assertEngagementAtCap(entries.get(1), false);
         assertThat(topicWeight(rust)).isEqualTo(20);
         assertThat(topicWeight(go)).isEqualTo(10);
     }
@@ -360,6 +362,7 @@ class FeedbackApiIntegrationTest {
         assertThat(entries).hasSize(1);
         assertLearned(entries.get(0), 20.0, 8.0, 28.0, "ENGAGEMENT_CAP");
         assertLearnedParts(entries.get(0), 0.0, 8.0);
+        assertEngagementAtCap(entries.get(0), true);
         assertThat(topicWeight(engcap)).isEqualTo(20);
     }
 
@@ -378,6 +381,8 @@ class FeedbackApiIntegrationTest {
         assertThat(entries).hasSize(1);
         assertLearned(entries.get(0), 45.0, 8.0, 50.0, "WEIGHT_RANGE");
         assertLearnedParts(entries.get(0), 0.0, 8.0);
+        // Engagement is still at its cap, so the Interests line can say "at max" (D-15)
+        assertEngagementAtCap(entries.get(0), true);
         assertThat(topicWeight(rangecap)).isEqualTo(45);
     }
 
@@ -395,6 +400,7 @@ class FeedbackApiIntegrationTest {
         assertThat(entries).hasSize(1);
         assertLearned(entries.get(0), 20.0, 2.7, 22.7, "NONE");
         assertLearnedParts(entries.get(0), 1.8, 0.9);
+        assertEngagementAtCap(entries.get(0), false);
         assertThat(topicWeight(mixed)).isEqualTo(20);
     }
 
@@ -495,6 +501,10 @@ class FeedbackApiIntegrationTest {
     private static void assertLearnedParts(Map<String, Object> entry, double thumbs, double engagement) {
         assertThat(((Number) entry.get("thumbsLearned")).doubleValue()).isEqualTo(thumbs);
         assertThat(((Number) entry.get("engagementLearned")).doubleValue()).isEqualTo(engagement);
+    }
+
+    private static void assertEngagementAtCap(Map<String, Object> entry, boolean atCap) {
+        assertThat(entry.get("engagementAtCap")).isEqualTo(atCap);
     }
 
     /** Article N: rust noul 0.95 (m 0.9), politics 0.8 (m 0.6), go 0.6 (m 0.2). */

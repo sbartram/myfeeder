@@ -72,15 +72,17 @@ public class ArticleFeedbackService {
     /**
      * Every topic's base, learned and effective weight with its limit, in ascending id order (FDBK-07),
      * read from the same learned model as the ranking and the badge. {@code learned} combines votes and
-     * engagement, and its capped thumbs and engagement parts follow the limit (D-15). No transaction and
-     * no write.
+     * engagement, and its capped thumbs and engagement parts follow the limit (D-15). {@code engagementAtCap}
+     * comes from {@link LearnedLimit#engagementAtCap}, the same rule the limit uses, whatever limit is
+     * reported. No transaction and no write.
      */
     public List<TopicLearned> learnedTopics() {
         int cap = properties.getInterest().getBlend().getLearnedCap();
         double engagementCap = properties.getInterest().getBlend().getEngagement().getCap();
         return queries.allTopicWeights().stream()
                 .map(w -> new TopicLearned(w.topicId(), w.base(), w.learned(), w.effective(),
-                        LearnedLimit.of(w, cap, engagementCap), w.thumbsLearned(), w.engagementLearned()))
+                        LearnedLimit.of(w, cap, engagementCap), w.thumbsLearned(), w.engagementLearned(),
+                        LearnedLimit.engagementAtCap(w, engagementCap)))
                 .toList();
     }
 
