@@ -40,13 +40,19 @@ export function useOpenOriginal(): (article: Pick<Article, 'id' | 'url'>) => voi
 /**
  * Forget engagement (CAPT-06): deletes every engagement kind recorded for the article at once,
  * with no confirm dialog, no undo and no success toast (D-03). A failure falls through to the
- * global MutationCache error toast. On success only the exact by-id article query refreshes
- * (D-06), so the Engaged line disappears; the lists and Priority are never refetched.
+ * global MutationCache error toast and runs no reaction. On success afterEngagement refetches the
+ * article by id, so the Engaged line disappears, and refreshes the learned weights and lists
+ * (D-07, replacing Phase 8's by-id-only refresh). Priority is only patched, never refetched:
+ * its row changes in place, with the "Ranking changed" hint, when the score moved (D-06).
  */
 export function useForgetEngagement() {
   const qc = useQueryClient()
+  const onPriority = useMatch('/priority') !== null
   return useMutation({
     mutationFn: (id: number) => articlesApi.forgetEngagement(id),
-    onSuccess: (_data, id) => qc.invalidateQueries({ queryKey: ['article', id], exact: true }),
+    onSuccess: (_data, id) => {
+      // Never return the promise: the mutation would stay pending until the GET ends (Pitfall 5).
+      void afterEngagement(qc, id, onPriority)
+    },
   })
 }
