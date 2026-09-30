@@ -6,6 +6,7 @@ import { ApiError } from '../api/client'
 import { useToastStore } from '../components/Toast'
 import { usePriorityStore } from '../stores/priorityStore'
 import { patchPriorityArticle } from './usePriorityArticles'
+import { invalidateAfterLearnedChange } from './engagementReaction'
 import { formatVoteToast, matchedTopics, nextVote, type Vote, type VoteKind } from '../utils/feedback'
 import type { Article, ArticleFeedback, FeedbackResult } from '../types'
 
@@ -60,17 +61,13 @@ export function useVoteFeedback() {
         ? (qc.getQueryData<Article>(['article', v.id])?.feedback ?? null)
         : (res.article.feedback ?? null)
       qc.setQueryData<Article>(['article', v.id], { ...res.article, feedback })
-      void qc.invalidateQueries({ queryKey: ['interest', 'learned'] })
-      void qc.invalidateQueries({ queryKey: ['articles'] })
+      // Learned weights and lists; off Priority also every other by-id article (D-05), leaving
+      // ['article', n, 'extracted'] alone. The engagement reactions share this set.
+      invalidateAfterLearnedChange(qc, v.id, v.onPriority)
       if (v.onPriority) {
         // D-06: patch only the voted row; the Priority key is never invalidated or refetched.
         patchPriorityArticle(qc, v.id, { interestScore: res.article.interestScore ?? null })
         usePriorityStore.getState().setRankingChanged(true)
-      } else {
-        // D-05: every other by-id article re-reads its badge; ['article', n, 'extracted'] is left alone.
-        void qc.invalidateQueries({
-          predicate: (q) => q.queryKey[0] === 'article' && q.queryKey.length === 2 && q.queryKey[1] !== v.id,
-        })
       }
       useToastStore.getState().addToast(formatVoteToast(v.kind, res), 'success')
     },

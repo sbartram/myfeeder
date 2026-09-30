@@ -1,6 +1,8 @@
+import { useMatch } from 'react-router-dom'
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { boardsApi } from '../api/boards'
 import { useToastStore } from '../components/Toast'
+import { afterEngagement } from './engagementReaction'
 
 export function useBoards() {
   return useQuery({ queryKey: ['boards'], queryFn: boardsApi.getAll })
@@ -27,12 +29,13 @@ export function useCreateBoard() {
 
 export function useAddArticleToBoard() {
   const qc = useQueryClient()
+  const onPriority = useMatch('/priority') !== null
   return useMutation({
     mutationFn: ({ boardId, articleId }: { boardId: number; articleId: number }) =>
       boardsApi.addArticle(boardId, articleId),
     onSuccess: (_, { boardId, articleId }) => {
-      // The board add is recorded as engagement: refresh only the by-id article (D-06).
-      void qc.invalidateQueries({ queryKey: ['article', articleId], exact: true })
+      // The board add is recorded as engagement: the shared reaction runs in the background (D-07).
+      void afterEngagement(qc, articleId, onPriority)
       return qc.invalidateQueries({ queryKey: ['boardArticles', boardId] })
     },
   })
@@ -40,6 +43,7 @@ export function useAddArticleToBoard() {
 
 export function useReadLater() {
   const qc = useQueryClient()
+  const onPriority = useMatch('/priority') !== null
   const addToast = useToastStore((s) => s.addToast)
 
   return useMutation({
@@ -50,8 +54,8 @@ export function useReadLater() {
     onSuccess: (_data, articleId) => {
       qc.invalidateQueries({ queryKey: ['boards'] })
       qc.invalidateQueries({ queryKey: ['boardArticles'] })
-      // The board add is recorded as engagement: refresh only the by-id article (D-06).
-      qc.invalidateQueries({ queryKey: ['article', articleId], exact: true })
+      // The board add is recorded as engagement: the shared reaction runs in the background (D-07).
+      void afterEngagement(qc, articleId, onPriority)
       addToast('Added to Read Later', 'success')
     },
     onError: () => {

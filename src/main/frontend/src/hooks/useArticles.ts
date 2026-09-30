@@ -81,12 +81,14 @@ export function useMarkRead() {
 
 export function useSaveToRaindrop() {
   const qc = useQueryClient()
+  const onPriority = useMatch('/priority') !== null
   return useMutation({
     mutationFn: (id: number) => articlesApi.saveToRaindrop(id),
     onSuccess: (_data, id) => {
       useToastStore.getState().addToast('Saved to Raindrop', 'success')
-      // The save is recorded as engagement: refresh only the by-id article (D-06).
-      void qc.invalidateQueries({ queryKey: ['article', id], exact: true })
+      // The save is recorded as engagement: refetch the article, refresh learned and lists, and
+      // patch Priority in place only when the score changed (D-06, D-07).
+      void afterEngagement(qc, id, onPriority)
     },
   })
 }
