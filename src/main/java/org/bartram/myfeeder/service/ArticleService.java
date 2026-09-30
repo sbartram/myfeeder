@@ -82,11 +82,15 @@ public class ArticleService {
         if (read != null) {
             article.setRead(read);
         }
+        // CAPT-02: only an unstarred-to-starred change earns STAR; unstar deletes nothing (sticky)
+        boolean newlyStarred = Boolean.TRUE.equals(starred) && !article.isStarred();
         if (starred != null) {
             article.setStarred(starred);
         }
 
         Article saved = articleRepository.save(article);
+        // Best-effort, after the user's save and outside any transaction, so it can never fail the star (D-07)
+        if (newlyStarred) engagementStore.recordQuietly(id, EngagementKind.STAR);
         withScores(List.of(saved));
         return saved;
     }

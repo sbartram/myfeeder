@@ -10,6 +10,7 @@ import org.bartram.myfeeder.repository.ArticleRepository;
 import org.bartram.myfeeder.repository.InterestScoreQueries;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -65,6 +66,77 @@ class ArticleServiceTest {
 
         var result = articleService.updateState(1L, null, true);
         assertThat(result.isStarred()).isTrue();
+    }
+
+    @Test
+    void starringAnUnstarredArticleRecordsStarAfterTheSave() {
+        var article = new Article();
+        article.setId(1L);
+        article.setStarred(false);
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(articleRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        articleService.updateState(1L, null, true);
+
+        InOrder inOrder = inOrder(articleRepository, engagementStore);
+        inOrder.verify(articleRepository).save(article);
+        inOrder.verify(engagementStore).recordQuietly(1L, EngagementKind.STAR);
+    }
+
+    @Test
+    void starringAnAlreadyStarredArticleRecordsNothing() {
+        var article = new Article();
+        article.setId(1L);
+        article.setStarred(true);
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(articleRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        articleService.updateState(1L, null, true);
+
+        verifyNoInteractions(engagementStore);
+    }
+
+    @Test
+    void unstarringRecordsNothing() {
+        var article = new Article();
+        article.setId(1L);
+        article.setStarred(true);
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(articleRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var result = articleService.updateState(1L, null, false);
+
+        assertThat(result.isStarred()).isFalse();
+        verifyNoInteractions(engagementStore);
+    }
+
+    @Test
+    void aReadOnlyUpdateRecordsNothing() {
+        var article = new Article();
+        article.setId(1L);
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(articleRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        articleService.updateState(1L, true, null);
+
+        verifyNoInteractions(engagementStore);
+    }
+
+    @Test
+    void updateStateOnAMissingArticleRecordsNothing() {
+        when(articleRepository.findById(1L)).thenReturn(Optional.empty());
+
+        org.junit.jupiter.api.Assertions.assertThrows(NotFoundException.class,
+                () -> articleService.updateState(1L, null, true));
+
+        verifyNoInteractions(engagementStore);
+    }
+
+    @Test
+    void bulkMarkReadRecordsNothing() {
+        articleService.markRead(List.of(1L), null, null);
+
+        verifyNoInteractions(engagementStore);
     }
 
     @Test

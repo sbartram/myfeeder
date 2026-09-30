@@ -3,7 +3,9 @@ package org.bartram.myfeeder.integration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bartram.myfeeder.model.Article;
+import org.bartram.myfeeder.model.EngagementKind;
 import org.bartram.myfeeder.model.IntegrationType;
+import org.bartram.myfeeder.repository.ArticleEngagementStore;
 import org.bartram.myfeeder.repository.IntegrationConfigRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,13 @@ public class RaindropService {
     private final IntegrationConfigRepository configRepository;
     private final RaindropApiClient raindropApiClient;
     private final ObjectMapper objectMapper;
+    private final ArticleEngagementStore engagementStore;
 
+    /**
+     * RAINDROP is recorded only once createBookmark has returned (CAPT-04): validation throws first and the
+     * client's fallback always throws, so a failed or blocked save records nothing. The capture never throws,
+     * so a created bookmark is never reported as an error that could invite a duplicate (D-08).
+     */
     public void saveToRaindrop(Article article) {
         var integrationConfig = configRepository.findByType(IntegrationType.RAINDROP)
                 .orElseThrow(() -> new IllegalStateException("Raindrop.io is not configured"));
@@ -41,6 +49,7 @@ public class RaindropService {
         }
 
         raindropApiClient.createBookmark(config.getCollectionId(), article.getUrl(), article.getTitle());
+        engagementStore.recordQuietly(article.getId(), EngagementKind.RAINDROP);
         log.info("Saved article '{}' to Raindrop.io", article.getTitle());
     }
 

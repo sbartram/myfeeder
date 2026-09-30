@@ -3,6 +3,8 @@ import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.Board;
 import org.bartram.myfeeder.model.BoardArticle;
+import org.bartram.myfeeder.model.EngagementKind;
+import org.bartram.myfeeder.repository.ArticleEngagementStore;
 import org.bartram.myfeeder.repository.BoardArticleRepository;
 import org.bartram.myfeeder.repository.BoardRepository;
 import org.bartram.myfeeder.repository.InterestScoreQueries;
@@ -18,6 +20,7 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final BoardArticleRepository boardArticleRepository;
     private final InterestScoreQueries interestScoreQueries;
+    private final ArticleEngagementStore engagementStore;
 
     public List<Board> findAll() { return boardRepository.findAll(); }
     public Optional<Board> findById(Long id) { return boardRepository.findById(id); }
@@ -59,13 +62,20 @@ public class BoardService {
         return articles;
     }
 
+    /**
+     * Every board add (any board, Read Later, the b key) lands here. BOARD is recorded after the
+     * save-or-already-present branch (D-09 as amended): a re-add credits, a thrown save records nothing.
+     * Best-effort and outside any transaction, so it can never fail the add (D-07).
+     */
     public void addArticle(Long boardId, Long articleId) {
-        if (boardArticleRepository.existsByBoardIdAndArticleId(boardId, articleId)) return;
-        BoardArticle ba = new BoardArticle();
-        ba.setBoardId(boardId);
-        ba.setArticleId(articleId);
-        ba.setAddedAt(Instant.now());
-        boardArticleRepository.save(ba);
+        if (!boardArticleRepository.existsByBoardIdAndArticleId(boardId, articleId)) {
+            BoardArticle ba = new BoardArticle();
+            ba.setBoardId(boardId);
+            ba.setArticleId(articleId);
+            ba.setAddedAt(Instant.now());
+            boardArticleRepository.save(ba);
+        }
+        engagementStore.recordQuietly(articleId, EngagementKind.BOARD);
     }
 
     public void removeArticle(Long boardId, Long articleId) {

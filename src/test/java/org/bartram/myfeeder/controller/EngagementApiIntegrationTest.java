@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,6 +27,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -53,6 +56,7 @@ class EngagementApiIntegrationTest {
         // Articles and their engagement rows cascade from the feed; boards do not, so they go by name
         jdbcTemplate.update("DELETE FROM feed WHERE url = ?", ENGAGEMENT_FEED_URL);
         jdbcTemplate.update("DELETE FROM board WHERE name LIKE 'engagement-it-%'");
+        jdbcTemplate.update("DELETE FROM interest_topic WHERE name LIKE 'engagement-it-%'");
     }
 
     @AfterEach
@@ -198,9 +202,171 @@ class EngagementApiIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
-    /** Seeds a row directly: STAR and BOARD capture only arrives with the save paths (08-03). */
+    @Test
+    void starringRecordsStarAndShowsOnTheArticle() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+
+        patchState(a, "{\"starred\":true}");
+
+        assertThat(kinds(a)).containsExactly("STAR");
+        List<String> engagement = JsonPath.read(getArticle(a), "$.engagement");
+        assertThat(engagement).containsExactly("STAR");
+    }
+
+    @Test
+    void unstarKeepsStarAndRestarKeepsOneRow() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+
+        patchState(a, "{\"starred\":true}");
+        patchState(a, "{\"starred\":false}");
+        assertThat(kinds(a)).containsExactly("STAR");
+
+        patchState(a, "{\"starred\":true}");
+        assertThat(kinds(a)).containsExactly("STAR");
+    }
+
+    @Test
+    void readOnlyPatchRecordsNothing() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+
+        patchState(a, "{\"read\":true}");
+
+        assertThat(kinds(a)).isEmpty();
+    }
+
+    @Test
+    void starringAStarredArticleRecordsNothing() throws Exception {
+        long a = insertStarredArticle(insertFeed(), "a");
+
+        patchState(a, "{\"starred\":true}");
+
+        assertThat(kinds(a)).isEmpty();
+    }
+
+    @Test
+    void bulkMarkReadRecordsNothing() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+
+        mockMvc.perform(post("/api/articles/mark-read")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"articleIds\":[" + a + "]}"))
+                .andExpect(status().isNoContent());
+
+        assertThat(kinds(a)).isEmpty();
+    }
+
+    @Test
+    void boardAddRecordsOneBoardRowAcrossTwoBoards() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+        long boardA = createBoard("engagement-it-a");
+        long boardB = createBoard("engagement-it-b");
+
+        addToBoard(boardA, a);
+        addToBoard(boardB, a);
+
+        assertThat(kinds(a)).containsExactly("BOARD");
+    }
+
+    @Test
+    void reAddingAnArticleAlreadyOnABoardEarnsBoard() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+        long board = createBoard("engagement-it-pre-v7");
+        // The pre-V7 shape: on the board, with no engagement row
+        jdbcTemplate.update("INSERT INTO board_article (board_id, article_id) VALUES (?, ?)", board, a);
+        assertThat(kinds(a)).isEmpty();
+
+        addToBoard(board, a);
+
+        assertThat(kinds(a)).containsExactly("BOARD");
+    }
+
+    @Test
+    void engagementIsStickyAcrossUnstarBoardRemovalAndBoardDelete() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+        putOpen(a);
+        patchState(a, "{\"starred\":true}");
+        long board = createBoard("engagement-it-sticky");
+        addToBoard(board, a);
+
+        patchState(a, "{\"starred\":false}");
+        mockMvc.perform(delete("/api/boards/{b}/articles/{id}", board, a))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/boards/{b}", board))
+                .andExpect(status().isNoContent());
+
+        List<String> engagement = JsonPath.read(getArticle(a), "$.engagement");
+        assertThat(engagement).containsExactly("OPEN_ORIGINAL", "STAR", "BOARD");
+    }
+
+    @Test
+    void deletingTheFeedRemovesEngagementAndSucceeds() throws Exception {
+        long feedId = insertFeed();
+        long a = insertArticle(feedId, "a");
+        long b = insertArticle(feedId, "b");
+        putOpen(a);
+        patchState(b, "{\"starred\":true}");
+        assertThat(kinds(a)).isNotEmpty();
+        assertThat(kinds(b)).isNotEmpty();
+
+        mockMvc.perform(delete("/api/feeds/{id}", feedId))
+                .andExpect(status().isNoContent());
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM article_engagement WHERE article_id IN (?, ?)", Integer.class, a, b))
+                .isZero();
+    }
+
+    @Test
+    void engagementLeavesTheRankingUnchanged() throws Exception {
+        long topicId = insertTopic("engagement-it-rust", 20);
+        long a = insertArticle(insertFeed(), "a");
+        insertScored(a, 2.0, 4);
+        insertTopicScore(a, topicId, 0.95);
+
+        String before = getArticle(a);
+        Object scoreBefore = JsonPath.read(before, "$.interestScore");
+        Object breakdownBefore = JsonPath.read(before, "$.interestBreakdown");
+        assertThat(scoreBefore).isNotNull();
+        assertThat(breakdownBefore).isNotNull();
+
+        putOpen(a);
+        patchState(a, "{\"starred\":true}");
+        addToBoard(createBoard("engagement-it-rank"), a);
+        assertThat(kinds(a)).containsExactly("BOARD", "OPEN_ORIGINAL", "STAR");
+
+        String after = getArticle(a);
+        assertThat((Object) JsonPath.read(after, "$.interestScore")).isEqualTo(scoreBefore);
+        assertThat((Object) JsonPath.read(after, "$.interestBreakdown")).isEqualTo(breakdownBefore);
+        assertThat(topicWeight(topicId)).isEqualTo(20);
+        verify(jevApiClient, never()).judge(any(), any());
+    }
+
+    /** Seeds a row directly, bypassing the save paths that capture STAR and BOARD. */
     private void insertEngagement(long articleId, String kind) {
         jdbcTemplate.update("INSERT INTO article_engagement (article_id, kind) VALUES (?, ?)", articleId, kind);
+    }
+
+    private void patchState(long articleId, String json) throws Exception {
+        mockMvc.perform(patch("/api/articles/{id}", articleId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+    }
+
+    private long createBoard(String name) throws Exception {
+        String body = mockMvc.perform(post("/api/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"" + name + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return ((Number) JsonPath.read(body, "$.id")).longValue();
+    }
+
+    private void addToBoard(long boardId, long articleId) throws Exception {
+        mockMvc.perform(post("/api/boards/{id}/articles", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"articleId\":" + articleId + "}"))
+                .andExpect(status().isCreated());
     }
 
     private void putOpen(long articleId) throws Exception {
@@ -239,5 +405,34 @@ class EngagementApiIntegrationTest {
                 Long.class, feedId, "engagement-" + guid, "Article " + guid,
                 "https://example.test/engagement-" + guid, "Summary " + guid,
                 Timestamp.from(Instant.parse("2026-09-20T10:00:00Z")));
+    }
+
+    private long insertStarredArticle(long feedId, String guid) {
+        long id = insertArticle(feedId, guid);
+        jdbcTemplate.update("UPDATE article SET starred = true WHERE id = ?", id);
+        return id;
+    }
+
+    private long insertTopic(String name, int weight) {
+        return jdbcTemplate.queryForObject(
+                "INSERT INTO interest_topic (name, description, weight) VALUES (?, ?, ?) RETURNING id",
+                Long.class, name, "Engagement test", weight);
+    }
+
+    private void insertScored(long articleId, double profileScore, int profileMaxLevel) {
+        jdbcTemplate.update(
+                "INSERT INTO article_score (article_id, status, profile_score, profile_max_level, attempts) "
+                        + "VALUES (?, 'SCORED', ?, ?, 1)",
+                articleId, profileScore, profileMaxLevel);
+    }
+
+    private void insertTopicScore(long articleId, long topicId, double noul) {
+        jdbcTemplate.update(
+                "INSERT INTO article_topic_score (article_id, topic_id, noul, topic_version) VALUES (?, ?, ?, 1)",
+                articleId, topicId, noul);
+    }
+
+    private int topicWeight(long topicId) {
+        return jdbcTemplate.queryForObject("SELECT weight FROM interest_topic WHERE id = ?", Integer.class, topicId);
     }
 }
