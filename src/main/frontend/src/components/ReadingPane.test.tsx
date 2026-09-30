@@ -8,6 +8,12 @@ import { usePriorityStore } from '../stores/priorityStore'
 let mockArticle: Article
 const mockUseExtractedArticle = vi.fn()
 const mockPress = vi.fn()
+const mockOpenOriginal = vi.fn()
+
+// The pane renders without a QueryClientProvider, so the real hook would throw (Pitfall 2).
+vi.mock('../hooks/useEngagement', () => ({
+  useOpenOriginal: () => mockOpenOriginal,
+}))
 
 vi.mock('../hooks/useFeedback', () => ({
   useVoteFeedback: () => ({ press: mockPress, narrow: vi.fn() }),
@@ -104,6 +110,7 @@ const mockRows = (): BreakdownRow[] => [
 
 beforeEach(() => {
   mockPress.mockReset()
+  mockOpenOriginal.mockReset()
   usePriorityStore.setState({ whyOpen: false })
   mockUseExtractedArticle
     .mockReset()
@@ -324,5 +331,34 @@ describe('ReadingPane no-match line', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Create topic from article' }))
     expect(onCreateTopic).toHaveBeenCalledWith({ description: 'Rust async runtimes', weight: -20 })
+  })
+})
+
+describe('ReadingPane Open Original', () => {
+  it('toolbarOpenOriginalGoesThroughTheHelper', () => {
+    mockArticle = article({ content: '<p>Body</p>' })
+    renderPane()
+
+    const buttons = screen.getAllByRole('button', { name: '↗ Open Original' })
+    expect(buttons).toHaveLength(1)
+    fireEvent.click(buttons[0])
+
+    expect(mockOpenOriginal).toHaveBeenCalledTimes(1)
+    expect(mockOpenOriginal).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1, url: 'https://example.com/post' })
+    )
+  })
+
+  it('extractionErrorFallbackGoesThroughTheHelper', () => {
+    mockArticle = article({ content: null, summary: null })
+    mockUseExtractedArticle.mockReturnValue({ data: undefined, isPending: false, isError: true })
+    const { container } = renderPane()
+
+    const fallback = container.querySelector('.reader-status button') as HTMLButtonElement
+    expect(fallback).toHaveTextContent('↗ Open Original')
+    fireEvent.click(fallback)
+
+    expect(mockOpenOriginal).toHaveBeenCalledTimes(1)
+    expect(mockOpenOriginal).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }))
   })
 })

@@ -42,7 +42,15 @@ export interface Article {
    * responses send it; optional so existing fixtures still type-check.
    */
   feedback?: ArticleFeedback | null
+  /**
+   * The engagement kinds, in server order; only GET /api/articles/{id} sends it ([] when none);
+   * optional so existing fixtures still type-check (D-05).
+   */
+  engagement?: EngagementKind[]
 }
+
+/** How the user engaged with an article (server enum names). */
+export type EngagementKind = 'OPEN_ORIGINAL' | 'STAR' | 'BOARD' | 'RAINDROP'
 
 /** Which bound, if any, held a topic's learned adjustment back on the last vote. */
 export type LearnedLimit = 'NONE' | 'LEARNED_CAP' | 'SIGN_CLAMP' | 'WEIGHT_RANGE'
