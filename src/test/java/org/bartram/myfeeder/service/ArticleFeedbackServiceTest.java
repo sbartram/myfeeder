@@ -154,8 +154,8 @@ class ArticleFeedbackServiceTest {
 
         assertThat(result.article()).isSameAs(article);
         assertThat(result.effects()).containsExactly(
-                new TopicEffect(10, "Rust", 20, 21.8, 20, 1.8, LearnedLimit.NONE),
-                new TopicEffect(11, "Politics", -10, -10, -30, 20, LearnedLimit.LEARNED_CAP));
+                new TopicEffect(10, "Rust", 20, 21.8, 20, 1.8, LearnedLimit.NONE, 1.8, 0),
+                new TopicEffect(11, "Politics", -10, -10, -30, 20, LearnedLimit.LEARNED_CAP, 20, 0));
     }
 
     @Test

@@ -108,7 +108,7 @@ public class ArticleFeedbackService {
                 .map(id -> {
                     TopicWeight a = after.get(id);
                     return new TopicEffect(id, a.name(), before.get(id).effective(), a.effective(), a.base(),
-                            a.learned(), LearnedLimit.of(a, cap, engagementCap));
+                            a.learned(), LearnedLimit.of(a, cap, engagementCap), 0, 0);
                 })
                 .toList();
         return new FeedbackResult(articleService.findByIdWithBreakdown(articleId).orElseThrow(), scored, effects);

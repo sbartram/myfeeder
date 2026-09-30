@@ -381,6 +381,28 @@ class FeedbackApiIntegrationTest {
     }
 
     @Test
+    void voteEffectBeforeIncludesTheEngagementItReplaces() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+        insertEngagement(a, "STAR");
+
+        // The vote replaces the save's 0.9 with the vote's 1.8
+        String put = putVote(a, "{\"vote\":1}");
+
+        assertEffect(put, 0, rust, 20.9, 21.8);
+        assertEffectParts(put, 0, 1.8, 1.8, 0.0, "NONE");
+
+        // Removing the vote brings the save back
+        String deleted = deleteVote(a);
+
+        assertEffect(deleted, 0, rust, 21.8, 20.9);
+        assertEffectParts(deleted, 0, 0.9, 0.0, 0.9, "NONE");
+        assertThat(topicWeight(rust)).isEqualTo(20);
+        verify(jevApiClient, never()).judge(any(), any());
+    }
+
+    @Test
     void learnedEntryDisappearsWithItsTopic() throws Exception {
         long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
         long go = insertTopic(FEEDBACK_TOPIC_PREFIX + "go", 10);
@@ -448,6 +470,15 @@ class FeedbackApiIntegrationTest {
         assertThat(((Number) effect.get("topicId")).longValue()).isEqualTo(topicId);
         assertThat(((Number) effect.get("before")).doubleValue()).isEqualTo(before);
         assertThat(((Number) effect.get("after")).doubleValue()).isEqualTo(after);
+    }
+
+    private static void assertEffectParts(String body, int index, double learned, double thumbs, double engagement,
+                                          String limit) {
+        Map<String, Object> effect = JsonPath.read(body, "$.effects[" + index + "]");
+        assertThat(((Number) effect.get("learned")).doubleValue()).isEqualTo(learned);
+        assertThat(((Number) effect.get("thumbsLearned")).doubleValue()).isEqualTo(thumbs);
+        assertThat(((Number) effect.get("engagementLearned")).doubleValue()).isEqualTo(engagement);
+        assertThat(effect.get("limit")).isEqualTo(limit);
     }
 
     private String deleteVote(long articleId) throws Exception {

@@ -20,5 +20,6 @@ public record FeedbackResult(Article article, boolean scored, List<TopicEffect> 
      * is smaller than the nominal nudge ({@link LearnedLimit}).
      */
     public record TopicEffect(long topicId, String name, double before, double after, double baseWeight,
-                              double learned, LearnedLimit limit) {}
+                              double learned, LearnedLimit limit, double thumbsLearned,
+                              double engagementLearned) {}
 }
