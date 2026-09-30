@@ -34,8 +34,9 @@ import java.util.Optional;
  *
  * <p>The {@link #LEARNED_CTE} derives each topic's learned adjustment from the stored thumbs votes in
  * {@code article_feedback}, honoring {@code topics_narrowed} and its {@code article_feedback_topic} picks
- * (03 D-02). The adjustment is derived on every read and never stored, so removing or flipping a vote
- * undoes it exactly. This class still only reads.
+ * (03 D-02), and from the engagement in {@code article_engagement} (LRN-01). The adjustment is derived
+ * on every read and never stored, so removing or flipping a vote undoes it exactly. This class still
+ * only reads and never calls Jev.
  */
 @Repository
 @RequiredArgsConstructor
@@ -91,12 +92,20 @@ public class InterestScoreQueries {
                                     BigDecimal exact, double baseWeight, double learnedWeight) {}
 
     /**
-     * The learned model (R2, FDBK-03), shared by the blend and {@link #topicWeights(Collection)}.
+     * The learned model (R2, FDBK-03, LRN-01..04), shared by the blend and {@link #topicWeights(Collection)}.
      * {@code learned} sums {@code vote x max(0, (noul - 0.5) x 2)} per topic over votes on SCORED articles,
-     * keeping a narrowed vote's picked topics only (03 D-02). {@code eff} scales it by {@code :learnRate}
-     * ({@code learned_raw}) and clamps it to {@code +/- :learnedCap} ({@code learned}). {@code eff2} adds
-     * the effective weight {@code w = base + learned} with the sign clamp (a positive base never goes
-     * below 0, a negative base never above 0, a zero base moves either way) inside -50..+50.
+     * keeping a narrowed vote's picked topics only (03 D-02). {@code engaged} collapses
+     * {@code article_engagement} to one MAX {@code strength} per article before any topic join (a save beats
+     * an open, each article counts once) and drops every article that has any thumbs vote (the vote replaces
+     * it; removing the vote restores it). {@code eng_learned} sums {@code strength x hinge} per topic over
+     * SCORED articles only, with no age or read window (D-08). {@code eff} scales the thumbs sum by
+     * {@code :learnRate} ({@code learned_raw}) and clamps it to {@code +/- :learnedCap} ({@code learned});
+     * it scales the engagement sum the same way ({@code eng_raw}, D-06/D-07) and caps it at
+     * {@code :engagementCap} with a zero floor ({@code eng}), so cap 0 disables it whatever the weights
+     * (D-02). Both are 0 for a topic with a negative base (LRN-03). {@code eff2} applies the sign clamp (a
+     * positive base never goes below 0, a negative base never above 0, a zero base moves either way) inside
+     * -50..+50 once: {@code w_thumbs} to {@code base + learned} (the thumbs-only effective weight) and
+     * {@code w} to {@code base + learned + eng} (D-09).
      * The constants are cast to float8 because an untyped unary minus is ambiguous in Postgres.
      */
     static final String LEARNED_CTE = "WITH learned AS (SELECT ts.topic_id, "
@@ -107,14 +116,32 @@ public class InterestScoreQueries {
             + "WHERE NOT f.topics_narrowed OR EXISTS (SELECT 1 FROM article_feedback_topic ft "
             + "WHERE ft.article_id = f.article_id AND ft.topic_id = ts.topic_id) "
             + "GROUP BY ts.topic_id), "
+            + "engaged AS (SELECT g.article_id, "
+            + "MAX(CASE WHEN g.kind = 'OPEN_ORIGINAL' THEN CAST(:engagementOpenWeight AS float8) "
+            + "ELSE CAST(:engagementSaveWeight AS float8) END) AS strength "
+            + "FROM article_engagement g "
+            + "WHERE NOT EXISTS (SELECT 1 FROM article_feedback f WHERE f.article_id = g.article_id) "
+            + "GROUP BY g.article_id), "
+            + "eng_learned AS (SELECT ts.topic_id, SUM(g.strength * GREATEST(0, (ts.noul - 0.5) * 2)) AS eng_sum "
+            + "FROM engaged g "
+            + "JOIN article_score gs ON gs.article_id = g.article_id AND gs.status = 'SCORED' "
+            + "JOIN article_topic_score ts ON ts.article_id = g.article_id "
+            + "GROUP BY ts.topic_id), "
             + "eff AS (SELECT t.id, t.name, t.weight AS base, "
             + "CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0) AS learned_raw, "
             + "LEAST(CAST(:learnedCap AS float8), GREATEST(-CAST(:learnedCap AS float8), "
-            + "CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0))) AS learned "
-            + "FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id), "
+            + "CAST(:learnRate AS float8) * COALESCE(l.vote_sum, 0))) AS learned, "
+            + "CASE WHEN t.weight < 0 THEN 0 ELSE CAST(:learnRate AS float8) * COALESCE(n.eng_sum, 0) END AS eng_raw, "
+            + "CASE WHEN t.weight < 0 THEN 0 ELSE GREATEST(0, LEAST(CAST(:engagementCap AS float8), "
+            + "CAST(:learnRate AS float8) * COALESCE(n.eng_sum, 0))) END AS eng "
+            + "FROM interest_topic t LEFT JOIN learned l ON l.topic_id = t.id "
+            + "LEFT JOIN eng_learned n ON n.topic_id = t.id), "
             + "eff2 AS (SELECT e.*, CASE WHEN e.base > 0 THEN GREATEST(0, LEAST(50, e.base + e.learned)) "
             + "WHEN e.base < 0 THEN LEAST(0, GREATEST(-50, e.base + e.learned)) "
-            + "ELSE GREATEST(-50, LEAST(50, e.learned)) END AS w "
+            + "ELSE GREATEST(-50, LEAST(50, e.learned)) END AS w_thumbs, "
+            + "CASE WHEN e.base > 0 THEN GREATEST(0, LEAST(50, e.base + e.learned + e.eng)) "
+            + "WHEN e.base < 0 THEN LEAST(0, GREATEST(-50, e.base + e.learned + e.eng)) "
+            + "ELSE GREATEST(-50, LEAST(50, e.learned + e.eng)) END AS w "
             + "FROM eff e)";
 
     /**
@@ -291,12 +318,18 @@ public class InterestScoreQueries {
                 .single());
     }
 
-    /** A statement that reads the learned model: binds {@code learnRate} and {@code learnedCap}. */
+    /**
+     * A statement that reads the learned model: binds every learned-model constant, under the same names
+     * the calibration replay passes with psql -v.
+     */
     private JdbcClient.StatementSpec learnedSql(String sql) {
         MyfeederProperties.Interest.Blend blend = properties.getInterest().getBlend();
         return jdbc.sql(sql)
                 .param("learnRate", blend.getLearnRate())
-                .param("learnedCap", blend.getLearnedCap());
+                .param("learnedCap", blend.getLearnedCap())
+                .param("engagementOpenWeight", blend.getEngagement().getOpenWeight())
+                .param("engagementSaveWeight", blend.getEngagement().getSaveWeight())
+                .param("engagementCap", blend.getEngagement().getCap());
     }
 
     /** A statement built from {@link #blendCte(String)}: binds every blend constant in one place. */
@@ -307,14 +340,14 @@ public class InterestScoreQueries {
     /**
      * The blend: {@code raw = ROUND(profilePoints x profile_score / profile_max_level
      * + SUM(max(0, (noul - 0.5) x 2) x w), 6)} over SCORED rows, with {@code w} the effective weight from
-     * {@link #LEARNED_CTE}. {@code contrib} also carries the topic's {@code base} and
-     * {@code learned_applied = w - base}, the learned part that actually applied. Only this class's scope
-     * constants are ever passed as {@code scope}.
+     * {@link #LEARNED_CTE}. {@code contrib} also carries the topic's {@code base},
+     * {@code learned_applied = w - base}, the learned part that actually applied, and {@code w_thumbs}, the
+     * thumbs-only effective weight. Only this class's scope constants are ever passed as {@code scope}.
      */
     static String blendCte(String scope) {
         return LEARNED_CTE + ", "
                 + "contrib AS (SELECT ts.article_id, ts.topic_id, ts.noul, "
-                + "GREATEST(0, (ts.noul - 0.5) * 2) AS hinge, e.w, e.base, e.w - e.base AS learned_applied, "
+                + "GREATEST(0, (ts.noul - 0.5) * 2) AS hinge, e.w, e.base, e.w - e.base AS learned_applied, e.w_thumbs, "
                 + "GREATEST(0, (ts.noul - 0.5) * 2) * e.w AS points "
                 + "FROM article_topic_score ts JOIN eff2 e ON e.id = ts.topic_id), "
                 + "blended AS (SELECT s.article_id, "

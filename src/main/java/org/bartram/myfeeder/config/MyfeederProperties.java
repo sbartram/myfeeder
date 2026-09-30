@@ -59,6 +59,18 @@ public class MyfeederProperties {
             private int learnedCap = 20;
             /** Badge tier thresholds served on /api/interest/status (D-13). */
             private Tiers tiers = new Tiers();
+            /** Engagement learning constants (LRN-05, D-01). Phase 12 calibrates them. */
+            private Engagement engagement = new Engagement();
+
+            @Data
+            public static class Engagement {
+                /** Strength of an OPEN_ORIGINAL engagement, as a fraction of one vote. */
+                private double openWeight = 0.25;
+                /** One strength for every save kind (STAR, BOARD and RAINDROP), as a fraction of one vote. */
+                private double saveWeight = 0.5;
+                /** Bound on the engagement points one topic can gain; 0 disables engagement learning. */
+                private double cap = 8;
+            }
 
             @Data
             public static class Tiers {
