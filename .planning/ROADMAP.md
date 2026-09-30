@@ -96,12 +96,12 @@ Plans:
   4. Open weight, save weight and engagement cap come from committed yaml; with engagement set to zero, scores and Priority order match v0.2.1 exactly, and the app refuses to start when save ≤ open or the cap is at or above the thumbs cap
   5. The calibration replay, regenerated in the same change, reproduces the app's scores with engagement present, the drift-guard test fails on any divergence between the replay and the CTE, and the extended learned CTE stays within a measured latency budget with about 20k seeded engagement rows
 
-**Plans**: 6 plans
+**Plans**: 2/6 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 09-01-PLAN.md — Backend tracer: extended LEARNED_CTE end to end over HTTP, replay .sql/.sh regenerated and Phase 8 guards inverted in one commit (CAL-01); D-01 yaml constants and startup validation; driver drift checks (wave 1)
-- [ ] 09-02-PLAN.md — Frontend type parity: LearnedLimit ENGAGEMENT_CAP, optional split fields, fall-through pinned for Phase 10 (wave 1)
+- [x] 09-01-PLAN.md — Backend tracer: extended LEARNED_CTE end to end over HTTP, replay .sql/.sh regenerated and Phase 8 guards inverted in one commit (CAL-01); D-01 yaml constants and startup validation; driver drift checks (wave 1)
+- [x] 09-02-PLAN.md — Frontend type parity: LearnedLimit ENGAGEMENT_CAP, optional split fields, fall-through pinned for Phase 10 (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 09-03-PLAN.md — Exact split, test-first: 1,456-cell real-Postgres grid, split columns on topic weights and breakdown, appended TopicWeight/TopicContribution/Row fields (wave 2)
@@ -197,7 +197,7 @@ Phases execute in numeric order: 8 → 9 → 10 → 11 → 12 (Phase 11 depends 
 | 6. Thumbs Feedback | v0.2.1 | 7/7 | Complete | 2026-09-27 |
 | 7. Rollout & Calibration | v0.2.1 | 11/11 | Complete | 2026-09-29 |
 | 8. Engagement Capture | v0.3.0 | 5/5 | Complete    | 2026-09-30 |
-| 9. Engagement Learning Model | v0.3.0 | 0/TBD | Not started | - |
+| 9. Engagement Learning Model | v0.3.0 | 2/6 | In Progress|  |
 | 10. Explainable Engagement in the UI | v0.3.0 | 0/TBD | Not started | - |
 | 11. Gap Discovery | v0.3.0 | 0/TBD | Not started | - |
 | 12. Calibration & Release | v0.3.0 | 0/TBD | Not started | - |
