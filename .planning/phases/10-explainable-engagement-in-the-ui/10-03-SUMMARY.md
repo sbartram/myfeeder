@@ -193,3 +193,8 @@ None - no external service configuration required.
 ---
 *Phase: 10-explainable-engagement-in-the-ui*
 *Completed: 2026-09-30*
+
+## Self-Check: PASSED
+
+- Files found: 10-03-SUMMARY.md, deferred-items.md, TopicRow.tsx, WhyBreakdown.tsx, feedback.ts
+- Commits found: 6b90222, bebfc81, 354d323, 06940c7, 940045c (plus the SUMMARY commit 36bf484)
