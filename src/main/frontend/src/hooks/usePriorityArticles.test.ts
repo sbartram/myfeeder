@@ -15,10 +15,12 @@ vi.mock('../api/articles', () => ({
 
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider, focusManager, onlineManager } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import { createElement } from 'react'
 import { usePriorityArticles, patchPriorityArticle, PRIORITY_KEY } from './usePriorityArticles'
 import { useUpdateArticleState } from './useArticles'
 import { articlesApi } from '../api/articles'
+import { usePriorityStore } from '../stores/priorityStore'
 import type { Article, PriorityPage } from '../types'
 
 function article(id: number, overrides: Partial<Article> = {}): Article {
@@ -50,7 +52,11 @@ function createWrapper() {
   return {
     qc,
     wrapper: ({ children }: { children: React.ReactNode }) =>
-      createElement(QueryClientProvider, { client: qc }, children),
+      createElement(
+        QueryClientProvider,
+        { client: qc },
+        createElement(MemoryRouter, { initialEntries: ['/priority'] }, children),
+      ),
   }
 }
 
@@ -72,6 +78,9 @@ describe('usePriorityArticles cache policy', () => {
     vi.mocked(articlesApi.updateState).mockImplementation(async (id, state) =>
       article(id, { ...state, interestScore: 5 }),
     )
+    // The star reaction's by-id refetch answers the listed score, so no pre-existing case lights the hint.
+    vi.mocked(articlesApi.getById).mockImplementation(async (id) => article(id))
+    usePriorityStore.setState({ rankingChanged: false, baselineUnscored: null })
   })
 
   afterEach(() => {
@@ -116,6 +125,50 @@ describe('usePriorityArticles cache policy', () => {
         { id: 3, read: false, starred: true },
       ]),
     )
+    expect(articlesApi.priority).toHaveBeenCalledTimes(1)
+  })
+
+  it('starOnPriorityPatchesTheScoreAndLightsTheHint', async () => {
+    vi.mocked(articlesApi.priority).mockResolvedValue(page([article(1), article(2), article(3)]))
+    vi.mocked(articlesApi.getById).mockImplementation(async (id) =>
+      article(id, id === 3 ? { starred: true, interestScore: 90 } : {}),
+    )
+    const { wrapper } = createWrapper()
+    const { result } = renderPriority(wrapper)
+    await waitFor(() => expect(result.current.priority.rows).toHaveLength(3))
+
+    await act(async () => {
+      await result.current.update.mutateAsync({ id: 3, state: { starred: true } })
+    })
+
+    await waitFor(() => expect(result.current.priority.rows[2].interestScore).toBe(90))
+    expect(result.current.priority.rows[2]).toMatchObject({ id: 3, starred: true, interestScore: 90 })
+    expect(result.current.priority.rows.map((a) => a.id)).toEqual([1, 2, 3])
+    expect(usePriorityStore.getState().rankingChanged).toBe(true)
+    expect(articlesApi.getById).toHaveBeenCalledWith(3)
+    expect(articlesApi.priority).toHaveBeenCalledTimes(1)
+  })
+
+  it('unstarAndReadDoNotReact', async () => {
+    vi.mocked(articlesApi.priority).mockResolvedValue(page([article(1), article(2), article(3)]))
+    vi.mocked(articlesApi.getById).mockImplementation(async (id) => article(id, { interestScore: 90 }))
+    const { wrapper } = createWrapper()
+    const { result } = renderPriority(wrapper)
+    await waitFor(() => expect(result.current.priority.rows).toHaveLength(3))
+
+    for (const state of [{ starred: false }, { read: true }, { read: false }]) {
+      await act(async () => {
+        await result.current.update.mutateAsync({ id: 3, state })
+      })
+    }
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    // Nothing renders the by-id article here, so any getById call would be the reaction's.
+    expect(articlesApi.getById).not.toHaveBeenCalled()
+    expect(usePriorityStore.getState().rankingChanged).toBe(false)
+    expect(result.current.priority.rows.map((a) => a.interestScore)).toEqual([82, 82, 82])
     expect(articlesApi.priority).toHaveBeenCalledTimes(1)
   })
 
