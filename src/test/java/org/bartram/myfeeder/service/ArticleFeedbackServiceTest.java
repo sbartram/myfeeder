@@ -145,10 +145,10 @@ class ArticleFeedbackServiceTest {
         when(queries.matchedTopicIds(ID)).thenReturn(matched);
         when(queries.isScored(ID)).thenReturn(true);
         when(queries.topicWeights(matched)).thenReturn(
-                Map.of(10L, new TopicWeight(10, "Rust", 20, 0, 0, 20),
-                        11L, new TopicWeight(11, "Politics", -30, 22, 20, -10)),
-                Map.of(10L, new TopicWeight(10, "Rust", 20, 1.8, 1.8, 21.8),
-                        11L, new TopicWeight(11, "Politics", -30, 24, 20, -10)));
+                Map.of(10L, new TopicWeight(10, "Rust", 20, 0, 0, 20, 0, 0, 0, 20),
+                        11L, new TopicWeight(11, "Politics", -30, 22, 20, -10, 20, 0, 0, -10)),
+                Map.of(10L, new TopicWeight(10, "Rust", 20, 1.8, 1.8, 21.8, 1.8, 0, 0, 21.8),
+                        11L, new TopicWeight(11, "Politics", -30, 24, 20, -10, 20, 0, 0, -10)));
 
         FeedbackResult result = service.vote(ID, 1, null);
 
@@ -191,7 +191,7 @@ class ArticleFeedbackServiceTest {
 
     /** A topic weight; the effective value is irrelevant to {@link LearnedLimit#of}. */
     private static TopicWeight weight(double base, double learnedRaw, double learned) {
-        return new TopicWeight(1, "t", base, learnedRaw, learned, 0);
+        return new TopicWeight(1, "t", base, learnedRaw, learned, 0, learned, 0, 0, 0);
     }
 
     private void givenArticle() {

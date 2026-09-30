@@ -27,7 +27,8 @@ class ScoreBreakdownsTest {
 
     private static TopicContribution topic(long id, String name, double noul, double hinge, double weight,
                                            String exact, double baseWeight, double learnedWeight) {
-        return new TopicContribution(id, name, noul, hinge, weight, bd(exact), baseWeight, learnedWeight);
+        return new TopicContribution(id, name, noul, hinge, weight, bd(exact), baseWeight, learnedWeight,
+                learnedWeight, 0);
     }
 
     private static BreakdownInputs inputs(String raw, int total, int display, Double profileScore,
