@@ -156,6 +156,12 @@ None - no external service configuration required.
   - Each of these changes a pinned test on purpose.
 - LRN-04 stays pending in REQUIREMENTS.md: 09-01, 09-03, 09-04 and 09-05 also declare it (shared-ID gate).
 
+## Self-Check: PASSED
+
+- All four modified source files and this SUMMARY exist.
+- Commits `76f9695`, `570a6bd` and `9aae83a` are present on the worktree branch.
+- The working tree is clean.
+
 ---
 *Phase: 09-engagement-learning-model*
 *Completed: 2026-09-30*
