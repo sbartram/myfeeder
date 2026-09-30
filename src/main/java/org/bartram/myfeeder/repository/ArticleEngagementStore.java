@@ -11,7 +11,8 @@ import java.util.List;
 
 /**
  * The recorded engagement: one sticky row per article and {@link EngagementKind}. This store writes only
- * {@code article_engagement}, and the ranking SQL does not read it in this phase. No method here opens a
+ * {@code article_engagement}. Since Phase 9, {@link InterestScoreQueries#LEARNED_CTE} reads the table as a
+ * capped, thumbs-overridable up-vote on the topics an engaged SCORED article matched. No method here opens a
  * transaction on purpose: each statement autocommits on its own, so a failed engagement insert can never
  * abort the user's save that triggered it (D-07).
  */
