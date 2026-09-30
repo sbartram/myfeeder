@@ -392,13 +392,55 @@ class FeedbackApiIntegrationTest {
 
         assertEffect(put, 0, rust, 20.9, 21.8);
         assertEffectParts(put, 0, 1.8, 1.8, 0.0, "NONE");
+        assertReplaced(put, 0, true);
 
         // Removing the vote brings the save back
         String deleted = deleteVote(a);
 
         assertEffect(deleted, 0, rust, 21.8, 20.9);
         assertEffectParts(deleted, 0, 0.9, 0.0, 0.9, "NONE");
+        assertReplaced(deleted, 0, true);
         assertThat(topicWeight(rust)).isEqualTo(20);
+        verify(jevApiClient, never()).judge(any(), any());
+    }
+
+    @Test
+    void narrowedDownVoteOnAnEngagedArticleMarksOnlyThePickedTopic() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long politics = insertTopic(FEEDBACK_TOPIC_PREFIX + "politics", -30);
+        long go = insertTopic(FEEDBACK_TOPIC_PREFIX + "go", 10);
+        long n = insertThreeTopicArticle(feedId, rust, politics, go);
+        insertEngagement(n, "STAR");
+
+        String body = putVote(n, "{\"vote\":-1,\"topicIds\":[" + rust + "]}");
+
+        // Rust's engagement share is replaced by the vote
+        assertEffect(body, 0, rust, 20.9, 18.2);
+        assertReplaced(body, 0, true);
+        // A negative base has no engagement share, and the vote did not pick politics
+        assertEffect(body, 1, politics, -30.0, -30.0);
+        assertReplaced(body, 1, false);
+        // Go loses its engagement share, but the vote did not pick go (D-11 as written)
+        assertEffect(body, 2, go, 10.2, 10.0);
+        assertReplaced(body, 2, false);
+        verify(jevApiClient, never()).judge(any(), any());
+    }
+
+    @Test
+    void flipOnAnEngagedArticleReplacesNothingMore() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+        insertEngagement(a, "STAR");
+
+        String up = putVote(a, "{\"vote\":1}");
+        String down = putVote(a, "{\"vote\":-1}");
+
+        assertEffect(up, 0, rust, 20.9, 21.8);
+        assertReplaced(up, 0, true);
+        assertEffect(down, 0, rust, 21.8, 18.2);
+        assertReplaced(down, 0, false);
         verify(jevApiClient, never()).judge(any(), any());
     }
 
@@ -479,6 +521,10 @@ class FeedbackApiIntegrationTest {
         assertThat(((Number) effect.get("thumbsLearned")).doubleValue()).isEqualTo(thumbs);
         assertThat(((Number) effect.get("engagementLearned")).doubleValue()).isEqualTo(engagement);
         assertThat(effect.get("limit")).isEqualTo(limit);
+    }
+
+    private static void assertReplaced(String body, int index, boolean replaced) {
+        assertThat((Boolean) JsonPath.read(body, "$.effects[" + index + "].engagementReplaced")).isEqualTo(replaced);
     }
 
     private String deleteVote(long articleId) throws Exception {

@@ -21,7 +21,15 @@ public record FeedbackResult(Article article, boolean scored, List<TopicEffect> 
      * {@code engagementLearned} are appended after {@code limit} (D-10, D-15). The client prints
      * {@code after - before} and never recomputes it. {@code limit} names why the change is smaller than
      * the nominal nudge ({@link LearnedLimit}).
+     *
+     * <p>{@code engagementReplaced}, appended last, is true when this write changed both the topic's capped
+     * engagement part and its uncapped thumbs part: the vote replaced this article's engagement share on
+     * the topic, or on removal restored it, so the change differs from the nominal nudge by that share
+     * (D-11). A narrowed 👎 leaves it false on topics the vote did not pick, even though their engagement
+     * share goes, because their thumbs part does not change. The client words it, and a binding limit's
+     * note wins over it (D-12).
      */
     public record TopicEffect(long topicId, String name, double before, double after, double baseWeight,
-                              double learned, LearnedLimit limit, double thumbsLearned, double engagementLearned) {}
+                              double learned, LearnedLimit limit, double thumbsLearned,
+                              double engagementLearned, boolean engagementReplaced) {}
 }

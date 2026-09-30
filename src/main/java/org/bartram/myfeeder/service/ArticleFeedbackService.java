@@ -28,6 +28,12 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class ArticleFeedbackService {
 
+    /**
+     * The topic-weight values are rounded to 6 decimals, and a float8 SUM may differ in its last digit
+     * between two reads, so before/after comparisons allow half a unit in the last place (Pitfall 8).
+     */
+    private static final double SIX_DECIMAL_TOLERANCE = 5e-7;
+
     private final ArticleService articleService;
     private final ArticleFeedbackStore store;
     private final InterestScoreQueries queries;
@@ -106,12 +112,20 @@ public class ArticleFeedbackService {
         List<TopicEffect> effects = matched.stream()
                 .filter(id -> before.containsKey(id) && after.containsKey(id))
                 .map(id -> {
+                    TopicWeight b = before.get(id);
                     TopicWeight a = after.get(id);
-                    return new TopicEffect(id, a.name(), before.get(id).effective(), a.effective(), a.base(),
+                    boolean engagementReplaced = differs(b.engagementLearned(), a.engagementLearned())
+                            && differs(b.learnedRaw(), a.learnedRaw());
+                    return new TopicEffect(id, a.name(), b.effective(), a.effective(), a.base(),
                             a.learned(), LearnedLimit.of(a, cap, engagementCap), a.thumbsLearned(),
-                            a.engagementLearned());
+                            a.engagementLearned(), engagementReplaced);
                 })
                 .toList();
         return new FeedbackResult(articleService.findByIdWithBreakdown(articleId).orElseThrow(), scored, effects);
+    }
+
+    /** Whether two 6-decimal topic-weight values differ by more than rounding noise. */
+    private static boolean differs(double x, double y) {
+        return Math.abs(x - y) > SIX_DECIMAL_TOLERANCE;
     }
 }
