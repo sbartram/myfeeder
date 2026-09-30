@@ -52,8 +52,11 @@ export interface Article {
 /** How the user engaged with an article (server enum names). */
 export type EngagementKind = 'OPEN_ORIGINAL' | 'STAR' | 'BOARD' | 'RAINDROP'
 
-/** Which bound, if any, held a topic's learned adjustment back on the last vote. */
-export type LearnedLimit = 'NONE' | 'LEARNED_CAP' | 'SIGN_CLAMP' | 'WEIGHT_RANGE'
+/**
+ * Which bound, if any, held a topic's learned adjustment back on the last vote, including the
+ * engagement cap (D-11).
+ */
+export type LearnedLimit = 'NONE' | 'LEARNED_CAP' | 'SIGN_CLAMP' | 'WEIGHT_RANGE' | 'ENGAGEMENT_CAP'
 
 /** An article's thumbs vote; topics are the narrowed picks (empty unless narrowed). */
 export interface ArticleFeedback {
@@ -71,6 +74,10 @@ export interface TopicEffect {
   baseWeight: number
   learned: number
   limit: LearnedLimit
+  /** The capped thumbs part of learned; learned is this plus engagementLearned (D-15). */
+  thumbsLearned?: number
+  /** The capped engagement part of learned; learned is thumbsLearned plus this (D-15). */
+  engagementLearned?: number
 }
 
 /** The PUT/DELETE /api/articles/{id}/feedback response; effects are in ascending topicId order. */
@@ -102,6 +109,10 @@ export interface TopicBreakdownRow {
   baseWeight?: number
   /** The applied learned part of weight (D-11). */
   learnedWeight?: number
+  /** The applied thumbs part of learnedWeight; it and engagementWeight sum to learnedWeight (D-16). */
+  thumbsWeight?: number
+  /** The applied engagement part of learnedWeight; it and thumbsWeight sum to learnedWeight (D-16). */
+  engagementWeight?: number
 }
 
 export type BreakdownRow = ProfileBreakdownRow | TopicBreakdownRow

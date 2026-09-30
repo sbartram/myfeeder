@@ -15,7 +15,13 @@ function effect(
   name: string,
   before: number,
   after: number,
-  opts: { baseWeight?: number; learned?: number; limit?: LearnedLimit } = {}
+  opts: {
+    baseWeight?: number
+    learned?: number
+    limit?: LearnedLimit
+    thumbsLearned?: number
+    engagementLearned?: number
+  } = {}
 ): TopicEffect {
   const baseWeight = opts.baseWeight ?? 10
   return {
@@ -26,6 +32,8 @@ function effect(
     baseWeight,
     learned: opts.learned ?? after - baseWeight,
     limit: opts.limit ?? 'NONE',
+    ...(opts.thumbsLearned !== undefined && { thumbsLearned: opts.thumbsLearned }),
+    ...(opts.engagementLearned !== undefined && { engagementLearned: opts.engagementLearned }),
   }
 }
 
@@ -153,6 +161,30 @@ describe('formatVoteToast', () => {
     expect(formatVoteToast('up', result(top))).toBe('👍 Big +0.0 (weight at max +50)')
     const bottom = [effect('Deep', -50, -50, { baseWeight: -40, learned: -10, limit: 'WEIGHT_RANGE' })]
     expect(formatVoteToast('down', result(bottom))).toBe('👎 Deep +0.0 (weight at min −50)')
+  })
+
+  it('engagementCapFallsThroughToNoNote', () => {
+    // D-11: Phase 9 has no ENGAGEMENT_CAP wording, so effectNote's default branch applies.
+    const capped = [
+      effect('Rust', 28, 29.8, {
+        baseWeight: 20,
+        learned: 9.8,
+        limit: 'ENGAGEMENT_CAP',
+        thumbsLearned: 1.8,
+        engagementLearned: 8,
+      }),
+    ]
+    expect(formatVoteToast('up', result(capped))).toBe('👍 Rust +1.8')
+  })
+
+  it('engagementCapWithNoChangeIsStillListed', () => {
+    // Research Pitfall 6: any non-NONE limit is listed, so an engagement-capped topic the vote
+    // did not move reads "+0.0" with no note. Phase 10 changes this deliberately.
+    const effects = [
+      effect('Rust', 20, 21.8),
+      effect('Go', 28, 28, { baseWeight: 20, learned: 8, limit: 'ENGAGEMENT_CAP' }),
+    ]
+    expect(formatVoteToast('up', result(effects))).toBe('👍 Rust +1.8 · Go +0.0')
   })
 
   it('zeroChangeWithoutLimitIsOmitted', () => {
