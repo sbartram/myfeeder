@@ -61,10 +61,15 @@ Full phase details: [milestones/v0.2.1-ROADMAP.md](milestones/v0.2.1-ROADMAP.md)
 **Plans**: 5 plans
 
 Plans:
+**Wave 1**
 - [ ] 08-01-PLAN.md — Backend: V7 schema, EngagementKind, ArticleEngagementStore, PUT open route, by-id `engagement`, Forget DELETE route (wave 1)
 - [ ] 08-02-PLAN.md — Frontend: one `useOpenOriginal` helper for both Open Original buttons and `o`; bodyless fire-and-forget PUT; in-body links and Copy Link unreported (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 08-03-PLAN.md — Backend: STAR/BOARD/RAINDROP capture in the owning services, stickiness, cascade and unchanged-ranking proofs, V7 migration test, CLAUDE.md (wave 2)
 - [ ] 08-04-PLAN.md — Frontend: "Engaged: … · Forget" line in ScoreRow (scored or engaged) and exact by-id refresh after saves (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 08-05-PLAN.md — Release v0.3.0: read-only dry run, blocking approval of the V7 one-way door, release and deploy, prod smoke and ranking-unchanged check (wave 3)
 
 **UI hint**: yes
