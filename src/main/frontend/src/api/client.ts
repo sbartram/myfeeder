@@ -51,11 +51,11 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return parseBody<T>(res)
 }
 
-export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+export async function apiPut<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   })
   await raiseIfBad(res, 'PUT', path)
   return parseBody<T>(res)

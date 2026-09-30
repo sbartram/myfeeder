@@ -37,4 +37,6 @@ export const articlesApi = {
   setFeedback: (id: number, vote: 1 | -1, topicIds?: number[] | null) =>
     apiPut<FeedbackResult>(`/articles/${id}/feedback`, { vote, topicIds: topicIds ?? null }),
   clearFeedback: (id: number) => apiDeleteJson<FeedbackResult>(`/articles/${id}/feedback`),
+  /** Reports an Open Original (OPEN_ORIGINAL engagement): a bodyless, idempotent PUT answered 204. */
+  recordOpen: (id: number) => apiPut<void>(`/articles/${id}/engagement/open`),
 }

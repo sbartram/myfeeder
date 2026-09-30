@@ -9,6 +9,7 @@ import { usePollFeed } from './useFeeds'
 import { useMarkAllReadInFeed } from './useMarkAllReadInFeed'
 import { useUnreadFeedNavigation } from './useUnreadFeedNavigation'
 import { useVoteFeedback } from './useFeedback'
+import { useOpenOriginal } from './useEngagement'
 import { canNarrow } from '../utils/feedback'
 import type { Article } from '../types'
 
@@ -48,6 +49,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
   const markAllReadInFeed = useMarkAllReadInFeed()
   const { findUnreadFeedId } = useUnreadFeedNavigation()
   const { press } = useVoteFeedback()
+  const openOriginal = useOpenOriginal()
 
   const currentIndex = articles.findIndex((a) => a.id === selectedArticleId)
   // The action target (o/m/s/v/b) must work even when the selected article is
@@ -170,7 +172,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           }
           break
         case 'o':
-          if (currentArticle) window.open(currentArticle.url, '_blank', 'noopener')
+          if (currentArticle) openOriginal(currentArticle)
           break
         case 'b':
           if (currentArticle && callbacks.onOpenBoard) {
@@ -219,7 +221,7 @@ export function useKeyboardShortcuts(articles: Article[], callbacks: KeyboardSho
           break
       }
     },
-    [articles, currentIndex, currentArticle, fetchedArticle, press, selectedArticleId, selectedFeedId, findUnreadFeedId, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setKeyboardFocus, setSearchQuery, updateState, markAllReadInFeed, pollFeed, saveToRaindrop, callbacks, keyboardFocus, articleListFontSize, readingFontSize, setArticleListFontSize, setReadingFontSize]
+    [articles, currentIndex, currentArticle, fetchedArticle, press, selectedArticleId, selectedFeedId, findUnreadFeedId, navigate, setSelectedArticle, setSelectedFeed, cycleFocus, setKeyboardFocus, setSearchQuery, updateState, markAllReadInFeed, pollFeed, saveToRaindrop, openOriginal, callbacks, keyboardFocus, articleListFontSize, readingFontSize, setArticleListFontSize, setReadingFontSize]
   )
 
   useEffect(() => {

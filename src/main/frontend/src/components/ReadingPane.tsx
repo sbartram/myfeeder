@@ -10,6 +10,7 @@ import {
 } from '../hooks/useArticles'
 import { usePreferences, READING_FONT_PX } from '../stores/preferencesStore'
 import { useReadLater, useRemoveArticleFromBoard } from '../hooks/useBoards'
+import { useOpenOriginal } from '../hooks/useEngagement'
 import { BoardManager } from './BoardManager'
 import { ScoreRow } from './ScoreRow'
 import { FeedbackBar } from './FeedbackBar'
@@ -62,6 +63,7 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose, onCrea
   const readingFontSize = usePreferences((s) => s.readingFontSize)
   const readLater = useReadLater()
   const removeFromBoard = useRemoveArticleFromBoard()
+  const openOriginal = useOpenOriginal()
   const [internalBoardOpen, setInternalBoardOpen] = useState(false)
   const boardOpen = externalBoardOpen || internalBoardOpen
   const closeBoardDialog = () => {
@@ -112,7 +114,7 @@ export function ReadingPane({ boardOpen: externalBoardOpen, onBoardClose, onCrea
   }
 
   const handleOpenOriginal = () => {
-    window.open(article.url, '_blank', 'noopener')
+    openOriginal(article)
   }
 
   const handleCopyLink = () => {
