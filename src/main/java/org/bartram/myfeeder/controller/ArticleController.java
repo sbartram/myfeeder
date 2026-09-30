@@ -110,6 +110,13 @@ public class ArticleController {
         articleService.recordOpen(id);
     }
 
+    /** Removes the article's engagement. DELETE is never a CORS simple request, so no content-type guard is needed. */
+    @DeleteMapping("/{id}/engagement")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void forgetEngagement(@PathVariable Long id) {
+        articleService.forgetEngagement(id);
+    }
+
     @PostMapping("/{id}/raindrop")
     public ResponseEntity<Void> saveToRaindrop(@PathVariable Long id) {
         Article article = articleService.findById(id)

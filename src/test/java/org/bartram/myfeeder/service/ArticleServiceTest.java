@@ -177,6 +177,25 @@ class ArticleServiceTest {
     }
 
     @Test
+    void forgetEngagementDeletesTheRows() {
+        when(articleRepository.existsById(5L)).thenReturn(true);
+
+        articleService.forgetEngagement(5L);
+
+        verify(engagementStore).deleteAll(5L);
+    }
+
+    @Test
+    void forgetEngagementOnAMissingArticleThrowsNotFound() {
+        when(articleRepository.existsById(5L)).thenReturn(false);
+
+        org.junit.jupiter.api.Assertions.assertThrows(NotFoundException.class,
+                () -> articleService.forgetEngagement(5L));
+
+        verifyNoInteractions(engagementStore);
+    }
+
+    @Test
     void shouldBulkMarkReadByIds() {
         articleService.markRead(List.of(1L, 2L), null, null);
         verify(articleRepository).markReadByIds(List.of(1L, 2L));

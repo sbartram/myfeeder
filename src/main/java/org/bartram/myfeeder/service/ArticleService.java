@@ -63,6 +63,18 @@ public class ArticleService {
         engagementStore.record(id, EngagementKind.OPEN_ORIGINAL);
     }
 
+    /**
+     * Forgets the article's engagement (CAPT-06): deletes its engagement rows and nothing else. It is not an
+     * undo of the save, so the star, board memberships and thumbs vote stay, and no tombstone is kept, so a
+     * later open records again. A missing article is a 404.
+     */
+    public void forgetEngagement(Long id) {
+        if (!articleRepository.existsById(id)) {
+            throw new NotFoundException("Article not found: " + id);
+        }
+        engagementStore.deleteAll(id);
+    }
+
     public Article updateState(Long id, Boolean read, Boolean starred) {
         Article article = articleRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Article not found: " + id));
