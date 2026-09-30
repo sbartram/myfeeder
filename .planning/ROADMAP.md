@@ -58,7 +58,7 @@ Full phase details: [milestones/v0.2.1-ROADMAP.md](milestones/v0.2.1-ROADMAP.md)
   4. The reading pane shows a small "Forget engagement" control only when the open article has engagement; using it deletes that article's engagement and hides the control, and a later open or save records again
   5. The capture release runs in production and engagement rows accumulate from real use, while the Priority order, badges and "Why N?" are unchanged from v0.2.1
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans executed
 
 Plans:
 **Wave 1**
@@ -70,7 +70,7 @@ Plans:
 - [x] 08-04-PLAN.md — Frontend: "Engaged: … · Forget" line in ScoreRow (scored or engaged) and exact by-id refresh after saves (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 08-05-PLAN.md — Release v0.3.0: read-only dry run, blocking approval of the V7 one-way door, release and deploy, prod smoke and ranking-unchanged check (wave 3)
+- [x] 08-05-PLAN.md — Release v0.3.0: read-only dry run, blocking approval of the V7 one-way door, release and deploy, prod smoke and ranking-unchanged check (wave 3)
 
 **UI hint**: yes
 **Notes**:
@@ -180,7 +180,7 @@ Phases execute in numeric order: 8 → 9 → 10 → 11 → 12 (Phase 11 depends 
 | 5. Blend & Priority View | v0.2.1 | 8/8 | Complete | 2026-09-26 |
 | 6. Thumbs Feedback | v0.2.1 | 7/7 | Complete | 2026-09-27 |
 | 7. Rollout & Calibration | v0.2.1 | 11/11 | Complete | 2026-09-29 |
-| 8. Engagement Capture | v0.3.0 | 4/5 | In Progress|  |
+| 8. Engagement Capture | v0.3.0 | 5/5 | In Progress|  |
 | 9. Engagement Learning Model | v0.3.0 | 0/TBD | Not started | - |
 | 10. Explainable Engagement in the UI | v0.3.0 | 0/TBD | Not started | - |
 | 11. Gap Discovery | v0.3.0 | 0/TBD | Not started | - |

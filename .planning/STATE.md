@@ -5,17 +5,17 @@ milestone_name: Engagement Learning
 current_phase: 08
 current_phase_name: Engagement Capture
 status: executing
-stopped_at: Phase 8 context gathered
-last_updated: "2026-09-30T01:58:54.639Z"
+stopped_at: Completed 08-05-PLAN.md
+last_updated: "2026-09-30T04:10:13.973Z"
 last_activity: 2026-09-29
 last_activity_desc: Phase 08 execution started
-state_head: 52c830c62a2258f855deb6e0646b92bc72d1b7c4
+state_head: 3a3ac8ba1e89f9f6a0231bbc842ffc2d78e8b92f
 progress:
   total_phases: 5
   completed_phases: 7
   total_plans: 5
-  completed_plans: 0
-  percent: 0
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -30,11 +30,11 @@ See: .planning/PROJECT.md (updated 2026-09-29)
 ## Current Position
 
 Phase: 08 (Engagement Capture) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 08
+Plan: 2 of 5
+Status: Ready to execute
 Last activity: 2026-09-29 — Phase 08 execution started
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -56,6 +56,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion. v0.2.1 per-plan metrics (Phases 1–7) are in this file's git history at `18269f8`.*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 08 P05 | 29min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -72,6 +77,7 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [v0.3.0]: Engaged-but-unscored articles stay ineligible for scoring; dormant engagement is measured by the calibration replay, with no status field
 - [v0.3.0]: Gap discovery = "Suggested topics" list + near-miss filter + dismissal; all V7 schema (engagement and dismissal tables) ships in one migration in Phase 8
 - [v0.3.0 roadmap]: Capture ships and releases first with ranking unchanged, so prod accumulates engagement before calibration; CAL-01 (replay + drift guard regeneration) lands with the learned-CTE change in Phase 9; Phase 11 depends only on Phase 8
+- [Phase 08]: 08-05: user answered 'approve b' at the D-13 checkpoint; v0.3.0 released (tag at db5acd7, image sha256:7a785af7, Helm rev 20, rollback rev 19), V7 applied to prod, ranking and why UNCHANGED, smoke PASS
 
 ### Pending Todos
 
@@ -114,9 +120,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-29T20:09:49.966Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-engagement-capture/08-CONTEXT.md
+Last session: 2026-09-30T04:10:13.955Z
+Stopped at: Completed 08-05-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 

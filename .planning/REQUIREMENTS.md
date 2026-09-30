@@ -9,13 +9,13 @@
 
 ### Engagement Capture
 
-- [ ] **CAPT-01**: Opening an article's original link (Open Original button or `o`) records an `OPEN_ORIGINAL` engagement, once per article. The tab always opens, even if recording fails.
-- [ ] **CAPT-02**: Starring an article (unstarred → starred) records a `STAR` engagement
-- [ ] **CAPT-03**: Adding an article to any board (including Read Later and `b`) records one `BOARD` engagement per article, however many boards it is on
-- [ ] **CAPT-04**: A successful Raindrop save records a `RAINDROP` engagement. A failed save, or one blocked by an open breaker, records nothing.
-- [ ] **CAPT-05**: Engagement is sticky: unstarring, removing from a board or deleting a board keeps it. Deleting the article or its feed removes it.
-- [ ] **CAPT-06**: User can forget an article's engagement with a small reading-pane control that appears only when the article has engagement
-- [ ] **CAPT-07**: Nothing else records engagement: not in-body link clicks, selection, reader view, dwell time or auto-mark-read
+- [x] **CAPT-01**: Opening an article's original link (Open Original button or `o`) records an `OPEN_ORIGINAL` engagement, once per article. The tab always opens, even if recording fails.
+- [x] **CAPT-02**: Starring an article (unstarred → starred) records a `STAR` engagement
+- [x] **CAPT-03**: Adding an article to any board (including Read Later and `b`) records one `BOARD` engagement per article, however many boards it is on
+- [x] **CAPT-04**: A successful Raindrop save records a `RAINDROP` engagement. A failed save, or one blocked by an open breaker, records nothing.
+- [x] **CAPT-05**: Engagement is sticky: unstarring, removing from a board or deleting a board keeps it. Deleting the article or its feed removes it.
+- [x] **CAPT-06**: User can forget an article's engagement with a small reading-pane control that appears only when the article has engagement
+- [x] **CAPT-07**: Nothing else records engagement: not in-body link clicks, selection, reader view, dwell time or auto-mark-read
 
 ### Learning
 
@@ -76,13 +76,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAPT-01 | Phase 8 | Pending |
-| CAPT-02 | Phase 8 | Pending |
-| CAPT-03 | Phase 8 | Pending |
-| CAPT-04 | Phase 8 | Pending |
-| CAPT-05 | Phase 8 | Pending |
-| CAPT-06 | Phase 8 | Pending |
-| CAPT-07 | Phase 8 | Pending |
+| CAPT-01 | Phase 8 | Complete |
+| CAPT-02 | Phase 8 | Complete |
+| CAPT-03 | Phase 8 | Complete |
+| CAPT-04 | Phase 8 | Complete |
+| CAPT-05 | Phase 8 | Complete |
+| CAPT-06 | Phase 8 | Complete |
+| CAPT-07 | Phase 8 | Complete |
 | LRN-01 | Phase 9 | Pending |
 | LRN-02 | Phase 9 | Pending |
 | LRN-03 | Phase 9 | Pending |
