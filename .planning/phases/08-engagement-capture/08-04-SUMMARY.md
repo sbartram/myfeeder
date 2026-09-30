@@ -168,3 +168,9 @@ None. No external service configuration is required.
 ---
 *Phase: 08-engagement-capture*
 *Completed: 2026-09-30*
+
+## Self-Check: PASSED
+
+- FOUND: ScoreRow.tsx, ScoreRow.test.tsx, useEngagement.ts, engagementRefresh.test.ts, 08-04-SUMMARY.md
+- FOUND commits: 6cfb34e, 9b063c1, 32d8d3d (the 3 counted from plan_head_before) and the SUMMARY commit 636b26e
+- The verification servers were stopped and no Testcontainers containers remain
