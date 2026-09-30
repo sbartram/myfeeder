@@ -11,6 +11,7 @@ vi.mock('../api/articles', () => ({
     priority: vi.fn(),
     setFeedback: vi.fn(),
     clearFeedback: vi.fn(),
+    recordOpen: vi.fn(),
   },
 }))
 vi.mock('../api/feeds', () => ({
@@ -131,6 +132,47 @@ describe('useKeyboardShortcuts', () => {
 
     press('o')
     expect(openSpy).toHaveBeenCalledWith('https://example.com/seven', '_blank', 'noopener')
+    await waitFor(() => expect(articlesApi.recordOpen).toHaveBeenCalledWith(7))
+    expect(openSpy.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(articlesApi.recordOpen).mock.invocationCallOrder[0]
+    )
+    openSpy.mockRestore()
+  })
+
+  it("'o' still opens and stays silent when recording fails", async () => {
+    const selected = article(7, { url: 'https://example.com/seven' })
+    const { qc, wrapper } = createWrapper()
+    qc.setQueryData(['article', 7], selected)
+    vi.mocked(articlesApi.getById).mockResolvedValue(selected)
+    vi.mocked(articlesApi.recordOpen).mockRejectedValue(new Error('boom'))
+    useUIStore.setState({ selectedArticleId: 7 })
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+    renderHook(() => useKeyboardShortcuts([]), { wrapper })
+    await waitFor(() => expect(qc.getQueryData(['article', 7])).toBeTruthy())
+
+    press('o')
+    expect(openSpy).toHaveBeenCalledWith('https://example.com/seven', '_blank', 'noopener')
+    await waitFor(() => expect(articlesApi.recordOpen).toHaveBeenCalledWith(7))
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(useToastStore.getState().toasts).toHaveLength(0)
+    openSpy.mockRestore()
+  })
+
+  it("'o' does nothing without a selected article", async () => {
+    const { wrapper } = createWrapper()
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+    renderHook(() => useKeyboardShortcuts([]), { wrapper })
+
+    press('o')
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(openSpy).not.toHaveBeenCalled()
+    expect(articlesApi.recordOpen).not.toHaveBeenCalled()
     openSpy.mockRestore()
   })
 

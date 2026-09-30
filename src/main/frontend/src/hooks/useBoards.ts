@@ -30,8 +30,11 @@ export function useAddArticleToBoard() {
   return useMutation({
     mutationFn: ({ boardId, articleId }: { boardId: number; articleId: number }) =>
       boardsApi.addArticle(boardId, articleId),
-    onSuccess: (_, { boardId }) =>
-      qc.invalidateQueries({ queryKey: ['boardArticles', boardId] }),
+    onSuccess: (_, { boardId, articleId }) => {
+      // The board add is recorded as engagement: refresh only the by-id article (D-06).
+      void qc.invalidateQueries({ queryKey: ['article', articleId], exact: true })
+      return qc.invalidateQueries({ queryKey: ['boardArticles', boardId] })
+    },
   })
 }
 
@@ -44,9 +47,11 @@ export function useReadLater() {
       const board = await boardsApi.getOrCreateByName('Read Later')
       await boardsApi.addArticle(board.id, articleId)
     },
-    onSuccess: () => {
+    onSuccess: (_data, articleId) => {
       qc.invalidateQueries({ queryKey: ['boards'] })
       qc.invalidateQueries({ queryKey: ['boardArticles'] })
+      // The board add is recorded as engagement: refresh only the by-id article (D-06).
+      qc.invalidateQueries({ queryKey: ['article', articleId], exact: true })
       addToast('Added to Read Later', 'success')
     },
     onError: () => {

@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch, apiPut, apiDeleteJson } from './client'
+import { apiGet, apiPost, apiPatch, apiPut, apiDelete, apiDeleteJson } from './client'
 import type {
   Article,
   ArticleFilters,
@@ -37,4 +37,8 @@ export const articlesApi = {
   setFeedback: (id: number, vote: 1 | -1, topicIds?: number[] | null) =>
     apiPut<FeedbackResult>(`/articles/${id}/feedback`, { vote, topicIds: topicIds ?? null }),
   clearFeedback: (id: number) => apiDeleteJson<FeedbackResult>(`/articles/${id}/feedback`),
+  /** Reports an Open Original (OPEN_ORIGINAL engagement): a bodyless, idempotent PUT answered 204. */
+  recordOpen: (id: number) => apiPut<void>(`/articles/${id}/engagement/open`),
+  /** Forgets every engagement kind recorded for the article (CAPT-06): a DELETE answered 204. */
+  forgetEngagement: (id: number) => apiDelete(`/articles/${id}/engagement`),
 }

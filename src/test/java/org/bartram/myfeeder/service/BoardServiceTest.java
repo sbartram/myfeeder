@@ -2,11 +2,15 @@ package org.bartram.myfeeder.service;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.Board;
 import org.bartram.myfeeder.model.BoardArticle;
+import org.bartram.myfeeder.model.EngagementKind;
+import org.bartram.myfeeder.repository.ArticleEngagementStore;
 import org.bartram.myfeeder.repository.BoardArticleRepository;
 import org.bartram.myfeeder.repository.BoardRepository;
 import org.bartram.myfeeder.repository.InterestScoreQueries;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -14,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -22,6 +27,7 @@ class BoardServiceTest {
     @Mock private BoardRepository boardRepository;
     @Mock private BoardArticleRepository boardArticleRepository;
     @Mock private InterestScoreQueries interestScoreQueries;
+    @Mock private ArticleEngagementStore engagementStore;
     @InjectMocks private BoardService boardService;
 
     @Test
@@ -58,6 +64,48 @@ class BoardServiceTest {
         when(boardArticleRepository.existsByBoardIdAndArticleId(1L, 2L)).thenReturn(false);
         boardService.addArticle(1L, 2L);
         verify(boardArticleRepository).save(any(BoardArticle.class));
+    }
+
+    @Test
+    void addingRecordsBoardAfterTheSave() {
+        when(boardArticleRepository.existsByBoardIdAndArticleId(1L, 2L)).thenReturn(false);
+
+        boardService.addArticle(1L, 2L);
+
+        InOrder inOrder = inOrder(boardArticleRepository, engagementStore);
+        inOrder.verify(boardArticleRepository).save(any(BoardArticle.class));
+        inOrder.verify(engagementStore).recordQuietly(2L, EngagementKind.BOARD);
+    }
+
+    @Test
+    void reAddingAnArticleAlreadyOnTheBoardStillRecordsBoard() {
+        when(boardArticleRepository.existsByBoardIdAndArticleId(1L, 2L)).thenReturn(true);
+
+        boardService.addArticle(1L, 2L);
+
+        verify(boardArticleRepository, never()).save(any());
+        verify(engagementStore).recordQuietly(2L, EngagementKind.BOARD);
+    }
+
+    @Test
+    void aFailedSaveRecordsNothing() {
+        when(boardArticleRepository.existsByBoardIdAndArticleId(99L, 2L)).thenReturn(false);
+        when(boardArticleRepository.save(any())).thenThrow(new DataIntegrityViolationException("fk"));
+
+        assertThatThrownBy(() -> boardService.addArticle(99L, 2L))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        verify(engagementStore, never()).recordQuietly(anyLong(), any());
+    }
+
+    @Test
+    void removingAndDeletingTouchNoEngagement() {
+        boardService.removeArticle(1L, 2L);
+        boardService.delete(1L);
+
+        verify(boardArticleRepository).removeArticleFromBoard(1L, 2L);
+        verify(boardRepository).deleteById(1L);
+        verifyNoInteractions(engagementStore);
     }
 
     @Test

@@ -50,8 +50,8 @@ cd src/main/frontend && npm run dev
 ```
 org.bartram.myfeeder
 ├── config/           MyfeederProperties, RestClientConfig (User-Agent customizer), SpaForwardController, TypeSafeConfig (app-owned TypeSafeClient, jev retry interval), InterestScoringConfig (jev-score executor), JevEventLogging (jev retry/breaker log lines)
-├── model/            Feed, FeedType, Article, Folder, Board, BoardArticle, IntegrationConfig, IntegrationType, UnreadCount, InterestProfile, InterestTopic, InterestBreakdown, ArticleFeedback
-├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig/InterestProfile/InterestTopic repositories, ArticleScoreStore, ArticleFeedbackStore, InterestScoreQueries (blend/learned CTEs: Priority sort, badge, breakdown)
+├── model/            Feed, FeedType, Article, Folder, Board, BoardArticle, IntegrationConfig, IntegrationType, UnreadCount, InterestProfile, InterestTopic, InterestBreakdown, ArticleFeedback, EngagementKind
+├── repository/       Feed/Article/Folder/Board/BoardArticle/IntegrationConfig/InterestProfile/InterestTopic repositories, ArticleScoreStore, ArticleFeedbackStore, ArticleEngagementStore, InterestScoreQueries (blend/learned CTEs: Priority sort, badge, breakdown)
 ├── parser/           FeedParser (ROME + Jackson), ParsedFeed, ParsedArticle, FeedParseException, OpmlFeed, OpmlParseException
 ├── service/          FeedService, ArticleService, FeedPollingService, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, OpmlImportResult, FeedFetcher, FetchResult, FeedUrlValidator, ArticleExtractionService, ExtractedContent, NotFoundException, FeedFetchException; interest: InterestService, InterestStatusService, InterestStatus, TierThresholds, InterestPreviewService, InterestRescoreService, RescoreCount, ArticleScoringService, ScoringQueue, ScoringFailure, InterestScoringListener, InterestQuestions, ArticleStateBuilder, PriorityService, ScoreBreakdowns, ArticleFeedbackService, FeedbackResult, LearnedLimit, TopicLearned, TopicPreviewResponse
 ├── integration/      RaindropService, RaindropApiClient/RaindropApiClientImpl (with Resilience4j @CircuitBreaker + @Retry), RaindropConfig, RaindropCollection, RaindropNotConfiguredException, JevApiClient/JevApiClientImpl (@CircuitBreaker(name = "jev") + @Retry(name = "jev")), JevJudgment, JevNotConfiguredException
@@ -73,6 +73,18 @@ org.bartram.myfeeder
 - **RetentionService** is a `@Scheduled` cron job — config under `myfeeder.retention.*`
 - **OpmlService** has XXE protection enabled — maintain this when modifying XML parsing
 - **OpmlImportService** publishes `FeedSavedEvent` per new feed; the scheduler's `@TransactionalEventListener(AFTER_COMMIT)` registers them post-commit (no manual `TransactionSynchronization`)
+- **Engagement capture (v0.3.0)**:
+  - Opens (both ↗ Open Original buttons and `o`) go through `useOpenOriginal` in `hooks/useEngagement.ts`: `window.open` first, then a fire-and-forget bodyless `PUT /api/articles/{id}/engagement/open` (204, idempotent, 404 for an unknown id) whose errors are swallowed.
+  - Saves are captured server-side after the user's write, through `ArticleEngagementStore.recordQuietly` (one `ON CONFLICT DO NOTHING` statement; a failure is a WARN with the ids and the exception class only):
+    - STAR in `ArticleService.updateState`, on an unstarred→starred change only
+    - BOARD in `BoardService.addArticle`, after the save-or-already-present branch, so re-adds credit
+    - RAINDROP in `RaindropService`, right after `createBookmark` returns, outside the breaker bean
+  - These three services must stay free of any transaction boundary, so a failed insert can never abort the user's save.
+  - Engagement is sticky: unstar, board removal and board delete keep it; an article or feed delete cascades it.
+  - Forget is `DELETE /api/articles/{id}/engagement` (204, no tombstone), reached from the reading pane's `Engaged: … · Forget` line in `ScoreRow` (shown when the article is scored or engaged; `useForgetEngagement`).
+  - `GET /api/articles/{id}` carries `engagement` (`[]` when none); list responses omit it.
+  - Nothing else records engagement: in-body links, Copy Link, selection, reader view, auto-mark-read, bulk mark-read, OPML import and polling.
+  - The ranking SQL does not read engagement until Phase 9 (`V7EngagementMigrationTest.rankingSqlDoesNotReadTheV7TablesYet` guards this).
 - **API endpoints**: `/api/feeds`, `/api/articles`, `/api/integrations`, `/api/opml`, `/api/boards`, `/api/folders`, `/api/interest`
 
 ## Frontend
@@ -86,7 +98,7 @@ org.bartram.myfeeder
 - **Type-check**: use `npx tsc -b` from `src/main/frontend/` — plain `tsc --noEmit` returns success even with errors because the root `tsconfig.json` has `files: []` and uses project references
 - **Key conventions**:
   - API client in `src/api/` — thin fetch wrappers per domain (feeds, articles, folders, boards, integrations, opml, interest)
-  - TanStack Query hooks in `src/hooks/` — one file per domain (useArticles, useFeeds, useFolders, useBoards, useOpml, useInterest (interest status, tiers and rubric), useFeedback, usePriorityArticles)
+  - TanStack Query hooks in `src/hooks/` — one file per domain (useArticles, useFeeds, useFolders, useBoards, useOpml, useInterest (interest status, tiers and rubric), useFeedback, usePriorityArticles, useEngagement (`useOpenOriginal`, `useForgetEngagement`))
   - Zustand stores in `src/stores/` — `uiStore` (selection, panel state), `preferencesStore` (localStorage-persisted settings)
   - Components in `src/components/` — AppShell, FeedPanel, ArticleList, ReadingPane, BoardArticleList, BoardManager, SettingsDialog, ShortcutOverlay, Toast, dialogs
   - Keyboard shortcuts: vim-style (j/k/n/p/m/s/o/b/v/r), g-chords, managed by `useKeyboardShortcuts` hook
@@ -97,7 +109,7 @@ org.bartram.myfeeder
 - `compose.yaml` defines Postgres and Redis for local dev (`bootRun`)
 - `TestcontainersConfiguration` provides Postgres and Redis containers for tests and `bootTestRun`
 - Docker must be running for both tests and local development
-- Flyway migrations: `V1__initial_schema.sql` (feeds, articles, integration_configs), `V2__folders_boards_and_feed_folder.sql` (folders, boards, board_articles, feed.folder_id), `V3__article_image_url.sql`, `V4__strip_raindrop_api_token.sql`, `V5__article_extracted_content.sql`, `V6__interest_scoring.sql` (interest_profile, interest_topic, article_score, article_topic_score, article_feedback, article_feedback_topic)
+- Flyway migrations: `V1__initial_schema.sql` (feeds, articles, integration_configs), `V2__folders_boards_and_feed_folder.sql` (folders, boards, board_articles, feed.folder_id), `V3__article_image_url.sql`, `V4__strip_raindrop_api_token.sql`, `V5__article_extracted_content.sql`, `V6__interest_scoring.sql` (interest_profile, interest_topic, article_score, article_topic_score, article_feedback, article_feedback_topic), `V7__engagement.sql` (article_engagement, topic_suggestion_dismissal)
 
 ## Deployment
 
@@ -145,7 +157,7 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
 
 ## Interest Ranking
 
-- **Schema**: `V6__interest_scoring.sql` creates all six interest tables (`interest_profile` singleton row 1, `interest_topic`, `article_score`, `article_topic_score`, `article_feedback`, `article_feedback_topic`); later milestone phases add no migrations
+- **Schema**: `V6__interest_scoring.sql` creates all six interest tables (`interest_profile` singleton row 1, `interest_topic`, `article_score`, `article_topic_score`, `article_feedback`, `article_feedback_topic`). V7 (v0.3.0) adds `article_engagement` (Phase 8 capture) and `topic_suggestion_dismissal` (used by Phase 11), and carries the whole v0.3.0 schema
 - **InterestService** owns the profile/topic limits (service constants, fixed-text 400s) and the version rules; `isColdStart()` is the single cold-start predicate (blank profile AND zero topics) — callers never reimplement it
 - **InterestQuestions** and **ArticleStateBuilder** are pure static builders shared by the preview and the scorer, so the preview judges exactly what scoring sends
 - **InterestStatusService**/`InterestStatus` serve `{configured, breakerState, coldStart, eligibleUnscored, failed, tiers}` (breaker state read from `CircuitBreakerRegistry.circuitBreaker("jev")`; `tiers` = `{high, neutral}` from `myfeeder.interest.blend.tiers.*`, D-13); both counts come from one query over eligible articles (unread, inside the window): `eligibleUnscored` = no score row or a FAILED row under 3 attempts, `failed` = FAILED with all 3 attempts used; later fields are appended, existing ones are never renamed
