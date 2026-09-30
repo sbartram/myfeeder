@@ -499,16 +499,21 @@ void clampAndRangeOutrankEngagementCap() {
 | A4 | Adding `engagementAtCap` to `TopicLearned` counts as "cheap" | Pattern 4 | Low: one record component + one expression + two test constructors |
 | A5 | Skipping the engagement compare while a vote on the same id is pending (Pitfall 4) is acceptable behavior | Pitfall 4 | Low: the vote patches the row and lights the hint itself |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+Resolved at plan-phase (2026-09-30) by adopting each recommendation below; the plans record them as assumptions.
 
 1. **Should the label's parts be forced to add up visually (Pitfall 6)?**
    - What we know: independent tenths rounding can make `base + votes + engaged` differ from the printed weight by 0.1. The carried-forward rule forbids client weight recomputation.
    - Recommendation: accept the mismatch (the server values are exact, and the tooltip shows the same rounding). Raise it at plan-check. If the user objects, the fix is presentation-only: print engaged as `round1(weight) − base − round1(votes)`. That needs explicit user approval, because it touches the "never recomputes" rule.
+   - **RESOLVED:** mismatch accepted; no client recomputation (10-03).
 2. **Narrowed 👎 on an engaged article: should unpicked topics get the replaced-engagement note (Pitfall 9)?**
    - What we know: D-11's condition requires "the thumbs part changed", so unpicked topics move by the engagement share with no note.
    - Recommendation: keep D-11 exactly as written (locked), and add a test that pins the behavior so it is deliberate. If the user wants the note there, drop the "thumbs changed" conjunct. The wording "(replaces engagement)" is still accurate.
+   - **RESOLVED:** D-11 kept as written; pinned by tests in 10-02.
 3. **Should the vote hook be refactored onto the shared helper?**
    - Recommendation: share only the invalidation set (learned, articles, other by-ids off Priority) through a small exported function, and keep the vote's unconditional patch/hint and toast. The existing `useFeedback.test.ts` cases must stay green unchanged.
+   - **RESOLVED:** only the invalidation set is shared (10-01 Task 3).
 
 ## Environment Availability
 
