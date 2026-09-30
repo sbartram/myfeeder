@@ -27,8 +27,14 @@ class ScoreBreakdownsTest {
 
     private static TopicContribution topic(long id, String name, double noul, double hinge, double weight,
                                            String exact, double baseWeight, double learnedWeight) {
+        return topic(id, name, noul, hinge, weight, exact, baseWeight, learnedWeight, learnedWeight, 0);
+    }
+
+    private static TopicContribution topic(long id, String name, double noul, double hinge, double weight,
+                                           String exact, double baseWeight, double learnedWeight,
+                                           double thumbsWeight, double engagementWeight) {
         return new TopicContribution(id, name, noul, hinge, weight, bd(exact), baseWeight, learnedWeight,
-                learnedWeight, 0);
+                thumbsWeight, engagementWeight);
     }
 
     private static BreakdownInputs inputs(String raw, int total, int display, Double profileScore,
@@ -94,6 +100,26 @@ class ScoreBreakdownsTest {
         assertThat(rust.weight()).isEqualTo(21.72);
         assertThat(rust.baseWeight()).isEqualTo(20.0);
         assertThat(rust.learnedWeight()).isEqualTo(1.72);
+    }
+
+    @Test
+    void topicRowsCarryTheSplit() {
+        InterestBreakdown b = ScoreBreakdowns.build(inputs("83.522000", 84, 84, 2.56, 4, "64.000000",
+                topic(1, "Rust", 0.93, 0.86, 22.7, "19.522000", 20, 2.7, 1.8, 0.9)));
+
+        Row profile = b.rows().get(0);
+        assertThat(profile.kind()).isEqualTo(Row.KIND_PROFILE);
+        assertThat(profile.thumbsWeight()).isNull();
+        assertThat(profile.engagementWeight()).isNull();
+
+        Row rust = b.rows().get(1);
+        assertThat(rust.kind()).isEqualTo(Row.KIND_TOPIC);
+        assertThat(rust.thumbsWeight()).isEqualTo(1.8);
+        assertThat(rust.engagementWeight()).isEqualTo(0.9);
+        assertThat(BigDecimal.valueOf(rust.baseWeight())
+                .add(BigDecimal.valueOf(rust.thumbsWeight()))
+                .add(BigDecimal.valueOf(rust.engagementWeight())))
+                .isEqualByComparingTo(BigDecimal.valueOf(rust.weight()));
     }
 
     @Test

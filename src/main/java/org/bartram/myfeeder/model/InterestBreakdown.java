@@ -20,23 +20,29 @@ public record InterestBreakdown(BigDecimal raw, int total, int display, List<Row
      * {@code weight}. {@code exact} is the unrounded contribution (6 decimals); null fields are omitted.
      * A TOPIC row also carries {@code baseWeight} (the topic's own weight) and {@code learnedWeight}, the
      * applied learned part (effective minus base, after the cap, the sign clamp and the +/-50 range), so
-     * {@code baseWeight + learnedWeight} equals {@code weight} (D-11, Pitfall 4); PROFILE rows omit both.
+     * {@code baseWeight + learnedWeight} equals {@code weight} (D-11, Pitfall 4). A TOPIC row's
+     * {@code learnedWeight} splits into {@code thumbsWeight} (the votes) and {@code engagementWeight}, both
+     * applied parts after the single clamp, so {@code baseWeight + thumbsWeight + engagementWeight} equals
+     * {@code weight} (D-16). PROFILE rows omit all four.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Row(String kind, Long topicId, String name, Integer levelIndex, Double noul, Double hinge,
-                      Double weight, BigDecimal exact, long points, Double baseWeight, Double learnedWeight) {
+                      Double weight, BigDecimal exact, long points, Double baseWeight, Double learnedWeight,
+                      Double thumbsWeight, Double engagementWeight) {
 
         public static final String KIND_PROFILE = "PROFILE";
         public static final String KIND_TOPIC = "TOPIC";
 
         public static Row profile(int levelIndex, BigDecimal exact, long points) {
-            return new Row(KIND_PROFILE, null, null, levelIndex, null, null, null, exact, points, null, null);
+            return new Row(KIND_PROFILE, null, null, levelIndex, null, null, null, exact, points, null, null,
+                    null, null);
         }
 
         public static Row topic(long topicId, String name, double noul, double hinge, double weight,
-                                BigDecimal exact, long points, double baseWeight, double learnedWeight) {
+                                BigDecimal exact, long points, double baseWeight, double learnedWeight,
+                                double thumbsWeight, double engagementWeight) {
             return new Row(KIND_TOPIC, topicId, name, null, noul, hinge, weight, exact, points, baseWeight,
-                    learnedWeight);
+                    learnedWeight, thumbsWeight, engagementWeight);
         }
     }
 
