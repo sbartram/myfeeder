@@ -86,10 +86,15 @@ public class InterestScoreQueries {
      * One judged topic of an article as the blend CTE saw it: effective weight, hinge and exact points,
      * plus the topic's base weight and the applied learned part ({@code weight - baseWeight}, after the
      * cap, the sign clamp and the +/-50 range), so {@code baseWeight + learnedWeight} equals
-     * {@code weight} (D-11). Weights are rounded to 6 decimals.
+     * {@code weight} (D-11). Weights are rounded to 6 decimals. The applied learned part splits into
+     * {@code thumbsWeight} (the votes, {@code thumbsEffective - base}) and {@code engagementWeight}
+     * ({@code weight - thumbsEffective}), both computed in SQL by subtracting 6-decimal rounded values, so
+     * {@code learnedWeight = thumbsWeight + engagementWeight} and
+     * {@code baseWeight + thumbsWeight + engagementWeight = weight} hold exactly (D-09, D-10).
      */
     public record TopicContribution(long topicId, String name, double noul, double hinge, double weight,
-                                    BigDecimal exact, double baseWeight, double learnedWeight) {}
+                                    BigDecimal exact, double baseWeight, double learnedWeight,
+                                    double thumbsWeight, double engagementWeight) {}
 
     /**
      * The learned model (R2, FDBK-03, LRN-01..04), shared by the blend and {@link #topicWeights(Collection)}.
@@ -145,11 +150,16 @@ public class InterestScoreQueries {
             + "FROM eff e)";
 
     /**
-     * One topic's weights under the learned model, rounded to 6 decimals: the stored base weight, the
-     * uncapped learned points, the capped learned points and the effective weight.
+     * One topic's weights under the learned model, all rounded to 6 decimals. {@code learnedRaw} is the
+     * uncapped thumbs points. {@code learned} is the thumbs capped plus the engagement capped, before the
+     * clamp (D-15): the sum {@code LearnedLimit} judges. {@code effective} is the clamped
+     * {@code base + learned}. {@code thumbsLearned} is the capped thumbs points, {@code engagementRaw} and
+     * {@code engagementLearned} the uncapped and capped engagement points (0 for a negative base), and
+     * {@code thumbsEffective} the thumbs-only effective weight ({@code w_thumbs}).
      */
     public record TopicWeight(long topicId, String name, double base, double learnedRaw, double learned,
-                              double effective) {}
+                              double effective, double thumbsLearned, double engagementRaw,
+                              double engagementLearned, double thumbsEffective) {}
 
     /** The Priority sort tuple of one row as served; {@code score} is {@code -Infinity} when unscored. */
     public record SortKey(double score, Instant date, long id) {}
@@ -238,7 +248,10 @@ public class InterestScoreQueries {
         }
         List<TopicContribution> topics = blendSql(blendCte(ARTICLE_SCOPE) + " SELECT c.topic_id, t.name, c.noul, c.hinge, "
                         + "ROUND(c.w::numeric, 6) AS w, ROUND(c.points::numeric, 6) AS exact, "
-                        + "ROUND(c.base::numeric, 6) AS base_w, ROUND(c.learned_applied::numeric, 6) AS learned_w "
+                        + "ROUND(c.base::numeric, 6) AS base_w, "
+                        + "ROUND(c.w::numeric, 6) - ROUND(c.base::numeric, 6) AS learned_w, "
+                        + "ROUND(c.w_thumbs::numeric, 6) - ROUND(c.base::numeric, 6) AS thumbs_w, "
+                        + "ROUND(c.w::numeric, 6) - ROUND(c.w_thumbs::numeric, 6) AS eng_w "
                         + "FROM contrib c JOIN interest_topic t ON t.id = c.topic_id WHERE c.article_id = :articleId")
                 .param("articleId", articleId)
                 .query((rs, rowNum) -> new TopicContribution(
@@ -249,7 +262,9 @@ public class InterestScoreQueries {
                         rs.getDouble("w"),
                         rs.getBigDecimal("exact"),
                         rs.getDouble("base_w"),
-                        rs.getDouble("learned_w")))
+                        rs.getDouble("learned_w"),
+                        rs.getDouble("thumbs_w"),
+                        rs.getDouble("eng_w")))
                 .list();
         BreakdownInputs h = header.get();
         return Optional.of(new BreakdownInputs(h.raw(), h.total(), h.display(), h.profileScore(),
@@ -287,12 +302,17 @@ public class InterestScoreQueries {
     /** The {@link TopicWeight} select over {@code eff2}, rounded to 6 decimals; callers add filter and order. */
     private static final String TOPIC_WEIGHTS_SELECT = LEARNED_CTE
             + " SELECT e.id, e.name, ROUND(e.base::numeric, 6) AS base, "
-            + "ROUND(e.learned_raw::numeric, 6) AS learned_raw, ROUND(e.learned::numeric, 6) AS learned, "
-            + "ROUND(e.w::numeric, 6) AS w FROM eff2 e";
+            + "ROUND(e.learned_raw::numeric, 6) AS learned_raw, "
+            + "ROUND(e.learned::numeric, 6) + ROUND(e.eng::numeric, 6) AS learned, "
+            + "ROUND(e.w::numeric, 6) AS w, ROUND(e.learned::numeric, 6) AS thumbs_learned, "
+            + "ROUND(e.eng_raw::numeric, 6) AS eng_raw, ROUND(e.eng::numeric, 6) AS eng, "
+            + "ROUND(e.w_thumbs::numeric, 6) AS w_thumbs FROM eff2 e";
 
     private static TopicWeight topicWeight(ResultSet rs) throws SQLException {
         return new TopicWeight(rs.getLong("id"), rs.getString("name"), rs.getDouble("base"),
-                rs.getDouble("learned_raw"), rs.getDouble("learned"), rs.getDouble("w"));
+                rs.getDouble("learned_raw"), rs.getDouble("learned"), rs.getDouble("w"),
+                rs.getDouble("thumbs_learned"), rs.getDouble("eng_raw"), rs.getDouble("eng"),
+                rs.getDouble("w_thumbs"));
     }
 
     /**

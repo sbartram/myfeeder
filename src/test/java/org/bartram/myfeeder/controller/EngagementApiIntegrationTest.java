@@ -345,6 +345,37 @@ class EngagementApiIntegrationTest {
         verify(jevApiClient, never()).judge(any(), any());
     }
 
+    /**
+     * D-16: the "Why N?" TOPIC row splits the learned part into votes and engagement. Starring a SCORED
+     * article that matched a base-20 topic at noul 0.95 adds learnRate 2 x save 0.5 x hinge 0.9 = 0.9
+     * engagement points and no vote points; the PROFILE row carries neither split key.
+     */
+    @Test
+    void whyBreakdownCarriesTheEngagementPart() throws Exception {
+        long topicId = insertTopic("engagement-it-split", 20);
+        long a = insertArticle(insertFeed(), "a");
+        insertScored(a, 2.0, 4);
+        insertTopicScore(a, topicId, 0.95);
+
+        patchState(a, "{\"starred\":true}");
+
+        String article = getArticle(a);
+        List<Map<String, Object>> topicRows = JsonPath.read(article,
+                "$.interestBreakdown.rows[?(@.kind == 'TOPIC' && @.topicId == " + topicId + ")]");
+        assertThat(topicRows).hasSize(1);
+        Map<String, Object> row = topicRows.get(0);
+        assertThat(((Number) row.get("baseWeight")).doubleValue()).isEqualTo(20.0);
+        assertThat(((Number) row.get("learnedWeight")).doubleValue()).isEqualTo(0.9);
+        assertThat(((Number) row.get("thumbsWeight")).doubleValue()).isEqualTo(0.0);
+        assertThat(((Number) row.get("engagementWeight")).doubleValue()).isEqualTo(0.9);
+        assertThat(((Number) row.get("weight")).doubleValue()).isEqualTo(20.9);
+
+        List<Map<String, Object>> profileRows = JsonPath.read(article,
+                "$.interestBreakdown.rows[?(@.kind == 'PROFILE')]");
+        assertThat(profileRows).hasSize(1);
+        assertThat(profileRows.get(0)).doesNotContainKeys("thumbsWeight", "engagementWeight");
+    }
+
     /** The effective weight of the breakdown's TOPIC row for {@code topicId}. */
     private static double topicRowWeight(String article, long topicId) {
         List<Number> weights = JsonPath.read(article,
