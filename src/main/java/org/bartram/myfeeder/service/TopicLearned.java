@@ -7,4 +7,4 @@ package org.bartram.myfeeder.service;
  * uses, and {@code limit} names the rule that held the value back. Read-only: nothing here is stored.
  */
 public record TopicLearned(long topicId, double baseWeight, double learned, double effectiveWeight,
-                           LearnedLimit limit) {}
+                           LearnedLimit limit, double thumbsLearned, double engagementLearned) {}

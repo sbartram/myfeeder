@@ -72,7 +72,7 @@ public class ArticleFeedbackService {
         double engagementCap = properties.getInterest().getBlend().getEngagement().getCap();
         return queries.allTopicWeights().stream()
                 .map(w -> new TopicLearned(w.topicId(), w.base(), w.learned(), w.effective(),
-                        LearnedLimit.of(w, cap, engagementCap)))
+                        LearnedLimit.of(w, cap, engagementCap), 0, 0))
                 .toList();
     }
 
