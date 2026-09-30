@@ -177,3 +177,8 @@ None - no external service configuration required.
 ---
 *Phase: 10-explainable-engagement-in-the-ui*
 *Completed: 2026-09-30*
+
+## Self-Check: PASSED
+
+- Files found: 10-04-SUMMARY.md, PriorityApiIntegrationTest.java, InterestScoreQueries.java
+- Commits found: 78e73d7, 3d2583e (plus the SUMMARY commit 8ba3f66)
