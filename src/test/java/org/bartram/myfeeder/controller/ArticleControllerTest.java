@@ -393,7 +393,8 @@ class ArticleControllerTest {
                 .andExpect(jsonPath("$.effects[0].after").value(21.8))
                 .andExpect(jsonPath("$.effects[0].limit").value("NONE"))
                 .andExpect(jsonPath("$.effects[0].thumbsLearned").value(1.8))
-                .andExpect(jsonPath("$.effects[0].engagementLearned").value(0.0));
+                .andExpect(jsonPath("$.effects[0].engagementLearned").value(0.0))
+                .andExpect(jsonPath("$.effects[0].engagementReplaced").value(true));
     }
 
     @Test
@@ -439,7 +440,7 @@ class ArticleControllerTest {
 
     private static FeedbackResult feedbackResult() {
         return new FeedbackResult(articleWithId(5L), true,
-                List.of(new TopicEffect(10, "Rust", 20, 21.8, 20, 1.8, LearnedLimit.NONE, 1.8, 0)));
+                List.of(new TopicEffect(10, "Rust", 20, 21.8, 20, 1.8, LearnedLimit.NONE, 1.8, 0, true)));
     }
 
     private static PriorityRow priorityRow(long id) {

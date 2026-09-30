@@ -340,8 +340,10 @@ class FeedbackApiIntegrationTest {
         assertThat(entries).extracting(e -> ((Number) e.get("topicId")).longValue()).containsExactly(rust, go);
         assertLearned(entries.get(0), 20.0, 1.8, 21.8, "NONE");
         assertLearnedParts(entries.get(0), 1.8, 0.0);
+        assertEngagementAtCap(entries.get(0), false);
         assertLearned(entries.get(1), 10.0, 0.0, 10.0, "NONE");
         assertLearnedParts(entries.get(1), 0.0, 0.0);
+        assertEngagementAtCap(entries.get(1), false);
         assertThat(topicWeight(rust)).isEqualTo(20);
         assertThat(topicWeight(go)).isEqualTo(10);
     }
@@ -360,7 +362,28 @@ class FeedbackApiIntegrationTest {
         assertThat(entries).hasSize(1);
         assertLearned(entries.get(0), 20.0, 8.0, 28.0, "ENGAGEMENT_CAP");
         assertLearnedParts(entries.get(0), 0.0, 8.0);
+        assertEngagementAtCap(entries.get(0), true);
         assertThat(topicWeight(engcap)).isEqualTo(20);
+    }
+
+    @Test
+    void bindingRangeOutranksTheEngagementCap() throws Exception {
+        long feedId = insertFeed();
+        long rangecap = insertTopic(FEEDBACK_TOPIC_PREFIX + "rangecap", 45);
+        for (int i = 0; i < 8; i++) {
+            long id = insertMatchingArticle(feedId, "range" + i, rangecap, 1.0);
+            insertEngagement(id, "STAR");
+        }
+
+        List<Map<String, Object>> entries = learnedEntries(List.of(rangecap));
+
+        // 45 + 8 = 53 is held at +50 by the range, which outranks the engagement cap (D-10)
+        assertThat(entries).hasSize(1);
+        assertLearned(entries.get(0), 45.0, 8.0, 50.0, "WEIGHT_RANGE");
+        assertLearnedParts(entries.get(0), 0.0, 8.0);
+        // Engagement is still at its cap, so the Interests line can say "at max" (D-15)
+        assertEngagementAtCap(entries.get(0), true);
+        assertThat(topicWeight(rangecap)).isEqualTo(45);
     }
 
     @Test
@@ -377,6 +400,7 @@ class FeedbackApiIntegrationTest {
         assertThat(entries).hasSize(1);
         assertLearned(entries.get(0), 20.0, 2.7, 22.7, "NONE");
         assertLearnedParts(entries.get(0), 1.8, 0.9);
+        assertEngagementAtCap(entries.get(0), false);
         assertThat(topicWeight(mixed)).isEqualTo(20);
     }
 
@@ -392,13 +416,55 @@ class FeedbackApiIntegrationTest {
 
         assertEffect(put, 0, rust, 20.9, 21.8);
         assertEffectParts(put, 0, 1.8, 1.8, 0.0, "NONE");
+        assertReplaced(put, 0, true);
 
         // Removing the vote brings the save back
         String deleted = deleteVote(a);
 
         assertEffect(deleted, 0, rust, 21.8, 20.9);
         assertEffectParts(deleted, 0, 0.9, 0.0, 0.9, "NONE");
+        assertReplaced(deleted, 0, true);
         assertThat(topicWeight(rust)).isEqualTo(20);
+        verify(jevApiClient, never()).judge(any(), any());
+    }
+
+    @Test
+    void narrowedDownVoteOnAnEngagedArticleMarksOnlyThePickedTopic() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long politics = insertTopic(FEEDBACK_TOPIC_PREFIX + "politics", -30);
+        long go = insertTopic(FEEDBACK_TOPIC_PREFIX + "go", 10);
+        long n = insertThreeTopicArticle(feedId, rust, politics, go);
+        insertEngagement(n, "STAR");
+
+        String body = putVote(n, "{\"vote\":-1,\"topicIds\":[" + rust + "]}");
+
+        // Rust's engagement share is replaced by the vote
+        assertEffect(body, 0, rust, 20.9, 18.2);
+        assertReplaced(body, 0, true);
+        // A negative base has no engagement share, and the vote did not pick politics
+        assertEffect(body, 1, politics, -30.0, -30.0);
+        assertReplaced(body, 1, false);
+        // Go loses its engagement share, but the vote did not pick go (D-11 as written)
+        assertEffect(body, 2, go, 10.2, 10.0);
+        assertReplaced(body, 2, false);
+        verify(jevApiClient, never()).judge(any(), any());
+    }
+
+    @Test
+    void flipOnAnEngagedArticleReplacesNothingMore() throws Exception {
+        long feedId = insertFeed();
+        long rust = insertTopic(FEEDBACK_TOPIC_PREFIX + "rust", 20);
+        long a = insertMatchingArticle(feedId, "a", rust, 0.95);
+        insertEngagement(a, "STAR");
+
+        String up = putVote(a, "{\"vote\":1}");
+        String down = putVote(a, "{\"vote\":-1}");
+
+        assertEffect(up, 0, rust, 20.9, 21.8);
+        assertReplaced(up, 0, true);
+        assertEffect(down, 0, rust, 21.8, 18.2);
+        assertReplaced(down, 0, false);
         verify(jevApiClient, never()).judge(any(), any());
     }
 
@@ -435,6 +501,10 @@ class FeedbackApiIntegrationTest {
     private static void assertLearnedParts(Map<String, Object> entry, double thumbs, double engagement) {
         assertThat(((Number) entry.get("thumbsLearned")).doubleValue()).isEqualTo(thumbs);
         assertThat(((Number) entry.get("engagementLearned")).doubleValue()).isEqualTo(engagement);
+    }
+
+    private static void assertEngagementAtCap(Map<String, Object> entry, boolean atCap) {
+        assertThat(entry.get("engagementAtCap")).isEqualTo(atCap);
     }
 
     /** Article N: rust noul 0.95 (m 0.9), politics 0.8 (m 0.6), go 0.6 (m 0.2). */
@@ -479,6 +549,10 @@ class FeedbackApiIntegrationTest {
         assertThat(((Number) effect.get("thumbsLearned")).doubleValue()).isEqualTo(thumbs);
         assertThat(((Number) effect.get("engagementLearned")).doubleValue()).isEqualTo(engagement);
         assertThat(effect.get("limit")).isEqualTo(limit);
+    }
+
+    private static void assertReplaced(String body, int index, boolean replaced) {
+        assertThat((Boolean) JsonPath.read(body, "$.effects[" + index + "].engagementReplaced")).isEqualTo(replaced);
     }
 
     private String deleteVote(long articleId) throws Exception {

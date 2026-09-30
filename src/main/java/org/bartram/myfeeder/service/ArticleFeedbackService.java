@@ -28,6 +28,12 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class ArticleFeedbackService {
 
+    /**
+     * The topic-weight values are rounded to 6 decimals, and a float8 SUM may differ in its last digit
+     * between two reads, so before/after comparisons allow half a unit in the last place (Pitfall 8).
+     */
+    private static final double SIX_DECIMAL_TOLERANCE = 5e-7;
+
     private final ArticleService articleService;
     private final ArticleFeedbackStore store;
     private final InterestScoreQueries queries;
@@ -66,15 +72,17 @@ public class ArticleFeedbackService {
     /**
      * Every topic's base, learned and effective weight with its limit, in ascending id order (FDBK-07),
      * read from the same learned model as the ranking and the badge. {@code learned} combines votes and
-     * engagement, and its capped thumbs and engagement parts follow the limit (D-15). No transaction and
-     * no write.
+     * engagement, and its capped thumbs and engagement parts follow the limit (D-15). {@code engagementAtCap}
+     * comes from {@link LearnedLimit#engagementAtCap}, the same rule the limit uses, whatever limit is
+     * reported. No transaction and no write.
      */
     public List<TopicLearned> learnedTopics() {
         int cap = properties.getInterest().getBlend().getLearnedCap();
         double engagementCap = properties.getInterest().getBlend().getEngagement().getCap();
         return queries.allTopicWeights().stream()
                 .map(w -> new TopicLearned(w.topicId(), w.base(), w.learned(), w.effective(),
-                        LearnedLimit.of(w, cap, engagementCap), w.thumbsLearned(), w.engagementLearned()))
+                        LearnedLimit.of(w, cap, engagementCap), w.thumbsLearned(), w.engagementLearned(),
+                        LearnedLimit.engagementAtCap(w, engagementCap)))
                 .toList();
     }
 
@@ -106,12 +114,20 @@ public class ArticleFeedbackService {
         List<TopicEffect> effects = matched.stream()
                 .filter(id -> before.containsKey(id) && after.containsKey(id))
                 .map(id -> {
+                    TopicWeight b = before.get(id);
                     TopicWeight a = after.get(id);
-                    return new TopicEffect(id, a.name(), before.get(id).effective(), a.effective(), a.base(),
+                    boolean engagementReplaced = differs(b.engagementLearned(), a.engagementLearned())
+                            && differs(b.learnedRaw(), a.learnedRaw());
+                    return new TopicEffect(id, a.name(), b.effective(), a.effective(), a.base(),
                             a.learned(), LearnedLimit.of(a, cap, engagementCap), a.thumbsLearned(),
-                            a.engagementLearned());
+                            a.engagementLearned(), engagementReplaced);
                 })
                 .toList();
         return new FeedbackResult(articleService.findByIdWithBreakdown(articleId).orElseThrow(), scored, effects);
+    }
+
+    /** Whether two 6-decimal topic-weight values differ by more than rounding noise. */
+    private static boolean differs(double x, double y) {
+        return Math.abs(x - y) > SIX_DECIMAL_TOLERANCE;
     }
 }
