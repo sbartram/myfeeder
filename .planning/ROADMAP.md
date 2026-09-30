@@ -135,18 +135,19 @@ Plans:
   3. After a refresh, an engaged article's position in Priority, its badge in every article list and in the reading pane, and its "Why N?" all agree
   4. A thumbs vote on an engaged article shows an effect toast whose before/after weights account for the engagement the vote replaced, matching "Why N?"
 
-**Plans**: 4 plans
+**Plans**: 2/4 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 10-01-PLAN.md — Frontend tracer: shared never-rejecting afterEngagement (by-id refetch, D-07 refresh set, Priority patch + hint only when the score changed) wired to open, star, board add, Read Later, Raindrop and Forget; vote hook shares the refresh set (wave 1)
-- [ ] 10-02-PLAN.md — Backend: TopicEffect.engagementReplaced end to end over HTTP (WR-03), LearnedLimit D-10 precedence (WR-01), TopicLearned.engagementAtCap (wave 1)
+- [x] 10-01-PLAN.md — Frontend tracer: shared never-rejecting afterEngagement (by-id refetch, D-07 refresh set, Priority patch + hint only when the score changed) wired to open, star, board add, Read Later, Raindrop and Forget; vote hook shares the refresh set (wave 1)
+- [x] 10-02-PLAN.md — Backend: TopicEffect.engagementReplaced end to end over HTTP (WR-03), LearnedLimit D-10 precedence (WR-01), TopicLearned.engagementAtCap (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 10-03-PLAN.md — Frontend wording: vote toast "(replaces engagement)" / "(engagement restored)" with D-12/D-13 rules, "Why N?" votes/engaged parts, Interests learned line split with "at max" (IN-01) (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 10-04-PLAN.md — SC-3 agreement proof over HTTP after a star and after Forget, priorityPageAfter Javadoc (IN-04), CLAUDE.md and STATE.md, full gates and manual UAT (wave 3)
+
 **UI hint**: yes
 **Notes**:
 
@@ -209,6 +210,6 @@ Phases execute in numeric order: 8 → 9 → 10 → 11 → 12 (Phase 11 depends 
 | 7. Rollout & Calibration | v0.2.1 | 11/11 | Complete | 2026-09-29 |
 | 8. Engagement Capture | v0.3.0 | 5/5 | Complete    | 2026-09-30 |
 | 9. Engagement Learning Model | v0.3.0 | 6/6 | Complete    | 2026-09-30 |
-| 10. Explainable Engagement in the UI | v0.3.0 | 0/4 | Not started | - |
+| 10. Explainable Engagement in the UI | v0.3.0 | 2/4 | In Progress|  |
 | 11. Gap Discovery | v0.3.0 | 0/TBD | Not started | - |
 | 12. Calibration & Release | v0.3.0 | 0/TBD | Not started | - |
