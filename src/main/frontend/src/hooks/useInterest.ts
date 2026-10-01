@@ -183,3 +183,26 @@ export function useTopicSuggestions() {
     staleTime: 0,
   })
 }
+
+/**
+ * Dismisses one suggestion: immediate and permanent, with no confirm and no undo (D-17). The row
+ * is removed from the cached list at once and the list is refetched; the server keeps the first
+ * reason. There is no inlineError meta, so a failure is reported through the global toast.
+ */
+export function useDismissSuggestion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (articleId: number) => interestApi.dismissSuggestion(articleId),
+    onSuccess: (_result: void, articleId: number) => {
+      qc.setQueryData<TopicSuggestions>(
+        SUGGESTIONS_KEY,
+        (old) =>
+          old && {
+            items: old.items.filter((s) => s.articleId !== articleId),
+            total: Math.max(0, old.total - 1),
+          },
+      )
+      void qc.invalidateQueries({ queryKey: SUGGESTIONS_KEY })
+    },
+  })
+}

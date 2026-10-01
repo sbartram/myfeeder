@@ -7,6 +7,7 @@ import {
   useLearnedTopics,
   useRescoreCount,
   useRescoreUnread,
+  useDismissSuggestion,
   useSaveInterestProfile,
   useTopicSuggestions,
 } from '../hooks/useInterest'
@@ -591,10 +592,11 @@ function TopicsSection({ topics, status, statusFailed, onDirtyCountChange, draft
  * badge, the title as plain text and the feed name, never the engagement kind or date (D-04).
  * Nothing renders, not even the heading, while the list is empty, loading or failed (D-02), and
  * no status or cold-start check applies (D-03). The heading counts the total only when the
- * server capped the list (D-07).
+ * server capped the list (D-07). Dismiss is one click with no confirm or undo (D-17).
  */
 function SuggestedTopics() {
   const suggestions = useTopicSuggestions()
+  const dismiss = useDismissSuggestion()
   const data = suggestions.data
   if (!data || data.items.length === 0) return null
   const heading =
@@ -614,6 +616,16 @@ function SuggestedTopics() {
                 {s.title}
               </span>
               <span className="interests-suggestion-feed">{s.feedTitle}</span>
+            </span>
+            <span className="interests-suggestion-actions">
+              <button
+                className="btn-secondary"
+                onClick={() => dismiss.mutate(s.articleId)}
+                disabled={dismiss.isPending && dismiss.variables === s.articleId}
+                aria-label={`Dismiss suggestion: ${s.title}`}
+              >
+                Dismiss
+              </button>
             </span>
           </li>
         ))}

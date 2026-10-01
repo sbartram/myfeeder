@@ -114,4 +114,7 @@ export const interestApi = {
   getRescoreCount: () => apiGet<RescoreCount>('/interest/rescore'),
   rescore: () => apiPost<RescoreCount>('/interest/rescore', { confirm: true }),
   getSuggestions: () => apiGet<TopicSuggestions>('/interest/suggestions'),
+  // No body argument, so the PUT is bodyless and never a CORS simple request.
+  dismissSuggestion: (articleId: number) =>
+    apiPut<void>(`/interest/suggestions/${articleId}/dismissal`),
 }
