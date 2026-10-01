@@ -254,3 +254,8 @@ None. No external service configuration is required.
 ---
 *Phase: 11-gap-discovery*
 *Completed: 2026-10-01*
+
+## Self-Check: PASSED
+
+- Files: SuggestionDismissalReason.java, TopicSuggestionStore.java, TopicSuggestionController.java, InterestService.java and this SUMMARY all exist.
+- Commits: e5fa294, 65c3d4e, 4d23a30, 7bd8d3f and ac18662 are all on the branch.
