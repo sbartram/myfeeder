@@ -63,6 +63,8 @@ public class MyfeederProperties implements Validator {
         private Duration sweepDelay = Duration.ofMinutes(2);
         private Duration sweepInitialDelay = Duration.ofMinutes(1);
         private Blend blend = new Blend();
+        /** Gap discovery (Suggested topics). A sibling of {@code blend}: the blend bind names stay pinned. */
+        private Suggestions suggestions = new Suggestions();
 
         /** Articles published (or fetched, when undated) after this instant are inside the scoring window. */
         public Instant eligibilityCutoff() {
@@ -108,6 +110,15 @@ public class MyfeederProperties implements Validator {
                 /** Display score at or above which a badge is neutral (inclusive); below it the badge is low. */
                 private int neutral = 40;
             }
+        }
+
+        @Data
+        public static class Suggestions {
+            /**
+             * D-09: an engaged article whose best noul (any topic, either weight sign) is at or above this
+             * is left out of Suggested topics. Applied at query time. Phase 12 tunes it.
+             */
+            private double nearMiss = 0.35;
         }
     }
 }
