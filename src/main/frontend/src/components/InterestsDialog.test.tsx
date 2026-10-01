@@ -1383,5 +1383,105 @@ describe('InterestsDialog', () => {
       await new Promise((r) => setTimeout(r, 50))
       expect(previewPosts()).toEqual([])
     })
+    describe('Dismiss', () => {
+      let dismissed: Set<number>
+
+      /** A stateful stub: the GET serves the items not yet dismissed; the PUT records the id. */
+      function statefulSuggestions(items: Suggestion[], total = items.length) {
+        dismissed = new Set()
+        route('GET', '/api/interest/suggestions', () => ({
+          status: 200,
+          body: {
+            items: items.filter((s) => !dismissed.has(s.articleId)),
+            total: total - dismissed.size,
+          },
+        }))
+        for (const s of items) {
+          route('PUT', `/api/interest/suggestions/${s.articleId}/dismissal`, () => {
+            dismissed.add(s.articleId)
+            return { status: 204 }
+          })
+        }
+      }
+
+      function dismissalPuts() {
+        return calls.filter((c) => c.method === 'PUT' && /^\/api\/interest\/suggestions\/\d+\/dismissal$/.test(c.url))
+      }
+
+      it('dismissRemovesTheRowWithoutConfirming', async () => {
+        const user = userEvent.setup()
+        statefulSuggestions([suggestion(41, 'Zig 0.15 released'), suggestion(42, 'A history of the B-tree')])
+        renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+        await screen.findByText('A history of the B-tree')
+        const getsBefore = suggestionGets().length
+
+        await user.click(screen.getByRole('button', { name: 'Dismiss suggestion: A history of the B-tree' }))
+
+        await waitFor(() => expect(screen.queryByText('A history of the B-tree')).not.toBeInTheDocument())
+        expect(screen.getByText('Zig 0.15 released')).toBeInTheDocument()
+        expect(dismissalPuts()).toHaveLength(1)
+        expect(dismissalPuts()[0].url).toBe('/api/interest/suggestions/42/dismissal')
+        expect(dismissalPuts()[0].body).toBeUndefined()
+        expect(screen.queryByText(/undo/i)).toBeNull()
+        expect(screen.queryByText(/are you sure/i)).toBeNull()
+        expect(screen.queryByRole('button', { name: /confirm/i })).not.toBeInTheDocument()
+        await waitFor(() => expect(suggestionGets().length).toBeGreaterThan(getsBefore))
+        const putIndex = calls.findIndex((c) => c.url === '/api/interest/suggestions/42/dismissal')
+        const laterGet = calls.findIndex(
+          (c, i) => i > putIndex && c.method === 'GET' && c.url === '/api/interest/suggestions',
+        )
+        expect(laterGet).toBeGreaterThan(putIndex)
+      })
+
+      it('dismissingTheLastSuggestionHidesTheSection', async () => {
+        const user = userEvent.setup()
+        statefulSuggestions([suggestion(41, 'Zig 0.15 released')])
+        const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+        await screen.findByText('Zig 0.15 released')
+
+        await user.click(screen.getByRole('button', { name: 'Dismiss suggestion: Zig 0.15 released' }))
+
+        await waitFor(() => expect(suggestionsSection(container)).toBeNull())
+        expect(screen.queryByText(/Suggested topics/)).toBeNull()
+      })
+
+      it('aFailedDismissKeepsTheRowAndToasts', async () => {
+        const user = userEvent.setup()
+        useToastStore.setState({ toasts: [] })
+        suggestions([suggestion(41, 'Zig 0.15 released')])
+        route('PUT', '/api/interest/suggestions/41/dismissal', () => ({
+          status: 500,
+          body: { title: 'Internal Server Error', detail: 'Dismiss failed' },
+        }))
+        renderDialog(<InterestsDialog open={true} onClose={() => {}} />, createQueryClient())
+        await screen.findByText('Zig 0.15 released')
+
+        await user.click(screen.getByRole('button', { name: 'Dismiss suggestion: Zig 0.15 released' }))
+
+        await waitFor(() => expect(useToastStore.getState().toasts).toHaveLength(1))
+        expect(screen.getByText('Zig 0.15 released')).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'Dismiss suggestion: Zig 0.15 released' })).toBeEnabled()
+      })
+
+      it('dismissNeverPostsPreview', async () => {
+        const user = userEvent.setup()
+        useUIStore.setState({ selectedArticleId: 1 })
+        route('GET', '/api/articles/1', () => ({ status: 200, body: article(1, 'Rust 1.90 released') }))
+        route('GET', '/api/interest/topics', () => ({
+          status: 200,
+          body: [topic(3, 'Rust', 'The Rust language')],
+        }))
+        statefulSuggestions([suggestion(41, 'Zig 0.15 released'), suggestion(42, 'A history of the B-tree')])
+        renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+        await screen.findByText('Zig 0.15 released')
+
+        await user.click(screen.getByRole('button', { name: 'Dismiss suggestion: Zig 0.15 released' }))
+        await waitFor(() => expect(screen.queryByText('Zig 0.15 released')).not.toBeInTheDocument())
+        await new Promise((r) => setTimeout(r, 50))
+
+        expect(dismissalPuts()).toHaveLength(1)
+        expect(previewPosts()).toEqual([])
+      })
+    })
   })
 })
