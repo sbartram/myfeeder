@@ -16,6 +16,9 @@ public class MyfeederProperties implements Validator {
     static final String ENGAGEMENT_INVALID = "myfeeder.interest.blend.engagement must be cap 0 (disabled), "
             + "or 0 <= open-weight < save-weight < 1 and 0 < cap < learned-cap";
 
+    /** Fixed startup-refusal text for the gap discovery near-miss (D-09); it never echoes a bound value. */
+    static final String SUGGESTIONS_INVALID = "myfeeder.interest.suggestions.near-miss must be above 0 and at most 0.5";
+
     private Polling polling = new Polling();
     private Retention retention = new Retention();
     private Raindrop raindrop = new Raindrop();
@@ -29,9 +32,13 @@ public class MyfeederProperties implements Validator {
 
     @Override
     public void validate(Object target, Errors errors) {
-        Interest.Blend blend = ((MyfeederProperties) target).getInterest().getBlend();
+        MyfeederProperties p = (MyfeederProperties) target;
+        Interest.Blend blend = p.getInterest().getBlend();
         if (!blend.getEngagement().isValid(blend.getLearnedCap())) {
             errors.reject("engagement", ENGAGEMENT_INVALID);
+        }
+        if (!p.getInterest().getSuggestions().isValid()) {
+            errors.reject("suggestions", SUGGESTIONS_INVALID);
         }
     }
 
@@ -119,6 +126,14 @@ public class MyfeederProperties implements Validator {
              * is left out of Suggested topics. Applied at query time. Phase 12 tunes it.
              */
             private double nearMiss = 0.35;
+
+            /**
+             * At most 0.5 keeps every matched article (noul above 0.5) excluded; above 0 keeps the list
+             * possible. NaN fails both comparisons.
+             */
+            public boolean isValid() {
+                return 0 < nearMiss && nearMiss <= 0.5;
+            }
         }
     }
 }

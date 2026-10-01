@@ -16,6 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Startup validation of the engagement constants (LRN-05, D-02, D-03): cap 0 disables engagement learning
  * and always starts; otherwise {@code 0 <= open-weight < save-weight < 1} and {@code 0 < cap < learned-cap},
  * and anything else refuses to start with the fixed text {@link MyfeederProperties#ENGAGEMENT_INVALID}.
+ * The gap discovery near-miss (D-09) must satisfy {@code 0 < near-miss <= 0.5}, or startup is refused with
+ * the fixed text {@link MyfeederProperties#SUGGESTIONS_INVALID}.
  * No Docker: the context binds {@link MyfeederProperties} only.
  */
 class MyfeederPropertiesValidationTest {
@@ -24,6 +26,7 @@ class MyfeederPropertiesValidationTest {
     private static final String OPEN = "myfeeder.interest.blend.engagement.open-weight=";
     private static final String SAVE = "myfeeder.interest.blend.engagement.save-weight=";
     private static final String LEARNED_CAP = "myfeeder.interest.blend.learned-cap=";
+    private static final String NEAR_MISS = "myfeeder.interest.suggestions.near-miss=";
 
     @Configuration(proxyBeanMethods = false)
     @EnableConfigurationProperties(MyfeederProperties.class)
@@ -52,7 +55,44 @@ class MyfeederPropertiesValidationTest {
                 .run(ctx -> {
                     assertThat(ctx).hasNotFailed();
                     assertEngagement(ctx.getBean(MyfeederProperties.class), 0.25, 0.5, 8.0);
+                    assertThat(ctx.getBean(MyfeederProperties.class).getInterest().getSuggestions().getNearMiss())
+                            .isEqualTo(0.35);
                 });
+    }
+
+    @Test
+    void defaultsBindTheNearMiss() {
+        runner.run(ctx -> {
+            assertThat(ctx).hasNotFailed();
+            assertThat(ctx.getBean(MyfeederProperties.class).getInterest().getSuggestions().getNearMiss())
+                    .isEqualTo(0.35);
+        });
+    }
+
+    @Test
+    void nearMissOutOfRangeIsRefused() {
+        refusedNearMiss(NEAR_MISS + "0");
+        refusedNearMiss(NEAR_MISS + "-0.1");
+        refusedNearMiss(NEAR_MISS + "0.51");
+        refusedNearMiss(NEAR_MISS + "NaN");
+    }
+
+    @Test
+    void nearMissInRangeStarts() {
+        starts(NEAR_MISS + "0.5");
+        starts(NEAR_MISS + "0.01");
+    }
+
+    /** The near-miss refusal names the rule, never the bound value. */
+    @Test
+    void nearMissRefusalTextIsFixed() {
+        runner.withPropertyValues(NEAR_MISS + "0.987654").run(ctx -> {
+            assertThat(ctx).hasFailed();
+            assertThat(ctx).getFailure().hasStackTraceContaining(MyfeederProperties.SUGGESTIONS_INVALID);
+            for (Throwable t = ctx.getStartupFailure(); t != null; t = t.getCause()) {
+                assertThat(String.valueOf(t.getMessage())).doesNotContain("0.987654");
+            }
+        });
     }
 
     @Test
@@ -137,6 +177,14 @@ class MyfeederPropertiesValidationTest {
             assertThat(ctx).as(Arrays.toString(props)).hasFailed();
             assertThat(ctx).getFailure().as(Arrays.toString(props))
                     .hasStackTraceContaining(MyfeederProperties.ENGAGEMENT_INVALID);
+        });
+    }
+
+    private void refusedNearMiss(String... props) {
+        runner.withPropertyValues(props).run(ctx -> {
+            assertThat(ctx).as(Arrays.toString(props)).hasFailed();
+            assertThat(ctx).getFailure().as(Arrays.toString(props))
+                    .hasStackTraceContaining(MyfeederProperties.SUGGESTIONS_INVALID);
         });
     }
 

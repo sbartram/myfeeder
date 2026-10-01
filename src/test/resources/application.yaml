@@ -52,6 +52,9 @@ myfeeder:
       tiers:
         high: 70
         neutral: 40
+    # D-09: gap discovery near-miss; an engaged article whose best noul (any topic) is at or above this is not suggested. Checked at startup (0 < near-miss <= 0.5). Phase 12 tunes it.
+    suggestions:
+      near-miss: 0.35
 
 resilience4j:
   circuitbreaker:
