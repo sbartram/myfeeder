@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -87,7 +88,7 @@ class InterestControllerTest {
 
     @Test
     void createTopicReturns201() throws Exception {
-        when(interestService.createTopic("Rust", "Rust lang", null)).thenReturn(topic(5L, "Rust", "Rust lang", 20, 1));
+        when(interestService.createTopic("Rust", "Rust lang", null, null)).thenReturn(topic(5L, "Rust", "Rust lang", 20, 1));
 
         mockMvc.perform(post("/api/interest/topics")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -100,7 +101,7 @@ class InterestControllerTest {
 
     @Test
     void createTwentySixthTopicIs400() throws Exception {
-        when(interestService.createTopic("Rust", "Rust lang", 10))
+        when(interestService.createTopic("Rust", "Rust lang", 10, null))
                 .thenThrow(new IllegalArgumentException("A maximum of 25 topics is allowed"));
 
         mockMvc.perform(post("/api/interest/topics")
@@ -108,6 +109,36 @@ class InterestControllerTest {
                         .content("{\"name\":\"Rust\",\"description\":\"Rust lang\",\"weight\":10}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detail").value("A maximum of 25 topics is allowed"));
+    }
+
+    @Test
+    void createTopicPassesTheSourceArticleId() throws Exception {
+        when(interestService.createTopic("Rust", "Rust lang", null, 42L))
+                .thenReturn(topic(5L, "Rust", "Rust lang", 20, 1));
+
+        mockMvc.perform(post("/api/interest/topics")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Rust\",\"description\":\"Rust lang\",\"sourceArticleId\":42}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(5));
+
+        verify(interestService).createTopic("Rust", "Rust lang", null, 42L);
+    }
+
+    @Test
+    void updateTopicIgnoresTheSourceArticleId() throws Exception {
+        when(interestService.updateTopic(5L, "Rust", "The Rust language", 30))
+                .thenReturn(topic(5L, "Rust", "The Rust language", 30, 2));
+
+        mockMvc.perform(put("/api/interest/topics/5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Rust\",\"description\":\"The Rust language\",\"weight\":30,"
+                                + "\"sourceArticleId\":42}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5));
+
+        verify(interestService).updateTopic(5L, "Rust", "The Rust language", 30);
+        verify(interestService, never()).createTopic(any(), any(), any(), any());
     }
 
     @Test
