@@ -28,6 +28,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -232,6 +233,108 @@ class PriorityApiIntegrationTest {
         assertThat(ours).as("mid must not be skipped when the cursor article's score drops").contains(mid);
         assertThat(ours.stream().distinct().toList()).containsExactly(top, mid, unscoredNew, unscoredFailed);
         assertThat(ours.stream().filter(id -> id == top).count()).isEqualTo(2);
+    }
+
+    /**
+     * Phase 10 SC-3 (LRN-06): after an engagement, and again after Forget, the engaged article's score
+     * agrees across the Priority walk, GET by id, its breakdown and the feed list, and its Priority
+     * position follows the score. Both articles start at 50 (profile 2.0/4) + 18 (base 20 x hinge 0.9)
+     * = 68, the peer newer so it ranks first; a star adds learn-rate 2 x save 0.5 x hinge 0.9 = 0.9 to
+     * the engaged topic, so 20.9 x 0.9 = 18.81 rounds to 19 and the engaged article reads 69.
+     */
+    @Test
+    void engagedArticleAgreesEverywhereAfterRefresh() throws Exception {
+        long feedId = insertFeed();
+        Instant now = Instant.now();
+        long engaged = insertArticle(feedId, "sc3-engaged", now.minus(Duration.ofHours(2)), false);
+        long peer = insertArticle(feedId, "sc3-peer", now.minus(Duration.ofHours(1)), false);
+        // Every article_score row before any article_topic_score row (FK)
+        insertScored(engaged, 2.0, 4);
+        insertScored(peer, 2.0, 4);
+        long engagedTopic = insertTopic(PRIORITY_TOPIC_NAME + "-eng", 20);
+        long peerTopic = insertTopic(PRIORITY_TOPIC_NAME + "-peer", 20);
+        insertTopicScore(engaged, engagedTopic, 0.95);
+        insertTopicScore(peer, peerTopic, 0.95);
+
+        assertEverySourceAgrees(feedId, engaged, peer, 68, 0.0, List.of(peer, engaged));
+
+        mockMvc.perform(patch("/api/articles/" + engaged)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"starred\": true}"))
+                .andExpect(status().isOk());
+        assertEverySourceAgrees(feedId, engaged, peer, 69, 0.9, List.of(engaged, peer));
+
+        mockMvc.perform(delete("/api/articles/" + engaged + "/engagement"))
+                .andExpect(status().isNoContent());
+        assertEverySourceAgrees(feedId, engaged, peer, 68, 0.0, List.of(peer, engaged));
+    }
+
+    /**
+     * Asserts {@code engaged} reads {@code score} by id, in its breakdown display and point sum, in the
+     * feed list and in a fresh Priority walk; its TOPIC row carries {@code engagementWeight} and no vote
+     * part; the peer stays at 68; and the walk lists the two seeded ids in {@code order}.
+     */
+    private void assertEverySourceAgrees(long feedId, long engaged, long peer, int score,
+                                         double engagementWeight, List<Long> order) throws Exception {
+        String byId = mockMvc.perform(get("/api/articles/" + engaged))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat((Integer) JsonPath.read(byId, "$.interestScore")).as("by-id score").isEqualTo(score);
+        assertThat((Integer) JsonPath.read(byId, "$.interestBreakdown.display")).as("breakdown display")
+                .isEqualTo(score);
+        List<Map<String, Object>> rows = JsonPath.read(byId, "$.interestBreakdown.rows");
+        assertThat(rows.stream().mapToLong(r -> ((Number) r.get("points")).longValue()).sum())
+                .as("breakdown points sum").isEqualTo(score);
+        List<Map<String, Object>> topicRows = rows.stream().filter(r -> "TOPIC".equals(r.get("kind"))).toList();
+        assertThat(topicRows).hasSize(1);
+        assertThat(((Number) topicRows.get(0).get("engagementWeight")).doubleValue())
+                .as("engagement part").isEqualTo(engagementWeight);
+        assertThat(((Number) topicRows.get(0).get("thumbsWeight")).doubleValue()).as("vote part").isEqualTo(0.0);
+
+        String list = mockMvc.perform(get("/api/articles?feedId=" + feedId + "&limit=50"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(scoreOf(JsonPath.read(list, "$.items"), engaged)).as("list badge").isEqualTo(score);
+
+        List<Map<String, Object>> walk = walkPriority();
+        assertThat(scoreOf(walk, engaged)).as("Priority score").isEqualTo(score);
+        assertThat(scoreOf(walk, peer)).as("peer Priority score").isEqualTo(68);
+        assertThat(walk.stream().map(i -> ((Number) i.get("id")).longValue()).filter(order::contains).toList())
+                .as("Priority order").containsExactlyElementsOf(order);
+    }
+
+    /** Every item a full Priority walk serves, in order, following nextCursor until it is null. */
+    private List<Map<String, Object>> walkPriority() throws Exception {
+        List<Map<String, Object>> items = new ArrayList<>();
+        String cursor = null;
+        int pages = 0;
+        while (true) {
+            if (++pages > 1000) {
+                fail("Priority walk did not terminate after 1000 pages");
+            }
+            var request = get("/api/articles/priority").param("limit", "50");
+            if (cursor != null) {
+                request.param("before", cursor);
+            }
+            String body = mockMvc.perform(request)
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            items.addAll(JsonPath.read(body, "$.items"));
+            cursor = JsonPath.read(body, "$.nextCursor");
+            if (cursor == null) {
+                return items;
+            }
+        }
+    }
+
+    /** The interestScore of the single item with {@code id}. */
+    private static Object scoreOf(List<Map<String, Object>> items, long id) {
+        List<Object> scores = items.stream()
+                .filter(i -> ((Number) i.get("id")).longValue() == id)
+                .map(i -> i.get("interestScore"))
+                .toList();
+        assertThat(scores).as("article %d listed once", id).hasSize(1);
+        return scores.get(0);
     }
 
     @Test

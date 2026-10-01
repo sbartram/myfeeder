@@ -219,6 +219,34 @@ describe('useVoteFeedback', () => {
     expect(toasts()).toEqual(['success:👍 Rust +2.0', 'success:👎 Rust −4.0'])
   })
 
+  it('engagedVoteToastSaysItReplacesEngagement', async () => {
+    vi.mocked(articlesApi.setFeedback).mockResolvedValueOnce(
+      result(article(1, { feedback: up }), [{ ...rust(20.9, 21.8), engagementReplaced: true }])
+    )
+    const { result: hook } = renderVote()
+    await waitFor(() => expect(hook.current.article.data).toBeDefined())
+
+    act(() => hook.current.vote.press(hook.current.article.data!, 1))
+
+    await waitFor(() => expect(toasts()).toHaveLength(1))
+    expect(toasts()).toEqual(['success:👍 Rust +0.9 (replaces engagement)'])
+  })
+
+  it('removedVoteToastSaysEngagementIsRestored', async () => {
+    vi.mocked(articlesApi.getById).mockImplementation(async (id) => article(id, { feedback: up }))
+    vi.mocked(articlesApi.clearFeedback).mockResolvedValueOnce(
+      result(article(1), [{ ...rust(21.8, 20.9), engagementReplaced: true }])
+    )
+    const { result: hook } = renderVote()
+    await waitFor(() => expect(hook.current.article.data?.feedback?.vote).toBe(1))
+
+    act(() => hook.current.vote.press(hook.current.article.data!, 1))
+
+    await waitFor(() => expect(toasts()).toHaveLength(1))
+    expect(articlesApi.clearFeedback).toHaveBeenCalledWith(1)
+    expect(toasts()).toEqual(['success:Vote removed · Rust −0.9 (engagement restored)'])
+  })
+
   it('priorityVotePatchesOnlyTheVotedRow', async () => {
     vi.mocked(articlesApi.priority).mockResolvedValue({
       items: [

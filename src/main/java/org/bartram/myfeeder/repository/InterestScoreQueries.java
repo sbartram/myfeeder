@@ -181,8 +181,11 @@ public class InterestScoreQueries {
 
     /**
      * The Priority page after the row served with {@code after}. It compares against the literal tuple
-     * the client got back and never reads the cursor article's live score, so a score change between
-     * pages cannot skip rows (WR-02). A row whose own score changed may cross the boundary and be listed
+     * the client got back and never reads the cursor article's live score, so the cursor row's own score
+     * change cannot skip rows (WR-02). That protects only the cursor row: an unloaded row whose score
+     * rises above that tuple between page fetches (a vote or any engagement raises its topics' weights)
+     * is not served until the user refreshes, and the Priority "Ranking changed" hint asks for that
+     * refresh (Phase 10 D-09, IN-04). A row whose own score changed may cross the boundary and be listed
      * twice; the client dedupes it by id. The statement does not read the cursor article, so a cursor
      * that was marked read still continues exactly (R4); the caller checks that it still exists.
      *

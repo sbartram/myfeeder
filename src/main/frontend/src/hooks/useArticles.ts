@@ -1,7 +1,9 @@
+import { useMatch } from 'react-router-dom'
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { articlesApi } from '../api/articles'
 import { useToastStore } from '../components/Toast'
 import { patchPriorityArticle } from './usePriorityArticles'
+import { afterEngagement } from './engagementReaction'
 import type { ArticleFilters } from '../types'
 
 export function useArticles(filters: ArticleFilters = {}) {
@@ -47,6 +49,7 @@ export function useUnreadCounts() {
 
 export function useUpdateArticleState() {
   const qc = useQueryClient()
+  const onPriority = useMatch('/priority') !== null
   return useMutation({
     mutationFn: ({ id, state }: { id: number; state: { read?: boolean; starred?: boolean } }) =>
       articlesApi.updateState(id, state),
@@ -56,6 +59,10 @@ export function useUpdateArticleState() {
       qc.invalidateQueries({ queryKey: ['unreadCounts'] })
       // Priority rows change in place and never refetch (D-07); request values only.
       patchPriorityArticle(qc, variables.id, variables.state)
+      // Only starring is engagement (D-05): unstar and read toggles, auto-mark-read included,
+      // never react. Starring an already-starred article records nothing, so the compare in
+      // afterEngagement finds no change (research Pitfall 10).
+      if (variables.state.starred === true) void afterEngagement(qc, variables.id, onPriority)
     },
   })
 }
@@ -74,12 +81,14 @@ export function useMarkRead() {
 
 export function useSaveToRaindrop() {
   const qc = useQueryClient()
+  const onPriority = useMatch('/priority') !== null
   return useMutation({
     mutationFn: (id: number) => articlesApi.saveToRaindrop(id),
     onSuccess: (_data, id) => {
       useToastStore.getState().addToast('Saved to Raindrop', 'success')
-      // The save is recorded as engagement: refresh only the by-id article (D-06).
-      void qc.invalidateQueries({ queryKey: ['article', id], exact: true })
+      // The save is recorded as engagement: refetch the article, refresh learned and lists, and
+      // patch Priority in place only when the score changed (D-06, D-07).
+      void afterEngagement(qc, id, onPriority)
     },
   })
 }

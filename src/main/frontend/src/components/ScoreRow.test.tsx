@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
+import { QueryClientProvider, type InfiniteData, type QueryClient } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import { ScoreRow } from './ScoreRow'
 import { createQueryClient } from '../queryClient'
 import { useToastStore } from './Toast'
 import { usePriorityStore } from '../stores/priorityStore'
-import type { Article } from '../types'
+import { PRIORITY_KEY } from '../hooks/usePriorityArticles'
+import type { Article, PriorityPage } from '../types'
 
 let qc: QueryClient
 let fetchSpy: ReturnType<typeof vi.spyOn>
@@ -29,13 +31,24 @@ const article = (overrides: Partial<Article>): Article =>
     ...overrides,
   }) as Article
 
-function renderRow(a: Article) {
+function renderRow(a: Article, path = '/') {
   return render(
     <QueryClientProvider client={qc}>
-      <ScoreRow article={a} />
+      <MemoryRouter initialEntries={[path]}>
+        <ScoreRow article={a} />
+      </MemoryRouter>
     </QueryClientProvider>
   )
 }
+
+/** The by-id article the Forget reaction refetches; its score is what GET /api/articles/1 answers. */
+let refetchedScore: number | null
+
+const articleGets = () =>
+  fetchSpy.mock.calls.filter(
+    ([url, init]: [string, RequestInit | undefined]) =>
+      url === '/api/articles/1' && (init?.method ?? 'GET') === 'GET'
+  )
 
 const firstKeys = () =>
   invalidateSpy.mock.calls.map(([filters]) => filters?.queryKey?.[0])
@@ -43,9 +56,17 @@ const firstKeys = () =>
 beforeEach(() => {
   qc = createQueryClient()
   invalidateSpy = vi.spyOn(qc, 'invalidateQueries')
-  fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(null, { status: 204 }))
+  refetchedScore = null
+  fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+    if (String(input) === '/api/articles/1' && (init?.method ?? 'GET') === 'GET') {
+      return new Response(JSON.stringify(article({ interestScore: refetchedScore, engagement: [] })), {
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    return new Response(null, { status: 204 })
+  })
   useToastStore.setState({ toasts: [] })
-  usePriorityStore.setState({ whyOpen: false })
+  usePriorityStore.setState({ whyOpen: false, rankingChanged: false, baselineUnscored: null })
 })
 
 afterEach(() => {
@@ -96,7 +117,7 @@ describe('ScoreRow engagement line', () => {
     expect(unscored.container).toBeEmptyDOMElement()
   })
 
-  it('forgetDeletesAndRefreshesOnlyThisArticle', async () => {
+  it('forgetRefetchesTheArticleAndRefreshesLearnedAndLists', async () => {
     renderRow(article({ interestScore: null, engagement: ['OPEN_ORIGINAL', 'STAR'] }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Forget engagement' }))
@@ -107,13 +128,30 @@ describe('ScoreRow engagement line', () => {
         expect.objectContaining({ method: 'DELETE' })
       )
     )
-    await waitFor(() =>
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['article', 1], exact: true })
-    )
-    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(articleGets()).toHaveLength(1))
+    const deleteOrder = fetchSpy.mock.invocationCallOrder[0]
+    const getOrder = fetchSpy.mock.invocationCallOrder[fetchSpy.mock.calls.indexOf(articleGets()[0])]
+    expect(deleteOrder).toBeLessThan(getOrder)
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['interest', 'learned'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['articles'] })
     expect(firstKeys()).not.toContain('priority')
-    expect(firstKeys()).not.toContain('articles')
     expect(useToastStore.getState().toasts).toEqual([])
+  })
+
+  it('forgetOnPriorityPatchesTheRowAndLightsTheHint', async () => {
+    qc.setQueryData<InfiniteData<PriorityPage>>(PRIORITY_KEY, {
+      pages: [{ items: [article({ interestScore: 82 })], nextCursor: null }],
+      pageParams: [undefined],
+    })
+    refetchedScore = 75
+    renderRow(article({ interestScore: 82, engagement: ['STAR'] }), '/priority')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Forget engagement' }))
+
+    await waitFor(() => expect(usePriorityStore.getState().rankingChanged).toBe(true))
+    const cached = qc.getQueryData<InfiniteData<PriorityPage>>(PRIORITY_KEY)
+    expect(cached?.pages[0].items[0].interestScore).toBe(75)
+    expect(firstKeys()).not.toContain('priority')
   })
 
   it('aFailedForgetShowsTheErrorToast', async () => {
@@ -125,6 +163,7 @@ describe('ScoreRow engagement line', () => {
     await waitFor(() => expect(useToastStore.getState().toasts).toHaveLength(1))
     expect(useToastStore.getState().toasts[0].type).toBe('error')
     expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['article', 1], exact: true })
+    expect(articleGets()).toHaveLength(0)
     expect(screen.getByText('Engaged: saved to Raindrop')).toBeInTheDocument()
   })
 })

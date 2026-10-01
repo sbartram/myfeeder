@@ -154,8 +154,54 @@ class ArticleFeedbackServiceTest {
 
         assertThat(result.article()).isSameAs(article);
         assertThat(result.effects()).containsExactly(
-                new TopicEffect(10, "Rust", 20, 21.8, 20, 1.8, LearnedLimit.NONE, 1.8, 0),
-                new TopicEffect(11, "Politics", -10, -10, -30, 20, LearnedLimit.LEARNED_CAP, 20, 0));
+                new TopicEffect(10, "Rust", 20, 21.8, 20, 1.8, LearnedLimit.NONE, 1.8, 0, false),
+                new TopicEffect(11, "Politics", -10, -10, -30, 20, LearnedLimit.LEARNED_CAP, 20, 0, false));
+    }
+
+    @Test
+    void anUpVoteOnAnEngagedArticleMarksTheReplacedEngagement() {
+        givenScoredArticleMatching(List.of(10L), Map.of(10L, ENGAGED_RUST), Map.of(10L, VOTED_RUST));
+
+        FeedbackResult result = service.vote(ID, 1, null);
+
+        assertThat(result.effects()).containsExactly(
+                new TopicEffect(10, "Rust", 20.9, 21.8, 20, 1.8, LearnedLimit.NONE, 1.8, 0, true));
+    }
+
+    @Test
+    void removingTheVoteMarksTheRestoredEngagement() {
+        givenScoredArticleMatching(List.of(10L), Map.of(10L, VOTED_RUST), Map.of(10L, ENGAGED_RUST));
+
+        FeedbackResult result = service.clear(ID);
+
+        assertThat(result.effects()).containsExactly(
+                new TopicEffect(10, "Rust", 21.8, 20.9, 20, 0.9, LearnedLimit.NONE, 0, 0.9, true));
+    }
+
+    @Test
+    void narrowedVoteLeavesUnpickedTopicsUnmarked() {
+        // A 👎 narrowed to Rust drops Go's engagement share too, but Go's thumbs part does not change
+        givenScoredArticleMatching(List.of(10L, 12L),
+                Map.of(10L, ENGAGED_RUST, 12L, new TopicWeight(12, "Go", 10, 0, 0.2, 10.2, 0, 0.2, 0.2, 10)),
+                Map.of(10L, new TopicWeight(10, "Rust", 20, -1.8, -1.8, 18.2, -1.8, 0, 0, 18.2),
+                        12L, new TopicWeight(12, "Go", 10, 0, 0, 10, 0, 0, 0, 10)));
+
+        FeedbackResult result = service.vote(ID, -1, List.of(10L));
+
+        assertThat(result.effects()).containsExactly(
+                new TopicEffect(10, "Rust", 20.9, 18.2, 20, -1.8, LearnedLimit.NONE, -1.8, 0, true),
+                new TopicEffect(12, "Go", 10.2, 10, 10, 0, LearnedLimit.NONE, 0, 0, false));
+    }
+
+    @Test
+    void sixDecimalNoiseIsNotAReplacement() {
+        // A float8 SUM may differ in its last digit between reads; that is not an engagement change
+        givenScoredArticleMatching(List.of(10L), Map.of(10L, ENGAGED_RUST),
+                Map.of(10L, new TopicWeight(10, "Rust", 20, 1.8, 2.7000004, 22.7000004, 1.8, 0.9, 0.9000004, 21.8)));
+
+        FeedbackResult result = service.vote(ID, 1, null);
+
+        assertThat(result.effects()).extracting(TopicEffect::engagementReplaced).containsExactly(false);
     }
 
     @Test
@@ -201,11 +247,21 @@ class ArticleFeedbackServiceTest {
     }
 
     @Test
-    void engagementCapOutranksClampAndRange() {
-        // Sum 45 + 5 + 8 = 58 would be WEIGHT_RANGE
-        assertThat(LearnedLimit.of(weight(45, 5, 5, 10, 8), 20, 8)).isEqualTo(LearnedLimit.ENGAGEMENT_CAP);
-        // Sum 10 - 19 + 8 = -1 would be SIGN_CLAMP
-        assertThat(LearnedLimit.of(weight(10, -19, -19, 8, 8), 20, 8)).isEqualTo(LearnedLimit.ENGAGEMENT_CAP);
+    void clampAndRangeOutrankEngagementCap() {
+        // Sum 45 + 5 + 8 = 58: the range holds the weight at +50, not the engagement cap (D-10)
+        assertThat(LearnedLimit.of(weight(45, 5, 5, 10, 8), 20, 8)).isEqualTo(LearnedLimit.WEIGHT_RANGE);
+        // Sum 10 - 19 + 8 = -1: the clamp holds the weight at 0, not the engagement cap (D-10)
+        assertThat(LearnedLimit.of(weight(10, -19, -19, 8, 8), 20, 8)).isEqualTo(LearnedLimit.SIGN_CLAMP);
+    }
+
+    @Test
+    void engagementAtCapIgnoresPrecedence() {
+        TopicWeight heldByRange = weight(45, 5, 5, 10, 8);
+        assertThat(LearnedLimit.of(heldByRange, 20, 8)).isEqualTo(LearnedLimit.WEIGHT_RANGE);
+        assertThat(LearnedLimit.engagementAtCap(heldByRange, 8)).isTrue();
+        assertThat(LearnedLimit.engagementAtCap(weight(20, 0, 0, 7.999999, 7.999999), 8)).isFalse();
+        // Cap 0 disables engagement
+        assertThat(LearnedLimit.engagementAtCap(weight(20, 0, 0, 5, 0), 0)).isFalse();
     }
 
     @Test
@@ -237,6 +293,20 @@ class ArticleFeedbackServiceTest {
                                       double engagementLearned) {
         return new TopicWeight(1, "t", base, learnedRaw, thumbsLearned + engagementLearned, 0, thumbsLearned,
                 engagementRaw, engagementLearned, 0);
+    }
+
+    /** Rust with a starred article's 0.9 engagement share and no vote. */
+    private static final TopicWeight ENGAGED_RUST = new TopicWeight(10, "Rust", 20, 0, 0.9, 20.9, 0, 0.9, 0.9, 20);
+    /** Rust after an up vote on that article replaced its engagement share with the vote's 1.8. */
+    private static final TopicWeight VOTED_RUST = new TopicWeight(10, "Rust", 20, 1.8, 1.8, 21.8, 1.8, 0, 0, 21.8);
+
+    /** A scored article matching {@code matched}, whose topic weights read {@code before} then {@code after}. */
+    private void givenScoredArticleMatching(List<Long> matched, Map<Long, TopicWeight> before,
+                                            Map<Long, TopicWeight> after) {
+        givenArticle();
+        when(queries.matchedTopicIds(ID)).thenReturn(matched);
+        when(queries.isScored(ID)).thenReturn(true);
+        when(queries.topicWeights(matched)).thenReturn(before, after);
     }
 
     private void givenArticle() {

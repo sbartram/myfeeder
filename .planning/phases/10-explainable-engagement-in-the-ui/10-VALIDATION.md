@@ -2,10 +2,10 @@
 phase: "10"
 slug: "explainable-engagement-in-the-ui"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
-# audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
+# audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: true) (#2117)
+status: validated
 nyquist_compliant: false
-wave_0_complete: false
+wave_0_complete: true
 created: "2026-09-30"
 ---
 
@@ -42,17 +42,17 @@ Filled by the planner/executor from the PLAN.md tasks. Requirement → test map 
 
 | Requirement | Behavior | Test Type | Automated Command | File Exists | Status |
 |-------------|----------|-----------|-------------------|-------------|--------|
-| EXPL-01 / SC-1 | "Why N?" label names votes/engaged parts, zero parts omitted, tooltip lists all parts, rows sum to badge | unit (component) | `npx vitest run src/components/WhyBreakdown.test.tsx` | ✅ update | ⬜ pending |
-| LRN-06 / SC-2 | Open, star, board add, Raindrop, Forget on Priority: by-id refetch, patch only when score differs, set hint, never touch `['priority']` | unit (hook) | `npx vitest run src/hooks/engagementRefresh.test.ts src/hooks/useEngagement.test.ts` | ✅ rewrite / ❌ W0 new cases | ⬜ pending |
-| LRN-06 / D-07 | Off Priority: learned, articles, other by-id (not extracted) invalidated | unit (hook) | `npx vitest run src/hooks/engagementRefresh.test.ts` | ❌ W0 | ⬜ pending |
-| LRN-06 / SC-2 | Forget from ScoreRow reacts; unstar and board removal do not | unit | `npx vitest run src/components/ScoreRow.test.tsx src/hooks/usePriorityArticles.test.ts` | ✅ update | ⬜ pending |
-| LRN-06 / SC-2 | PriorityList keeps row order and shows "↻ Ranking changed — refresh" after engagement | component | `npx vitest run src/components/PriorityList.test.tsx` | ✅ add case | ⬜ pending |
-| LRN-06 / SC-3 | Priority page score = by-id `interestScore` = breakdown display for an engaged article | integration | `./gradlew test -x npmBuild -x npmInstall --tests "org.bartram.myfeeder.controller.PriorityApiIntegrationTest"` | ❌ W0 | ⬜ pending |
-| SC-4 / WR-03 | Vote/removal on engaged article marks replaced engagement; no marker without engagement | unit + integration | `./gradlew test -x npmBuild -x npmInstall --tests "org.bartram.myfeeder.service.ArticleFeedbackServiceTest" --tests "org.bartram.myfeeder.controller.FeedbackApiIntegrationTest"` | ✅ extend | ⬜ pending |
-| SC-4 / D-11..D-13 | Toast wording, one note per topic, ENGAGEMENT_CAP never worded or listed alone | unit | `npx vitest run src/utils/feedback.test.ts` | ✅ update | ⬜ pending |
-| WR-01 / D-10 | LearnedLimit precedence LEARNED_CAP → SIGN_CLAMP → WEIGHT_RANGE → ENGAGEMENT_CAP → NONE | unit | `./gradlew test -x npmBuild -x npmInstall --tests "org.bartram.myfeeder.service.ArticleFeedbackServiceTest"` | ✅ replace test | ⬜ pending |
-| IN-01 / D-14, D-15 | Interests learned line split, omitted zeros, "at max", other variants | unit (component) | `npx vitest run src/components/TopicRow.test.tsx` | ✅ update | ⬜ pending |
-| Serialization | New `TopicEffect` / `TopicLearned` fields on the JSON | controller slice | `./gradlew test -x npmBuild -x npmInstall --tests "org.bartram.myfeeder.controller.ArticleControllerTest" --tests "org.bartram.myfeeder.controller.InterestControllerTest"` | ✅ update | ⬜ pending |
+| EXPL-01 / SC-1 | "Why N?" label names votes/engaged parts, zero parts omitted, tooltip lists all parts, rows sum to badge | unit (component) | `npx vitest run src/components/WhyBreakdown.test.tsx` | ✅ | ✅ green |
+| LRN-06 / SC-2 | Open, star, board add, Raindrop, Forget on Priority: by-id refetch, patch only when score differs, set hint, never touch `['priority']` | unit (hook) | `npx vitest run src/hooks/engagementRefresh.test.ts src/hooks/useEngagement.test.ts` | ✅ | ✅ green |
+| LRN-06 / D-07 | Off Priority: learned, articles, other by-id (not extracted) invalidated | unit (hook) | `npx vitest run src/hooks/engagementRefresh.test.ts` | ✅ | ✅ green |
+| LRN-06 / SC-2 | Forget from ScoreRow reacts; unstar and board removal do not | unit | `npx vitest run src/components/ScoreRow.test.tsx src/hooks/usePriorityArticles.test.ts` | ✅ | ✅ green |
+| LRN-06 / SC-2 | PriorityList keeps row order and shows "↻ Ranking changed — refresh" after engagement | component | `npx vitest run src/components/PriorityList.test.tsx` | ✅ | ✅ green |
+| LRN-06 / SC-3 | Priority page score = by-id `interestScore` = breakdown display for an engaged article | integration | `./gradlew test -x npmBuild -x npmInstall --tests "org.bartram.myfeeder.controller.PriorityApiIntegrationTest"` | ✅ | ✅ green |
+| SC-4 / WR-03 | Vote/removal on engaged article marks replaced engagement; no marker without engagement | unit + integration | `./gradlew test -x npmBuild -x npmInstall --tests "org.bartram.myfeeder.service.ArticleFeedbackServiceTest" --tests "org.bartram.myfeeder.controller.FeedbackApiIntegrationTest"` | ✅ | ✅ green |
+| SC-4 / D-11..D-13 | Toast wording, one note per topic, ENGAGEMENT_CAP never worded or listed alone | unit | `npx vitest run src/utils/feedback.test.ts` | ✅ | ✅ green |
+| WR-01 / D-10 | LearnedLimit precedence LEARNED_CAP → SIGN_CLAMP → WEIGHT_RANGE → ENGAGEMENT_CAP → NONE | unit | `./gradlew test -x npmBuild -x npmInstall --tests "org.bartram.myfeeder.service.ArticleFeedbackServiceTest"` | ✅ | ✅ green |
+| IN-01 / D-14, D-15 | Interests learned line split, omitted zeros, "at max", other variants | unit (component) | `npx vitest run src/components/TopicRow.test.tsx` | ✅ | ✅ green |
+| Serialization | New `TopicEffect` / `TopicLearned` fields on the JSON | controller slice | `./gradlew test -x npmBuild -x npmInstall --tests "org.bartram.myfeeder.controller.ArticleControllerTest" --tests "org.bartram.myfeeder.controller.InterestControllerTest"` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -60,10 +60,10 @@ Filled by the planner/executor from the PLAN.md tasks. Requirement → test map 
 
 ## Wave 0 Requirements
 
-- [ ] `MemoryRouter` wrappers in `engagementRefresh.test.ts`, `useEngagement.test.ts`, `ScoreRow.test.tsx`, `usePriorityArticles.test.ts` (same task that adds `useMatch` to the hooks)
-- [ ] New Priority-reaction cases for all five actions (differ → patch + hint; equal → nothing; failure → silent; never `['priority']`)
-- [ ] `PriorityApiIntegrationTest`: one SC-3 agreement test with an `article_engagement` row
-- [ ] `ArticleFeedbackServiceTest`: replaced-engagement true/false cases, including the narrowed-unpicked case
+- [x] `MemoryRouter` wrappers in `engagementRefresh.test.ts`, `useEngagement.test.ts`, `ScoreRow.test.tsx`, `usePriorityArticles.test.ts` (same task that adds `useMatch` to the hooks)
+- [x] New Priority-reaction cases for all five actions (differ → patch + hint; equal → nothing; failure → silent; never `['priority']`)
+- [x] `PriorityApiIntegrationTest`: one SC-3 agreement test with an `article_engagement` row
+- [x] `ArticleFeedbackServiceTest`: replaced-engagement true/false cases, including the narrowed-unpicked case
 
 ---
 
@@ -78,11 +78,23 @@ Filled by the planner/executor from the PLAN.md tasks. Requirement → test map 
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 120s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 120s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-09-30
+
+---
+
+## Validation Audit 2026-09-30
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+Evidence: `npx tsc -b` clean; 9 Vitest files / 146 tests green (WhyBreakdown, engagementRefresh, engagementReaction, useEngagement, ScoreRow, usePriorityArticles, PriorityList, feedback, TopicRow); 5 JUnit classes / 98 tests green (PriorityApiIntegrationTest 7, ArticleFeedbackServiceTest 25, FeedbackApiIntegrationTest 24, ArticleControllerTest 30, InterestControllerTest 12). Former W0 rows now pinned by `engagementReaction.test.ts` (offPriority…, neverInvalidatesResetsOrRefetchesPriority, extracted key untouched), `PriorityApiIntegrationTest.engagedArticleAgreesEverywhereAfterRefresh`, `engagementRefresh.test.ts` boardRemovalRunsNoReaction, `usePriorityArticles.test.ts` unstarAndReadDoNotReact. Manual-only rows passed in 10-UAT.md (6/6).

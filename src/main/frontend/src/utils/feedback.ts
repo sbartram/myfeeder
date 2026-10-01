@@ -71,10 +71,14 @@ const SAVED_LEADS: Record<Exclude<VoteKind, 'removed'>, string> = {
 const MAX_LISTED = 3
 
 /**
- * Why a topic's change is what it is (D-07), from the server's limit, learned and after values:
- * a limit note, or "(now …)" for a disliked topic so a softening 👍 still reads as buried.
+ * Why a topic's change is what it is (D-07, D-11, D-12), from the server's limit, learned, after
+ * and engagementReplaced values. Each topic gets one note: a binding limit's note (LEARNED_CAP,
+ * SIGN_CLAMP, WEIGHT_RANGE) wins; otherwise (NONE or ENGAGEMENT_CAP, which is never worded, D-13)
+ * a vote that replaced the article's engagement share says "(replaces engagement)" and a removal
+ * that restored it "(engagement restored)"; otherwise "(now …)" for a disliked topic so a
+ * softening 👍 still reads as buried.
  */
-function effectNote(e: TopicEffect): string {
+function effectNote(e: TopicEffect, kind: VoteKind): string {
   switch (e.limit) {
     case 'LEARNED_CAP':
       return e.learned > 0
@@ -85,6 +89,9 @@ function effectNote(e: TopicEffect): string {
     case 'WEIGHT_RANGE':
       return e.after > 0 ? ' (weight at max +50)' : ' (weight at min −50)'
     default:
+      if (e.engagementReplaced) {
+        return kind === 'removed' ? ' (engagement restored)' : ' (replaces engagement)'
+      }
       return e.baseWeight < 0 ? ` (now ${formatSigned(e.after, 1)})` : ''
   }
 }
@@ -93,9 +100,11 @@ function effectNote(e: TopicEffect): string {
  * The effect toast (D-07..D-10, FDBK-04): an unscored article's vote says it counts once the
  * article is scored (D-03), and a scored article with no matched topic says so (D-18, D-19); a
  * removal of either is just "Vote removed". Otherwise it lists each topic whose rounded server
- * change (after − before) is non-zero or that hit a limit, largest change first (ties keep server
- * order), at most three then "+N more", each with its note; when every change rounds away it says
- * "Effect under 0.1 points". The client prints the server's numbers and never recomputes a weight.
+ * change (after − before) is non-zero, that hit a binding limit, or whose engagement share the vote
+ * replaced or restored (D-11); the engagement cap alone never lists a topic (D-13). Largest change
+ * first (ties keep server order), at most three then "+N more", each with its one note (D-12);
+ * when nothing is listed it says "Effect under 0.1 points". The client prints the server's numbers
+ * and never recomputes a weight.
  */
 export function formatVoteToast(kind: VoteKind, result: FeedbackResult): string {
   if (!result.scored) {
@@ -106,14 +115,19 @@ export function formatVoteToast(kind: VoteKind, result: FeedbackResult): string 
   }
   const listed = result.effects
     .map((e) => ({ e, d: e.after - e.before }))
-    .filter(({ e, d }) => Math.round(d * 10) !== 0 || e.limit !== 'NONE')
+    .filter(
+      ({ e, d }) =>
+        Math.round(d * 10) !== 0 ||
+        (e.limit !== 'NONE' && e.limit !== 'ENGAGEMENT_CAP') ||
+        e.engagementReplaced === true
+    )
     .sort((a, b) => Math.abs(b.d) - Math.abs(a.d))
   if (listed.length === 0) {
     return `${kind === 'removed' ? 'Vote removed' : SAVED_LEADS[kind]} · Effect under 0.1 points`
   }
   const entries = listed
     .slice(0, MAX_LISTED)
-    .map(({ e, d }) => `${e.name} ${formatDelta(d)}${effectNote(e)}`)
+    .map(({ e, d }) => `${e.name} ${formatDelta(d)}${effectNote(e, kind)}`)
   if (listed.length > MAX_LISTED) entries.push(`+${listed.length - MAX_LISTED} more`)
   return LEADS[kind] + entries.join(' · ')
 }

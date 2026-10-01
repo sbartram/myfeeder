@@ -8,8 +8,12 @@ package org.bartram.myfeeder.service;
  * here is stored.
  *
  * <p>{@code learned} combines votes and engagement ({@code learned = thumbsLearned + engagementLearned},
- * each capped, D-15). The two parts are appended after {@code limit} so existing clients keep working and
- * Phase 10 can split the editor line (D-10).
+ * each capped, D-15). The two parts are appended after {@code limit} so existing clients keep working.
+ *
+ * <p>{@code engagementAtCap}, appended last, is true when the topic's engagement points reach the
+ * engagement cap, from {@link LearnedLimit#engagementAtCap}, whichever limit is reported. It lets the
+ * Interests line say "engaged … at max" even when a binding clamp or range is the reported limit (D-15).
  */
 public record TopicLearned(long topicId, double baseWeight, double learned, double effectiveWeight,
-                           LearnedLimit limit, double thumbsLearned, double engagementLearned) {}
+                           LearnedLimit limit,
+                           double thumbsLearned, double engagementLearned, boolean engagementAtCap) {}
