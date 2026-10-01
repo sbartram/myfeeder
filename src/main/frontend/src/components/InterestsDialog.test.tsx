@@ -1525,7 +1525,8 @@ describe('InterestsDialog', () => {
 
       await user.click(screen.getByRole('button', { name: 'Create topic from suggestion: A history of the B-tree' }))
       expect(screen.getByText('Draft added')).toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: 'Discard draft: new topic' }))
+      // An unnamed draft is labelled by its description (TopicRow's topicLabel).
+      await user.click(screen.getByRole('button', { name: 'Discard draft: A history of the B-tree' }))
 
       expect(topicRows(container)).toHaveLength(0)
       const row = suggestionRow(container, 'A history of the B-tree')!

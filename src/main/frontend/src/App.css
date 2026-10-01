@@ -838,6 +838,10 @@ html, body, #root {
 
 .interests-suggestion-actions { display: flex; gap: 8px; flex: none; }
 
+.interests-suggestion.drafted { opacity: 0.6; }
+
+.interests-suggestion-state { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
 .interests-topic-row.dirty { border-left: 3px solid var(--accent); }
 
 .interests-topic-row .dialog-error { margin-top: 0; font-size: 12px; }

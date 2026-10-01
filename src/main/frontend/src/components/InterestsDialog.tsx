@@ -590,6 +590,7 @@ function TopicsSection({ topics, status, statusFailed, onDirtyCountChange, draft
       </section>
       <SuggestedTopics
         rows={rows}
+        atMax={atMax}
         onCreate={(s) =>
           addDraft({ description: s.title.trim().slice(0, 500), weight: 20, sourceArticleId: s.articleId })
         }
@@ -605,20 +606,32 @@ function TopicsSection({ topics, status, statusFailed, onDirtyCountChange, draft
  * Nothing renders, not even the heading, while the list is empty, loading or failed (D-02), and
  * no status or cold-start check applies (D-03). The heading counts the total only when the
  * server capped the list (D-07). Dismiss is one click with no confirm or undo (D-17).
+ *
+ * Create topic adds a prefilled +20 draft to the already-open dialog and saves nothing (D-15).
+ * While that draft is unsaved the row reads "Draft added" with no actions, so it can't be drafted
+ * twice; saving hides it, and discarding the draft makes it active again (D-16). At 25 topic rows
+ * Create topic is disabled with the at-max tooltip, and Dismiss still works (D-18).
  */
 function SuggestedTopics({
   rows,
+  atMax,
   onCreate,
 }: {
   rows: TopicRowState[]
+  atMax: boolean
   onCreate: (s: TopicSuggestion) => void
 }) {
   const suggestions = useTopicSuggestions()
   const dismiss = useDismissSuggestion()
+  const sources = (saved: boolean) =>
+    new Set(
+      rows
+        .filter((r) => (r.id !== null) === saved && r.sourceArticleId !== undefined)
+        .map((r) => r.sourceArticleId),
+    )
   // A saved row's source is handled on the server; hide it before the refetch lands.
-  const created = new Set(
-    rows.filter((r) => r.id !== null && r.sourceArticleId !== undefined).map((r) => r.sourceArticleId),
-  )
+  const created = sources(true)
+  const drafted = sources(false)
   const data = suggestions.data
   const items = data?.items.filter((s) => !created.has(s.articleId)) ?? []
   if (!data || items.length === 0) return null
@@ -631,34 +644,48 @@ function SuggestedTopics({
     <section className="interests-section interests-suggestions" aria-labelledby="interests-suggestions-title">
       <h3 id="interests-suggestions-title">{heading}</h3>
       <ul className="interests-suggestion-list">
-        {items.map((s) => (
-          <li className="interests-suggestion" key={s.articleId}>
-            <InterestBadge score={s.interestScore} />
-            <span className="interests-suggestion-text">
-              <span className="interests-suggestion-title" title={s.title}>
-                {s.title}
+        {items.map((s) => {
+          const text = (
+            <>
+              <InterestBadge score={s.interestScore} />
+              <span className="interests-suggestion-text">
+                <span className="interests-suggestion-title" title={s.title}>
+                  {s.title}
+                </span>
+                <span className="interests-suggestion-feed">{s.feedTitle}</span>
               </span>
-              <span className="interests-suggestion-feed">{s.feedTitle}</span>
-            </span>
-            <span className="interests-suggestion-actions">
-              <button
-                className="btn-secondary"
-                onClick={() => onCreate(s)}
-                aria-label={`Create topic from suggestion: ${s.title}`}
-              >
-                Create topic
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => dismiss.mutate(s.articleId)}
-                disabled={dismiss.isPending && dismiss.variables === s.articleId}
-                aria-label={`Dismiss suggestion: ${s.title}`}
-              >
-                Dismiss
-              </button>
-            </span>
-          </li>
-        ))}
+            </>
+          )
+          return drafted.has(s.articleId) ? (
+            <li className="interests-suggestion drafted" aria-disabled="true" key={s.articleId}>
+              {text}
+              <span className="interests-suggestion-state">Draft added</span>
+            </li>
+          ) : (
+            <li className="interests-suggestion" key={s.articleId}>
+              {text}
+              <span className="interests-suggestion-actions">
+                <button
+                  className="btn-secondary"
+                  onClick={() => onCreate(s)}
+                  disabled={atMax}
+                  title={atMax ? 'You have 25 topics, the maximum.' : undefined}
+                  aria-label={`Create topic from suggestion: ${s.title}`}
+                >
+                  Create topic
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={() => dismiss.mutate(s.articleId)}
+                  disabled={dismiss.isPending && dismiss.variables === s.articleId}
+                  aria-label={`Dismiss suggestion: ${s.title}`}
+                >
+                  Dismiss
+                </button>
+              </span>
+            </li>
+          )
+        })}
       </ul>
     </section>
   )
