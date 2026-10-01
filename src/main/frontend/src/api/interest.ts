@@ -78,6 +78,26 @@ export interface TopicPreview {
   model: string
 }
 
+/**
+ * One row of GET /api/interest/suggestions: an engaged, scored article that no topic covers.
+ * interestScore is the article's badge score (0-100).
+ */
+export interface TopicSuggestion {
+  articleId: number
+  title: string
+  feedTitle: string
+  interestScore: number
+}
+
+/**
+ * GET /api/interest/suggestions: engaged, scored articles no topic covers, in the server's order
+ * (badge ascending). At most 10 items; total counts all of them (D-07).
+ */
+export interface TopicSuggestions {
+  items: TopicSuggestion[]
+  total: number
+}
+
 export const interestApi = {
   getStatus: () => apiGet<InterestStatus>('/interest/status'),
   getProfile: () => apiGet<InterestProfile>('/interest/profile'),
@@ -93,4 +113,8 @@ export const interestApi = {
     apiPost<TopicPreview>('/interest/preview', request),
   getRescoreCount: () => apiGet<RescoreCount>('/interest/rescore'),
   rescore: () => apiPost<RescoreCount>('/interest/rescore', { confirm: true }),
+  getSuggestions: () => apiGet<TopicSuggestions>('/interest/suggestions'),
+  // No body argument, so the PUT is bodyless and never a CORS simple request.
+  dismissSuggestion: (articleId: number) =>
+    apiPut<void>(`/interest/suggestions/${articleId}/dismissal`),
 }

@@ -7,12 +7,15 @@ import {
   useLearnedTopics,
   useRescoreCount,
   useRescoreUnread,
+  useDismissSuggestion,
   useSaveInterestProfile,
+  useTopicSuggestions,
 } from '../hooks/useInterest'
 import { useArticle } from '../hooks/useArticles'
 import { useUIStore } from '../stores/uiStore'
 import { articles, isTopicDirty, OPEN_BREAKER_STATES } from '../utils/interest'
 import { TopicRow, type PreviewBlock, type TopicRowState } from './TopicRow'
+import { InterestBadge } from './InterestBadge'
 
 const PROFILE_MAX = 2000
 
@@ -515,67 +518,118 @@ function TopicsSection({ topics, status, statusFailed, onDirtyCountChange, draft
   const atMax = rows.length >= TOPICS_MAX
 
   return (
-    <section className="interests-section">
-      {draftBlocked && (
-        <div className="interests-notice">
-          <strong>You have 25 topics, the maximum.</strong> Delete one, then use Create topic from
-          article again.
+    <>
+      <section className="interests-section">
+        {draftBlocked && (
+          <div className="interests-notice">
+            <strong>You have 25 topics, the maximum.</strong> Delete one, then use Create topic from
+            article again.
+          </div>
+        )}
+        <div className="interests-topics-head">
+          <h3>Topics</h3>
+          <span className="interests-topic-count">
+            {rows.length} / {TOPICS_MAX}
+          </span>
         </div>
-      )}
-      <div className="interests-topics-head">
-        <h3>Topics</h3>
-        <span className="interests-topic-count">
-          {rows.length} / {TOPICS_MAX}
-        </span>
-      </div>
-      <p className="interests-help">{TOPICS_HELP}</p>
-      {learned.isError && (
-        <p className="interests-note">
-          Couldn't load learned adjustments. Close and reopen Interests to try again.
-        </p>
-      )}
-      {previewBlock && previewBlock.kind !== 'status-pending' ? (
-        <p className="interests-preview-target">Preview unavailable: {previewBlock.reason}</p>
-      ) : article.data ? (
-        <p className="interests-preview-target" title={article.data.title}>
-          Previewing against: <span className="interests-preview-title">{article.data.title}</span>
-        </p>
-      ) : (
-        <p className="interests-preview-target">Previewing against: loading article…</p>
-      )}
-      {rows.length === 0 ? (
-        <>
-          <p className="interests-empty-heading">No topics yet.</p>
-          <p className="interests-help">
-            Add a topic for each subject you want boosted or buried. You can also rank with the
-            profile alone.
+        <p className="interests-help">{TOPICS_HELP}</p>
+        {learned.isError && (
+          <p className="interests-note">
+            Couldn't load learned adjustments. Close and reopen Interests to try again.
           </p>
-        </>
-      ) : (
-        <div className="interests-topic-list">
-          {rows.map((row) => (
-            <TopicRow
-              key={row.key}
-              row={row}
-              onChange={(next) => updateRow(row.key, () => next)}
-              onSaved={(topic) => markSaved(row.key, topic)}
-              onDiscard={() => removeRow(row.key)}
-              onDeleted={() => removeRow(row.key)}
-              articleId={selectedArticleId}
-              previewBlock={previewBlock}
-              learned={row.id !== null ? learnedById.get(row.id) : undefined}
-            />
-          ))}
-        </div>
-      )}
-      <button
-        className="btn-secondary interests-add-topic"
-        onClick={addDraft}
-        disabled={atMax}
-        title={atMax ? 'You have 25 topics, the maximum. Delete one to add another.' : undefined}
-      >
-        + Add topic
-      </button>
+        )}
+        {previewBlock && previewBlock.kind !== 'status-pending' ? (
+          <p className="interests-preview-target">Preview unavailable: {previewBlock.reason}</p>
+        ) : article.data ? (
+          <p className="interests-preview-target" title={article.data.title}>
+            Previewing against: <span className="interests-preview-title">{article.data.title}</span>
+          </p>
+        ) : (
+          <p className="interests-preview-target">Previewing against: loading article…</p>
+        )}
+        {rows.length === 0 ? (
+          <>
+            <p className="interests-empty-heading">No topics yet.</p>
+            <p className="interests-help">
+              Add a topic for each subject you want boosted or buried. You can also rank with the
+              profile alone.
+            </p>
+          </>
+        ) : (
+          <div className="interests-topic-list">
+            {rows.map((row) => (
+              <TopicRow
+                key={row.key}
+                row={row}
+                onChange={(next) => updateRow(row.key, () => next)}
+                onSaved={(topic) => markSaved(row.key, topic)}
+                onDiscard={() => removeRow(row.key)}
+                onDeleted={() => removeRow(row.key)}
+                articleId={selectedArticleId}
+                previewBlock={previewBlock}
+                learned={row.id !== null ? learnedById.get(row.id) : undefined}
+              />
+            ))}
+          </div>
+        )}
+        <button
+          className="btn-secondary interests-add-topic"
+          onClick={addDraft}
+          disabled={atMax}
+          title={atMax ? 'You have 25 topics, the maximum. Delete one to add another.' : undefined}
+        >
+          + Add topic
+        </button>
+      </section>
+      <SuggestedTopics />
+    </>
+  )
+}
+
+/**
+ * Engaged, scored articles no topic covers, below Topics and above the Re-score footer (D-01).
+ * Rows keep the server's order, so the "surprise" (lowest badge) comes first. Each row shows the
+ * badge, the title as plain text and the feed name, never the engagement kind or date (D-04).
+ * Nothing renders, not even the heading, while the list is empty, loading or failed (D-02), and
+ * no status or cold-start check applies (D-03). The heading counts the total only when the
+ * server capped the list (D-07). Dismiss is one click with no confirm or undo (D-17).
+ */
+function SuggestedTopics() {
+  const suggestions = useTopicSuggestions()
+  const dismiss = useDismissSuggestion()
+  const data = suggestions.data
+  if (!data || data.items.length === 0) return null
+  const heading =
+    data.total > data.items.length
+      ? `Suggested topics (${data.items.length} of ${data.total})`
+      : 'Suggested topics'
+
+  return (
+    <section className="interests-section interests-suggestions" aria-labelledby="interests-suggestions-title">
+      <h3 id="interests-suggestions-title">{heading}</h3>
+      <ul className="interests-suggestion-list">
+        {data.items.map((s) => (
+          <li className="interests-suggestion" key={s.articleId}>
+            <InterestBadge score={s.interestScore} />
+            <span className="interests-suggestion-text">
+              <span className="interests-suggestion-title" title={s.title}>
+                {s.title}
+              </span>
+              <span className="interests-suggestion-feed">{s.feedTitle}</span>
+            </span>
+            <span className="interests-suggestion-actions">
+              <button
+                className="btn-secondary"
+                onClick={() => dismiss.mutate(s.articleId)}
+                disabled={dismiss.isPending && dismiss.variables === s.articleId}
+                aria-label={`Dismiss suggestion: ${s.title}`}
+              >
+                Dismiss
+              </button>
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }
