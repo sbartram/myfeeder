@@ -112,6 +112,28 @@ function rescoreCount(count: number, windowDays = 14) {
   route('GET', '/api/interest/rescore', () => ({ status: 200, body: { count, windowDays } }))
 }
 
+function suggestion(articleId: number, title: string, feedTitle = 'Hacker News', interestScore = 12) {
+  return { articleId, title, feedTitle, interestScore }
+}
+
+type Suggestion = ReturnType<typeof suggestion>
+
+function suggestions(items: Suggestion[], total = items.length) {
+  route('GET', '/api/interest/suggestions', () => ({ status: 200, body: { items, total } }))
+}
+
+function suggestionsSection(container: HTMLElement): HTMLElement | null {
+  return container.querySelector<HTMLElement>('.interests-suggestions')
+}
+
+function suggestionGets() {
+  return calls.filter((c) => c.method === 'GET' && c.url === '/api/interest/suggestions')
+}
+
+function previewPosts() {
+  return calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/preview')
+}
+
 const RESCORE_COPY_312 =
   "Re-judge 312 unread articles from the last 14 days? Existing scores are replaced as they're re-scored."
 
@@ -135,6 +157,7 @@ describe('InterestsDialog', () => {
     route('GET', '/api/interest/profile', () => ({ status: 200, body: profile('') }))
     route('GET', '/api/interest/topics', () => ({ status: 200, body: [] }))
     route('GET', '/api/interest/topics/learned', () => ({ status: 200, body: [] }))
+    route('GET', '/api/interest/suggestions', () => ({ status: 200, body: { items: [], total: 0 } }))
     route('PUT', '/api/interest/profile', (init) => {
       const { profileText } = JSON.parse(String(init?.body)) as { profileText: string }
       return { status: 200, body: { ...profile(profileText), version: 2 } }
@@ -1239,6 +1262,126 @@ describe('InterestsDialog', () => {
       expect(second.querySelector('.interests-learned')?.textContent).toBe(
         'No learned adjustment yet · Effective weight +20',
       )
+    })
+  })
+  describe('Suggested topics', () => {
+    it('sectionSitsBelowTopicsAndAboveTheRescoreFooter', async () => {
+      suggestions([suggestion(41, 'Zig 0.15 released'), suggestion(42, 'A history of the B-tree')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+      await screen.findByText('Zig 0.15 released')
+      const headings = Array.from(container.querySelectorAll('.interests-section h3')).map((h) => h.textContent)
+      expect(headings).toEqual(['Profile', 'Topics', 'Suggested topics'])
+      const section = suggestionsSection(container)!
+      const rescoreRoot = container.querySelector('.interests-rescore')!
+      expect(section.compareDocumentPosition(rescoreRoot) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    })
+
+    it('rowShowsTheBadgeTitleAndFeed', async () => {
+      suggestions([suggestion(41, 'Zig 0.15 released')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+      expect(await screen.findByText('Zig 0.15 released')).toBeVisible()
+      const section = suggestionsSection(container)!
+      const row = section.querySelector<HTMLElement>('.interests-suggestion')!
+      expect(row.querySelector('.interest-badge')).toHaveTextContent('12')
+      expect(within(row).getByText('Hacker News')).toBeVisible()
+      expect(section.querySelector('a')).toBeNull()
+      expect(within(section).queryByRole('button', { name: 'Zig 0.15 released' })).not.toBeInTheDocument()
+    })
+
+    it('hiddenWhenThereAreNoSuggestions', async () => {
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+      await screen.findByRole('textbox', { name: 'Interest profile' })
+      await waitFor(() => expect(suggestionGets()).toHaveLength(1))
+      // Let the empty response land before asserting nothing rendered.
+      await new Promise((r) => setTimeout(r, 20))
+      expect(suggestionsSection(container)).toBeNull()
+      expect(screen.queryByText(/Suggested topics/)).toBeNull()
+    })
+
+    it('hiddenWhenTheListFails', async () => {
+      route('GET', '/api/interest/suggestions', () => ({ status: 500, body: { title: 'Internal Server Error' } }))
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+      expect(await screen.findByRole('textbox', { name: 'Interest profile' })).toBeInTheDocument()
+      await waitFor(() => expect(suggestionGets()).toHaveLength(1))
+      await new Promise((r) => setTimeout(r, 20))
+      expect(suggestionsSection(container)).toBeNull()
+      expect(screen.queryByText(/Suggested topics/)).toBeNull()
+      expect(screen.getByText('Topics')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Re-score unread' })).toBeInTheDocument()
+    })
+
+    it('headerShowsTheTotalOnlyWhenCapped', async () => {
+      suggestions(
+        Array.from({ length: 10 }, (_, i) => suggestion(100 + i, `Article ${i}`)),
+        23,
+      )
+      const first = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      expect(await screen.findByRole('heading', { name: 'Suggested topics (10 of 23)' })).toBeInTheDocument()
+      first.unmount()
+
+      suggestions([suggestion(41, 'Zig 0.15 released'), suggestion(42, 'A history of the B-tree')], 2)
+      renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      expect(await screen.findByRole('heading', { name: 'Suggested topics' })).toBeInTheDocument()
+      expect(screen.queryByText(/of 2\)/)).toBeNull()
+    })
+
+    it('shownInColdStartAndWithoutAKey', async () => {
+      status({ configured: false, coldStart: true })
+      suggestions([suggestion(41, 'Zig 0.15 released')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+      expect(await screen.findByText('Zig 0.15 released')).toBeInTheDocument()
+      expect(await screen.findByText(/Scoring isn't set up yet\./)).toBeInTheDocument()
+      expect(suggestionsSection(container)).not.toBeNull()
+    })
+
+    it('everyOpenRefetchesTheList', async () => {
+      const client = createQueryClient()
+      const first = renderDialog(<InterestsDialog open={true} onClose={() => {}} />, client)
+      await screen.findByRole('textbox', { name: 'Interest profile' })
+      await waitFor(() => expect(suggestionGets()).toHaveLength(1))
+      await new Promise((r) => setTimeout(r, 20))
+      expect(suggestionsSection(first.container)).toBeNull()
+      first.unmount()
+
+      suggestions([suggestion(41, 'Zig 0.15 released')])
+      const second = renderDialog(<InterestsDialog open={true} onClose={() => {}} />, client)
+
+      expect(await screen.findByText('Zig 0.15 released')).toBeInTheDocument()
+      expect(suggestionsSection(second.container)).not.toBeNull()
+      expect(suggestionGets()).toHaveLength(2)
+    })
+
+    it('titlesRenderAsText', async () => {
+      const markup = '<img src=x onerror=alert(1)>'
+      suggestions([suggestion(41, markup, '<b>Feed</b>')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+      expect(await screen.findByText(markup)).toBeInTheDocument()
+      const section = suggestionsSection(container)!
+      expect(section.querySelector('img')).toBeNull()
+      expect(section.querySelector('b')).toBeNull()
+      expect(section.querySelector('.interests-suggestion-title')?.textContent).toBe(markup)
+      expect(section.querySelector('.interests-suggestion-feed')?.textContent).toBe('<b>Feed</b>')
+    })
+
+    it('listingNeverPostsPreview', async () => {
+      useUIStore.setState({ selectedArticleId: 1 })
+      route('GET', '/api/articles/1', () => ({ status: 200, body: article(1, 'Rust 1.90 released') }))
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: [topic(3, 'Rust', 'The Rust language')],
+      }))
+      suggestions([suggestion(41, 'Zig 0.15 released')])
+      renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+
+      expect(await screen.findByText('Zig 0.15 released')).toBeInTheDocument()
+      await new Promise((r) => setTimeout(r, 50))
+      expect(previewPosts()).toEqual([])
     })
   })
 })

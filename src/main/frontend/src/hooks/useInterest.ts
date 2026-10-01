@@ -6,6 +6,7 @@ import {
   type TopicInput,
   type TopicPreviewRequest,
   type TierThresholds,
+  type TopicSuggestions,
 } from '../api/interest'
 import { usePriorityStore } from '../stores/priorityStore'
 import { DEFAULT_TIERS } from '../utils/interest'
@@ -165,5 +166,20 @@ export function useRescoreUnread() {
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
       usePriorityStore.getState().setRankingChanged(true)
     },
+  })
+}
+
+export const SUGGESTIONS_KEY = ['interest', 'suggestions'] as const
+
+/**
+ * The Interests dialog's suggested topics (GAP-01). staleTime 0 refetches it on every Interests
+ * open, so articles engaged since the last open appear (SC-1). It never polls. The caller hides
+ * the section when the list is empty, still loading or failed (D-02).
+ */
+export function useTopicSuggestions() {
+  return useQuery<TopicSuggestions>({
+    queryKey: SUGGESTIONS_KEY,
+    queryFn: interestApi.getSuggestions,
+    staleTime: 0,
   })
 }
