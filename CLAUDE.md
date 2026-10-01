@@ -104,7 +104,7 @@ org.bartram.myfeeder
 - **Type-check**: use `npx tsc -b` from `src/main/frontend/` — plain `tsc --noEmit` returns success even with errors because the root `tsconfig.json` has `files: []` and uses project references
 - **Key conventions**:
   - API client in `src/api/` — thin fetch wrappers per domain (feeds, articles, folders, boards, integrations, opml, interest)
-  - TanStack Query hooks in `src/hooks/` — one file per domain (useArticles, useFeeds, useFolders, useBoards, useOpml, useInterest (interest status, tiers and rubric), useFeedback, usePriorityArticles, useEngagement (`useOpenOriginal`, `useForgetEngagement`), engagementReaction (`afterEngagement`, `invalidateAfterLearnedChange`; plain functions, not hooks))
+  - TanStack Query hooks in `src/hooks/` — one file per domain (useArticles, useFeeds, useFolders, useBoards, useOpml, useInterest (interest status, tiers, rubric and topic suggestions: useTopicSuggestions, useDismissSuggestion), useFeedback, usePriorityArticles, useEngagement (`useOpenOriginal`, `useForgetEngagement`), engagementReaction (`afterEngagement`, `invalidateAfterLearnedChange`; plain functions, not hooks))
   - Zustand stores in `src/stores/` — `uiStore` (selection, panel state), `preferencesStore` (localStorage-persisted settings)
   - Components in `src/components/` — AppShell, FeedPanel, ArticleList, ReadingPane, BoardArticleList, BoardManager, SettingsDialog, ShortcutOverlay, Toast, dialogs
   - Keyboard shortcuts: vim-style (j/k/n/p/m/s/o/b/v/r), g-chords, managed by `useKeyboardShortcuts` hook
@@ -200,6 +200,12 @@ Ordering matters: `release` before `bootJar` (else the jar is stamped `-SNAPSHOT
   - Lifecycle: Dismiss (`PUT /suggestions/{articleId}/dismissal`) writes DISMISSED; a topic saved with a `sourceArticleId` writes TOPIC_CREATED inside `InterestService.createTopic`'s transaction, so the two commit or roll back together, and a cap or validation 400 writes nothing. `TopicSuggestionStore.handle` is one `INSERT ... SELECT ... ON CONFLICT (article_id) DO NOTHING`: it keeps the first reason, and a stale article id inserts nothing and never blocks the save. Deleting the topic keeps the row (Phase 8 D-14), and there is no un-dismiss, so a handled article never returns, even after a later engagement.
   - Jev is never called: not to list, dismiss or create a topic from a suggestion.
   - Proofs: `TopicSuggestionStoreTest`, `TopicSuggestionServiceTest`, `TopicSuggestionApiIntegrationTest` (including `aFailedDismissalInsertRollsBackTheTopic` for atomicity and `neverCallsJev` after every test).
+  - UI: the Interests dialog's "Suggested topics" section sits after Topics and before the Re-score footer, and is hidden when the list is empty, loading or failed. The heading reads `Suggested topics (N of M)` only when the list is capped. Each row shows the badge, the title as plain text, the feed name, Create topic and Dismiss.
+  - Create topic calls `addDraft({ description: title.trim().slice(0, 500), weight: 20, sourceArticleId })` in the open dialog and saves nothing. While that draft is unsaved the row reads "Draft added" with no actions; saving hides it (a saved row keeps its `sourceArticleId`, so it stays hidden before the refetch), and discarding the draft makes it active again.
+  - At 25 topic rows (drafts count), Create topic is disabled with the tooltip "You have 25 topics, the maximum." and Dismiss still works.
+  - The reading-pane "Create topic from article" draft also carries `sourceArticleId`, so there is one draft path. `TopicRow` sends `sourceArticleId` only on create, never on a PUT.
+  - Freshness: `['interest', 'suggestions']` uses staleTime 0, so it refetches on every open. It is invalidated by `invalidateAfterLearnedChange` (votes and every engagement reaction), topic create and delete, Re-score and Dismiss.
+  - UI proofs: the `Suggested topics` describe in `InterestsDialog.test.tsx`, plus `useInterest.test.tsx` and `engagementReaction.test.ts`.
 
 ## Jev Scoring and Resilience
 

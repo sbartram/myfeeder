@@ -462,6 +462,7 @@ function TopicsSection({ topics, status, statusFailed, onDirtyCountChange, draft
             weightText: String(draft.weight),
             weight: draft.weight,
             saved: null,
+            sourceArticleId: draft.sourceArticleId,
           },
         ]
       : seedRows(topics),

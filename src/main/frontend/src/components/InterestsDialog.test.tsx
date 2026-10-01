@@ -1138,6 +1138,30 @@ describe('InterestsDialog', () => {
       expect(notice?.querySelector('strong')).toHaveTextContent('You have 25 topics, the maximum.')
     })
 
+    it('seededDraftSendsItsSourceOnSave', async () => {
+      const user = userEvent.setup()
+      twoTopics()
+      route('POST', '/api/interest/topics', (init) => ({
+        status: 201,
+        body: { ...topic(10, '', ''), ...(JSON.parse(String(init?.body)) as object) },
+      }))
+      const { container } = renderDialog(
+        <InterestsDialog open={true} onClose={() => {}} draft={{ ...DRAFT, sourceArticleId: 77 }} />,
+      )
+      await screen.findByText('3 / 25')
+
+      const last = topicRows(container)[2]
+      await user.type(within(last).getByRole('textbox', { name: 'Topic name' }), 'Async')
+      await user.click(screen.getByRole('button', { name: 'Save topic: Async' }))
+
+      await waitFor(() => expect(within(last).queryByText('Unsaved')).not.toBeInTheDocument())
+      const posts = calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/topics')
+      expect(posts).toHaveLength(1)
+      expect(posts[0].body).toBe(
+        '{"name":"Async","description":"Rust async runtimes","weight":-20,"sourceArticleId":77}',
+      )
+    })
+
     it('noDraftWithoutTheProp', async () => {
       twoTopics()
       const first = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)

@@ -348,7 +348,7 @@ describe('ReadingPane no-match line', () => {
     expect(order).toEqual(['reading-toolbar', 'feedback-notice', 'reading-content'])
 
     fireEvent.click(screen.getByRole('button', { name: 'Create topic from article' }))
-    expect(onCreateTopic).toHaveBeenCalledWith({ description: 'Rust async runtimes', weight: -20 })
+    expect(onCreateTopic).toHaveBeenCalledWith({ description: 'Rust async runtimes', weight: -20, sourceArticleId: 1 })
   })
 })
 
