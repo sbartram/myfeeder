@@ -36,7 +36,8 @@ public class InterestController {
     @PostMapping("/topics")
     public ResponseEntity<InterestTopic> createTopic(@RequestBody TopicRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(interestService.createTopic(request.name(), request.description(), request.weight(), null));
+                .body(interestService.createTopic(request.name(), request.description(), request.weight(),
+                        request.sourceArticleId()));
     }
 
     @PutMapping("/topics/{id}")

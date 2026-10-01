@@ -3,6 +3,7 @@ package org.bartram.myfeeder.service;
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.model.InterestProfile;
 import org.bartram.myfeeder.model.InterestTopic;
+import org.bartram.myfeeder.model.SuggestionDismissalReason;
 import org.bartram.myfeeder.repository.InterestProfileRepository;
 import org.bartram.myfeeder.repository.InterestTopicRepository;
 import org.bartram.myfeeder.repository.TopicSuggestionStore;
@@ -66,6 +67,11 @@ public class InterestService {
     /**
      * Creates a topic; a null weight means {@link #DEFAULT_WEIGHT}. The 25-topic cap is a
      * count-then-insert in one transaction; concurrent creates are not serialized (single user).
+     *
+     * <p>A non-null {@code sourceArticleId} marks that article's suggested topic handled: the
+     * TOPIC_CREATED row is written in the same transaction as the topic (D-13). A 400 from the cap
+     * or the validation happens before the save, so nothing is written. A stale id inserts nothing
+     * and never blocks the save. Deleting the topic later keeps the row (Phase 8 D-14).
      */
     @Transactional
     public InterestTopic createTopic(String name, String description, Integer weight, Long sourceArticleId) {
@@ -82,7 +88,11 @@ public class InterestService {
         Instant now = Instant.now();
         topic.setCreatedAt(now);
         topic.setUpdatedAt(now);
-        return topicRepository.save(topic);
+        InterestTopic saved = topicRepository.save(topic);
+        if (sourceArticleId != null) {
+            suggestionStore.handle(sourceArticleId, SuggestionDismissalReason.TOPIC_CREATED);
+        }
+        return saved;
     }
 
     /**
