@@ -10,8 +10,9 @@ import type { PriorityPage } from '../types'
  * re-reads its badge too, while ['article', n, 'extracted'] is left alone. The engaged
  * (or voted) article itself is refreshed by its caller. ['priority'] is never touched here.
  * The Interests dialog's suggestions are marked stale too, so articles engaged or voted on since
- * it last opened are refetched (Phase 11 SC-1): a vote takes an article out of the list and an
- * engagement can add one. This covers votes (useVoteFeedback) and every afterEngagement caller,
+ * it last opened are refetched (Phase 11 SC-1): a vote takes an article out of the list, and a
+ * first engagement of a new kind can add one (a repeated engagement of the same kind keeps its
+ * original timestamp). This covers votes (useVoteFeedback) and every afterEngagement caller,
  * Forget included.
  */
 export function invalidateAfterLearnedChange(qc: QueryClient, id: number, onPriority: boolean): void {

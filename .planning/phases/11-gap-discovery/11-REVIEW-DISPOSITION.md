@@ -5,7 +5,7 @@ titles: json
 findings:
   - id: WR-01
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Engaging again does not move an article back into the 30-day window, but the docs and comments say it does"
   - id: WR-02
     severity: warning
@@ -31,7 +31,7 @@ findings:
     severity: info
     disposition: open
     title: "A failed suggestions load is silent"
-open: 7
+open: 6
 total: 7
 recorded: 2026-10-01T23:10:04.648Z
 ---
@@ -40,7 +40,7 @@ recorded: 2026-10-01T23:10:04.648Z
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | open | - |
+| WR-01 | warning | fixed | UAT test 3: accepted first-recording-per-kind window; CLAUDE.md and engagementReaction.ts corrected |
 | WR-02 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
