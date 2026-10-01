@@ -3,15 +3,22 @@ package org.bartram.myfeeder.controller;
 import com.jayway.jsonpath.JsonPath;
 import org.bartram.myfeeder.TestcontainersConfiguration;
 import org.bartram.myfeeder.integration.JevApiClient;
+import org.bartram.myfeeder.model.SuggestionDismissalReason;
+import org.bartram.myfeeder.repository.TopicSuggestionStore;
+import org.bartram.myfeeder.service.InterestService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -21,10 +28,14 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -35,6 +46,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * InterestScoreQueries → Testcontainers Postgres. The test yaml leaves Jev unconfigured, and the list is
  * still served (D-03). The container is shared with other test classes, so assertions only read seeded ids;
  * seeded rows have badge 0 and a fresh engagement, so they sort first (Pitfall 3). Jev must never be called.
+ * The two writes (Dismiss and a topic created with a sourceArticleId) are proven permanent, idempotent and,
+ * for the topic create, atomic with the topic insert.
  */
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -46,6 +59,8 @@ class TopicSuggestionApiIntegrationTest {
     @Autowired private WebApplicationContext wac;
     @Autowired private JdbcTemplate jdbcTemplate;
     @MockitoBean private JevApiClient jevApiClient;
+    @MockitoSpyBean private TopicSuggestionStore suggestionStore;
+    @Autowired private InterestService interestService;
 
     private MockMvc mockMvc;
 
@@ -54,7 +69,8 @@ class TopicSuggestionApiIntegrationTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
         // Articles, engagement, scores, votes and dismissals cascade from the feed
         jdbcTemplate.update("DELETE FROM feed WHERE url = ?", SUGGESTIONS_FEED_URL);
-        jdbcTemplate.update("DELETE FROM interest_topic WHERE name LIKE 'suggestions-it-%'");
+        // The 25-topic cap is global, so start from no topics at all (as InterestApiIntegrationTest does)
+        jdbcTemplate.update("DELETE FROM interest_topic");
     }
 
     @AfterEach
@@ -182,12 +198,154 @@ class TopicSuggestionApiIntegrationTest {
                 .andExpect(jsonPath("$.interestScore").value(50));
     }
 
-    /** An engaged (OPEN_ORIGINAL), SCORED (badge 0), unmatched article in a fresh test feed. */
-    private long engagedScoredArticle(String guid) {
-        long id = insertArticle(insertFeed(), guid);
+    @Test
+    void creatingATopicFromASuggestionHidesItForGood() throws Exception {
+        long a = engagedScoredArticle("a");
+
+        postTopic("{\"name\":\"suggestions-it-rust\",\"description\":\"Rust\",\"weight\":20,\"sourceArticleId\":"
+                + a + "}")
+                .andExpect(status().isCreated());
+
+        assertThat(dismissalReason(a)).isEqualTo("TOPIC_CREATED");
+        assertThat(listedIds(getSuggestions())).doesNotContain(a);
+        assertThat(listedIds(getSuggestions())).doesNotContain(a);
+    }
+
+    @Test
+    void aStaleSourceArticleIdStillCreatesTheTopic() throws Exception {
+        long gone = insertArticle(insertFeed(), "gone");
+        jdbcTemplate.update("DELETE FROM article WHERE id = ?", gone);
+
+        postTopic("{\"name\":\"suggestions-it-stale\",\"description\":\"Stale\",\"sourceArticleId\":" + gone + "}")
+                .andExpect(status().isCreated());
+
+        assertThat(topicCount("suggestions-it-stale")).isEqualTo(1);
+        assertThat(dismissalReason(gone)).isNull();
+    }
+
+    @Test
+    void withoutASourceNoRowIsWritten() throws Exception {
+        long a = engagedScoredArticle("a");
+
+        postTopic("{\"name\":\"suggestions-it-plain\",\"description\":\"Plain\",\"weight\":20}")
+                .andExpect(status().isCreated());
+
+        assertThat(dismissalReason(a)).isNull();
+        assertThat(listedIds(getSuggestions())).contains(a);
+    }
+
+    @Test
+    void theTwentyFifthTopicWritesTheRowAndTheTwentySixthWritesNothing() throws Exception {
+        long feed = insertFeed();
+        long a = engagedScored(feed, "a");
+        long b = engagedScored(feed, "b");
+        for (int n = 1; n <= 24; n++) {
+            insertTopic("suggestions-it-cap-" + n, 10);
+        }
+
+        postTopic("{\"name\":\"suggestions-it-25\",\"description\":\"Twenty-fifth\",\"sourceArticleId\":" + a + "}")
+                .andExpect(status().isCreated());
+        assertThat(dismissalReason(a)).isEqualTo("TOPIC_CREATED");
+
+        postTopic("{\"name\":\"suggestions-it-26\",\"description\":\"Twenty-sixth\",\"sourceArticleId\":" + b + "}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("A maximum of 25 topics is allowed"));
+        assertThat(dismissalReason(b)).isNull();
+        assertThat(listedIds(getSuggestions())).contains(b);
+    }
+
+    @Test
+    void aDismissedArticleKeepsItsFirstReasonWhenATopicIsCreatedFromIt() throws Exception {
+        long a = engagedScoredArticle("a");
+        mockMvc.perform(put("/api/interest/suggestions/{id}/dismissal", a)).andExpect(status().isNoContent());
+
+        postTopic("{\"name\":\"suggestions-it-again\",\"description\":\"Again\",\"sourceArticleId\":" + a + "}")
+                .andExpect(status().isCreated());
+
+        assertThat(dismissalReasons(a)).containsExactly("DISMISSED");
+    }
+
+    @Test
+    void deletingTheTopicKeepsTheArticleHandled() throws Exception {
+        long a = engagedScoredArticle("a");
+        String created = postTopic("{\"name\":\"suggestions-it-del\",\"description\":\"Delete me\",\"sourceArticleId\":"
+                + a + "}")
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long topicId = ((Number) JsonPath.read(created, "$.id")).longValue();
+
+        mockMvc.perform(delete("/api/interest/topics/{id}", topicId)).andExpect(status().isNoContent());
+
+        assertThat(dismissalReason(a)).isEqualTo("TOPIC_CREATED");
+        assertThat(listedIds(getSuggestions())).doesNotContain(a);
+    }
+
+    @Test
+    void aFailedDismissalInsertRollsBackTheTopic() {
+        long a = engagedScoredArticle("a");
+        doThrow(new DataIntegrityViolationException("forced"))
+                .when(suggestionStore).handle(a, SuggestionDismissalReason.TOPIC_CREATED);
+
+        // Called on the transactional bean directly: through MockMvc the exception would be rethrown,
+        // because GlobalExceptionHandler has no catch-all
+        assertThatThrownBy(() -> interestService.createTopic("suggestions-it-atomic", "Atomic", 20, a))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        assertThat(topicCount("suggestions-it-atomic")).isZero();
+        assertThat(dismissalReason(a)).isNull();
+    }
+
+    @Test
+    void aTextPlainTopicCreateIs415() throws Exception {
+        mockMvc.perform(post("/api/interest/topics")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("{\"name\":\"suggestions-it-csrf\",\"description\":\"Cross-site\"}"))
+                .andExpect(status().isUnsupportedMediaType());
+
+        assertThat(topicCount("suggestions-it-csrf")).isZero();
+    }
+
+    @Test
+    void updatingATopicWithASourceWritesNoRow() throws Exception {
+        long a = engagedScoredArticle("a");
+        long topicId = insertTopic("suggestions-it-go", 20);
+
+        mockMvc.perform(put("/api/interest/topics/{id}", topicId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"suggestions-it-go\",\"description\":\"Go\",\"weight\":10,"
+                                + "\"sourceArticleId\":" + a + "}"))
+                .andExpect(status().isOk());
+
+        assertThat(dismissalReason(a)).isNull();
+    }
+
+    private ResultActions postTopic(String json) throws Exception {
+        return mockMvc.perform(post("/api/interest/topics")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json));
+    }
+
+    private int topicCount(String name) {
+        return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM interest_topic WHERE name = ?", Integer.class, name);
+    }
+
+    /** The article's dismissal reason, or null when it has no row. */
+    private String dismissalReason(long articleId) {
+        List<String> reasons = dismissalReasons(articleId);
+        return reasons.isEmpty() ? null : reasons.get(0);
+    }
+
+    /** An engaged (OPEN_ORIGINAL), SCORED (badge 0), unmatched article in the given feed. */
+    private long engagedScored(long feedId, String guid) {
+        long id = insertArticle(feedId, guid);
         insertScored(id);
         insertEngagement(id, "OPEN_ORIGINAL");
         return id;
+    }
+
+    /** An engaged (OPEN_ORIGINAL), SCORED (badge 0), unmatched article in a fresh test feed. */
+    private long engagedScoredArticle(String guid) {
+        return engagedScored(insertFeed(), guid);
     }
 
     private List<String> dismissalReasons(long articleId) {
