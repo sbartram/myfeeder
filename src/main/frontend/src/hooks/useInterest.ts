@@ -66,6 +66,8 @@ export function useSaveInterestProfile() {
 
 const TOPICS_KEY = ['interest', 'topics']
 
+export const SUGGESTIONS_KEY = ['interest', 'suggestions'] as const
+
 export function useInterestTopics() {
   return useQuery({ queryKey: ['interest', 'topics'], queryFn: interestApi.listTopics })
 }
@@ -79,7 +81,10 @@ export function useLearnedTopics() {
   return useQuery({ queryKey: ['interest', 'learned'], queryFn: interestApi.getLearned })
 }
 
-/** Appends the created topic to the cached list; a new topic can end cold start (D-05). */
+/**
+ * Appends the created topic to the cached list; a new topic can end cold start (D-05). It can
+ * cover a suggested article, so the suggestions are marked stale.
+ */
 export function useCreateInterestTopic() {
   const qc = useQueryClient()
   return useMutation({
@@ -89,6 +94,7 @@ export function useCreateInterestTopic() {
       qc.setQueryData<InterestTopic[]>(TOPICS_KEY, (old) => (old ? [...old, topic] : [topic]))
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
       void qc.invalidateQueries({ queryKey: ['interest', 'learned'] })
+      void qc.invalidateQueries({ queryKey: SUGGESTIONS_KEY })
       usePriorityStore.getState().setRankingChanged(true)
     },
   })
@@ -125,7 +131,10 @@ export function usePreviewTopic() {
   })
 }
 
-/** Removes the topic from the cached list; deleting the last topic can restore cold start. */
+/**
+ * Removes the topic from the cached list; deleting the last topic can restore cold start. An
+ * article only that topic covered can become a suggestion, so the suggestions are marked stale.
+ */
 export function useDeleteInterestTopic() {
   const qc = useQueryClient()
   return useMutation({
@@ -135,6 +144,7 @@ export function useDeleteInterestTopic() {
       qc.setQueryData<InterestTopic[]>(TOPICS_KEY, (old) => old?.filter((t) => t.id !== id))
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
       void qc.invalidateQueries({ queryKey: ['interest', 'learned'] })
+      void qc.invalidateQueries({ queryKey: SUGGESTIONS_KEY })
       usePriorityStore.getState().setRankingChanged(true)
     },
   })
@@ -156,6 +166,7 @@ export function useRescoreCount() {
 /**
  * Resets the in-window unread scores so the sweep re-judges them. Destructive and billed
  * downstream, so it is never retried (TanStack's mutation default); refreshes the status counts.
+ * Reset articles drop out of the suggestions until re-scored, so they are marked stale.
  */
 export function useRescoreUnread() {
   const qc = useQueryClient()
@@ -164,12 +175,11 @@ export function useRescoreUnread() {
     meta: { inlineError: true },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+      void qc.invalidateQueries({ queryKey: SUGGESTIONS_KEY })
       usePriorityStore.getState().setRankingChanged(true)
     },
   })
 }
-
-export const SUGGESTIONS_KEY = ['interest', 'suggestions'] as const
 
 /**
  * The Interests dialog's suggested topics (GAP-01). staleTime 0 refetches it on every Interests
