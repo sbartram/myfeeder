@@ -167,12 +167,12 @@ Plans:
   4. Dismissing a suggestion removes it permanently, across reloads and after later engagement with the same article
   5. Listing, creating from and dismissing suggestions never call Jev
 
-**Plans**: 4 plans
+**Plans**: 2/4 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 11-01-PLAN.md — Backend tracer: GET /api/interest/suggestions end to end (TopicSuggestionStore D-08 predicate, displayScores badge, surprise order, cap 10 + total), edge proofs, near-miss 0.35 yaml constant with startup validation (wave 1)
-- [ ] 11-03-PLAN.md — Frontend tracer: "Suggested topics" section below Topics (badge, title, feed; hidden when empty; refetched on open), immediate Dismiss, suggestions invalidated by engagement, votes, topic create/delete and Re-score (wave 1)
+- [x] 11-01-PLAN.md — Backend tracer: GET /api/interest/suggestions end to end (TopicSuggestionStore D-08 predicate, displayScores badge, surprise order, cap 10 + total), edge proofs, near-miss 0.35 yaml constant with startup validation (wave 1)
+- [x] 11-03-PLAN.md — Frontend tracer: "Suggested topics" section below Topics (badge, title, feed; hidden when empty; refetched on open), immediate Dismiss, suggestions invalidated by engagement, votes, topic create/delete and Re-score (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 11-02-PLAN.md — Backend: bodyless idempotent PUT dismissal, POST /topics sourceArticleId writing TOPIC_CREATED in the same transaction (D-13), permanence and rollback proofs, CLAUDE.md backend docs (wave 2)
@@ -223,5 +223,5 @@ Phases execute in numeric order: 8 → 9 → 10 → 11 → 12 (Phase 11 depends 
 | 8. Engagement Capture | v0.3.0 | 5/5 | Complete    | 2026-09-30 |
 | 9. Engagement Learning Model | v0.3.0 | 6/6 | Complete    | 2026-09-30 |
 | 10. Explainable Engagement in the UI | v0.3.0 | 4/4 | Complete    | 2026-09-30 |
-| 11. Gap Discovery | v0.3.0 | 0/4 | Not started | - |
+| 11. Gap Discovery | v0.3.0 | 2/4 | In Progress|  |
 | 12. Calibration & Release | v0.3.0 | 0/TBD | Not started | - |
