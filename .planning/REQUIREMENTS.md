@@ -32,11 +32,11 @@
 
 ### Gap Discovery
 
-- [ ] **GAP-01**: Interests has a "Suggested topics" section listing engaged, SCORED articles that matched no topic
-- [ ] **GAP-02**: User can create a topic from a suggestion (a prefilled draft), which removes the suggestion from the list
+- [x] **GAP-01**: Interests has a "Suggested topics" section listing engaged, SCORED articles that matched no topic
+- [x] **GAP-02**: User can create a topic from a suggestion (a prefilled draft), which removes the suggestion from the list
 - [x] **GAP-03**: User can dismiss a suggestion permanently
-- [ ] **GAP-04**: Near-miss articles (best topic noul close to matching) are not suggested, so existing topics don't get duplicated
-- [ ] **GAP-05**: Suggestions never call Jev
+- [x] **GAP-04**: Near-miss articles (best topic noul close to matching) are not suggested, so existing topics don't get duplicated
+- [x] **GAP-05**: Suggestions never call Jev
 
 ### Calibration
 
@@ -90,11 +90,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LRN-05 | Phase 9 | Complete |
 | LRN-06 | Phase 10 | Complete |
 | EXPL-01 | Phase 10 | Complete |
-| GAP-01 | Phase 11 | Pending |
-| GAP-02 | Phase 11 | Pending |
+| GAP-01 | Phase 11 | Complete |
+| GAP-02 | Phase 11 | Complete |
 | GAP-03 | Phase 11 | Complete |
-| GAP-04 | Phase 11 | Pending |
-| GAP-05 | Phase 11 | Pending |
+| GAP-04 | Phase 11 | Complete |
+| GAP-05 | Phase 11 | Complete |
 | CAL-01 | Phase 9 | Complete |
 | CAL-02 | Phase 12 | Pending |
 | CAL-03 | Phase 12 | Pending |

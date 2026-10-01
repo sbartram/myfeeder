@@ -57,10 +57,10 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Engagement capture: opening the original link (`o`/Open Original, fire-and-forget, tab always opens) and saving (star, board, Raindrop) record sticky, idempotent `article_engagement` rows (V7); a reading-pane "Engaged: … · Forget" line deletes them; ranking unchanged — v0.3.0 (Phase 8)
 - ✓ Engagement nudges topic weights as a fractional, capped, thumbs-overridable implicit up-vote, derived at query time in `LEARNED_CTE` with no Jev calls (open 0.25 / save 0.5 / cap 8, cap 0 = exactly v0.2.1); the backend split fields and `ENGAGEMENT_CAP` limit are served; replay and drift guard extended (CAL-01) — Phase 9 (merged to the feature branch, no release per D-14)
 - ✓ "Why N?", the vote toast and Interests show engagement-learned points separately from thumbs-learned points (server split fields only); open, star, board add, Raindrop and Forget refetch the article and light "Ranking changed" without re-sorting an open Priority list; vote effects flag replaced engagement and LearnedLimit reports binding clamps before the engagement cap — Phase 10 (feature branch, no release)
+- ✓ Engaged articles that matched no topic are suggested as new topics: Interests "Suggested topics" lists engaged, SCORED, unvoted, undismissed articles whose best noul is below the 0.35 near-miss; Create topic prefills a +20 draft whose save atomically marks the article handled, Dismiss is permanent; Jev is never called — Phase 11 (feature branch, no release)
 
 ### Active
 
-- [ ] Engaged articles that matched no topic are suggested as new topics
 - [ ] Engagement weights and cap are calibrated by the read-only replay with an extended drift guard (replay + guard extended in Phase 9; tuning waits for Phase 12)
 
 ### Out of Scope
@@ -135,6 +135,8 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | One shared post-engagement reaction (`afterEngagement`): by-id refetch, patch the Priority row only on a changed score, never invalidate `['priority']` (Phase 10 D-06/D-07) | Engaging while triaging must not re-sort the list | ✓ Good — SC-3 agreement test proves refresh makes position, badges and "Why N?" agree; UAT 6/6 |
 | LearnedLimit precedence LEARNED_CAP → SIGN_CLAMP → WEIGHT_RANGE → ENGAGEMENT_CAP → NONE; toast never words ENGAGEMENT_CAP (Phase 10 D-10..D-13) | The note must name the limit that actually binds | ✓ Good — pinned by unit and HTTP tests |
 | Accept review edges WR-01 (star-then-vote GET race), WR-02 (narrowed unpicked topic has no note), WR-04 (cancelling parts read "No learned adjustment yet") and board-list badge staleness ≤30s (Phase 10 UAT) | Rare, self-healing on refresh, and consistent with v0.2.1 vote behavior | — Pending re-check at Phase 12 release |
+| Gap-discovery window = first recording per engagement kind (`article_engagement` keeps the first `created_at` per (article, kind)); repeating the same kind does not refresh it (Phase 11 WR-01, UAT) | No migration this phase (Phase 8 D-13); docs corrected to match the code | ✓ Accepted — a `last_engaged_at` column is the route if "latest engagement" is ever wanted |
+| Suggestion writes (dismiss, topic-from-suggestion) are one `ON CONFLICT DO NOTHING` insert; the topic-create write shares `createTopic`'s transaction (Phase 11) | A topic and its handled mark must commit or roll back together | ✓ Good — `aFailedDismissalInsertRollsBackTheTopic`; UAT 3/3 |
 
 ## Evolution
 
@@ -154,4 +156,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-30 after Phase 10*
+*Last updated: 2026-10-01 after Phase 11*
