@@ -8,6 +8,7 @@ import org.bartram.myfeeder.integration.JevJudgment.JevScore;
 import org.bartram.myfeeder.model.Article;
 import org.bartram.myfeeder.model.InterestTopic;
 import org.bartram.myfeeder.repository.ArticleScoreStore;
+import org.bartram.myfeeder.repository.TopicSuggestionStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -36,7 +37,8 @@ import static org.mockito.Mockito.when;
  * Scorer → store → Postgres with the real {@link InterestService}; only the Jev client is mocked.
  */
 @DataJdbcTest
-@Import({TestcontainersConfiguration.class, ArticleScoreStore.class, InterestService.class})
+@Import({TestcontainersConfiguration.class, ArticleScoreStore.class, InterestService.class,
+        TopicSuggestionStore.class})
 class ArticleScoringFlowTest {
 
     private static final String FEED_TITLE = "Hacker News";
@@ -70,8 +72,8 @@ class ArticleScoringFlowTest {
     void scoresAnEligibleArticleOnceAndStoresRawOutputs() {
         interestService.updateProfile("Rust and Postgres");
         int profileVersion = interestService.getProfile().getVersion();
-        InterestTopic rust = interestService.createTopic("Rust", "The Rust programming language", 30);
-        InterestTopic crypto = interestService.createTopic("Crypto", "Cryptocurrency markets", -40);
+        InterestTopic rust = interestService.createTopic("Rust", "The Rust programming language", 30, null);
+        InterestTopic crypto = interestService.createTopic("Crypto", "Cryptocurrency markets", -40, null);
         Article article = article("g-1", "Rust 1.90 released", "<p>Faster compile times</p>", false);
         long articleId = insert(article);
 
@@ -120,7 +122,7 @@ class ArticleScoringFlowTest {
     @Test
     void readArticleIsNeverJudged() {
         interestService.updateProfile("Rust and Postgres");
-        interestService.createTopic("Rust", "The Rust programming language", 30);
+        interestService.createTopic("Rust", "The Rust programming language", 30, null);
         long articleId = insert(article("g-read", "Rust 1.90 released", "<p>Faster compile times</p>", true));
 
         scorer.score(articleId);

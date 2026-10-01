@@ -5,6 +5,7 @@ import org.bartram.myfeeder.model.InterestProfile;
 import org.bartram.myfeeder.model.InterestTopic;
 import org.bartram.myfeeder.repository.InterestProfileRepository;
 import org.bartram.myfeeder.repository.InterestTopicRepository;
+import org.bartram.myfeeder.repository.TopicSuggestionStore;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class InterestService {
 
     private final InterestProfileRepository profileRepository;
     private final InterestTopicRepository topicRepository;
+    private final TopicSuggestionStore suggestionStore;
 
     public InterestProfile getProfile() {
         return profileRepository.findById(PROFILE_ID)
@@ -66,7 +68,7 @@ public class InterestService {
      * count-then-insert in one transaction; concurrent creates are not serialized (single user).
      */
     @Transactional
-    public InterestTopic createTopic(String name, String description, Integer weight) {
+    public InterestTopic createTopic(String name, String description, Integer weight, Long sourceArticleId) {
         if (topicRepository.count() >= MAX_TOPICS) {
             throw new IllegalArgumentException("A maximum of 25 topics is allowed");
         }
