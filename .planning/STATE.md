@@ -132,5 +132,4 @@ Resume file: None
 
 ## Operator Next Steps
 
-- Merge `gsd/phase-10-explainable-engagement-in-the-ui` to main with `--no-ff` (no tag/release; release is Phase 12)
 - Discuss Phase 11 with /gsd-discuss-phase 11
