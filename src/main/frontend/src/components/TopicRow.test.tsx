@@ -289,6 +289,53 @@ describe('TopicRow', () => {
     expect(calls.some((c) => c.method === 'POST')).toBe(false)
   })
 
+  it('aDraftWithASourceSendsItOnCreate', async () => {
+    const user = userEvent.setup()
+    const onSaved = vi.fn()
+    route('POST', '/api/interest/topics', (init) => ({
+      status: 201,
+      body: {
+        id: 50,
+        version: 1,
+        createdAt: '2026-09-23T00:00:00Z',
+        updatedAt: '2026-09-23T00:00:00Z',
+        ...(JSON.parse(String(init?.body)) as object),
+      },
+    }))
+    renderRow({ initial: draftRow({ name: 'Zig', description: 'Zig comptime', sourceArticleId: 42 }), onSaved })
+
+    await user.click(screen.getByRole('button', { name: 'Save topic: Zig' }))
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1))
+    const post = calls.find((c) => c.method === 'POST' && c.url === '/api/interest/topics')
+    expect(post?.body).toBe('{"name":"Zig","description":"Zig comptime","weight":20,"sourceArticleId":42}')
+  })
+
+  it('aSavedRowEditNeverSendsTheSource', async () => {
+    const user = userEvent.setup()
+    const onSaved = vi.fn()
+    route('PUT', '/api/interest/topics/7', (init) => ({
+      status: 200,
+      body: {
+        id: 7,
+        version: 2,
+        createdAt: '2026-09-23T00:00:00Z',
+        updatedAt: '2026-09-23T00:00:00Z',
+        ...(JSON.parse(String(init?.body)) as object),
+      },
+    }))
+    renderRow({ initial: savedRow({ sourceArticleId: 42 }), onSaved })
+
+    const number = screen.getByRole('spinbutton', { name: 'Topic weight value' })
+    await user.clear(number)
+    await user.type(number, '35')
+    await user.click(screen.getByRole('button', { name: 'Save topic: Rust' }))
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1))
+    const put = calls.find((c) => c.method === 'PUT')
+    expect(put?.body).toBe('{"name":"Rust","description":"The Rust programming language","weight":35}')
+  })
+
   it('deleteConfirmsInlineThenDeletes', async () => {
     const user = userEvent.setup()
     const onDeleted = vi.fn()

@@ -65,6 +65,11 @@ export interface TopicInput {
   name: string
   description: string
   weight: number
+  /**
+   * Sent only when creating a topic from an article (a suggestion or the reading pane); the
+   * server then marks that article's suggestion handled (D-13). Updates never send it.
+   */
+  sourceArticleId?: number
 }
 
 export interface TopicPreviewRequest {

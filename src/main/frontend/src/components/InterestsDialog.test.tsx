@@ -1383,6 +1383,107 @@ describe('InterestsDialog', () => {
       await new Promise((r) => setTimeout(r, 50))
       expect(previewPosts()).toEqual([])
     })
+
+    /**
+     * A stateful stub of the plan 11-02 contract: a POST with sourceArticleId echoes the body as
+     * topic `id` and hides that article from later suggestion GETs.
+     */
+    function createdFromSuggestions(items: Suggestion[], id = 50) {
+      const handled = new Set<number>()
+      route('GET', '/api/interest/suggestions', () => {
+        const visible = items.filter((s) => !handled.has(s.articleId))
+        return { status: 200, body: { items: visible, total: visible.length } }
+      })
+      route('POST', '/api/interest/topics', (init) => {
+        const body = JSON.parse(String(init?.body)) as { sourceArticleId?: number }
+        if (body.sourceArticleId !== undefined) handled.add(body.sourceArticleId)
+        return { status: 201, body: { ...topic(id, '', ''), ...body } }
+      })
+    }
+
+    function writes() {
+      return calls.filter((c) => c.method !== 'GET')
+    }
+
+    it('createTopicAddsAPlus20DraftToTheOpenDialog', async () => {
+      const user = userEvent.setup()
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: [topic(3, 'Rust', 'The Rust language')],
+      }))
+      suggestions([suggestion(42, '  Zig comptime explained  ')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('Zig comptime explained')
+      expect(topicRows(container)).toHaveLength(1)
+
+      await user.click(screen.getByRole('button', { name: /^Create topic from suggestion: +Zig comptime explained/ }))
+
+      const rows = topicRows(container)
+      expect(rows).toHaveLength(2)
+      const last = rows[1]
+      const name = within(last).getByRole('textbox', { name: 'Topic name' })
+      expect(name).toHaveValue('')
+      expect(name).toHaveFocus()
+      expect(within(last).getByRole('textbox', { name: 'Topic description' })).toHaveValue(
+        'Zig comptime explained',
+      )
+      expect(within(last).getByRole('spinbutton', { name: 'Topic weight value' })).toHaveValue(20)
+      expect(within(last).getByText('Unsaved')).toBeInTheDocument()
+      expect(screen.getByText('2 / 25')).toBeInTheDocument()
+      await new Promise((r) => setTimeout(r, 20))
+      expect(writes()).toEqual([])
+    })
+
+    it('savingTheDraftSendsTheSourceAndRemovesTheSuggestion', async () => {
+      const user = userEvent.setup()
+      createdFromSuggestions([suggestion(42, 'Zig comptime explained')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('Zig comptime explained')
+
+      await user.click(screen.getByRole('button', { name: 'Create topic from suggestion: Zig comptime explained' }))
+      const row = topicRows(container)[0]
+      await user.type(within(row).getByRole('textbox', { name: 'Topic name' }), 'Zig')
+      await user.click(screen.getByRole('button', { name: 'Save topic: Zig' }))
+
+      await waitFor(() => expect(within(row).queryByText('Unsaved')).not.toBeInTheDocument())
+      const posts = calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/topics')
+      expect(posts).toHaveLength(1)
+      expect(posts[0].body).toBe(
+        '{"name":"Zig","description":"Zig comptime explained","weight":20,"sourceArticleId":42}',
+      )
+      expect(suggestionsSection(container)).toBeNull()
+      expect(screen.queryByText('Zig comptime explained')).not.toBeInTheDocument()
+      const postIndex = calls.indexOf(posts[0])
+      await waitFor(() =>
+        expect(
+          calls.findIndex((c, i) => i > postIndex && c.method === 'GET' && c.url === '/api/interest/suggestions'),
+        ).toBeGreaterThan(postIndex),
+      )
+      await new Promise((r) => setTimeout(r, 20))
+      expect(suggestionsSection(container)).toBeNull()
+    })
+
+    it('creatingNeverPostsPreview', async () => {
+      const user = userEvent.setup()
+      useUIStore.setState({ selectedArticleId: 1 })
+      route('GET', '/api/articles/1', () => ({ status: 200, body: article(1, 'Rust 1.90 released') }))
+      createdFromSuggestions([suggestion(42, 'Zig comptime explained')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('Zig comptime explained')
+
+      await user.click(screen.getByRole('button', { name: 'Create topic from suggestion: Zig comptime explained' }))
+      const row = topicRows(container)[0]
+      // Preview is available on the draft, yet nothing runs it without a click.
+      await waitFor(() => expect(within(row).getByRole('button', { name: /^Preview topic:/ })).toBeEnabled())
+      await user.type(within(row).getByRole('textbox', { name: 'Topic name' }), 'Zig')
+      await user.click(screen.getByRole('button', { name: 'Save topic: Zig' }))
+      await waitFor(() => expect(within(row).queryByText('Unsaved')).not.toBeInTheDocument())
+      await new Promise((r) => setTimeout(r, 50))
+
+      expect(calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/topics')).toHaveLength(1)
+      expect(previewPosts()).toEqual([])
+    })
+
     describe('Dismiss', () => {
       let dismissed: Set<number>
 
