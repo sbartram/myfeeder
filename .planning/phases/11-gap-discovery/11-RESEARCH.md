@@ -636,11 +636,11 @@ onCreateTopic?.({ description: article.title.trim().slice(0, 500), weight: feedb
 | A5 | D-16 "row disabled" means the whole row (Create and Dismiss replaced by "Draft added") | §6 | If the user wants Dismiss usable while drafted, add it back. A later save then keeps DISMISSED (first reason), which is harmless |
 | A6 | Near-miss bounds `0 < x <= 0.5` | §5 | CONTEXT offers this as the example. Tighter or looser bounds are a planner call |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Header count after a local hide.** Between a save and the refetch, `items` can shrink by one while `total` hasn't. Recommendation: accept it (sub-second), or compute `(shown of total - hidden)`. Not worth extra code.
-2. **Help line under the heading.** CONTEXT specifies none. Recommendation: none (D-02 spirit; the section only shows when it has rows). The Pitfall 10 research note ("a topic created now learns from future articles only") is not a locked decision. Leave it out unless the user asks.
-3. **Phase 12 calibration of 0.35 (do NOT run now).** A read-only query for Phase 12 to run against prod (via the existing read-only replay conventions, `PGOPTIONS='-c default_transaction_read_only=on'`):
+1. **Header count after a local hide.** RESOLVED: accept the lag; no `(shown of total - hidden)` arithmetic. Between a save and the refetch, `items` can shrink by one while `total` hasn't; it is sub-second and not worth extra code. Plans 11-03 and 11-04 record this as accepted: the heading reads `data.items.length` and `data.total` (D-07), a Dismiss patches the cached list (item filtered out, `total` decremented), and a created-topic hide filters only the rendered rows, so the count can lag by one until the refetch.
+2. **Help line under the heading.** RESOLVED: no help line. CONTEXT specifies none, and the section only shows when it has rows (D-02 spirit), so the plans render the `Suggested topics` heading and its rows with no caption. The Pitfall 10 research note ("a topic created now learns from future articles only") is not a locked decision; it would be added only if the user asks.
+3. **Phase 12 calibration of 0.35 (do NOT run now).** RESOLVED: deferred to Phase 12. Phase 11 ships 0.35 as the D-09 yaml constant `myfeeder.interest.suggestions.near-miss` (plan 11-01, commented "Phase 12 tunes it"), and no Phase 11 task runs the query below or touches prod. It is recorded here for Phase 12, read-only against prod (via the existing read-only replay conventions, `PGOPTIONS='-c default_transaction_read_only=on'`):
 
    ```sql
    SELECT width_bucket(COALESCE(b.best, 0), 0, 0.5, 10) AS bucket, count(*)
