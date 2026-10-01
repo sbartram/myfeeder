@@ -56,10 +56,10 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 - ✓ Engagement capture: opening the original link (`o`/Open Original, fire-and-forget, tab always opens) and saving (star, board, Raindrop) record sticky, idempotent `article_engagement` rows (V7); a reading-pane "Engaged: … · Forget" line deletes them; ranking unchanged — v0.3.0 (Phase 8)
 - ✓ Engagement nudges topic weights as a fractional, capped, thumbs-overridable implicit up-vote, derived at query time in `LEARNED_CTE` with no Jev calls (open 0.25 / save 0.5 / cap 8, cap 0 = exactly v0.2.1); the backend split fields and `ENGAGEMENT_CAP` limit are served; replay and drift guard extended (CAL-01) — Phase 9 (merged to the feature branch, no release per D-14)
+- ✓ "Why N?", the vote toast and Interests show engagement-learned points separately from thumbs-learned points (server split fields only); open, star, board add, Raindrop and Forget refetch the article and light "Ranking changed" without re-sorting an open Priority list; vote effects flag replaced engagement and LearnedLimit reports binding clamps before the engagement cap — Phase 10 (feature branch, no release)
 
 ### Active
 
-- [ ] "Why N?" and Interests show engagement-learned points separately from thumbs-learned points (Phase 9 serves the split; Phase 10 renders it)
 - [ ] Engaged articles that matched no topic are suggested as new topics
 - [ ] Engagement weights and cap are calibrated by the read-only replay with an extended drift guard (replay + guard extended in Phase 9; tuning waits for Phase 12)
 
@@ -132,6 +132,9 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | Engagement = fractional vote through `learnRate`, own cap below thumbs cap, zero floor, one sign/±50 clamp on base + thumbs + engagement (Phase 9 D-06/D-09) | Explicit thumbs must dominate; engagement must never lower a weight or lift a negative-base topic | ✓ Good — exact split proven on a 1,456-cell grid; cap 0 bit-identical to frozen v0.2.1 SQL |
 | Self-validating `MyfeederProperties` (cap 0 disables; else 0 ≤ open < save < 1 and 0 < cap < learned-cap), yaml-only tuning (Phase 9 D-02/D-03) | Bad constants must refuse startup, not silently mis-rank | ✓ Good — fixed-text `ENGAGEMENT_INVALID`; no Helm/env keys (09-UAT) |
 | No release in Phase 9 (D-14); latency guarded at 10 × baseline + 250 ms with ~20k rows (D-17) | Uncalibrated weights stay off prod until Phase 12 | ✓ Good — no index or migration needed |
+| One shared post-engagement reaction (`afterEngagement`): by-id refetch, patch the Priority row only on a changed score, never invalidate `['priority']` (Phase 10 D-06/D-07) | Engaging while triaging must not re-sort the list | ✓ Good — SC-3 agreement test proves refresh makes position, badges and "Why N?" agree; UAT 6/6 |
+| LearnedLimit precedence LEARNED_CAP → SIGN_CLAMP → WEIGHT_RANGE → ENGAGEMENT_CAP → NONE; toast never words ENGAGEMENT_CAP (Phase 10 D-10..D-13) | The note must name the limit that actually binds | ✓ Good — pinned by unit and HTTP tests |
+| Accept review edges WR-01 (star-then-vote GET race), WR-02 (narrowed unpicked topic has no note), WR-04 (cancelling parts read "No learned adjustment yet") and board-list badge staleness ≤30s (Phase 10 UAT) | Rare, self-healing on refresh, and consistent with v0.2.1 vote behavior | — Pending re-check at Phase 12 release |
 
 ## Evolution
 
@@ -151,4 +154,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-30 after Phase 9*
+*Last updated: 2026-09-30 after Phase 10*

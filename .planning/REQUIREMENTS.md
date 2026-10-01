@@ -24,11 +24,11 @@
 - [x] **LRN-03**: Engagement only nudges topics whose base weight is ≥ 0
 - [x] **LRN-04**: Engagement learning has its own cap, below the thumbs cap and added on top of the thumbs-learned adjustment. The effective weight stays within the existing sign clamp and ±50.
 - [x] **LRN-05**: Open weight, save weight and engagement cap are committed yaml constants. Zero disables engagement learning, and startup rejects inconsistent values (save ≤ open, or cap ≥ thumbs cap).
-- [ ] **LRN-06**: The Priority order, badge and "Why N?" reflect engagement consistently. Engagement never re-sorts an open Priority list; it sets the "Ranking changed" hint instead.
+- [x] **LRN-06**: The Priority order, badge and "Why N?" reflect engagement consistently. Engagement never re-sorts an open Priority list; it sets the "Ranking changed" hint instead.
 
 ### Explainability
 
-- [ ] **EXPL-01**: "Why N?" shows each topic's effective weight as base + votes + engagement, and its rows still sum exactly to the badge
+- [x] **EXPL-01**: "Why N?" shows each topic's effective weight as base + votes + engagement, and its rows still sum exactly to the badge
 
 ### Gap Discovery
 
@@ -88,8 +88,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LRN-03 | Phase 9 | Complete |
 | LRN-04 | Phase 9 | Complete |
 | LRN-05 | Phase 9 | Complete |
-| LRN-06 | Phase 10 | Pending |
-| EXPL-01 | Phase 10 | Pending |
+| LRN-06 | Phase 10 | Complete |
+| EXPL-01 | Phase 10 | Complete |
 | GAP-01 | Phase 11 | Pending |
 | GAP-02 | Phase 11 | Pending |
 | GAP-03 | Phase 11 | Pending |

@@ -39,7 +39,7 @@ Full phase details: [milestones/v0.2.1-ROADMAP.md](milestones/v0.2.1-ROADMAP.md)
 
 - [x] **Phase 8: Engagement Capture** - V7 schema; record opens (`o`/Open Original) and saves (star, board, Raindrop) as sticky, forgettable engagement; release to prod with ranking unchanged (completed 2026-09-30)
 - [x] **Phase 9: Engagement Learning Model** - Engagement becomes a fractional, capped, thumbs-overridable up-vote in the derived learned CTE, with the replay and drift guard regenerated in the same change (completed 2026-09-30)
-- [ ] **Phase 10: Explainable Engagement in the UI** - "Why N?" splits each topic's weight into base + votes + engagement; engaging never re-sorts an open Priority list
+- [x] **Phase 10: Explainable Engagement in the UI** - "Why N?" splits each topic's weight into base + votes + engagement; engaging never re-sorts an open Priority list (completed 2026-09-30)
 - [ ] **Phase 11: Gap Discovery** - "Suggested topics" in Interests from engaged, unmatched articles, with a near-miss filter, create-from-draft and permanent dismissal
 - [ ] **Phase 12: Calibration & Release** - Tune open/save weights and the engagement cap from prod data by read-only replay, release, and document
 
@@ -135,7 +135,7 @@ Plans:
   3. After a refresh, an engaged article's position in Priority, its badge in every article list and in the reading pane, and its "Why N?" all agree
   4. A thumbs vote on an engaged article shows an effect toast whose before/after weights account for the engagement the vote replaced, matching "Why N?"
 
-**Plans**: 4/4 plans executed
+**Plans**: 4/4 plans complete
 
 Plans:
 **Wave 1**
@@ -210,6 +210,6 @@ Phases execute in numeric order: 8 → 9 → 10 → 11 → 12 (Phase 11 depends 
 | 7. Rollout & Calibration | v0.2.1 | 11/11 | Complete | 2026-09-29 |
 | 8. Engagement Capture | v0.3.0 | 5/5 | Complete    | 2026-09-30 |
 | 9. Engagement Learning Model | v0.3.0 | 6/6 | Complete    | 2026-09-30 |
-| 10. Explainable Engagement in the UI | v0.3.0 | 4/4 | In Progress|  |
+| 10. Explainable Engagement in the UI | v0.3.0 | 4/4 | Complete    | 2026-09-30 |
 | 11. Gap Discovery | v0.3.0 | 0/TBD | Not started | - |
 | 12. Calibration & Release | v0.3.0 | 0/TBD | Not started | - |
