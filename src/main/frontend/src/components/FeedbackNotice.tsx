@@ -10,8 +10,10 @@ interface FeedbackNoticeProps {
 /**
  * The no-match line (D-18, D-19): shown while the open article has a vote, is scored and matched
  * no topic. "Create topic from article" hands a draft to the Interests dialog (D-20): the title,
- * trimmed and cut to 500 characters, with +20 after 👍 or −20 after 👎. Nothing is saved here and
- * the vote, the article and its score are untouched; the article is never re-judged (D-21).
+ * trimmed and cut to 500 characters, with +20 after 👍 or −20 after 👎. The draft carries the
+ * article's id, so a topic saved from it marks the article handled and it never shows up as a
+ * suggested topic (D-14: the same draft path as Create topic on a suggestion). Nothing is saved
+ * here and the vote, the article and its score are untouched; the article is never re-judged (D-21).
  */
 export function FeedbackNotice({ article, onCreateTopic }: FeedbackNoticeProps) {
   const feedback = article.feedback
@@ -22,6 +24,7 @@ export function FeedbackNotice({ article, onCreateTopic }: FeedbackNoticeProps) 
       // 500 is the server's description limit (InterestService.MAX_DESCRIPTION_CHARS).
       description: article.title.trim().slice(0, 500),
       weight: feedback.vote === 1 ? 20 : -20,
+      sourceArticleId: article.id,
     })
 
   return (

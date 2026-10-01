@@ -1138,6 +1138,30 @@ describe('InterestsDialog', () => {
       expect(notice?.querySelector('strong')).toHaveTextContent('You have 25 topics, the maximum.')
     })
 
+    it('seededDraftSendsItsSourceOnSave', async () => {
+      const user = userEvent.setup()
+      twoTopics()
+      route('POST', '/api/interest/topics', (init) => ({
+        status: 201,
+        body: { ...topic(10, '', ''), ...(JSON.parse(String(init?.body)) as object) },
+      }))
+      const { container } = renderDialog(
+        <InterestsDialog open={true} onClose={() => {}} draft={{ ...DRAFT, sourceArticleId: 77 }} />,
+      )
+      await screen.findByText('3 / 25')
+
+      const last = topicRows(container)[2]
+      await user.type(within(last).getByRole('textbox', { name: 'Topic name' }), 'Async')
+      await user.click(screen.getByRole('button', { name: 'Save topic: Async' }))
+
+      await waitFor(() => expect(within(last).queryByText('Unsaved')).not.toBeInTheDocument())
+      const posts = calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/topics')
+      expect(posts).toHaveLength(1)
+      expect(posts[0].body).toBe(
+        '{"name":"Async","description":"Rust async runtimes","weight":-20,"sourceArticleId":77}',
+      )
+    })
+
     it('noDraftWithoutTheProp', async () => {
       twoTopics()
       const first = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
@@ -1383,6 +1407,260 @@ describe('InterestsDialog', () => {
       await new Promise((r) => setTimeout(r, 50))
       expect(previewPosts()).toEqual([])
     })
+
+    /**
+     * A stateful stub of the plan 11-02 contract: a POST with sourceArticleId echoes the body as
+     * topic `id` and hides that article from later suggestion GETs.
+     */
+    function createdFromSuggestions(items: Suggestion[], id = 50) {
+      const handled = new Set<number>()
+      route('GET', '/api/interest/suggestions', () => {
+        const visible = items.filter((s) => !handled.has(s.articleId))
+        return { status: 200, body: { items: visible, total: visible.length } }
+      })
+      route('POST', '/api/interest/topics', (init) => {
+        const body = JSON.parse(String(init?.body)) as { sourceArticleId?: number }
+        if (body.sourceArticleId !== undefined) handled.add(body.sourceArticleId)
+        return { status: 201, body: { ...topic(id, '', ''), ...body } }
+      })
+    }
+
+    function writes() {
+      return calls.filter((c) => c.method !== 'GET')
+    }
+
+    it('createTopicAddsAPlus20DraftToTheOpenDialog', async () => {
+      const user = userEvent.setup()
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: [topic(3, 'Rust', 'The Rust language')],
+      }))
+      suggestions([suggestion(42, '  Zig comptime explained  ')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('Zig comptime explained')
+      expect(topicRows(container)).toHaveLength(1)
+
+      await user.click(screen.getByRole('button', { name: /^Create topic from suggestion: +Zig comptime explained/ }))
+
+      const rows = topicRows(container)
+      expect(rows).toHaveLength(2)
+      const last = rows[1]
+      const name = within(last).getByRole('textbox', { name: 'Topic name' })
+      expect(name).toHaveValue('')
+      expect(name).toHaveFocus()
+      expect(within(last).getByRole('textbox', { name: 'Topic description' })).toHaveValue(
+        'Zig comptime explained',
+      )
+      expect(within(last).getByRole('spinbutton', { name: 'Topic weight value' })).toHaveValue(20)
+      expect(within(last).getByText('Unsaved')).toBeInTheDocument()
+      expect(screen.getByText('2 / 25')).toBeInTheDocument()
+      await new Promise((r) => setTimeout(r, 20))
+      expect(writes()).toEqual([])
+    })
+
+    it('savingTheDraftSendsTheSourceAndRemovesTheSuggestion', async () => {
+      const user = userEvent.setup()
+      createdFromSuggestions([suggestion(42, 'Zig comptime explained')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('Zig comptime explained')
+
+      await user.click(screen.getByRole('button', { name: 'Create topic from suggestion: Zig comptime explained' }))
+      const row = topicRows(container)[0]
+      await user.type(within(row).getByRole('textbox', { name: 'Topic name' }), 'Zig')
+      await user.click(screen.getByRole('button', { name: 'Save topic: Zig' }))
+
+      await waitFor(() => expect(within(row).queryByText('Unsaved')).not.toBeInTheDocument())
+      const posts = calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/topics')
+      expect(posts).toHaveLength(1)
+      expect(posts[0].body).toBe(
+        '{"name":"Zig","description":"Zig comptime explained","weight":20,"sourceArticleId":42}',
+      )
+      expect(suggestionsSection(container)).toBeNull()
+      expect(screen.queryByText('Zig comptime explained')).not.toBeInTheDocument()
+      const postIndex = calls.indexOf(posts[0])
+      await waitFor(() =>
+        expect(
+          calls.findIndex((c, i) => i > postIndex && c.method === 'GET' && c.url === '/api/interest/suggestions'),
+        ).toBeGreaterThan(postIndex),
+      )
+      await new Promise((r) => setTimeout(r, 20))
+      expect(suggestionsSection(container)).toBeNull()
+    })
+
+    it('creatingNeverPostsPreview', async () => {
+      const user = userEvent.setup()
+      useUIStore.setState({ selectedArticleId: 1 })
+      route('GET', '/api/articles/1', () => ({ status: 200, body: article(1, 'Rust 1.90 released') }))
+      createdFromSuggestions([suggestion(42, 'Zig comptime explained')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('Zig comptime explained')
+
+      await user.click(screen.getByRole('button', { name: 'Create topic from suggestion: Zig comptime explained' }))
+      const row = topicRows(container)[0]
+      // Preview is available on the draft, yet nothing runs it without a click.
+      await waitFor(() => expect(within(row).getByRole('button', { name: /^Preview topic:/ })).toBeEnabled())
+      await user.type(within(row).getByRole('textbox', { name: 'Topic name' }), 'Zig')
+      await user.click(screen.getByRole('button', { name: 'Save topic: Zig' }))
+      await waitFor(() => expect(within(row).queryByText('Unsaved')).not.toBeInTheDocument())
+      await new Promise((r) => setTimeout(r, 50))
+
+      expect(calls.filter((c) => c.method === 'POST' && c.url === '/api/interest/topics')).toHaveLength(1)
+      expect(previewPosts()).toEqual([])
+    })
+
+    function suggestionRow(container: HTMLElement, title: string): HTMLElement | undefined {
+      return Array.from(
+        suggestionsSection(container)?.querySelectorAll<HTMLElement>('.interests-suggestion') ?? [],
+      ).find((li) => li.querySelector('.interests-suggestion-title')?.textContent === title)
+    }
+
+    function descriptions(container: HTMLElement): string[] {
+      return topicRows(container).map(
+        (row) => (within(row).getByRole('textbox', { name: 'Topic description' }) as HTMLInputElement).value,
+      )
+    }
+
+    it('aDraftedSuggestionReadsDraftAddedAndCannotBeAddedTwice', async () => {
+      const user = userEvent.setup()
+      suggestions([suggestion(41, 'Zig 0.15 released'), suggestion(42, 'A history of the B-tree')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('A history of the B-tree')
+
+      await user.click(screen.getByRole('button', { name: 'Create topic from suggestion: A history of the B-tree' }))
+
+      expect(topicRows(container)).toHaveLength(1)
+      const drafted = suggestionRow(container, 'A history of the B-tree')!
+      expect(drafted).toHaveClass('drafted')
+      expect(within(drafted).getByText('Draft added')).toBeInTheDocument()
+      expect(within(drafted).queryByRole('button')).not.toBeInTheDocument()
+      const other = suggestionRow(container, 'Zig 0.15 released')!
+      expect(other).not.toHaveClass('drafted')
+      expect(within(other).getByRole('button', { name: 'Create topic from suggestion: Zig 0.15 released' })).toBeEnabled()
+      expect(within(other).getByRole('button', { name: 'Dismiss suggestion: Zig 0.15 released' })).toBeEnabled()
+      expect(screen.queryByRole('button', { name: 'Create topic from suggestion: A history of the B-tree' })).toBeNull()
+      expect(topicRows(container)).toHaveLength(1)
+    })
+
+    it('discardingTheDraftReactivatesTheSuggestion', async () => {
+      const user = userEvent.setup()
+      suggestions([suggestion(42, 'A history of the B-tree')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('A history of the B-tree')
+
+      await user.click(screen.getByRole('button', { name: 'Create topic from suggestion: A history of the B-tree' }))
+      expect(screen.getByText('Draft added')).toBeInTheDocument()
+      // An unnamed draft is labelled by its description (TopicRow's topicLabel).
+      await user.click(screen.getByRole('button', { name: 'Discard draft: A history of the B-tree' }))
+
+      expect(topicRows(container)).toHaveLength(0)
+      const row = suggestionRow(container, 'A history of the B-tree')!
+      expect(row).not.toHaveClass('drafted')
+      expect(screen.queryByText('Draft added')).toBeNull()
+      expect(within(row).getByRole('button', { name: 'Create topic from suggestion: A history of the B-tree' })).toBeEnabled()
+      expect(within(row).getByRole('button', { name: 'Dismiss suggestion: A history of the B-tree' })).toBeEnabled()
+      expect(writes()).toEqual([])
+    })
+
+    it('aSavedDraftHidesTheSuggestionBeforeTheRefetch', async () => {
+      const user = userEvent.setup()
+      // A stale server view: the GET keeps listing 42 after the topic is created.
+      suggestions([suggestion(41, 'Zig 0.15 released'), suggestion(42, 'A history of the B-tree')])
+      route('POST', '/api/interest/topics', (init) => ({
+        status: 201,
+        body: { ...topic(50, '', ''), ...(JSON.parse(String(init?.body)) as object) },
+      }))
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('A history of the B-tree')
+
+      await user.click(screen.getByRole('button', { name: 'Create topic from suggestion: A history of the B-tree' }))
+      const row = topicRows(container)[0]
+      await user.type(within(row).getByRole('textbox', { name: 'Topic name' }), 'B-trees')
+      await user.click(screen.getByRole('button', { name: 'Save topic: B-trees' }))
+      await waitFor(() => expect(within(row).queryByText('Unsaved')).not.toBeInTheDocument())
+      const postIndex = calls.findIndex((c) => c.method === 'POST' && c.url === '/api/interest/topics')
+      await waitFor(() =>
+        expect(
+          calls.findIndex((c, i) => i > postIndex && c.method === 'GET' && c.url === '/api/interest/suggestions'),
+        ).toBeGreaterThan(postIndex),
+      )
+      await new Promise((r) => setTimeout(r, 20))
+
+      expect(suggestionRow(container, 'A history of the B-tree')).toBeUndefined()
+      expect(screen.queryByText('Draft added')).toBeNull()
+      expect(suggestionRow(container, 'Zig 0.15 released')).toBeDefined()
+    })
+
+    it('at25CreateTopicIsDisabledWithTheTooltipAndDismissStillWorks', async () => {
+      const user = userEvent.setup()
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: Array.from({ length: 25 }, (_, i) => topic(i + 1, `Topic ${i + 1}`, `Subject ${i + 1}`)),
+      }))
+      let dismissed = false
+      route('GET', '/api/interest/suggestions', () => ({
+        status: 200,
+        body: dismissed ? { items: [], total: 0 } : { items: [suggestion(42, 'A history of the B-tree')], total: 1 },
+      }))
+      route('PUT', '/api/interest/suggestions/42/dismissal', () => {
+        dismissed = true
+        return { status: 204 }
+      })
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('25 / 25')
+      await screen.findByText('A history of the B-tree')
+
+      const create = screen.getByRole('button', { name: 'Create topic from suggestion: A history of the B-tree' })
+      expect(create).toBeDisabled()
+      expect(create).toHaveAttribute('title', 'You have 25 topics, the maximum.')
+      const dismiss = screen.getByRole('button', { name: 'Dismiss suggestion: A history of the B-tree' })
+      expect(dismiss).toBeEnabled()
+      expect(dismiss).not.toHaveAttribute('title')
+
+      await user.click(dismiss)
+
+      await waitFor(() => expect(suggestionsSection(container)).toBeNull())
+      expect(calls.filter((c) => c.method === 'PUT' && c.url === '/api/interest/suggestions/42/dismissal')).toHaveLength(1)
+      expect(topicRows(container)).toHaveLength(25)
+    })
+
+    it('aLongTitleIsCutTo500', async () => {
+      const user = userEvent.setup()
+      const title = 'x'.repeat(600)
+      suggestions([suggestion(42, title)])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText(title)
+
+      await user.click(screen.getByRole('button', { name: /^Create topic from suggestion:/ }))
+
+      const description = within(topicRows(container)[0]).getByRole('textbox', { name: 'Topic description' })
+      expect((description as HTMLInputElement).value).toHaveLength(500)
+      expect((description as HTMLInputElement).value).toBe('x'.repeat(500))
+    })
+
+    it('draftsAppendInClickOrderAndKeepTheirPlace', async () => {
+      const user = userEvent.setup()
+      route('GET', '/api/interest/topics', () => ({
+        status: 200,
+        body: [topic(3, 'Rust', 'The Rust language')],
+      }))
+      createdFromSuggestions([suggestion(41, 'Zig 0.15 released'), suggestion(42, 'A history of the B-tree')])
+      const { container } = renderDialog(<InterestsDialog open={true} onClose={() => {}} />)
+      await screen.findByText('A history of the B-tree')
+
+      await user.click(screen.getByRole('button', { name: 'Create topic from suggestion: A history of the B-tree' }))
+      await user.click(screen.getByRole('button', { name: 'Create topic from suggestion: Zig 0.15 released' }))
+
+      expect(descriptions(container)).toEqual(['The Rust language', 'A history of the B-tree', 'Zig 0.15 released'])
+      const second = topicRows(container)[1]
+      await user.type(within(second).getByRole('textbox', { name: 'Topic name' }), 'B-trees')
+      await user.click(screen.getByRole('button', { name: 'Save topic: B-trees' }))
+      await waitFor(() => expect(within(second).queryByText('Unsaved')).not.toBeInTheDocument())
+      await new Promise((r) => setTimeout(r, 20))
+
+      expect(topicRows(container)[1]).toBe(second)
+      expect(descriptions(container)).toEqual(['The Rust language', 'A history of the B-tree', 'Zig 0.15 released'])
+    })
+
     describe('Dismiss', () => {
       let dismissed: Set<number>
 
