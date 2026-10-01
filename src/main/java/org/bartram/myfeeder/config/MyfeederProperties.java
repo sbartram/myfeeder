@@ -16,6 +16,9 @@ public class MyfeederProperties implements Validator {
     static final String ENGAGEMENT_INVALID = "myfeeder.interest.blend.engagement must be cap 0 (disabled), "
             + "or 0 <= open-weight < save-weight < 1 and 0 < cap < learned-cap";
 
+    /** Fixed startup-refusal text for the gap discovery near-miss (D-09); it never echoes a bound value. */
+    static final String SUGGESTIONS_INVALID = "myfeeder.interest.suggestions.near-miss must be above 0 and at most 0.5";
+
     private Polling polling = new Polling();
     private Retention retention = new Retention();
     private Raindrop raindrop = new Raindrop();
@@ -29,9 +32,13 @@ public class MyfeederProperties implements Validator {
 
     @Override
     public void validate(Object target, Errors errors) {
-        Interest.Blend blend = ((MyfeederProperties) target).getInterest().getBlend();
+        MyfeederProperties p = (MyfeederProperties) target;
+        Interest.Blend blend = p.getInterest().getBlend();
         if (!blend.getEngagement().isValid(blend.getLearnedCap())) {
             errors.reject("engagement", ENGAGEMENT_INVALID);
+        }
+        if (!p.getInterest().getSuggestions().isValid()) {
+            errors.reject("suggestions", SUGGESTIONS_INVALID);
         }
     }
 
@@ -63,6 +70,8 @@ public class MyfeederProperties implements Validator {
         private Duration sweepDelay = Duration.ofMinutes(2);
         private Duration sweepInitialDelay = Duration.ofMinutes(1);
         private Blend blend = new Blend();
+        /** Gap discovery (Suggested topics). A sibling of {@code blend}: the blend bind names stay pinned. */
+        private Suggestions suggestions = new Suggestions();
 
         /** Articles published (or fetched, when undated) after this instant are inside the scoring window. */
         public Instant eligibilityCutoff() {
@@ -107,6 +116,23 @@ public class MyfeederProperties implements Validator {
                 private int high = 70;
                 /** Display score at or above which a badge is neutral (inclusive); below it the badge is low. */
                 private int neutral = 40;
+            }
+        }
+
+        @Data
+        public static class Suggestions {
+            /**
+             * D-09: an engaged article whose best noul (any topic, either weight sign) is at or above this
+             * is left out of Suggested topics. Applied at query time. Phase 12 tunes it.
+             */
+            private double nearMiss = 0.35;
+
+            /**
+             * At most 0.5 keeps every matched article (noul above 0.5) excluded; above 0 keeps the list
+             * possible. NaN fails both comparisons.
+             */
+            public boolean isValid() {
+                return 0 < nearMiss && nearMiss <= 0.5;
             }
         }
     }
