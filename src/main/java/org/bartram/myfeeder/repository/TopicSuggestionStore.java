@@ -1,6 +1,7 @@
 package org.bartram.myfeeder.repository;
 
 import lombok.RequiredArgsConstructor;
+import org.bartram.myfeeder.model.SuggestionDismissalReason;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -17,6 +18,8 @@ import java.util.List;
  * <p>Each engagement kind keeps its first {@code created_at} ({@code ON CONFLICT DO NOTHING}), so the
  * latest engagement is the most recent first engagement of any kind: re-opening an old article does not
  * bring it back into the window, but a new kind (a star, say) does.
+ *
+ * <p>The store also writes {@code topic_suggestion_dismissal} ({@link #handle}), and is its only writer.
  */
 @Repository
 @RequiredArgsConstructor
@@ -52,5 +55,19 @@ public class TopicSuggestionStore {
                 .query((rs, rowNum) -> new Candidate(rs.getLong("id"), rs.getString("title"),
                         rs.getString("feed_title"), rs.getTimestamp("engaged_at").toInstant()))
                 .list();
+    }
+
+    /**
+     * Marks the article's suggestion handled. Idempotent: a repeat keeps the first reason. A missing article
+     * inserts nothing and never throws, so a stale suggestion never blocks a topic save. Opens no transaction
+     * of its own, so inside {@code InterestService.createTopic} it joins that transaction. True when a row
+     * was inserted.
+     */
+    public boolean handle(long articleId, SuggestionDismissalReason reason) {
+        return jdbc.sql("INSERT INTO topic_suggestion_dismissal (article_id, reason) SELECT a.id, CAST(:reason AS text) "
+                        + "FROM article a WHERE a.id = :articleId ON CONFLICT (article_id) DO NOTHING")
+                .param("articleId", articleId)
+                .param("reason", reason.name())
+                .update() == 1;
     }
 }

@@ -2,6 +2,8 @@ package org.bartram.myfeeder.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bartram.myfeeder.config.MyfeederProperties;
+import org.bartram.myfeeder.model.SuggestionDismissalReason;
+import org.bartram.myfeeder.repository.ArticleRepository;
 import org.bartram.myfeeder.repository.InterestScoreQueries;
 import org.bartram.myfeeder.repository.TopicSuggestionStore;
 import org.bartram.myfeeder.repository.TopicSuggestionStore.Candidate;
@@ -32,6 +34,7 @@ public class TopicSuggestionService {
     private final TopicSuggestionStore store;
     private final InterestScoreQueries scoreQueries;
     private final MyfeederProperties properties;
+    private final ArticleRepository articleRepository;
 
     /**
      * Badge ascending ("surprise" order), then latest engagement newest first, then id descending (D-05);
@@ -51,5 +54,16 @@ public class TopicSuggestionService {
                 .map(c -> new TopicSuggestion(c.articleId(), c.title(), c.feedTitle(), badges.get(c.articleId())))
                 .toList();
         return new TopicSuggestions(all.stream().limit(MAX_SUGGESTIONS).toList(), all.size());
+    }
+
+    /**
+     * Dismisses the article's suggestion (GAP-03, D-17): immediate and permanent, with no un-dismiss. A repeat
+     * is a no-op that keeps the first reason. A missing article is a 404. Never calls Jev.
+     */
+    public void dismiss(Long articleId) {
+        if (!articleRepository.existsById(articleId)) {
+            throw new NotFoundException("Article not found: " + articleId);
+        }
+        store.handle(articleId, SuggestionDismissalReason.DISMISSED);
     }
 }

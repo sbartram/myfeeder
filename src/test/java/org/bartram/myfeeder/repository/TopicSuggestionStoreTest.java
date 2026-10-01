@@ -1,6 +1,7 @@
 package org.bartram.myfeeder.repository;
 
 import org.bartram.myfeeder.TestcontainersConfiguration;
+import org.bartram.myfeeder.model.SuggestionDismissalReason;
 import org.bartram.myfeeder.repository.TopicSuggestionStore.Candidate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -201,6 +202,38 @@ class TopicSuggestionStoreTest {
         engage(a, "BOARD", now.minus(Duration.ofMinutes(5)));
 
         assertThat(ids(store.candidates(cutoff, NEAR_MISS))).containsExactly(a);
+    }
+
+    @Test
+    void handleInsertsOnceAndKeepsTheFirstReason() {
+        long a = article("a");
+
+        assertThat(store.handle(a, SuggestionDismissalReason.DISMISSED)).isTrue();
+        assertThat(store.handle(a, SuggestionDismissalReason.TOPIC_CREATED)).isFalse();
+
+        assertThat(jdbc.queryForList("SELECT reason FROM topic_suggestion_dismissal WHERE article_id = ?",
+                String.class, a)).containsExactly("DISMISSED");
+    }
+
+    @Test
+    void handleOnAMissingArticleInsertsNothing() {
+        long gone = article("gone");
+        jdbc.update("DELETE FROM article WHERE id = ?", gone);
+
+        assertThat(store.handle(gone, SuggestionDismissalReason.TOPIC_CREATED)).isFalse();
+
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM topic_suggestion_dismissal WHERE article_id = ?",
+                Integer.class, gone)).isZero();
+    }
+
+    @Test
+    void aHandledArticleIsNoLongerACandidate() {
+        long a = engagedScored("a");
+        assertThat(ids(store.candidates(cutoff, NEAR_MISS))).containsExactly(a);
+
+        store.handle(a, SuggestionDismissalReason.DISMISSED);
+
+        assertThat(store.candidates(cutoff, NEAR_MISS)).isEmpty();
     }
 
     /** A SCORED article with no topic rows and a fresh OPEN_ORIGINAL. */

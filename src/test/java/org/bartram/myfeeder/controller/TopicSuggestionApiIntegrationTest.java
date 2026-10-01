@@ -26,6 +26,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -104,6 +106,93 @@ class TopicSuggestionApiIntegrationTest {
                 .andExpect(status().isNoContent());
 
         assertThat(listedIds(getSuggestions())).contains(e);
+    }
+
+    @Test
+    void dismissReturns204AndHidesTheSuggestion() throws Exception {
+        long a = engagedScoredArticle("a");
+        assertThat(listedIds(getSuggestions())).contains(a);
+
+        mockMvc.perform(put("/api/interest/suggestions/{id}/dismissal", a))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        assertThat(dismissalReasons(a)).containsExactly("DISMISSED");
+        assertThat(listedIds(getSuggestions())).doesNotContain(a);
+    }
+
+    @Test
+    void dismissIsIdempotentAndKeepsTheFirstReason() throws Exception {
+        long a = engagedScoredArticle("a");
+
+        mockMvc.perform(put("/api/interest/suggestions/{id}/dismissal", a)).andExpect(status().isNoContent());
+        mockMvc.perform(put("/api/interest/suggestions/{id}/dismissal", a)).andExpect(status().isNoContent());
+
+        assertThat(dismissalReasons(a)).containsExactly("DISMISSED");
+    }
+
+    @Test
+    void dismissingAnUnknownArticleIs404() throws Exception {
+        long gone = insertArticle(insertFeed(), "gone");
+        jdbcTemplate.update("DELETE FROM article WHERE id = ?", gone);
+
+        mockMvc.perform(put("/api/interest/suggestions/{id}/dismissal", gone))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Article not found: " + gone));
+
+        assertThat(dismissalReasons(gone)).isEmpty();
+    }
+
+    @Test
+    void dismissingWithANonNumericIdIs400() throws Exception {
+        mockMvc.perform(put("/api/interest/suggestions/abc/dismissal"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void aDismissedSuggestionStaysGoneAfterLaterEngagement() throws Exception {
+        long a = engagedScoredArticle("a");
+        mockMvc.perform(put("/api/interest/suggestions/{id}/dismissal", a)).andExpect(status().isNoContent());
+
+        mockMvc.perform(put("/api/articles/{id}/engagement/open", a)).andExpect(status().isNoContent());
+        insertEngagement(a, "STAR");
+
+        assertThat(listedIds(getSuggestions())).doesNotContain(a);
+        assertThat(listedIds(getSuggestions())).doesNotContain(a);
+        assertThat(dismissalReasons(a)).containsExactly("DISMISSED");
+    }
+
+    @Test
+    void dismissingLeavesTheBadgeUnchanged() throws Exception {
+        long a = insertArticle(insertFeed(), "a");
+        jdbcTemplate.update(
+                "INSERT INTO article_score (article_id, status, profile_score, profile_max_level, attempts) "
+                        + "VALUES (?, 'SCORED', 2, 4, 1)",
+                a);
+        insertEngagement(a, "OPEN_ORIGINAL");
+
+        mockMvc.perform(get("/api/articles/{id}", a))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.interestScore").value(50));
+
+        mockMvc.perform(put("/api/interest/suggestions/{id}/dismissal", a)).andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/articles/{id}", a))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.interestScore").value(50));
+    }
+
+    /** An engaged (OPEN_ORIGINAL), SCORED (badge 0), unmatched article in a fresh test feed. */
+    private long engagedScoredArticle(String guid) {
+        long id = insertArticle(insertFeed(), guid);
+        insertScored(id);
+        insertEngagement(id, "OPEN_ORIGINAL");
+        return id;
+    }
+
+    private List<String> dismissalReasons(long articleId) {
+        return jdbcTemplate.queryForList(
+                "SELECT reason FROM topic_suggestion_dismissal WHERE article_id = ?", String.class, articleId);
     }
 
     private String getSuggestions() throws Exception {
