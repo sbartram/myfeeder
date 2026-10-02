@@ -200,7 +200,7 @@ Plans:
   3. The calibrated release is deployed to production with a clean startup, and engaged articles in prod show engagement in their badges and "Why N?"
   4. CLAUDE.md documents the V7 schema, the capture rules, the extended learned model (thumbs first, separate additive cap, negative-base skip, scored articles only) and the engagement tuning levers
 
-**Plans**: 3/5 plans executed
+**Plans**: 4/5 plans executed
 
 Plans:
 **Wave 1**
@@ -213,7 +213,7 @@ Plans:
 - [x] 12-03-PLAN.md — Prod replay of the D-06 grid, the cap-0 cross-check, the blocking data-floor gate (D-01 to D-03), the D-04 proposal with the ENG-F4/ENG-F5 calls, and 12-CALIBRATION.md (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 12-04-PLAN.md — Approved constants in main yaml plus the dev overlay, the startup test, and the CLAUDE.md SC-4 audit (wave 4)
+- [x] 12-04-PLAN.md — Approved constants in main yaml plus the dev overlay, the startup test, and the CLAUDE.md SC-4 audit (wave 4)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 12-05-PLAN.md — Release v0.3.1: dry run, blocking D-12 approval (including the untracked files), publish and deploy, D-13 replay-vs-API proof, and "Shipped in 0.3.1" (wave 5)
@@ -241,4 +241,4 @@ Phases execute in numeric order: 8 → 9 → 10 → 11 → 12 (Phase 11 depends 
 | 9. Engagement Learning Model | v0.3.0 | 6/6 | Complete    | 2026-09-30 |
 | 10. Explainable Engagement in the UI | v0.3.0 | 4/4 | Complete    | 2026-09-30 |
 | 11. Gap Discovery | v0.3.0 | 4/4 | Complete    | 2026-10-01 |
-| 12. Calibration & Release | v0.3.0 | 3/5 | In Progress|  |
+| 12. Calibration & Release | v0.3.0 | 4/5 | In Progress|  |
