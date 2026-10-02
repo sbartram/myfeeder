@@ -43,7 +43,7 @@ myfeeder:
       profile-points: 100
       learn-rate: 2
       learned-cap: 20
-      # D-01: engagement learning (LRN-05). cap 0 disables; otherwise 0 <= open-weight < save-weight < 1 and 0 < cap < learned-cap, checked at startup. Phase 12 calibrates.
+      # D-01: engagement learning (LRN-05). cap 0 disables; otherwise 0 <= open-weight < save-weight < 1 and 0 < cap < learned-cap, checked at startup. The suite keeps the D-01 values (FeedbackApiIntegrationTest and PriorityApiIntegrationTest assume them); application-dev.yaml carries main's calibrated values (D-14).
       engagement:
         open-weight: 0.25
         save-weight: 0.5
@@ -52,7 +52,7 @@ myfeeder:
       tiers:
         high: 70
         neutral: 40
-    # D-09: gap discovery near-miss; an engaged article whose best noul (any topic) is at or above this is not suggested. Checked at startup (0 < near-miss <= 0.5). Phase 12 tunes it.
+    # D-09: gap discovery near-miss; an engaged article whose best noul (any topic) is at or above this is not suggested. Checked at startup (0 < near-miss <= 0.5). Phase 12 kept it at 0.35 (D-05).
     suggestions:
       near-miss: 0.35
 
