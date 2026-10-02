@@ -200,3 +200,25 @@ approved-constants: open-weight=0.25 save-weight=0.5 cap=8
 constants: revisit
 eng-f4: keep
 eng-f5: recommend
+
+## Shipped in 0.3.1
+
+| Item | Value |
+|---|---|
+| Approval (12-05 Task 2) | `approve-exclude-untracked`; the 3 untracked paths were excluded locally for the release, then the user committed the MetalLB plan and gitignored `.claude/HANDOFF.md` (d995411) |
+| Phase branch / merge | gsd/phase-12-calibration-release, merged `--no-ff` as c3a25fe |
+| Pushed range | 9230982..c3a25fe (76 commits) |
+| Tag | v0.3.1 → c3a25fe34180ba5559bb2e0edd0ad8fdcfcd9f32, VERSION 0.3.1 |
+| Image | registry.bartram.org/bartram/myfeeder:0.3.1, sha256:8e7b648d1636df2499bc4bbbc71e5d3b9188aae222f9979f3db202373d71b059 |
+| Helm | revision 21 deployed 2026-10-02T22:42:53Z, rolled out 2026-10-02T22:43:23Z; rollback revision 20 (0.3.0) |
+| Startup | clean: 1 `Started MyfeederApplication`, 0 ERROR, 0 `TypeSafe Jev not configured`; Jev retry 0, exhausted 0, breaker transitions 0 |
+| /api/version | 0.3.1 |
+| /api/interest/status | configured true, breaker CLOSED, coldStart false, tiers 70 / 22 |
+| Engagement constants | open-weight 0.25, save-weight 0.5, cap 8 (equal to the approved line) |
+| Removed env overrides | none (0 `MYFEEDER_INTEREST_*`) |
+| D-13 cross-check (cap 8) | 26605: replay 65, api 65, engaged topics 0; 26771: replay 62, api 62, engaged topics 0; 26595: replay 21, api 21, engaged topics 0; 26427: replay 20, api 20, engaged topics 0; 26819: replay 16, api 16, engaged topics 0 |
+| D-13 verdict | **not provable yet** (user, 2026-10-02): replay equals api on 5 of 5 ids, so the shipped blend matches the replay, but with 0 topics with engagement (D-03 fallback) no article can show a nonzero engagement part. Re-run `$HOME/.cache/myfeeder-phase12/sc3.sh` once engaged articles match topics |
+| Soak | pass: 10 min, polling registered for 46 feeds (pre-deploy 46), 0 ERROR; 4 per-feed poll WARNs (HTTP 429, I/O, parse, body size) |
+| Dump | 11.6 MB (114 entries), `$HOME/.cache/myfeeder-phase12/myfeeder-pre-0.3.1.dump`, mode 600 |
+| Earlier tags | v0.3.0 db5acd76ef52fc7bd82ec4b1a36bdc7b749907d2 and v0.2.1 5461d0a555e9daa8f0907e07660e5e51958d154c, unchanged |
+| Failure path | not run |
