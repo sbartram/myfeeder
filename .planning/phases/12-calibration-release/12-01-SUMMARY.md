@@ -187,6 +187,11 @@ None.
   `OUT_DIR=... scripts/interest-calibration-replay.sh 100:70:22:0.25:0.5:0 100:70:22:0.25:0.5:8 ...`
 - The `engaged` section is the badge source for the D-13 cross-check.
 
+## Self-Check: PASSED
+
+- All 4 code files and this SUMMARY exist.
+- Commits 1e7876d, cc824e9 and 7755952 are present on the worktree branch.
+
 ---
 *Phase: 12-calibration-release*
 *Completed: 2026-10-02*
