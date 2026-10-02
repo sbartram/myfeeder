@@ -200,14 +200,14 @@ Plans:
   3. The calibrated release is deployed to production with a clean startup, and engaged articles in prod show engagement in their badges and "Why N?"
   4. CLAUDE.md documents the V7 schema, the capture rules, the extended learned model (thumbs first, separate additive cap, negative-base skip, scored articles only) and the engagement tuning levers
 
-**Plans**: 1/5 plans executed
+**Plans**: 2/5 plans executed
 
 Plans:
 **Wave 1**
 - [x] 12-01-PLAN.md — Replay tooling I: 6-field candidates with per-candidate TSV names, the `engaged` section, a Testcontainers run test, and WR-02 closed (the driver mirrors isValid before connecting); D-11 merge is a precondition (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 12-02-PLAN.md — Replay tooling II: backfill sim (only the engaged CTE differs, D-07/D-08), dormant, dormant-kind, floor and backfill-pool counts, and eng_articles, with bypass and privacy guards (wave 2)
+- [x] 12-02-PLAN.md — Replay tooling II: backfill sim (only the engaged CTE differs, D-07/D-08), dormant, dormant-kind, floor and backfill-pool counts, and eng_articles, with bypass and privacy guards (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 12-03-PLAN.md — Prod replay of the D-06 grid, the cap-0 cross-check, the blocking data-floor gate (D-01 to D-03), the D-04 proposal with the ENG-F4/ENG-F5 calls, and 12-CALIBRATION.md (wave 3)
@@ -241,4 +241,4 @@ Phases execute in numeric order: 8 → 9 → 10 → 11 → 12 (Phase 11 depends 
 | 9. Engagement Learning Model | v0.3.0 | 6/6 | Complete    | 2026-09-30 |
 | 10. Explainable Engagement in the UI | v0.3.0 | 4/4 | Complete    | 2026-09-30 |
 | 11. Gap Discovery | v0.3.0 | 4/4 | Complete    | 2026-10-01 |
-| 12. Calibration & Release | v0.3.0 | 1/5 | In Progress|  |
+| 12. Calibration & Release | v0.3.0 | 2/5 | In Progress|  |
