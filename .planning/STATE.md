@@ -106,7 +106,7 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [Phase 6] 06-UI-REVIEW.md 21/24: picker can overflow a narrow pane (positioned against viewport), vote-error toasts announced politely not as alert, aria-controls points at an absent element when picker is closed
 - [Phase 7] 07-REVIEW-DISPOSITION.md: 12 findings open and non-blocking (e.g. WR-01 breaker log prints "-1.0%" rates on OPEN_TO_HALF_OPEN/HALF_OPEN_TO_CLOSED; IN-01 70/40 first-paint badge flash; WR-05/IN-10 drift-guard advisories needing non-standard SQL spellings)
 - [Phase 7] trufflehog pre-push stage is configured but only the pre-commit hook is installed in this clone (`pre-commit install --hook-type pre-push`)
-- 12-03 resolved 2026-10-02 by the D-03 fallback (date moved to 2026-10-02 by the user): constants 0.25/0.5/8 kept, marked revisit (12-CALIBRATION.md); recalibrate once engagement lands on covered topics
+- v0.3.1 shipped 2026-10-02 (Helm rev 21, rollback 20) with engagement constants 0.25/0.5/8 kept by the D-03 fallback, marked revisit; D-13 engagement-part check not provable yet — re-run $HOME/.cache/myfeeder-phase12/sc3.sh and recalibrate once engaged articles match topics
   - Precheck 2026-10-02T21:08Z (read-only floor query, no executor dispatch): counted 13/30, topics 0/3, hold kept. Every counted article scores ≤ 0.10 on all non-negative topics and is read, so it sits outside Re-score scope and can never add a topic; 74 unread scored articles clear 0.5 on 5 non-negative topics. Engage (without voting) about 17 more articles from the top of Priority across ≥ 3 topics
 
 ### Quick Tasks Completed
