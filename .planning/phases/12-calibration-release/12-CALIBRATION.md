@@ -218,7 +218,7 @@ eng-f5: recommend
 | Removed env overrides | none (0 `MYFEEDER_INTEREST_*`) |
 | D-13 cross-check (cap 8) | 26605: replay 65, api 65, engaged topics 0; 26771: replay 62, api 62, engaged topics 0; 26595: replay 21, api 21, engaged topics 0; 26427: replay 20, api 20, engaged topics 0; 26819: replay 16, api 16, engaged topics 0 |
 | D-13 verdict | **not provable yet** (user, 2026-10-02): replay equals api on 5 of 5 ids, so the shipped blend matches the replay, but with 0 topics with engagement (D-03 fallback) no article can show a nonzero engagement part. Re-run `$HOME/.cache/myfeeder-phase12/sc3.sh` once engaged articles match topics |
-| Soak | pass: 10 min, polling registered for 46 feeds (pre-deploy 46), 0 ERROR; 4 per-feed poll WARNs (HTTP 429, I/O, parse, body size) |
+| Soak | pass: 10 min, polling registered for 46 feeds (pre-deploy 46), 0 ERROR; 4 per-feed poll WARNs (HTTP 429, I/O, parse, 10 MiB body cap) |
 | Dump | 11.6 MB (114 entries), `$HOME/.cache/myfeeder-phase12/myfeeder-pre-0.3.1.dump`, mode 600 |
 | Earlier tags | v0.3.0 db5acd76ef52fc7bd82ec4b1a36bdc7b749907d2 and v0.2.1 5461d0a555e9daa8f0907e07660e5e51958d154c, unchanged |
 | Failure path | not run |
