@@ -88,7 +88,7 @@ public class MyfeederProperties implements Validator {
             private int learnedCap = 20;
             /** Badge tier thresholds served on /api/interest/status (D-13). */
             private Tiers tiers = new Tiers();
-            /** Engagement learning constants (LRN-05, D-01). Phase 12 calibrates them. */
+            /** Engagement learning constants (LRN-05, D-01); calibrated in Phase 12 (12-CALIBRATION.md). */
             private Engagement engagement = new Engagement();
 
             @Data
@@ -123,7 +123,7 @@ public class MyfeederProperties implements Validator {
         public static class Suggestions {
             /**
              * D-09: an engaged article whose best noul (any topic, either weight sign) is at or above this
-             * is left out of Suggested topics. Applied at query time. Phase 12 tunes it.
+             * is left out of Suggested topics. Applied at query time. Phase 12 kept it at 0.35 (D-05).
              */
             private double nearMiss = 0.35;
 

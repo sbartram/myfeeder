@@ -54,6 +54,7 @@ class MyfeederPropertiesValidationTest {
         runner.withInitializer(ctx -> ctx.getEnvironment().getPropertySources().addFirst(mainYaml))
                 .run(ctx -> {
                     assertThat(ctx).hasNotFailed();
+                    // The approved-constants line of 12-CALIBRATION.md (Phase 12 kept the D-01 values, D-03).
                     assertEngagement(ctx.getBean(MyfeederProperties.class), 0.25, 0.5, 8.0);
                     assertThat(ctx.getBean(MyfeederProperties.class).getInterest().getSuggestions().getNearMiss())
                             .isEqualTo(0.35);

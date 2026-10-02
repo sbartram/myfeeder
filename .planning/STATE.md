@@ -6,16 +6,16 @@ current_phase: 12
 current_phase_name: Calibration & Release
 status: executing
 stopped_at: Phase 12 context gathered
-last_updated: "2026-10-02T17:40:37.852Z"
-last_activity: 2026-10-01
-last_activity_desc: Phase 11 complete, transitioned to Phase 12
-state_head: 62fb5c95b738ea38daa2d62565d185eb8f2723a6
+last_updated: "2026-10-02T20:12:40.395Z"
+last_activity: 2026-10-02
+last_activity_desc: Phase 12 execution resumed (wave continue)
+state_head: 213828e2d20ff933d73632a1a2935c8e4a8bb359
 progress:
   total_phases: 5
   completed_phases: 11
   total_plans: 24
-  completed_plans: 19
-  percent: 79
+  completed_plans: 21
+  percent: 88
 ---
 
 # Project State
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-10-01)
 
 ## Current Position
 
-Phase: 12 (Calibration & Release) — READY TO EXECUTE
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-10-01 — Phase 11 complete, transitioned to Phase 12
+Phase: 12 (Calibration & Release) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 12
+Last activity: 2026-10-02 — Phase 12 execution resumed (wave continue)
 
-Progress: [████████░░] 79%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
@@ -94,7 +94,7 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [Phase 8] 08-REVIEW.md WR-01 open: `recordQuietly` swallows only `DataAccessException`, so a non-DB failure after `createBookmark` could surface an error and invite a duplicate-bookmark retry; IN-01..IN-06 open (non-blocking)
 - [Phase 8] 08-UI-REVIEW.md 19/24: Forget styled like the "Why N?" toggle (no danger hover), no "Forgetting…" pending label, Open Original buttons stay enabled for URL-less articles
 - [Phase 10] 10-REVIEW-DISPOSITION.md: WR-01 (star-then-vote GET race), WR-02, WR-04 accepted in 10-UAT; board-list badge can lag ≤30s after engagement (accepted); pre-existing WhyBreakdown ESLint setState-in-effect warning
-- [Phase 9] 09-REVIEW-DISPOSITION.md: WR-01, WR-03, IN-01 and IN-04 fixed in Phase 10; WR-02 (replay accepts out-of-range engagement values) stays open for Phase 12, and IN-02 and IN-03 stay open; all non-blocking
+- [Phase 9] 09-REVIEW-DISPOSITION.md: WR-01, WR-03, IN-01 and IN-04 fixed in Phase 10; WR-02 fixed in Phase 12 (12-01), and IN-02 and IN-03 stay open; all non-blocking
 - [Phase 11] 11-REVIEW-DISPOSITION.md: WR-02 (dismiss count/pending state not tied to the clicked row; heading count briefly low after a double dismiss) and IN-01..IN-05 open; non-blocking
 - [Phase 12] Waits on several weeks of prod engagement collected after the Phase 8 release
 - [Phase 2] 02-REVIEW WR-04 (Raindrop createBookmark POST retried) and WR-05 (helm --set secret mangling) still deferred; WR-01..03 closed in Phase 4
@@ -106,6 +106,8 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [Phase 6] 06-UI-REVIEW.md 21/24: picker can overflow a narrow pane (positioned against viewport), vote-error toasts announced politely not as alert, aria-controls points at an absent element when picker is closed
 - [Phase 7] 07-REVIEW-DISPOSITION.md: 12 findings open and non-blocking (e.g. WR-01 breaker log prints "-1.0%" rates on OPEN_TO_HALF_OPEN/HALF_OPEN_TO_CLOSED; IN-01 70/40 first-paint badge flash; WR-05/IN-10 drift-guard advisories needing non-standard SQL spellings)
 - [Phase 7] trufflehog pre-push stage is configured but only the pre-commit hook is installed in this clone (`pre-commit install --hook-type pre-push`)
+- 12-03 resolved 2026-10-02 by the D-03 fallback (date moved to 2026-10-02 by the user): constants 0.25/0.5/8 kept, marked revisit (12-CALIBRATION.md); recalibrate once engagement lands on covered topics
+  - Precheck 2026-10-02T21:08Z (read-only floor query, no executor dispatch): counted 13/30, topics 0/3, hold kept. Every counted article scores ≤ 0.10 on all non-negative topics and is read, so it sits outside Re-score scope and can never add a topic; 74 unread scored articles clear 0.5 on 5 non-negative topics. Engage (without voting) about 17 more articles from the top of Priority across ≥ 3 topics
 
 ### Quick Tasks Completed
 
