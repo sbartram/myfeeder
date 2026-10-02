@@ -471,16 +471,19 @@ helm -n myfeeder get values myfeeder -o json | jq -c '{app}'                    
 | A5 | A pre-deploy pg_dump is optional for 0.3.1 (no migration; rollback to rev 20 runs on the same V7 schema) | Recommended Plan Structure | Low: the dump costs about 11 MB and a minute. Include it if the user prefers the 08-05 habit |
 | A6 | The prod floor will not be met for several weeks (capture started 2026-09-30) | Summary | None for planning: the gate handles it, and the D-03 fallback date is 2026-11-11. The live count could not be read, because prod psql was blocked |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **What is the current prod engagement volume?**
+1. **What is the current prod engagement volume?** RESOLVED
    - What we know: prod runs 0.3.0, with 10 topics (8 non-negative: bases 30, 30, 20, 20, 15, 20, 25, 35; 2 at -20) and learned 0.0 everywhere [VERIFIED: `/api/interest/topics/learned`, ids and weights only]. Capture started 2026-09-30.
    - What's unclear: the number of `article_engagement` rows. psql to prod was blocked in this session.
    - Recommendation: the first gate run reports the `floor` and `dormant` rows; nothing in planning depends on the number.
-2. **What happens to the two untracked `docs/superpowers/plans/...` files?**
+   - RESOLVED: the number is read at execution time, not at planning time. 12-03 Task 1 runs the read-only prod replay and writes the `floor` row (counted, topics_with_eng, floor_met) to `gate.txt` and the `dormant` row to `proposal.txt`. 12-03 Task 2 gates on it: while the D-02 floor is unmet before 2026-11-11, hold is the only outcome (D-01, D-03). No plan depends on the count.
+2. **What happens to the two untracked `docs/superpowers/plans/...` files?** RESOLVED
    - Recommendation: the release preflight surfaces them and the user decides (commit, ignore or move). Never bypass `verifyRelease`.
-3. **Should the full `summary` percentile set be repeated in `backfill-summary`?**
+   - RESOLVED: as recommended. 12-05 Task 1 (read-only dry run) lists each untracked path as an `untracked: <path>` line in `dry-run.txt`. 12-05 Task 2 (the D-12 blocking checkpoint) has the user choose approve-commit-untracked, approve-exclude-untracked (`.git/info/exclude`) or approve-user-moved, with plain approve accepted only when none are listed. 12-05 Task 3 applies that answer before the merge and never deletes a file, and the plan prohibits `-Prelease.disableChecks`.
+3. **Should the full `summary` percentile set be repeated in `backfill-summary`?** RESOLVED
    - Recommendation: yes, for a like-for-like comparison in the note. It costs nothing to the guard.
+   - RESOLVED: yes. 12-02 Task 1 builds `backfill-summary` as the summary's whole SELECT with only the label changed, so it carries the same column list (high_pct is column 6 in both, p10 to p95 in columns 9 to 17). 12-03 Task 1 uses those columns for the D-10 ENG-F5 comparison (bf_high_pct, bf_delta_off, bf_delta_real).
 
 ## Environment Availability
 
