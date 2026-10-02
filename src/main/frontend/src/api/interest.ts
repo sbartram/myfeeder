@@ -65,6 +65,11 @@ export interface TopicInput {
   name: string
   description: string
   weight: number
+  /**
+   * Sent only when creating a topic from an article (a suggestion or the reading pane); the
+   * server then marks that article's suggestion handled (D-13). Updates never send it.
+   */
+  sourceArticleId?: number
 }
 
 export interface TopicPreviewRequest {
@@ -76,6 +81,26 @@ export interface TopicPreviewRequest {
 export interface TopicPreview {
   noul: number
   model: string
+}
+
+/**
+ * One row of GET /api/interest/suggestions: an engaged, scored article that no topic covers.
+ * interestScore is the article's badge score (0-100).
+ */
+export interface TopicSuggestion {
+  articleId: number
+  title: string
+  feedTitle: string
+  interestScore: number
+}
+
+/**
+ * GET /api/interest/suggestions: engaged, scored articles no topic covers, in the server's order
+ * (badge ascending). At most 10 items; total counts all of them (D-07).
+ */
+export interface TopicSuggestions {
+  items: TopicSuggestion[]
+  total: number
 }
 
 export const interestApi = {
@@ -93,4 +118,8 @@ export const interestApi = {
     apiPost<TopicPreview>('/interest/preview', request),
   getRescoreCount: () => apiGet<RescoreCount>('/interest/rescore'),
   rescore: () => apiPost<RescoreCount>('/interest/rescore', { confirm: true }),
+  getSuggestions: () => apiGet<TopicSuggestions>('/interest/suggestions'),
+  // No body argument, so the PUT is bodyless and never a CORS simple request.
+  dismissSuggestion: (articleId: number) =>
+    apiPut<void>(`/interest/suggestions/${articleId}/dismissal`),
 }

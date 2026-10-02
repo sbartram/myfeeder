@@ -798,6 +798,50 @@ html, body, #root {
   min-width: 0;
 }
 
+/* Suggested topics: engaged articles no topic covers (Phase 11, D-01..D-04) */
+.interests-suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.interests-suggestion {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  min-width: 0;
+}
+
+.interests-suggestion-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.interests-suggestion-title {
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.interests-suggestion-feed { font-size: 12px; color: var(--text-muted); }
+
+.interests-suggestion-actions { display: flex; gap: 8px; flex: none; }
+
+.interests-suggestion.drafted { opacity: 0.6; }
+
+.interests-suggestion-state { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
 .interests-topic-row.dirty { border-left: 3px solid var(--accent); }
 
 .interests-topic-row .dialog-error { margin-top: 0; font-size: 12px; }

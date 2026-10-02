@@ -156,6 +156,20 @@ describe('afterEngagement', () => {
     expect(qc.getQueryData<Article>(['article', 2])?.interestScore).toBe(95)
   })
 
+  it('suggestionsAreMarkedStaleOnAndOffPriority', async () => {
+    seedPriority([[2, 80]])
+    refetchReturns(2, 95)
+    qc.setQueryData(['interest', 'suggestions'], { items: [], total: 0 })
+
+    await afterEngagement(qc, 2, false)
+    expect(invalidated(['interest', 'suggestions'])).toBe(true)
+
+    qc.setQueryData(['interest', 'suggestions'], { items: [], total: 0 })
+    expect(invalidated(['interest', 'suggestions'])).toBe(false)
+    await afterEngagement(qc, 2, true)
+    expect(invalidated(['interest', 'suggestions'])).toBe(true)
+  })
+
   it('onPriorityLeavesOtherOpenArticlesAlone', async () => {
     qc.setQueryData(['article', 8], article(8, 50))
     qc.setQueryData(['articles', {}], { pages: [], pageParams: [] })

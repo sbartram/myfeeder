@@ -2,19 +2,19 @@
 gsd_state_version: "1.0"
 milestone: v0.3.0
 milestone_name: Engagement Learning
-current_phase: 11
-current_phase_name: Gap Discovery
+current_phase: 12
+current_phase_name: Calibration & Release
 status: executing
-stopped_at: Phase 11 context gathered
-last_updated: "2026-10-01T17:30:34.624Z"
-last_activity: 2026-09-30
-last_activity_desc: Phase 10 complete, transitioned to Phase 11
-state_head: 83017192525050c7a7f1635bffdc43d384ef11d6
+stopped_at: Phase 12 context gathered
+last_updated: "2026-10-02T17:40:37.852Z"
+last_activity: 2026-10-01
+last_activity_desc: Phase 11 complete, transitioned to Phase 12
+state_head: 62fb5c95b738ea38daa2d62565d185eb8f2723a6
 progress:
   total_phases: 5
-  completed_phases: 10
-  total_plans: 19
-  completed_plans: 15
+  completed_phases: 11
+  total_plans: 24
+  completed_plans: 19
   percent: 79
 ---
 
@@ -22,17 +22,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-30)
+See: .planning/PROJECT.md (updated 2026-10-01)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 11 — Gap Discovery
+**Current focus:** Phase 12 — Calibration & Release
 
 ## Current Position
 
-Phase: 11 (Gap Discovery) — READY TO EXECUTE
+Phase: 12 (Calibration & Release) — READY TO EXECUTE
 Plan: Not started
 Status: Ready to execute
-Last activity: 2026-09-30 — Phase 10 complete, transitioned to Phase 11
+Last activity: 2026-10-01 — Phase 11 complete, transitioned to Phase 12
 
 Progress: [████████░░] 79%
 
@@ -40,7 +40,7 @@ Progress: [████████░░] 79%
 
 **Velocity:**
 
-- Total plans completed: 15 (51 in v0.2.1 Phases 1–7, 5 in Phase 8)
+- Total plans completed: 19 (51 in v0.2.1 Phases 1–7, 5 in Phase 8)
 - Average duration: -
 - Total execution time: -
 
@@ -51,6 +51,7 @@ Progress: [████████░░] 79%
 | 08 | 5 | - | - |
 | 09 | 6 | - | - |
 | 10 | 4 | - | - |
+| 11 | 4 | - | - |
 
 **Recent Trend:**
 
@@ -82,6 +83,7 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [Phase 08]: 08-05: user answered 'approve b' at the D-13 checkpoint; v0.3.0 released (tag at db5acd7, image sha256:7a785af7, Helm rev 20, rollback rev 19), V7 applied to prod, ranking and why UNCHANGED, smoke PASS
 - [Phase 09]: engagement learning merged on branch gsd/phase-09-engagement-learning-model with no release (D-14); UAT 3/3, Nyquist compliant, SECURITY 16/16 closed
 - [Phase 10]: explainable engagement on branch gsd/phase-10-explainable-engagement-in-the-ui, no release; UAT 6/6 (WR-01, WR-02, WR-04 and board-list badge staleness accepted), Nyquist compliant, SECURITY 12/12 closed
+- [Phase 11]: gap discovery on branch gsd/phase-11-gap-discovery, no release; UAT 3/3; WR-01 resolved by accepting the first-recording-per-kind window and correcting the docs
 
 ### Pending Todos
 
@@ -93,6 +95,7 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [Phase 8] 08-UI-REVIEW.md 19/24: Forget styled like the "Why N?" toggle (no danger hover), no "Forgetting…" pending label, Open Original buttons stay enabled for URL-less articles
 - [Phase 10] 10-REVIEW-DISPOSITION.md: WR-01 (star-then-vote GET race), WR-02, WR-04 accepted in 10-UAT; board-list badge can lag ≤30s after engagement (accepted); pre-existing WhyBreakdown ESLint setState-in-effect warning
 - [Phase 9] 09-REVIEW-DISPOSITION.md: WR-01, WR-03, IN-01 and IN-04 fixed in Phase 10; WR-02 (replay accepts out-of-range engagement values) stays open for Phase 12, and IN-02 and IN-03 stay open; all non-blocking
+- [Phase 11] 11-REVIEW-DISPOSITION.md: WR-02 (dismiss count/pending state not tied to the clicked row; heading count briefly low after a double dismiss) and IN-01..IN-05 open; non-blocking
 - [Phase 12] Waits on several weeks of prod engagement collected after the Phase 8 release
 - [Phase 2] 02-REVIEW WR-04 (Raindrop createBookmark POST retried) and WR-05 (helm --set secret mangling) still deferred; WR-01..03 closed in Phase 4
 - [Phase 5] 05-REVIEW.md WR-04 closed by quick 260926-hhz (decoded cursor date bounded to years 1..9999 → 404); WR-05 (an unserved row whose score rises past the fixed cursor boundary is skipped — mitigated in Phase 6: votes set the Ranking-changed hint); WR-01/WR-03 user-deferred
@@ -126,9 +129,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-01T15:56:03.146Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-gap-discovery/11-CONTEXT.md
+Last session: 2026-10-02T16:44:33.901Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-calibration-release/12-CONTEXT.md
 
 ## Operator Next Steps
 

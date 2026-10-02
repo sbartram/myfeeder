@@ -33,6 +33,8 @@ export type TopicRowState = {
   weightText: string
   weight: number
   saved: { name: string; description: string; weight: number } | null
+  /** The article this draft was created from; sent once, when the draft is first saved. */
+  sourceArticleId?: number
 }
 
 /** Why Preview is unavailable for every row; InterestsDialog computes at most one (D-14). */
@@ -324,7 +326,10 @@ export function TopicRow({
   const handleSave = () => {
     const input = { name: row.name.trim(), description: row.description.trim(), weight: row.weight }
     if (row.id === null) {
-      create.mutate(input, { onSuccess: onSaved })
+      create.mutate(
+        row.sourceArticleId === undefined ? input : { ...input, sourceArticleId: row.sourceArticleId },
+        { onSuccess: onSaved },
+      )
     } else {
       update.mutate({ id: row.id, input }, { onSuccess: onSaved })
     }

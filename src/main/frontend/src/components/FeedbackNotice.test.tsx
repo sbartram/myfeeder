@@ -81,7 +81,7 @@ describe('FeedbackNotice', () => {
       <FeedbackNotice article={article({ title: '  A long title  ' })} onCreateTopic={onCreateTopic} />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Create topic from article' }))
-    expect(onCreateTopic).toHaveBeenLastCalledWith({ description: 'A long title', weight: -20 })
+    expect(onCreateTopic).toHaveBeenLastCalledWith({ description: 'A long title', weight: -20, sourceArticleId: 1 })
     down.unmount()
 
     const up = render(
@@ -91,12 +91,12 @@ describe('FeedbackNotice', () => {
       />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Create topic from article' }))
-    expect(onCreateTopic).toHaveBeenLastCalledWith({ description: 'Up title', weight: 20 })
+    expect(onCreateTopic).toHaveBeenLastCalledWith({ description: 'Up title', weight: 20, sourceArticleId: 1 })
     up.unmount()
 
     render(<FeedbackNotice article={article({ title: 'x'.repeat(600) })} onCreateTopic={onCreateTopic} />)
     fireEvent.click(screen.getByRole('button', { name: 'Create topic from article' }))
-    expect(onCreateTopic).toHaveBeenLastCalledWith({ description: 'x'.repeat(500), weight: -20 })
+    expect(onCreateTopic).toHaveBeenLastCalledWith({ description: 'x'.repeat(500), weight: -20, sourceArticleId: 1 })
     expect(onCreateTopic).toHaveBeenCalledTimes(3)
   })
 })

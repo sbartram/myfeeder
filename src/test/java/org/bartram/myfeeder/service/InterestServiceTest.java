@@ -2,10 +2,13 @@ package org.bartram.myfeeder.service;
 
 import org.bartram.myfeeder.model.InterestProfile;
 import org.bartram.myfeeder.model.InterestTopic;
+import org.bartram.myfeeder.model.SuggestionDismissalReason;
 import org.bartram.myfeeder.repository.InterestProfileRepository;
 import org.bartram.myfeeder.repository.InterestTopicRepository;
+import org.bartram.myfeeder.repository.TopicSuggestionStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,6 +25,7 @@ import static org.mockito.Mockito.*;
 class InterestServiceTest {
     @Mock private InterestProfileRepository profileRepository;
     @Mock private InterestTopicRepository topicRepository;
+    @Mock private TopicSuggestionStore suggestionStore;
     @InjectMocks private InterestService interestService;
 
     private InterestProfile profile(String text, int version) {
@@ -105,7 +109,7 @@ class InterestServiceTest {
         when(topicRepository.count()).thenReturn(0L);
         stubTopicSave();
 
-        InterestTopic t = interestService.createTopic("  Rust  ", "  The Rust programming language ", null);
+        InterestTopic t = interestService.createTopic("  Rust  ", "  The Rust programming language ", null, null);
 
         assertThat(t.getWeight()).isEqualTo(20);
         assertThat(t.getVersion()).isEqualTo(1);
@@ -119,13 +123,13 @@ class InterestServiceTest {
     void createTopicRejectsTwentySixth() {
         when(topicRepository.count()).thenReturn(25L, 24L);
 
-        assertThatThrownBy(() -> interestService.createTopic("Rust", "Rust lang", 10))
+        assertThatThrownBy(() -> interestService.createTopic("Rust", "Rust lang", 10, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("A maximum of 25 topics is allowed");
         verify(topicRepository, never()).save(any());
 
         stubTopicSave();
-        assertThat(interestService.createTopic("Rust", "Rust lang", 10)).isNotNull();
+        assertThat(interestService.createTopic("Rust", "Rust lang", 10, null)).isNotNull();
         verify(topicRepository).save(any());
     }
 
@@ -134,8 +138,8 @@ class InterestServiceTest {
         when(topicRepository.count()).thenReturn(0L);
         stubTopicSave();
 
-        assertThat(interestService.createTopic("Low", "Low weight", -50).getWeight()).isEqualTo(-50);
-        assertThat(interestService.createTopic("High", "High weight", 50).getWeight()).isEqualTo(50);
+        assertThat(interestService.createTopic("Low", "Low weight", -50, null).getWeight()).isEqualTo(-50);
+        assertThat(interestService.createTopic("High", "High weight", 50, null).getWeight()).isEqualTo(50);
     }
 
     @Test
@@ -143,7 +147,7 @@ class InterestServiceTest {
         when(topicRepository.count()).thenReturn(0L);
 
         for (int weight : new int[]{-51, 51}) {
-            assertThatThrownBy(() -> interestService.createTopic("Rust", "Rust lang", weight))
+            assertThatThrownBy(() -> interestService.createTopic("Rust", "Rust lang", weight, null))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Weight must be a whole number from -50 to +50");
         }
@@ -151,20 +155,58 @@ class InterestServiceTest {
     }
 
     @Test
+    void createTopicWithASourceHandlesTheSuggestionAfterTheSave() {
+        when(topicRepository.count()).thenReturn(3L);
+        stubTopicSave();
+
+        InterestTopic t = interestService.createTopic("Rust", "Rust lang", 20, 42L);
+
+        assertThat(t.getName()).isEqualTo("Rust");
+        InOrder order = inOrder(topicRepository, suggestionStore);
+        order.verify(topicRepository).save(any());
+        order.verify(suggestionStore).handle(42L, SuggestionDismissalReason.TOPIC_CREATED);
+    }
+
+    @Test
+    void createTopicWithoutASourceNeverTouchesTheStore() {
+        when(topicRepository.count()).thenReturn(0L);
+        stubTopicSave();
+
+        interestService.createTopic("Rust", "Rust lang", null, null);
+
+        verifyNoInteractions(suggestionStore);
+    }
+
+    @Test
+    void aRejectedCreateNeverHandlesTheSuggestion() {
+        when(topicRepository.count()).thenReturn(25L, 0L);
+
+        assertThatThrownBy(() -> interestService.createTopic("Rust", "Rust lang", 10, 42L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("A maximum of 25 topics is allowed");
+        assertThatThrownBy(() -> interestService.createTopic("  ", "Rust lang", 10, 42L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("name is required");
+
+        verify(topicRepository, never()).save(any());
+        verifyNoInteractions(suggestionStore);
+    }
+
+    @Test
     void createTopicRejectsBlankOrLongNameAndDescription() {
         when(topicRepository.count()).thenReturn(0L);
 
-        assertThatThrownBy(() -> interestService.createTopic("   ", "Rust lang", 10))
+        assertThatThrownBy(() -> interestService.createTopic("   ", "Rust lang", 10, null))
                 .isInstanceOf(IllegalArgumentException.class).hasMessage("name is required");
-        assertThatThrownBy(() -> interestService.createTopic(null, "Rust lang", 10))
+        assertThatThrownBy(() -> interestService.createTopic(null, "Rust lang", 10, null))
                 .isInstanceOf(IllegalArgumentException.class).hasMessage("name is required");
-        assertThatThrownBy(() -> interestService.createTopic("n".repeat(41), "Rust lang", 10))
+        assertThatThrownBy(() -> interestService.createTopic("n".repeat(41), "Rust lang", 10, null))
                 .isInstanceOf(IllegalArgumentException.class).hasMessage("name can be at most 40 characters");
-        assertThatThrownBy(() -> interestService.createTopic("Rust", "  ", 10))
+        assertThatThrownBy(() -> interestService.createTopic("Rust", "  ", 10, null))
                 .isInstanceOf(IllegalArgumentException.class).hasMessage("description is required");
-        assertThatThrownBy(() -> interestService.createTopic("Rust", null, 10))
+        assertThatThrownBy(() -> interestService.createTopic("Rust", null, 10, null))
                 .isInstanceOf(IllegalArgumentException.class).hasMessage("description is required");
-        assertThatThrownBy(() -> interestService.createTopic("Rust", "d".repeat(501), 10))
+        assertThatThrownBy(() -> interestService.createTopic("Rust", "d".repeat(501), 10, null))
                 .isInstanceOf(IllegalArgumentException.class).hasMessage("description can be at most 500 characters");
         verify(topicRepository, never()).save(any());
     }
@@ -255,7 +297,7 @@ class InterestServiceTest {
 
         when(topicRepository.count()).thenReturn(0L);
         String secretName = "SECRET".repeat(7).substring(0, 41);
-        assertThatThrownBy(() -> interestService.createTopic(secretName, "Rust lang", 10))
+        assertThatThrownBy(() -> interestService.createTopic(secretName, "Rust lang", 10, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .satisfies(e -> assertThat(e.getMessage()).doesNotContain("SECRET"));
     }

@@ -6,6 +6,7 @@ import {
   type TopicInput,
   type TopicPreviewRequest,
   type TierThresholds,
+  type TopicSuggestions,
 } from '../api/interest'
 import { usePriorityStore } from '../stores/priorityStore'
 import { DEFAULT_TIERS } from '../utils/interest'
@@ -65,6 +66,8 @@ export function useSaveInterestProfile() {
 
 const TOPICS_KEY = ['interest', 'topics']
 
+export const SUGGESTIONS_KEY = ['interest', 'suggestions'] as const
+
 export function useInterestTopics() {
   return useQuery({ queryKey: ['interest', 'topics'], queryFn: interestApi.listTopics })
 }
@@ -78,7 +81,10 @@ export function useLearnedTopics() {
   return useQuery({ queryKey: ['interest', 'learned'], queryFn: interestApi.getLearned })
 }
 
-/** Appends the created topic to the cached list; a new topic can end cold start (D-05). */
+/**
+ * Appends the created topic to the cached list; a new topic can end cold start (D-05). It can
+ * cover a suggested article, so the suggestions are marked stale.
+ */
 export function useCreateInterestTopic() {
   const qc = useQueryClient()
   return useMutation({
@@ -88,6 +94,7 @@ export function useCreateInterestTopic() {
       qc.setQueryData<InterestTopic[]>(TOPICS_KEY, (old) => (old ? [...old, topic] : [topic]))
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
       void qc.invalidateQueries({ queryKey: ['interest', 'learned'] })
+      void qc.invalidateQueries({ queryKey: SUGGESTIONS_KEY })
       usePriorityStore.getState().setRankingChanged(true)
     },
   })
@@ -124,7 +131,10 @@ export function usePreviewTopic() {
   })
 }
 
-/** Removes the topic from the cached list; deleting the last topic can restore cold start. */
+/**
+ * Removes the topic from the cached list; deleting the last topic can restore cold start. An
+ * article only that topic covered can become a suggestion, so the suggestions are marked stale.
+ */
 export function useDeleteInterestTopic() {
   const qc = useQueryClient()
   return useMutation({
@@ -134,6 +144,7 @@ export function useDeleteInterestTopic() {
       qc.setQueryData<InterestTopic[]>(TOPICS_KEY, (old) => old?.filter((t) => t.id !== id))
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
       void qc.invalidateQueries({ queryKey: ['interest', 'learned'] })
+      void qc.invalidateQueries({ queryKey: SUGGESTIONS_KEY })
       usePriorityStore.getState().setRankingChanged(true)
     },
   })
@@ -155,6 +166,7 @@ export function useRescoreCount() {
 /**
  * Resets the in-window unread scores so the sweep re-judges them. Destructive and billed
  * downstream, so it is never retried (TanStack's mutation default); refreshes the status counts.
+ * Reset articles drop out of the suggestions until re-scored, so they are marked stale.
  */
 export function useRescoreUnread() {
   const qc = useQueryClient()
@@ -163,7 +175,44 @@ export function useRescoreUnread() {
     meta: { inlineError: true },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['interest', 'status'] })
+      void qc.invalidateQueries({ queryKey: SUGGESTIONS_KEY })
       usePriorityStore.getState().setRankingChanged(true)
+    },
+  })
+}
+
+/**
+ * The Interests dialog's suggested topics (GAP-01). staleTime 0 refetches it on every Interests
+ * open, so articles engaged since the last open appear (SC-1). It never polls. The caller hides
+ * the section when the list is empty, still loading or failed (D-02).
+ */
+export function useTopicSuggestions() {
+  return useQuery<TopicSuggestions>({
+    queryKey: SUGGESTIONS_KEY,
+    queryFn: interestApi.getSuggestions,
+    staleTime: 0,
+  })
+}
+
+/**
+ * Dismisses one suggestion: immediate and permanent, with no confirm and no undo (D-17). The row
+ * is removed from the cached list at once and the list is refetched; the server keeps the first
+ * reason. There is no inlineError meta, so a failure is reported through the global toast.
+ */
+export function useDismissSuggestion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (articleId: number) => interestApi.dismissSuggestion(articleId),
+    onSuccess: (_result: void, articleId: number) => {
+      qc.setQueryData<TopicSuggestions>(
+        SUGGESTIONS_KEY,
+        (old) =>
+          old && {
+            items: old.items.filter((s) => s.articleId !== articleId),
+            total: Math.max(0, old.total - 1),
+          },
+      )
+      void qc.invalidateQueries({ queryKey: SUGGESTIONS_KEY })
     },
   })
 }
