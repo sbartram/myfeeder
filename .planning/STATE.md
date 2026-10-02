@@ -6,10 +6,10 @@ current_phase: 12
 current_phase_name: Calibration & Release
 status: executing
 stopped_at: Phase 12 context gathered
-last_updated: "2026-10-02T18:10:11.633Z"
+last_updated: "2026-10-02T20:12:40.395Z"
 last_activity: 2026-10-02
-last_activity_desc: Phase 12 execution started
-state_head: e9938b55f1843b96df1b8bb5a0edc013c5c25530
+last_activity_desc: Phase 12 execution resumed (wave continue)
+state_head: 213828e2d20ff933d73632a1a2935c8e4a8bb359
 progress:
   total_phases: 5
   completed_phases: 11
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-10-01)
 Phase: 12 (Calibration & Release) — EXECUTING
 Plan: 1 of 5
 Status: Executing Phase 12
-Last activity: 2026-10-02 — Phase 12 execution started
+Last activity: 2026-10-02 — Phase 12 execution resumed (wave continue)
 
 Progress: [█████████░] 88%
 
@@ -106,6 +106,7 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [Phase 6] 06-UI-REVIEW.md 21/24: picker can overflow a narrow pane (positioned against viewport), vote-error toasts announced politely not as alert, aria-controls points at an absent element when picker is closed
 - [Phase 7] 07-REVIEW-DISPOSITION.md: 12 findings open and non-blocking (e.g. WR-01 breaker log prints "-1.0%" rates on OPEN_TO_HALF_OPEN/HALF_OPEN_TO_CLOSED; IN-01 70/40 first-paint badge flash; WR-05/IN-10 drift-guard advisories needing non-standard SQL spellings)
 - [Phase 7] trufflehog pre-push stage is configured but only the pre-commit hook is installed in this clone (`pre-commit install --hook-type pre-push`)
+- 12-03 data floor unmet (counted 8/30, topics 0/3) — hold chosen 2026-10-02; re-run /gsd-execute-phase 12 after more engagement on covered articles, or on/after 2026-11-11 for the D-03 fallback
 
 ### Quick Tasks Completed
 
