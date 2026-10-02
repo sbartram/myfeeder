@@ -1,7 +1,9 @@
 package org.bartram.myfeeder.repository;
 
 import org.assertj.core.api.SoftAssertions;
+import org.bartram.myfeeder.config.MyfeederProperties;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +38,15 @@ class InterestCalibrationReplaySqlTest {
     private static final String WINDOW_SCOPE =
             "COALESCE(a.published_at, a.fetched_at) > now() - :windowDays * interval '1 day'";
 
+    /** The engaged cross-check scope (Phase 12, D-13): every engaged article, read or unread. */
+    private static final String ENGAGED_SCOPE = "a.id IN (SELECT g.article_id FROM article_engagement g)";
+
+    /** Statements that open a learned CTE: three unread blends, the window blend, learned and engaged. */
+    private static final int BLEND_STATEMENTS = 6;
+
+    /** Verbatim INTEREST_SCORE copies in the file, which is also the number of badge lines. */
+    private static final int BADGE_COPIES = 5;
+
     /** The learned section's opening text, as {@code replaysTheLearnedModelVerbatim} builds it. */
     private static final String LEARNED_SECTION = InterestScoreQueries.LEARNED_CTE + " SELECT 'learned' AS section";
 
@@ -52,6 +63,10 @@ class InterestCalibrationReplaySqlTest {
 
     /** Opens a learned CTE, in any case or whitespace and anywhere in a line (deliberately unanchored). */
     private static final Pattern BLEND_START = Pattern.compile("(?i)\\bwith\\s+learned\\s+as\\b");
+
+    /** The driver's OUT_DIR in every driver test. */
+    @TempDir
+    Path outDir;
 
     @Test
     void replaysTheAppsUnreadBlendVerbatim() throws IOException {
@@ -83,6 +98,13 @@ class InterestCalibrationReplaySqlTest {
     @Test
     void replaysTheLearnedModelVerbatim() throws IOException {
         assertThat(Files.readString(SQL)).contains(InterestScoreQueries.LEARNED_CTE + " SELECT 'learned' AS section");
+    }
+
+    /** D-13: the engaged section is the app's blend over every engaged article, followed by its badge line. */
+    @Test
+    void replaysTheEngagedSectionVerbatim() throws IOException {
+        assertThat(Files.readString(SQL))
+                .contains(InterestScoreQueries.blendCte(ENGAGED_SCOPE) + "\nSELECT 'engaged' AS section");
     }
 
     @Test
@@ -133,6 +155,132 @@ class InterestCalibrationReplaySqlTest {
         assertThat(run.stderr()).contains("MYFEEDER_PG_PASSWORD is required");
     }
 
+    /** D-06: a candidate may carry its own engagement constants; this one passes validation and reaches psql. */
+    @Test
+    void driverAcceptsTheSixFieldForm() throws Exception {
+        DriverRun run = runDriver(Map.of("MYFEEDER_PG_PASSWORD", "x"), "100:70:40:0.25:0.5:8");
+
+        assertThat(run.stderr()).contains("psql:");
+        assertThat(run.stderr()).doesNotContain("invalid");
+    }
+
+    /** T-12-01: a short, long or non-numeric engagement part is refused before any connection. */
+    @Test
+    void driverRejectsAMalformedSixFieldCandidate() throws Exception {
+        for (String candidate : List.of("100:70:40:0.25:0.5", "100:70:40:0.25:0.5:8:1",
+                "100:70:40:.5:0.5:8", "100:70:40:0.25:-0.5:8")) {
+            DriverRun run = runDriver(Map.of("MYFEEDER_PG_PASSWORD", "x"), candidate);
+
+            assertThat(run.exitCode()).as(candidate).isEqualTo(2);
+            assertThat(run.stderr()).as(candidate).contains("invalid candidate: " + candidate);
+            assertThat(run.stderr()).as(candidate).doesNotContain("psql:");
+        }
+    }
+
+    /**
+     * WR-02 / T-12-03: on a 64-cell boundary grid the driver refuses a candidate exactly when the app's
+     * {@code Engagement.isValid(20)} refuses it, and it refuses before any connection.
+     */
+    @Test
+    void driverRefusesWhatTheAppRefuses() throws Exception {
+        List<String> opens = List.of("0", "0.25", "0.5", "0.75");
+        List<String> saves = List.of("0.25", "0.5", "0.99", "1");
+        List<String> caps = List.of("0", "8", "19.99", "20");
+        SoftAssertions softly = new SoftAssertions();
+        for (String open : opens) {
+            for (String save : saves) {
+                for (String cap : caps) {
+                    MyfeederProperties.Interest.Blend.Engagement engagement =
+                            new MyfeederProperties.Interest.Blend.Engagement();
+                    engagement.setOpenWeight(Double.parseDouble(open));
+                    engagement.setSaveWeight(Double.parseDouble(save));
+                    engagement.setCap(Double.parseDouble(cap));
+                    String candidate = "100:70:40:" + open + ":" + save + ":" + cap;
+
+                    DriverRun run = runDriver(Map.of("MYFEEDER_PG_PASSWORD", "x"), candidate);
+
+                    if (engagement.isValid(20)) {
+                        softly.assertThat(run.stderr()).as(candidate + " accepted").contains("psql:")
+                                .doesNotContain("invalid engagement constants");
+                    } else {
+                        softly.assertThat(run.exitCode()).as(candidate + " exit").isEqualTo(2);
+                        softly.assertThat(run.stderr()).as(candidate + " refused")
+                                .contains("invalid engagement constants").doesNotContain("psql:");
+                    }
+                }
+            }
+        }
+        softly.assertAll();
+    }
+
+    /** WR-02: each threshold flips the verdict exactly, on the six-field and the env path alike. */
+    @Test
+    void driverRejectsOutOfRangeEngagementBeforeConnecting() throws Exception {
+        record Case(String candidate, Map<String, String> env) {}
+        List<Case> refused = List.of(
+                new Case("100:70:40:0.5:0.5:8", Map.of()),
+                new Case("100:70:40:0.25:1:8", Map.of()),
+                new Case("100:70:40:0.25:0.5:20", Map.of()),
+                new Case("100:70:40:0.3:0.25:8", Map.of()),
+                new Case("100:70:40", Map.of("ENGAGEMENT_SAVE_WEIGHT", "1")),
+                new Case("100:70:40:0.25:0.5:8", Map.of("LEARNED_CAP", "8")));
+        List<Case> accepted = List.of(
+                new Case("100:70:40:0.25:0.5:8", Map.of("LEARNED_CAP", "9")),
+                new Case("100:70:40:0.9:0.5:0", Map.of()),
+                new Case("100:70:40:0:0.5:8", Map.of()),
+                new Case("100:70:40:0.49:0.5:8", Map.of()),
+                new Case("100:70:40:0.25:0.99:8", Map.of()),
+                new Case("100:70:40:0.25:0.5:19.99", Map.of()));
+
+        for (Case c : refused) {
+            Map<String, String> env = new LinkedHashMap<>(c.env());
+            env.put("MYFEEDER_PG_PASSWORD", "x");
+            DriverRun run = runDriver(env, c.candidate());
+            String as = c.candidate() + " " + c.env();
+
+            assertThat(run.exitCode()).as(as).isEqualTo(2);
+            assertThat(run.stderr()).as(as).contains("invalid engagement constants: " + c.candidate());
+            assertThat(run.stderr()).as(as).doesNotContain("psql:");
+        }
+        for (Case c : accepted) {
+            Map<String, String> env = new LinkedHashMap<>(c.env());
+            env.put("MYFEEDER_PG_PASSWORD", "x");
+            DriverRun run = runDriver(env, c.candidate());
+            String as = c.candidate() + " " + c.env();
+
+            assertThat(run.stderr()).as(as).contains("psql:");
+            assertThat(run.stderr()).as(as).doesNotContain("invalid");
+        }
+    }
+
+    /** A valid candidate followed by an invalid one: nothing connects and no file is written. */
+    @Test
+    void driverValidatesEveryCandidateBeforeAnyConnection() throws Exception {
+        DriverRun run = runDriver(Map.of("MYFEEDER_PG_PASSWORD", "x"),
+                "100:70:40:0.25:0.5:8", "100:70:40:0.25:1:8");
+
+        assertThat(run.exitCode()).isEqualTo(2);
+        assertThat(run.stderr()).contains("invalid engagement constants: 100:70:40:0.25:1:8");
+        assertThat(run.stderr()).doesNotContain("psql:");
+        assertThat(filesIn(outDir)).noneMatch(name -> name.endsWith(".tsv"));
+    }
+
+    /** A run that fails after validation (here a refused connection) leaves neither a .tsv nor a .tmp file. */
+    @Test
+    void aFailedRunLeavesNoFile() throws Exception {
+        DriverRun run = runDriver(Map.of("MYFEEDER_PG_PASSWORD", "x"), "100:70:40:0.25:0.5:8");
+
+        assertThat(run.exitCode()).isNotZero();
+        assertThat(run.stderr()).contains("psql:");
+        assertThat(filesIn(outDir)).noneMatch(name -> name.endsWith(".tsv") || name.endsWith(".tmp"));
+    }
+
+    private static List<String> filesIn(Path dir) throws IOException {
+        try (Stream<Path> files = Files.list(dir)) {
+            return files.map(p -> p.getFileName().toString()).toList();
+        }
+    }
+
     @Test
     void everyCopyInTheReplayIsVerbatim() throws IOException {
         assertEveryCopyIsVerbatim(Files.readString(SQL));
@@ -147,7 +295,8 @@ class InterestCalibrationReplaySqlTest {
         List<Copy> copies = List.of(
                 new Copy("unread", InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE), 3),
                 new Copy("window", InterestScoreQueries.blendCte(WINDOW_SCOPE), 1),
-                new Copy("learned", LEARNED_SECTION, 1));
+                new Copy("learned", LEARNED_SECTION, 1),
+                new Copy("engaged", InterestScoreQueries.blendCte(ENGAGED_SCOPE), 1));
         for (Copy copy : copies) {
             assertThat(occurrences(sql, copy.needle())).as(copy.label() + " copies").isEqualTo(copy.expected());
             for (int i = 0; i < copy.expected(); i++) {
@@ -164,8 +313,8 @@ class InterestCalibrationReplaySqlTest {
         String sql = Files.readString(SQL);
         assertThatCode(() -> assertEveryCopyIsVerbatim(sql)).doesNotThrowAnyException();
 
-        assertThat(occurrences(sql, InterestScoreQueries.INTEREST_SCORE)).as("badge copies").isEqualTo(4);
-        for (int i = 0; i < 4; i++) {
+        assertThat(occurrences(sql, InterestScoreQueries.INTEREST_SCORE)).as("badge copies").isEqualTo(BADGE_COPIES);
+        for (int i = 0; i < BADGE_COPIES; i++) {
             String drifted = driftOneByte(sql, InterestScoreQueries.INTEREST_SCORE, i);
             assertThatCode(() -> assertEveryCopyIsVerbatim(drifted))
                     .as("badge copy " + i)
@@ -173,7 +322,7 @@ class InterestCalibrationReplaySqlTest {
         }
     }
 
-    /** One step either side of the shipped counts (5 blend lines, 4 badge copies) fails. */
+    /** One step either side of the shipped counts ({@link #BLEND_STATEMENTS} blend lines, {@link #BADGE_COPIES} badge copies) fails. */
     @Test
     void aMissingOrExtraCopyFails() throws IOException {
         String sql = Files.readString(SQL);
@@ -205,8 +354,8 @@ class InterestCalibrationReplaySqlTest {
 
     /**
      * A one-token drift of the top badge fails whatever verbatim copy survives: in a comment on the same line,
-     * in an appended section, or in code on the same line. Cases 1-6 keep 4 raw copies, so only the
-     * per-statement check can catch them; case 7 adds a fifth copy with no drift.
+     * in an appended section, or in code on the same line. Cases 1-6 keep {@link #BADGE_COPIES} raw copies, so
+     * only the per-statement check can catch them; case 7 adds one more copy with no drift.
      */
     @Test
     void aDriftedBadgeFailsDespiteAVerbatimDecoy() throws IOException {
@@ -238,9 +387,11 @@ class InterestCalibrationReplaySqlTest {
 
         variants.forEach((name, variant) -> {
             if (name.equals(extraCopy)) {
-                assertThat(occurrences(variant, verbatim)).as(name + " holds 5 raw copies").isEqualTo(5);
+                assertThat(occurrences(variant, verbatim)).as(name + " holds one extra raw copy")
+                        .isEqualTo(BADGE_COPIES + 1);
             } else {
-                assertThat(occurrences(variant, verbatim)).as(name + " keeps 4 raw copies").isEqualTo(4);
+                assertThat(occurrences(variant, verbatim)).as(name + " keeps the shipped raw copies")
+                        .isEqualTo(BADGE_COPIES);
             }
         });
 
@@ -274,15 +425,15 @@ class InterestCalibrationReplaySqlTest {
      * Checks, and only checks, the following:
      * <ol>
      * <li>The code of the file opens a learned CTE ({@code with learned as} in any case, with any whitespace,
-     * anywhere in a line) exactly 5 times. Together with the next check this means no statement anywhere in
-     * the code opens a learned CTE other than the five verbatim lines.</li>
+     * anywhere in a line) exactly {@link #BLEND_STATEMENTS} (6) times. Together with the next check this means
+     * no statement anywhere in the code opens a learned CTE other than the six verbatim lines.</li>
      * <li>The lines that start with {@code WITH learned AS} are, in file order, the unread blend three times
-     * (summary, top, bottom), the window blend, then the learned section. The blend lines are compared with
-     * the Java text by equality, so text appended to a line also fails.</li>
-     * <li>{@code INTEREST_SCORE} occurs exactly 4 times in the whole file, comments included, so a copy in any
-     * comment form is a fifth copy and fails.</li>
-     * <li>The code of the line after each unread or window blend line (the badge line of summary, top, bottom
-     * and window-summary) holds {@code INTEREST_SCORE} once and the item
+     * (summary, top, bottom), the window blend, the learned section, then the engaged blend. The blend lines
+     * are compared with the Java text by equality, so text appended to a line also fails.</li>
+     * <li>{@code INTEREST_SCORE} occurs exactly {@link #BADGE_COPIES} (5) times in the whole file, comments
+     * included, so a copy in any comment form is an extra copy and fails.</li>
+     * <li>The code of the line after each unread, window or engaged blend line (the badge line of summary, top,
+     * bottom, window-summary and engaged) holds {@code INTEREST_SCORE} once and the item
      * {@code , <INTEREST_SCORE> AS interest_score} once, and names {@code interest_score} once.</li>
      * <li>"Code" means the line as {@link #codeOf(String)} returns it: {@code /* *}{@code /} spans removed and
      * any {@code --} tail cut, per line.</li>
@@ -293,29 +444,32 @@ class InterestCalibrationReplaySqlTest {
     private static void assertEveryCopyIsVerbatim(String sql) {
         String unread = InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE);
         String window = InterestScoreQueries.blendCte(WINDOW_SCOPE);
+        String engaged = InterestScoreQueries.blendCte(ENGAGED_SCOPE);
         String code = sql.lines().map(InterestCalibrationReplaySqlTest::codeOf).collect(Collectors.joining("\n"));
         assertThat(BLEND_START.matcher(code).results().count())
                 .as("statements that open the learned CTE in the code, in any case, whitespace or position")
-                .isEqualTo(5);
+                .isEqualTo(BLEND_STATEMENTS);
 
         List<String> labels = sql.lines()
                 .filter(line -> line.startsWith("WITH learned AS"))
                 .map(line -> line.equals(unread) ? "unread"
                         : line.equals(window) ? "window"
+                        : line.equals(engaged) ? "engaged"
                         : line.startsWith(LEARNED_SECTION) ? "learned"
                         : "drifted")
                 .toList();
 
         assertThat(labels).as("kind of each 'WITH learned AS' line, in file order")
-                .containsExactly("unread", "unread", "unread", "window", "learned");
+                .containsExactly("unread", "unread", "unread", "window", "learned", "engaged");
         assertThat(occurrences(sql, InterestScoreQueries.INTEREST_SCORE))
                 .as("verbatim INTEREST_SCORE copies anywhere in the file, comments included")
-                .isEqualTo(4);
+                .isEqualTo(BADGE_COPIES);
 
         List<String> lines = sql.lines().toList();
         int badgeLines = 0;
         for (int i = 0; i < lines.size(); i++) {
-            if (!lines.get(i).equals(unread) && !lines.get(i).equals(window)) {
+            String line = lines.get(i);
+            if (!line.equals(unread) && !line.equals(window) && !line.equals(engaged)) {
                 continue;
             }
             String where = "the line after blend line " + (i + 1);
@@ -331,13 +485,13 @@ class InterestCalibrationReplaySqlTest {
                     .isEqualTo(1);
             badgeLines++;
         }
-        assertThat(badgeLines).as("badge lines checked").isEqualTo(4);
+        assertThat(badgeLines).as("badge lines checked").isEqualTo(BADGE_COPIES);
     }
 
     /**
      * The code of one line: every {@code /* *}{@code /} span is removed (an unclosed {@code /*} runs to the end
      * of the line), then the line is cut at the first {@code --}. It works per line, with no string-literal or
-     * nesting awareness, so a block comment that spans lines counts as code. The four badge lines and five
+     * nesting awareness, so a block comment that spans lines counts as code. The five badge lines and six
      * blend lines hold no {@code --} or {@code /*} today, so it never cuts real SQL on them.
      */
     private static String codeOf(String line) {
@@ -392,15 +546,17 @@ class InterestCalibrationReplaySqlTest {
 
     /**
      * Runs the driver against a dead local port, so a validation bug could never reach a real database.
-     * The password is removed unless {@code env} supplies it.
+     * The password is removed unless {@code env} supplies it. OUT_DIR is this test's {@link #outDir} unless
+     * {@code env} supplies it, so no driver test ever writes under {@code $HOME/.cache}.
      */
-    private static DriverRun runDriver(Map<String, String> env, String... candidates) throws Exception {
+    private DriverRun runDriver(Map<String, String> env, String... candidates) throws Exception {
         ProcessBuilder builder = new ProcessBuilder(
                 Stream.concat(Stream.of("bash", DRIVER.toString()), Stream.of(candidates)).toList());
         Map<String, String> environment = builder.environment();
         environment.remove("MYFEEDER_PG_PASSWORD");
         environment.put("PGHOST", "127.0.0.1");
         environment.put("PGPORT", "1");
+        environment.put("OUT_DIR", outDir.toString());
         environment.putAll(env);
         builder.redirectErrorStream(false);
         builder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
