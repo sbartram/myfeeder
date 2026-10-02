@@ -94,7 +94,7 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [Phase 8] 08-REVIEW.md WR-01 open: `recordQuietly` swallows only `DataAccessException`, so a non-DB failure after `createBookmark` could surface an error and invite a duplicate-bookmark retry; IN-01..IN-06 open (non-blocking)
 - [Phase 8] 08-UI-REVIEW.md 19/24: Forget styled like the "Why N?" toggle (no danger hover), no "Forgetting…" pending label, Open Original buttons stay enabled for URL-less articles
 - [Phase 10] 10-REVIEW-DISPOSITION.md: WR-01 (star-then-vote GET race), WR-02, WR-04 accepted in 10-UAT; board-list badge can lag ≤30s after engagement (accepted); pre-existing WhyBreakdown ESLint setState-in-effect warning
-- [Phase 9] 09-REVIEW-DISPOSITION.md: WR-01, WR-03, IN-01 and IN-04 fixed in Phase 10; WR-02 (replay accepts out-of-range engagement values) stays open for Phase 12, and IN-02 and IN-03 stay open; all non-blocking
+- [Phase 9] 09-REVIEW-DISPOSITION.md: WR-01, WR-03, IN-01 and IN-04 fixed in Phase 10; WR-02 fixed in Phase 12 (12-01), and IN-02 and IN-03 stay open; all non-blocking
 - [Phase 11] 11-REVIEW-DISPOSITION.md: WR-02 (dismiss count/pending state not tied to the clicked row; heading count briefly low after a double dismiss) and IN-01..IN-05 open; non-blocking
 - [Phase 12] Waits on several weeks of prod engagement collected after the Phase 8 release
 - [Phase 2] 02-REVIEW WR-04 (Raindrop createBookmark POST retried) and WR-05 (helm --set secret mangling) still deferred; WR-01..03 closed in Phase 4

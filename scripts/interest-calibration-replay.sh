@@ -52,6 +52,21 @@ for value in "$LEARNED_CAP" "$WINDOW_DAYS"; do
   fi
 done
 
+# Refuses the engagement constants the app refuses to start with (Phase 9 WR-02). Source of truth:
+# MyfeederProperties.Interest.Blend.Engagement.isValid -- keep the two in step; InterestCalibrationReplaySqlTest
+# compares them on a boundary grid. Runs after the numeric regexes, because awk compares non-numbers as strings.
+engagement_ok() {
+  awk -v o="$1" -v s="$2" -v c="$3" -v l="$LEARNED_CAP" \
+    'BEGIN { exit !(c == 0 || (o >= 0 && o < s && s < 1 && c > 0 && c < l)) }'
+}
+for candidate in "$@"; do
+  IFS=: read -r pp high neutral open save cap <<<"$candidate"
+  if ! engagement_ok "${open:-$ENGAGEMENT_OPEN_WEIGHT}" "${save:-$ENGAGEMENT_SAVE_WEIGHT}" "${cap:-$ENGAGEMENT_CAP}"; then
+    echo "invalid engagement constants: $candidate (cap 0, or 0 <= open < save < 1 and 0 < cap < learned-cap)" >&2
+    exit 2
+  fi
+done
+
 if [[ -z "${MYFEEDER_PG_PASSWORD:-}" ]]; then
   echo "MYFEEDER_PG_PASSWORD is required" >&2
   exit 2
