@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -154,6 +155,63 @@ class InterestCalibrationReplayRunTest {
         assertThat(badgesAtCap8.get(s5)).isGreaterThan(badgesAtCap0.get(s5));
     }
 
+    /**
+     * D-07 / D-10: the simulated backfill counts every star and board row as a save under the live rules. At
+     * learn-rate 2, save 0.5 and hinge 0.9 one save adds 0.9 to go's eng_raw: S (starred), B (board only) and O
+     * (opened and starred, counted once as a save) give 2.7. V (voted), U (unscored) and N (negative topic only)
+     * add nothing. The real learned model counts only O's open: 2 x 0.25 x 0.9 = 0.45.
+     */
+    @Test
+    void backfillCountsStarsAndBoardsAsSavesUnderTheLiveRules() throws Exception {
+        long go = insertTopic("replay-run-go", 10);
+        long neg = insertTopic("replay-run-neg", -10);
+        long board = insertBoard("replay-run-board");
+
+        long s = scored(false, go);
+        star(s);
+        long b = scored(false, go);
+        insertBoardArticle(board, b);
+        long o = scored(false, go);
+        insertEngagement(o, "OPEN_ORIGINAL");
+        star(o);
+        long v = scored(false, go);
+        star(v);
+        insertFeedback(v, 1);
+        long u = insertArticle(false);
+        star(u);
+        long n = insertArticle(false);
+        insertScored(n, 2.0, 4);
+        insertTopicScore(n, neg, 0.95);
+        star(n);
+
+        runReplay("100:70:40:0.25:0.5:8");
+        Path tsv = outDir.resolve("replay-pp100-hi70-ne40-op0.25-sv0.5-cap8.tsv");
+
+        Map<Long, String[]> backfill = byTopic(rows(tsv, "backfill-learned"));
+        Map<Long, String[]> learned = byTopic(rows(tsv, "learned"));
+        assertThat(backfill.keySet()).containsExactlyInAnyOrder(go, neg);
+        assertThat(learned.keySet()).containsExactlyInAnyOrder(go, neg);
+
+        assertThat(new BigDecimal(backfill.get(go)[7])).as("go backfill eng_raw").isEqualByComparingTo("2.700");
+        assertThat(new BigDecimal(backfill.get(go)[8])).as("go backfill eng").isEqualByComparingTo("2.700");
+        assertThat(backfill.get(go)[9]).as("go backfill eng_at_cap").isEqualTo("f");
+        assertThat(new BigDecimal(learned.get(go)[7])).as("go real eng_raw").isEqualByComparingTo("0.450");
+        assertThat(new BigDecimal(backfill.get(neg)[7])).as("neg backfill eng_raw").isEqualByComparingTo("0.000");
+        assertThat(new BigDecimal(learned.get(neg)[7])).as("neg real eng_raw").isEqualByComparingTo("0.000");
+
+        List<String[]> summary = rows(tsv, "summary");
+        List<String[]> backfillSummary = rows(tsv, "backfill-summary");
+        assertThat(summary).hasSize(1);
+        assertThat(backfillSummary).hasSize(1);
+        assertThat(backfillSummary.get(0)).as("backfill-summary columns").hasSameSizeAs(summary.get(0));
+        assertThat(backfillSummary.get(0)[4]).as("scored_unread").isEqualTo(summary.get(0)[4]).isEqualTo("5");
+    }
+
+    /** Learned-shaped rows keyed by topic id (column 2). */
+    private static Map<Long, String[]> byTopic(List<String[]> rows) {
+        return rows.stream().collect(Collectors.toMap(r -> Long.parseLong(r[1]), r -> r));
+    }
+
     /** Checks one replay file's engaged section against displayScores under the same constants; returns its badges. */
     private Map<Long, Integer> assertEngagedSectionMatchesTheApp(Path tsv, double cap, Set<Long> expectedIds,
                                                                  Set<Long> read, long voted) throws IOException {
@@ -257,5 +315,17 @@ class InterestCalibrationReplayRunTest {
 
     private void insertEngagement(long articleId, String kind) {
         jdbc.update("INSERT INTO article_engagement (article_id, kind) VALUES (?, ?)", articleId, kind);
+    }
+
+    private void star(long articleId) {
+        jdbc.update("UPDATE article SET starred = true WHERE id = ?", articleId);
+    }
+
+    private long insertBoard(String name) {
+        return jdbc.queryForObject("INSERT INTO board (name) VALUES (?) RETURNING id", Long.class, name);
+    }
+
+    private void insertBoardArticle(long boardId, long articleId) {
+        jdbc.update("INSERT INTO board_article (board_id, article_id) VALUES (?, ?)", boardId, articleId);
     }
 }

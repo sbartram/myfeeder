@@ -41,14 +41,47 @@ class InterestCalibrationReplaySqlTest {
     /** The engaged cross-check scope (Phase 12, D-13): every engaged article, read or unread. */
     private static final String ENGAGED_SCOPE = "a.id IN (SELECT g.article_id FROM article_engagement g)";
 
-    /** Statements that open a learned CTE: three unread blends, the window blend, learned and engaged. */
-    private static final int BLEND_STATEMENTS = 6;
+    /**
+     * Statements that open a learned CTE: three unread blends, the window blend, learned, engaged, and the
+     * two simulated-backfill statements (backfill-summary and backfill-learned).
+     */
+    private static final int BLEND_STATEMENTS = 8;
 
     /** Verbatim INTEREST_SCORE copies in the file, which is also the number of badge lines. */
-    private static final int BADGE_COPIES = 5;
+    private static final int BADGE_COPIES = 6;
 
     /** The learned section's opening text, as {@code replaysTheLearnedModelVerbatim} builds it. */
     private static final String LEARNED_SECTION = InterestScoreQueries.LEARNED_CTE + " SELECT 'learned' AS section";
+
+    /** The app's engaged CTE, cut from LEARNED_CTE: from {@code engaged AS (} up to {@code , eng_learned AS (}. */
+    private static final String ORIGINAL_ENGAGED = InterestScoreQueries.LEARNED_CTE.substring(
+            InterestScoreQueries.LEARNED_CTE.indexOf("engaged AS ("),
+            InterestScoreQueries.LEARNED_CTE.indexOf(", eng_learned AS ("));
+
+    /**
+     * The simulated-backfill engaged CTE (Phase 12, D-07): the real engagement rows unioned with every starred
+     * article and every board row as a save, one MAX strength per article, with the original vote-exclusion tail.
+     */
+    private static final String BACKFILL_ENGAGED = "engaged AS (SELECT g.article_id, MAX(g.strength) AS strength "
+            + "FROM (SELECT e.article_id, CASE WHEN e.kind = 'OPEN_ORIGINAL' THEN CAST(:engagementOpenWeight AS float8) "
+            + "ELSE CAST(:engagementSaveWeight AS float8) END AS strength FROM article_engagement e "
+            + "UNION ALL SELECT sa.id, CAST(:engagementSaveWeight AS float8) FROM article sa WHERE sa.starred "
+            + "UNION ALL SELECT ba.article_id, CAST(:engagementSaveWeight AS float8) FROM board_article ba) g "
+            + "WHERE NOT EXISTS (SELECT 1 FROM article_feedback f WHERE f.article_id = g.article_id) "
+            + "GROUP BY g.article_id)";
+
+    /** The backfill-summary blend line (D-08): the unread blend with only the engaged CTE replaced. */
+    private static final String BACKFILL = InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE)
+            .replace(ORIGINAL_ENGAGED, BACKFILL_ENGAGED);
+
+    /** The backfill-learned section's opening text: LEARNED_CTE with only the engaged CTE replaced. */
+    private static final String BACKFILL_LEARNED_SECTION =
+            InterestScoreQueries.LEARNED_CTE.replace(ORIGINAL_ENGAGED, BACKFILL_ENGAGED)
+                    + " SELECT 'backfill-learned' AS section";
+
+    /** The vote-exclusion tail that the original and the backfill engaged CTE share (D-07). */
+    private static final String VOTE_EXCLUSION_TAIL =
+            " WHERE NOT EXISTS (SELECT 1 FROM article_feedback f WHERE f.article_id = g.article_id) GROUP BY g.article_id)";
 
     private static final Pattern WRITE_KEYWORD = Pattern.compile(
             "(?i)\\b(insert|update|delete|create|drop|alter|truncate|grant|copy|into)\\b");
@@ -296,7 +329,9 @@ class InterestCalibrationReplaySqlTest {
                 new Copy("unread", InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE), 3),
                 new Copy("window", InterestScoreQueries.blendCte(WINDOW_SCOPE), 1),
                 new Copy("learned", LEARNED_SECTION, 1),
-                new Copy("engaged", InterestScoreQueries.blendCte(ENGAGED_SCOPE), 1));
+                new Copy("engaged", InterestScoreQueries.blendCte(ENGAGED_SCOPE), 1),
+                new Copy("backfill", BACKFILL, 1),
+                new Copy("backfill-learned", BACKFILL_LEARNED_SECTION, 1));
         for (Copy copy : copies) {
             assertThat(occurrences(sql, copy.needle())).as(copy.label() + " copies").isEqualTo(copy.expected());
             for (int i = 0; i < copy.expected(); i++) {
@@ -422,19 +457,82 @@ class InterestCalibrationReplaySqlTest {
     }
 
     /**
+     * D-08: the simulated backfill differs from the app blend only in the engaged CTE. The original engaged CTE
+     * occurs once in each Java source, the file holds each backfill text once, the backfill CTE keeps the
+     * original's vote-exclusion tail and reads the real engagement rows, and removing the two engaged CTEs leaves
+     * equal text.
+     */
+    @Test
+    void backfillDiffersFromTheAppBlendOnlyInTheEngagedCte() throws IOException {
+        String sql = Files.readString(SQL);
+        String unread = InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE);
+
+        assertThat(ORIGINAL_ENGAGED).startsWith("engaged AS (").endsWith(VOTE_EXCLUSION_TAIL);
+        assertThat(occurrences(InterestScoreQueries.LEARNED_CTE, ORIGINAL_ENGAGED)).as("in LEARNED_CTE").isEqualTo(1);
+        assertThat(occurrences(unread, ORIGINAL_ENGAGED)).as("in the unread blend").isEqualTo(1);
+        assertThat(BACKFILL).isNotEqualTo(unread);
+
+        assertThat(occurrences(sql, BACKFILL)).as("backfill blend lines").isEqualTo(1);
+        assertThat(occurrences(sql, BACKFILL_LEARNED_SECTION)).as("backfill-learned lines").isEqualTo(1);
+
+        assertThat(BACKFILL_ENGAGED).endsWith(VOTE_EXCLUSION_TAIL);
+        assertThat(BACKFILL_ENGAGED).contains("FROM article_engagement", "WHERE sa.starred", "FROM board_article ba");
+        assertThat(BACKFILL.replace(BACKFILL_ENGAGED, "")).isEqualTo(unread.replace(ORIGINAL_ENGAGED, ""));
+        assertThat(BACKFILL_LEARNED_SECTION.replace(BACKFILL_ENGAGED, "").replace("'backfill-learned'", "'learned'"))
+                .isEqualTo(LEARNED_SECTION.replace(ORIGINAL_ENGAGED, ""));
+    }
+
+    /**
+     * v0.2.1 lesson 4: each way round the backfill exception fails the guard. A backfill CTE that lost the vote
+     * exclusion, a second backfill line, a backfill line replaced by the plain unread blend, and a backfill-learned
+     * line drifted outside the engaged span.
+     */
+    @Test
+    void aBackfillBypassFails() throws IOException {
+        String sql = Files.readString(SQL);
+        assertThatCode(() -> assertEveryCopyIsVerbatim(sql)).doesNotThrowAnyException();
+
+        String unread = InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE);
+        String voteExclusion = " WHERE NOT EXISTS (SELECT 1 FROM article_feedback f WHERE f.article_id = g.article_id)";
+        assertThat(occurrences(BACKFILL, voteExclusion)).isEqualTo(1);
+        String noVoteExclusion = BACKFILL.replace(voteExclusion, "");
+
+        String learnedLine = sql.lines().filter(line -> line.startsWith(BACKFILL_LEARNED_SECTION))
+                .findFirst().orElseThrow();
+        int eff2 = learnedLine.indexOf("eff2 AS (") + "eff2 AS (".length();
+        assertThat(eff2).isGreaterThan(learnedLine.indexOf(", eng_learned AS ("));
+        assertThat(learnedLine.charAt(eff2)).isEqualTo('S');
+        String driftedLearnedLine = learnedLine.substring(0, eff2) + 's' + learnedLine.substring(eff2 + 1);
+
+        Map<String, String> variants = new LinkedHashMap<>();
+        variants.put("backfill CTE without the vote exclusion", sql.replace(BACKFILL, noVoteExclusion));
+        variants.put("a second backfill line", sql + "\n" + BACKFILL + "\n");
+        variants.put("backfill line replaced by the unread blend", sql.replace(BACKFILL, unread));
+        variants.put("backfill-learned drifted outside the engaged span", sql.replace(learnedLine, driftedLearnedLine));
+
+        variants.forEach((name, variant) -> assertThat(variant).as(name).isNotEqualTo(sql));
+        SoftAssertions.assertSoftly(softly -> variants.forEach((name, variant) -> softly
+                .assertThatCode(() -> assertEveryCopyIsVerbatim(variant))
+                .as(name)
+                .isInstanceOf(AssertionError.class)));
+    }
+
+    /**
      * Checks, and only checks, the following:
      * <ol>
      * <li>The code of the file opens a learned CTE ({@code with learned as} in any case, with any whitespace,
-     * anywhere in a line) exactly {@link #BLEND_STATEMENTS} (6) times. Together with the next check this means
-     * no statement anywhere in the code opens a learned CTE other than the six verbatim lines.</li>
+     * anywhere in a line) exactly {@link #BLEND_STATEMENTS} (8) times. Together with the next check this means
+     * no statement anywhere in the code opens a learned CTE other than the eight verbatim lines.</li>
      * <li>The lines that start with {@code WITH learned AS} are, in file order, the unread blend three times
-     * (summary, top, bottom), the window blend, the learned section, then the engaged blend. The blend lines
-     * are compared with the Java text by equality, so text appended to a line also fails.</li>
-     * <li>{@code INTEREST_SCORE} occurs exactly {@link #BADGE_COPIES} (5) times in the whole file, comments
+     * (summary, top, bottom), the window blend, the learned section, the engaged blend, the backfill blend
+     * ({@link #BACKFILL}) and the backfill-learned section ({@link #BACKFILL_LEARNED_SECTION}). The blend lines
+     * are compared with the Java text by equality, so text appended to a line also fails. The two backfill texts
+     * differ from the app's only in the engaged CTE (D-08).</li>
+     * <li>{@code INTEREST_SCORE} occurs exactly {@link #BADGE_COPIES} (6) times in the whole file, comments
      * included, so a copy in any comment form is an extra copy and fails.</li>
-     * <li>The code of the line after each unread, window or engaged blend line (the badge line of summary, top,
-     * bottom, window-summary and engaged) holds {@code INTEREST_SCORE} once and the item
-     * {@code , <INTEREST_SCORE> AS interest_score} once, and names {@code interest_score} once.</li>
+     * <li>The code of the line after each unread, window, engaged or backfill blend line (the badge line of
+     * summary, top, bottom, window-summary, engaged and backfill-summary) holds {@code INTEREST_SCORE} once and
+     * the item {@code , <INTEREST_SCORE> AS interest_score} once, and names {@code interest_score} once.</li>
      * <li>"Code" means the line as {@link #codeOf(String)} returns it: {@code /* *}{@code /} spans removed and
      * any {@code --} tail cut, per line.</li>
      * </ol>
@@ -455,12 +553,15 @@ class InterestCalibrationReplaySqlTest {
                 .map(line -> line.equals(unread) ? "unread"
                         : line.equals(window) ? "window"
                         : line.equals(engaged) ? "engaged"
+                        : line.equals(BACKFILL) ? "backfill"
+                        : line.startsWith(BACKFILL_LEARNED_SECTION) ? "backfill-learned"
                         : line.startsWith(LEARNED_SECTION) ? "learned"
                         : "drifted")
                 .toList();
 
         assertThat(labels).as("kind of each 'WITH learned AS' line, in file order")
-                .containsExactly("unread", "unread", "unread", "window", "learned", "engaged");
+                .containsExactly("unread", "unread", "unread", "window", "learned", "engaged",
+                        "backfill", "backfill-learned");
         assertThat(occurrences(sql, InterestScoreQueries.INTEREST_SCORE))
                 .as("verbatim INTEREST_SCORE copies anywhere in the file, comments included")
                 .isEqualTo(BADGE_COPIES);
@@ -469,7 +570,7 @@ class InterestCalibrationReplaySqlTest {
         int badgeLines = 0;
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
-            if (!line.equals(unread) && !line.equals(window) && !line.equals(engaged)) {
+            if (!line.equals(unread) && !line.equals(window) && !line.equals(engaged) && !line.equals(BACKFILL)) {
                 continue;
             }
             String where = "the line after blend line " + (i + 1);
@@ -491,7 +592,7 @@ class InterestCalibrationReplaySqlTest {
     /**
      * The code of one line: every {@code /* *}{@code /} span is removed (an unclosed {@code /*} runs to the end
      * of the line), then the line is cut at the first {@code --}. It works per line, with no string-literal or
-     * nesting awareness, so a block comment that spans lines counts as code. The five badge lines and six
+     * nesting awareness, so a block comment that spans lines counts as code. The six badge lines and eight
      * blend lines hold no {@code --} or {@code /*} today, so it never cuts real SQL on them.
      */
     private static String codeOf(String line) {
