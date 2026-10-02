@@ -107,6 +107,7 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [Phase 7] 07-REVIEW-DISPOSITION.md: 12 findings open and non-blocking (e.g. WR-01 breaker log prints "-1.0%" rates on OPEN_TO_HALF_OPEN/HALF_OPEN_TO_CLOSED; IN-01 70/40 first-paint badge flash; WR-05/IN-10 drift-guard advisories needing non-standard SQL spellings)
 - [Phase 7] trufflehog pre-push stage is configured but only the pre-commit hook is installed in this clone (`pre-commit install --hook-type pre-push`)
 - 12-03 data floor unmet (counted 8/30, topics 0/3) — hold chosen 2026-10-02; re-run /gsd-execute-phase 12 after more engagement on covered articles, or on/after 2026-11-11 for the D-03 fallback
+  - Precheck 2026-10-02T21:08Z (read-only floor query, no executor dispatch): counted 13/30, topics 0/3, hold kept. Every counted article scores ≤ 0.10 on all non-negative topics and is read, so it sits outside Re-score scope and can never add a topic; 74 unread scored articles clear 0.5 on 5 non-negative topics. Engage (without voting) about 17 more articles from the top of Priority across ≥ 3 topics
 
 ### Quick Tasks Completed
 
