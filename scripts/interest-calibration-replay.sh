@@ -2,20 +2,26 @@
 # Replays the Priority blend for one or more candidate constant sets (Phase 7, D-09 / OPS-02).
 # Read-only: every psql session runs with default_transaction_read_only=on.
 #
-# Usage: scripts/interest-calibration-replay.sh PP:HIGH:NEUTRAL [PP:HIGH:NEUTRAL ...]
+# Usage: scripts/interest-calibration-replay.sh PP:HIGH:NEUTRAL[:OPEN:SAVE:CAP] [...]
 #   PP       profile points
 #   HIGH     badge at or above this is high
 #   NEUTRAL  badge at or above this (and below HIGH) is neutral
+#   OPEN     strength of an open (default: ENGAGEMENT_OPEN_WEIGHT)
+#   SAVE     strength of a save (default: ENGAGEMENT_SAVE_WEIGHT)
+#   CAP      engagement cap per topic, 0 = engagement off (default: ENGAGEMENT_CAP)
+#   OPEN, SAVE and CAP are given together or not at all.
 #
 # Env: MYFEEDER_PG_PASSWORD (required), PGHOST (pg.bartram.org), PGPORT (5432), PGUSER (myfeeder),
 #      PGDATABASE (myfeeder), LEARN_RATE (2), LEARNED_CAP (20), WINDOW_DAYS (14),
 #      ENGAGEMENT_OPEN_WEIGHT (0.25), ENGAGEMENT_SAVE_WEIGHT (0.5), ENGAGEMENT_CAP (8),
-#      OUT_DIR ($HOME/.cache/myfeeder-phase07/replay)
-# Output: one tab-separated file per candidate, $OUT_DIR/replay-pp<PP>-hi<HIGH>-ne<NEUTRAL>.tsv
+#      OUT_DIR ($HOME/.cache/myfeeder-phase12/replay)
+# Output: one tab-separated file per candidate,
+#   $OUT_DIR/replay-pp<PP>-hi<HIGH>-ne<NEUTRAL>-op<OPEN>-sv<SAVE>-cap<CAP>.tsv
+#   written to <file>.tmp and renamed only after psql succeeds, so a failed run leaves no file.
 set -euo pipefail
 
 if [[ $# -eq 0 ]]; then
-  echo "usage: $0 PP:HIGH:NEUTRAL [PP:HIGH:NEUTRAL ...]" >&2
+  echo "usage: $0 PP:HIGH:NEUTRAL[:OPEN:SAVE:CAP] [PP:HIGH:NEUTRAL[:OPEN:SAVE:CAP] ...]" >&2
   exit 2
 fi
 
@@ -28,7 +34,7 @@ WINDOW_DAYS="${WINDOW_DAYS:-14}"
 
 # Every value becomes SQL text through psql -v, so validate all of them before any connection.
 for candidate in "$@"; do
-  if [[ ! "$candidate" =~ ^[0-9]+:[0-9]+:[0-9]+$ ]]; then
+  if [[ ! "$candidate" =~ ^[0-9]+:[0-9]+:[0-9]+(:[0-9]+(\.[0-9]+)?:[0-9]+(\.[0-9]+)?:[0-9]+(\.[0-9]+)?)?$ ]]; then
     echo "invalid candidate: $candidate" >&2
     exit 2
   fi
@@ -58,20 +64,29 @@ export PGPORT="${PGPORT:-5432}"
 export PGUSER="${PGUSER:-myfeeder}"
 export PGDATABASE="${PGDATABASE:-myfeeder}"
 
-OUT_DIR="${OUT_DIR:-$HOME/.cache/myfeeder-phase07/replay}"
+OUT_DIR="${OUT_DIR:-$HOME/.cache/myfeeder-phase12/replay}"
 umask 077
 mkdir -p "$OUT_DIR"
 
 SQL_FILE="$(dirname "$0")/interest-calibration-replay.sql"
 
 for candidate in "$@"; do
-  IFS=: read -r pp high neutral <<<"$candidate"
-  out="$OUT_DIR/replay-pp${pp}-hi${high}-ne${neutral}.tsv"
+  IFS=: read -r pp high neutral open save cap <<<"$candidate"
+  open="${open:-$ENGAGEMENT_OPEN_WEIGHT}"
+  save="${save:-$ENGAGEMENT_SAVE_WEIGHT}"
+  cap="${cap:-$ENGAGEMENT_CAP}"
+  out="$OUT_DIR/replay-pp${pp}-hi${high}-ne${neutral}-op${open}-sv${save}-cap${cap}.tsv"
+  status=0
   psql -X -A -F $'\t' -P footer=off -v ON_ERROR_STOP=1 \
     -v profilePoints="$pp" -v learnRate="$LEARN_RATE" -v learnedCap="$LEARNED_CAP" \
-    -v engagementOpenWeight="$ENGAGEMENT_OPEN_WEIGHT" -v engagementSaveWeight="$ENGAGEMENT_SAVE_WEIGHT" \
-    -v engagementCap="$ENGAGEMENT_CAP" \
+    -v engagementOpenWeight="$open" -v engagementSaveWeight="$save" \
+    -v engagementCap="$cap" \
     -v tierHigh="$high" -v tierNeutral="$neutral" -v windowDays="$WINDOW_DAYS" \
-    -f "$SQL_FILE" > "$out"
-  echo "replayed pp=$pp high=$high neutral=$neutral -> $out"
+    -f "$SQL_FILE" > "$out.tmp" || status=$?
+  if [[ $status -ne 0 ]]; then
+    rm -f "$out.tmp"
+    exit "$status"
+  fi
+  mv "$out.tmp" "$out"
+  echo "replayed pp=$pp high=$high neutral=$neutral open=$open save=$save cap=$cap -> $out"
 done
