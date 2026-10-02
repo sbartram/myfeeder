@@ -1,0 +1,30 @@
+{
+  "planPath": "docs/superpowers/plans/2026-09-29-metallb-annotation-external-services.md",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "Task 1: Change the annotation key in the repo",
+      "status": "pending",
+      "description": "**Goal:** The repo's deployment source renders `metallb.io/loadBalancerIPs: <IP>` for `$SVC` and contains no `metallb.universe.tf/` key.\n\n**Files:**\n- Modify: whichever file sets the annotation. Usually `values.yaml` (`service.annotations`) or `chart/templates/service.yaml`, and possibly an environment values file such as `values-prod.yaml`. Step 2 finds them.\n\n**Acceptance Criteria:**\n- [ ] The live row still matches the table (IP, release, and the old key is present) before any edit\n- [ ] `grep -rn 'metallb.universe.tf/'` over the deployment source (excluding historical docs) returns nothing\n- [ ] `helm template` of the release, rendered with the same values files the deploy uses, prints `metallb.io/loadBalancerIPs` with value `$IP` on the `$SVC` Service\n- [ ] The change is committed on `chore/metallb-annotation`\n\n**Verify:** `helm template $RELEASE <chart-path> -n $NS -f <values files the deploy uses> | grep -n 'metallb\\.'` \u2192 only `metallb.io/loadBalancerIPs: ...$IP` lines\n\n```json:metadata\n{\"files\": [\"values.yaml or chart/templates/service.yaml (located in Step 2)\"], \"verifyCommand\": \"helm template $RELEASE <chart-path> -n $NS -f <values files> | grep -n 'metallb\\\\.'\", \"modelTier\": \"standard\", \"acceptanceCriteria\": [\"The live row still matches the table (IP, release, and the old key is present) before any edit\", \"`grep -rn 'metallb.universe.tf/'` over the deployment source (excluding historical docs) returns nothing\", \"`helm template` of the release, rendered with the same values files the deploy uses, prints `metallb.io/loadBalancerIPs` with value `$IP` on the `$SVC` Service\", \"The change is committed on `chore/metallb-annotation`\"]}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Switch the live Service in place",
+      "status": "pending",
+      "description": "**Goal:** The live `$SVC` Service carries only `metallb.io/loadBalancerIPs=$IP`, keeps `$IP`, and still answers.\n\n**Files:** none (cluster state only).\n\n**Acceptance Criteria:**\n- [ ] `kubectl get svc -n $NS $SVC -o jsonpath='{.status.loadBalancer.ingress[0].ip}'` prints `$IP`, both straight after the patch and 30 seconds later\n- [ ] The Service annotations contain `metallb.io/loadBalancerIPs` and no key starting with `metallb.universe.tf/`\n- [ ] The row's reachability check returns the same HTTP code as the baseline recorded in Step 1 (don't expect 200 everywhere: vidtag's root returned 500 on 2026-09-29)\n- [ ] No `deprecatedAnnotation` event for `$NS` has a `lastTimestamp` later than the patch time\n\n**Verify:** `kubectl get svc -n $NS $SVC -o jsonpath='{.status.loadBalancer.ingress[0].ip} {.metadata.annotations}'` \u2192 `$IP` and only `metallb.io/*` keys\n\n```json:metadata\n{\"files\": [], \"verifyCommand\": \"kubectl get svc -n $NS $SVC -o jsonpath='{.status.loadBalancer.ingress[0].ip} {.metadata.annotations}'\", \"modelTier\": \"standard\", \"note\": \"live cluster change; rollback command in Step 3\", \"acceptanceCriteria\": [\"`kubectl get svc -n $NS $SVC -o jsonpath='{.status.loadBalancer.ingress[0].ip}'` prints `$IP`, both straight after the patch and 30 seconds later\", \"The Service annotations contain `metallb.io/loadBalancerIPs` and no key starting with `metallb.universe.tf/`\", \"The row's reachability check returns the same HTTP code as the baseline recorded in Step 1 (don't expect 200 everywhere: vidtag's root returned 500 on 2026-09-29)\", \"No `deprecatedAnnotation` event for `$NS` has a `lastTimestamp` later than the patch time\"]}\n```",
+      "blockedBy": [
+        1
+      ]
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Merge and record",
+      "status": "pending",
+      "description": "**Goal:** The key change is on the repo's default branch, and the gitops-deploy backlog shows this service as done.\n\n**Files:**\n- Modify (in the **gitops-deploy** repo, not this one): `docs/backlog.md`, the entry \"MetalLB `metallb.universe.tf/*` annotations still used outside this repo\"\n\n**Acceptance Criteria:**\n- [ ] `chore/metallb-annotation` is merged to the default branch with `--no-ff`, and the branch is deleted\n- [ ] In gitops-deploy `docs/backlog.md`, `$SVC` is removed from the entry's list of services. If it was the last one, the whole entry is deleted.\n- [ ] Nothing is pushed unless the operator asked\n\n**Verify:** `git log --oneline --merges -1` \u2192 the merge commit; `grep -n \"$SVC\" <gitops-deploy>/docs/backlog.md` \u2192 no match in the MetalLB entry\n\n```json:metadata\n{\"files\": [\"<gitops-deploy>/docs/backlog.md\"], \"verifyCommand\": \"git log --oneline --merges -1\", \"modelTier\": \"mechanical\", \"acceptanceCriteria\": [\"`chore/metallb-annotation` is merged to the default branch with `--no-ff`, and the branch is deleted\", \"In gitops-deploy `docs/backlog.md`, `$SVC` is removed from the entry's list of services. If it was the last one, the whole entry is deleted.\", \"Nothing is pushed unless the operator asked\"]}\n```",
+      "blockedBy": [
+        2
+      ]
+    }
+  ],
+  "lastUpdated": "2026-09-29T23:09:29-04:00"
+}

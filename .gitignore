@@ -71,3 +71,4 @@ pub.sh
 .planning/state.json
 .planning/milestone.lock
 .playwright-mcp/
+.claude/HANDOFF.md
