@@ -59,6 +59,10 @@ class InterestCalibrationReplayRunTest {
     private static final Path DRIVER = Path.of("scripts/interest-calibration-replay.sh");
     private static final String FEED_URL = "https://example.test/replay-run-feed.xml";
 
+    /** The default engagement constants at tiers 70 / 40, and the file the driver writes for them. */
+    private static final String CANDIDATE = "100:70:40:0.25:0.5:8";
+    private static final String CANDIDATE_TSV = "replay-pp100-hi70-ne40-op0.25-sv0.5-cap8.tsv";
+
     @Autowired private JdbcClient jdbcClient;
     @Autowired private JdbcTemplate jdbc;
     @Autowired private PostgreSQLContainer postgres;
@@ -163,6 +167,42 @@ class InterestCalibrationReplayRunTest {
      */
     @Test
     void backfillCountsStarsAndBoardsAsSavesUnderTheLiveRules() throws Exception {
+        BackfillFixture fx = backfillFixture();
+        long go = fx.go();
+        long neg = fx.neg();
+
+        runReplay(CANDIDATE);
+        Path tsv = outDir.resolve(CANDIDATE_TSV);
+
+        Map<Long, String[]> backfill = byTopic(rows(tsv, "backfill-learned"));
+        Map<Long, String[]> learned = byTopic(rows(tsv, "learned"));
+        assertThat(backfill.keySet()).containsExactlyInAnyOrder(go, neg);
+        assertThat(learned.keySet()).containsExactlyInAnyOrder(go, neg);
+
+        assertThat(new BigDecimal(backfill.get(go)[7])).as("go backfill eng_raw").isEqualByComparingTo("2.700");
+        assertThat(new BigDecimal(backfill.get(go)[8])).as("go backfill eng").isEqualByComparingTo("2.700");
+        assertThat(backfill.get(go)[9]).as("go backfill eng_at_cap").isEqualTo("f");
+        assertThat(new BigDecimal(learned.get(go)[7])).as("go real eng_raw").isEqualByComparingTo("0.450");
+        assertThat(new BigDecimal(backfill.get(neg)[7])).as("neg backfill eng_raw").isEqualByComparingTo("0.000");
+        assertThat(new BigDecimal(learned.get(neg)[7])).as("neg real eng_raw").isEqualByComparingTo("0.000");
+
+        List<String[]> summary = rows(tsv, "summary");
+        List<String[]> backfillSummary = rows(tsv, "backfill-summary");
+        assertThat(summary).hasSize(1);
+        assertThat(backfillSummary).hasSize(1);
+        assertThat(backfillSummary.get(0)).as("backfill-summary columns").hasSameSizeAs(summary.get(0));
+        assertThat(backfillSummary.get(0)[4]).as("scored_unread").isEqualTo(summary.get(0)[4]).isEqualTo("5");
+    }
+
+    /** The S, B, O, V, U and N articles of the backfill fixture and its two topics. */
+    private record BackfillFixture(long go, long neg, long s, long b, long o, long v, long u, long n) {}
+
+    /**
+     * Topics go (+10) and neg (-10). S: SCORED, go 0.95, starred. B: SCORED, go 0.95, on a board. O: SCORED,
+     * go 0.95, opened and starred. V: SCORED, go 0.95, starred, +1 vote. U: starred, no score row. N: SCORED,
+     * neg 0.95 only, starred.
+     */
+    private BackfillFixture backfillFixture() {
         long go = insertTopic("replay-run-go", 10);
         long neg = insertTopic("replay-run-neg", -10);
         long board = insertBoard("replay-run-board");
@@ -183,28 +223,147 @@ class InterestCalibrationReplayRunTest {
         insertScored(n, 2.0, 4);
         insertTopicScore(n, neg, 0.95);
         star(n);
+        return new BackfillFixture(go, neg, s, b, o, v, u, n);
+    }
 
-        runReplay("100:70:40:0.25:0.5:8");
-        Path tsv = outDir.resolve("replay-pp100-hi70-ne40-op0.25-sv0.5-cap8.tsv");
+    /** backfill-pool: 6 starred or boarded, O already engaged, 5 added, of which S, B and N are SCORED and unvoted. */
+    @Test
+    void backfillPoolCountsMatchTheFixture() throws Exception {
+        backfillFixture();
 
-        Map<Long, String[]> backfill = byTopic(rows(tsv, "backfill-learned"));
-        Map<Long, String[]> learned = byTopic(rows(tsv, "learned"));
-        assertThat(backfill.keySet()).containsExactlyInAnyOrder(go, neg);
-        assertThat(learned.keySet()).containsExactlyInAnyOrder(go, neg);
+        runReplay(CANDIDATE);
 
-        assertThat(new BigDecimal(backfill.get(go)[7])).as("go backfill eng_raw").isEqualByComparingTo("2.700");
-        assertThat(new BigDecimal(backfill.get(go)[8])).as("go backfill eng").isEqualByComparingTo("2.700");
-        assertThat(backfill.get(go)[9]).as("go backfill eng_at_cap").isEqualTo("f");
-        assertThat(new BigDecimal(learned.get(go)[7])).as("go real eng_raw").isEqualByComparingTo("0.450");
-        assertThat(new BigDecimal(backfill.get(neg)[7])).as("neg backfill eng_raw").isEqualByComparingTo("0.000");
-        assertThat(new BigDecimal(learned.get(neg)[7])).as("neg real eng_raw").isEqualByComparingTo("0.000");
+        List<String[]> pool = rows(outDir.resolve(CANDIDATE_TSV), "backfill-pool");
+        assertThat(pool).hasSize(1);
+        assertThat(pool.get(0)).containsExactly("backfill-pool", "6", "1", "5", "3");
+    }
 
-        List<String[]> summary = rows(tsv, "summary");
-        List<String[]> backfillSummary = rows(tsv, "backfill-summary");
-        assertThat(summary).hasSize(1);
-        assertThat(backfillSummary).hasSize(1);
-        assertThat(backfillSummary.get(0)).as("backfill-summary columns").hasSameSizeAs(summary.get(0));
-        assertThat(backfillSummary.get(0)[4]).as("scored_unread").isEqualTo(summary.get(0)[4]).isEqualTo("5");
+    /**
+     * D-09: the dormant row counts distinct engaged articles. E1 OPEN_ORIGINAL SCORED unread; E2 STAR SCORED voted;
+     * E3 BOARD with no score row, read; E4 RAINDROP FAILED; E5 OPEN_ORIGINAL and STAR, SKIPPED, published 30 days
+     * ago; E6 STAR SCORED read.
+     */
+    @Test
+    void dormantAndKindCountsMatchTheFixture() throws Exception {
+        long e1 = insertArticle(false);
+        insertScored(e1, 2.0, 4);
+        insertEngagement(e1, "OPEN_ORIGINAL");
+        long e2 = insertArticle(false);
+        insertScored(e2, 2.0, 4);
+        insertEngagement(e2, "STAR");
+        insertFeedback(e2, 1);
+        long e3 = insertArticle(true);
+        insertEngagement(e3, "BOARD");
+        long e4 = insertArticle(false);
+        insertScoreRow(e4, "FAILED");
+        insertEngagement(e4, "RAINDROP");
+        long e5 = insertArticle(false, now.minus(Duration.ofDays(30)));
+        insertScoreRow(e5, "SKIPPED");
+        insertEngagement(e5, "OPEN_ORIGINAL");
+        insertEngagement(e5, "STAR");
+        long e6 = insertArticle(true);
+        insertScored(e6, 2.0, 4);
+        insertEngagement(e6, "STAR");
+
+        runReplay(CANDIDATE);
+        Path tsv = outDir.resolve(CANDIDATE_TSV);
+
+        List<String[]> dormant = rows(tsv, "dormant");
+        assertThat(dormant).hasSize(1);
+        assertThat(dormant.get(0)).containsExactly("dormant", "6", "3", "2", "1", "3", "1", "1", "1", "1", "1", "50.0");
+
+        assertThat(rows(tsv, "dormant-kind")).containsExactly(
+                new String[] {"dormant-kind", "BOARD", "1", "1"},
+                new String[] {"dormant-kind", "OPEN_ORIGINAL", "2", "1"},
+                new String[] {"dormant-kind", "RAINDROP", "1", "1"},
+                new String[] {"dormant-kind", "STAR", "3", "1"});
+    }
+
+    /**
+     * D-02 / CAL-03 boundary: the floor is met at exactly 30 counted articles and 3 topics. A voted engaged article
+     * raises neither count, and neither a noul of exactly 0.5 nor a negative-base topic counts as a topic.
+     */
+    @Test
+    void floorIsMetExactlyAtThirtyCountedAndThreeTopics() throws Exception {
+        long t1 = insertTopic("replay-run-t1", 10);
+        long t2 = insertTopic("replay-run-t2", 10);
+        long t3 = insertTopic("replay-run-t3", 10);
+        long neg = insertTopic("replay-run-neg", -10);
+        long edge = insertTopic("replay-run-edge", 10);
+
+        List<Long> counted = new ArrayList<>();
+        for (int i = 0; i < 29; i++) {
+            counted.add(floorArticle(t1, t2, t3));
+        }
+        long voted = floorArticle(t1, t2, t3);
+        insertFeedback(voted, 1);
+
+        assertThat(floorRow()).containsExactly("floor", "29", "3", "f");
+
+        counted.add(floorArticle(t1, t2, t3));
+        assertThat(floorRow()).containsExactly("floor", "30", "3", "t");
+
+        jdbc.update("DELETE FROM article_topic_score WHERE topic_id = ?", t3);
+        for (long id : counted) {
+            insertTopicScore(id, neg, 0.9);
+            insertTopicScore(id, edge, 0.5);
+        }
+        insertTopicScore(voted, edge, 0.9);
+        assertThat(floorRow()).containsExactly("floor", "30", "2", "f");
+    }
+
+    /** One OPEN_ORIGINAL-engaged SCORED article that judged each topic at noul 0.9. */
+    private long floorArticle(long... topics) {
+        long id = insertArticle(false);
+        insertScored(id, 2.0, 4);
+        for (long topic : topics) {
+            insertTopicScore(id, topic, 0.9);
+        }
+        insertEngagement(id, "OPEN_ORIGINAL");
+        return id;
+    }
+
+    /** Runs the replay and returns its single floor row. */
+    private String[] floorRow() throws Exception {
+        runReplay(CANDIDATE);
+        List<String[]> floor = rows(outDir.resolve(CANDIDATE_TSV), "floor");
+        assertThat(floor).hasSize(1);
+        return floor.get(0);
+    }
+
+    /**
+     * D-04: eng_articles counts the articles in the statement's engaged CTE that are SCORED and match the topic
+     * above noul 0.5. go is matched by 3 engaged SCORED unvoted articles; a voted one, an engaged FAILED one and
+     * one at exactly 0.5 do not count. The backfill also counts a starred-only SCORED match.
+     */
+    @Test
+    void engArticlesCountsUnvotedScoredMatches() throws Exception {
+        long go = insertTopic("replay-run-go", 10);
+        for (int i = 0; i < 3; i++) {
+            insertEngagement(scored(false, go), "OPEN_ORIGINAL");
+        }
+        long votedArticle = scored(false, go);
+        insertEngagement(votedArticle, "STAR");
+        insertFeedback(votedArticle, 1);
+        long failed = insertArticle(false);
+        insertScoreRow(failed, "FAILED");
+        insertTopicScore(failed, go, 0.95);
+        insertEngagement(failed, "OPEN_ORIGINAL");
+        long atHalf = insertArticle(false);
+        insertScored(atHalf, 2.0, 4);
+        insertTopicScore(atHalf, go, 0.5);
+        insertEngagement(atHalf, "OPEN_ORIGINAL");
+        star(scored(false, go));
+
+        runReplay(CANDIDATE);
+        Path tsv = outDir.resolve(CANDIDATE_TSV);
+
+        String[] learned = byTopic(rows(tsv, "learned")).get(go);
+        String[] backfill = byTopic(rows(tsv, "backfill-learned")).get(go);
+        assertThat(learned).hasSize(11);
+        assertThat(backfill).hasSize(11);
+        assertThat(learned[10]).as("learned eng_articles").isEqualTo("3");
+        assertThat(backfill[10]).as("backfill-learned eng_articles").isEqualTo("4");
     }
 
     /** Learned-shaped rows keyed by topic id (column 2). */
@@ -283,8 +442,11 @@ class InterestCalibrationReplayRunTest {
     }
 
     private long insertArticle(boolean read) {
+        return insertArticle(read, now.minus(Duration.ofHours(1)));
+    }
+
+    private long insertArticle(boolean read, Instant publishedAt) {
         String guid = "replay-run-" + (guidSeq++);
-        Instant publishedAt = now.minus(Duration.ofHours(1));
         return jdbc.queryForObject(
                 "INSERT INTO article (feed_id, guid, title, url, summary, content, published_at, fetched_at, \"read\") "
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
@@ -301,6 +463,11 @@ class InterestCalibrationReplayRunTest {
     private void insertScored(long articleId, Double profileScore, Integer profileMaxLevel) {
         jdbc.update("INSERT INTO article_score (article_id, status, profile_score, profile_max_level, attempts) "
                 + "VALUES (?, 'SCORED', ?, ?, 1)", articleId, profileScore, profileMaxLevel);
+    }
+
+    /** A FAILED or SKIPPED score row (no profile score). */
+    private void insertScoreRow(long articleId, String status) {
+        jdbc.update("INSERT INTO article_score (article_id, status, attempts) VALUES (?, ?, 1)", articleId, status);
     }
 
     private void insertTopicScore(long articleId, long topicId, double noul) {

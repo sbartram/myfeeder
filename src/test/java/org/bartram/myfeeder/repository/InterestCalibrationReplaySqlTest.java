@@ -518,6 +518,38 @@ class InterestCalibrationReplaySqlTest {
     }
 
     /**
+     * T-12-06 privacy: article titles appear only in the top and bottom sections, and no code outside the verbatim
+     * CTE text (whose {@code eff} carries {@code t.name}) names a {@code .name} or {@code .description}. A line
+     * that starts with a verbatim blend or learned-section text is checked only after that text; every other code
+     * line is checked whole.
+     */
+    @Test
+    void newSectionsPrintNoNamesOrTitles() throws IOException {
+        List<String> code = Files.readString(SQL).lines().map(InterestCalibrationReplaySqlTest::codeOf).toList();
+
+        assertThat(code.stream().mapToInt(line -> occurrences(line, "a.title")).sum()).as("a.title in code")
+                .isEqualTo(2);
+        assertThat(code.stream().filter(line -> line.contains("a.title")))
+                .as("lines that select a title")
+                .hasSize(2)
+                .allMatch(line -> line.startsWith("SELECT 'top' AS section")
+                        || line.startsWith("SELECT 'bottom' AS section"));
+
+        List<String> verbatim = List.of(BACKFILL_LEARNED_SECTION, LEARNED_SECTION, BACKFILL,
+                InterestScoreQueries.blendCte(InterestScoreQueries.UNREAD_SCOPE),
+                InterestScoreQueries.blendCte(WINDOW_SCOPE), InterestScoreQueries.blendCte(ENGAGED_SCOPE));
+        Pattern nameOrDescription = Pattern.compile("(?i)\\.(name|description)\\b");
+        for (int i = 0; i < code.size(); i++) {
+            String line = code.get(i);
+            String rest = verbatim.stream().filter(line::startsWith).findFirst()
+                    .map(prefix -> line.substring(prefix.length()))
+                    .orElse(line);
+            assertThat(nameOrDescription.matcher(rest).find()).as("a name or description on code line " + (i + 1))
+                    .isFalse();
+        }
+    }
+
+    /**
      * Checks, and only checks, the following:
      * <ol>
      * <li>The code of the file opens a learned CTE ({@code with learned as} in any case, with any whitespace,
