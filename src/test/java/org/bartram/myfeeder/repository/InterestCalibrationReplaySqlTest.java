@@ -1,6 +1,7 @@
 package org.bartram.myfeeder.repository;
 
 import org.assertj.core.api.SoftAssertions;
+import org.bartram.myfeeder.config.MyfeederProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -173,6 +174,110 @@ class InterestCalibrationReplaySqlTest {
             assertThat(run.exitCode()).as(candidate).isEqualTo(2);
             assertThat(run.stderr()).as(candidate).contains("invalid candidate: " + candidate);
             assertThat(run.stderr()).as(candidate).doesNotContain("psql:");
+        }
+    }
+
+    /**
+     * WR-02 / T-12-03: on a 64-cell boundary grid the driver refuses a candidate exactly when the app's
+     * {@code Engagement.isValid(20)} refuses it, and it refuses before any connection.
+     */
+    @Test
+    void driverRefusesWhatTheAppRefuses() throws Exception {
+        List<String> opens = List.of("0", "0.25", "0.5", "0.75");
+        List<String> saves = List.of("0.25", "0.5", "0.99", "1");
+        List<String> caps = List.of("0", "8", "19.99", "20");
+        SoftAssertions softly = new SoftAssertions();
+        for (String open : opens) {
+            for (String save : saves) {
+                for (String cap : caps) {
+                    MyfeederProperties.Interest.Blend.Engagement engagement =
+                            new MyfeederProperties.Interest.Blend.Engagement();
+                    engagement.setOpenWeight(Double.parseDouble(open));
+                    engagement.setSaveWeight(Double.parseDouble(save));
+                    engagement.setCap(Double.parseDouble(cap));
+                    String candidate = "100:70:40:" + open + ":" + save + ":" + cap;
+
+                    DriverRun run = runDriver(Map.of("MYFEEDER_PG_PASSWORD", "x"), candidate);
+
+                    if (engagement.isValid(20)) {
+                        softly.assertThat(run.stderr()).as(candidate + " accepted").contains("psql:")
+                                .doesNotContain("invalid engagement constants");
+                    } else {
+                        softly.assertThat(run.exitCode()).as(candidate + " exit").isEqualTo(2);
+                        softly.assertThat(run.stderr()).as(candidate + " refused")
+                                .contains("invalid engagement constants").doesNotContain("psql:");
+                    }
+                }
+            }
+        }
+        softly.assertAll();
+    }
+
+    /** WR-02: each threshold flips the verdict exactly, on the six-field and the env path alike. */
+    @Test
+    void driverRejectsOutOfRangeEngagementBeforeConnecting() throws Exception {
+        record Case(String candidate, Map<String, String> env) {}
+        List<Case> refused = List.of(
+                new Case("100:70:40:0.5:0.5:8", Map.of()),
+                new Case("100:70:40:0.25:1:8", Map.of()),
+                new Case("100:70:40:0.25:0.5:20", Map.of()),
+                new Case("100:70:40:0.3:0.25:8", Map.of()),
+                new Case("100:70:40", Map.of("ENGAGEMENT_SAVE_WEIGHT", "1")),
+                new Case("100:70:40:0.25:0.5:8", Map.of("LEARNED_CAP", "8")));
+        List<Case> accepted = List.of(
+                new Case("100:70:40:0.25:0.5:8", Map.of("LEARNED_CAP", "9")),
+                new Case("100:70:40:0.9:0.5:0", Map.of()),
+                new Case("100:70:40:0:0.5:8", Map.of()),
+                new Case("100:70:40:0.49:0.5:8", Map.of()),
+                new Case("100:70:40:0.25:0.99:8", Map.of()),
+                new Case("100:70:40:0.25:0.5:19.99", Map.of()));
+
+        for (Case c : refused) {
+            Map<String, String> env = new LinkedHashMap<>(c.env());
+            env.put("MYFEEDER_PG_PASSWORD", "x");
+            DriverRun run = runDriver(env, c.candidate());
+            String as = c.candidate() + " " + c.env();
+
+            assertThat(run.exitCode()).as(as).isEqualTo(2);
+            assertThat(run.stderr()).as(as).contains("invalid engagement constants: " + c.candidate());
+            assertThat(run.stderr()).as(as).doesNotContain("psql:");
+        }
+        for (Case c : accepted) {
+            Map<String, String> env = new LinkedHashMap<>(c.env());
+            env.put("MYFEEDER_PG_PASSWORD", "x");
+            DriverRun run = runDriver(env, c.candidate());
+            String as = c.candidate() + " " + c.env();
+
+            assertThat(run.stderr()).as(as).contains("psql:");
+            assertThat(run.stderr()).as(as).doesNotContain("invalid");
+        }
+    }
+
+    /** A valid candidate followed by an invalid one: nothing connects and no file is written. */
+    @Test
+    void driverValidatesEveryCandidateBeforeAnyConnection() throws Exception {
+        DriverRun run = runDriver(Map.of("MYFEEDER_PG_PASSWORD", "x"),
+                "100:70:40:0.25:0.5:8", "100:70:40:0.25:1:8");
+
+        assertThat(run.exitCode()).isEqualTo(2);
+        assertThat(run.stderr()).contains("invalid engagement constants: 100:70:40:0.25:1:8");
+        assertThat(run.stderr()).doesNotContain("psql:");
+        assertThat(filesIn(outDir)).noneMatch(name -> name.endsWith(".tsv"));
+    }
+
+    /** A run that fails after validation (here a refused connection) leaves neither a .tsv nor a .tmp file. */
+    @Test
+    void aFailedRunLeavesNoFile() throws Exception {
+        DriverRun run = runDriver(Map.of("MYFEEDER_PG_PASSWORD", "x"), "100:70:40:0.25:0.5:8");
+
+        assertThat(run.exitCode()).isNotZero();
+        assertThat(run.stderr()).contains("psql:");
+        assertThat(filesIn(outDir)).noneMatch(name -> name.endsWith(".tsv") || name.endsWith(".tmp"));
+    }
+
+    private static List<String> filesIn(Path dir) throws IOException {
+        try (Stream<Path> files = Files.list(dir)) {
+            return files.map(p -> p.getFileName().toString()).toList();
         }
     }
 
