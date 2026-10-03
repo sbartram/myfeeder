@@ -41,7 +41,7 @@ Full phase details: [milestones/v0.2.1-ROADMAP.md](milestones/v0.2.1-ROADMAP.md)
 - [x] **Phase 9: Engagement Learning Model** - Engagement becomes a fractional, capped, thumbs-overridable up-vote in the derived learned CTE, with the replay and drift guard regenerated in the same change (completed 2026-09-30)
 - [x] **Phase 10: Explainable Engagement in the UI** - "Why N?" splits each topic's weight into base + votes + engagement; engaging never re-sorts an open Priority list (completed 2026-09-30)
 - [x] **Phase 11: Gap Discovery** - "Suggested topics" in Interests from engaged, unmatched articles, with a near-miss filter, create-from-draft and permanent dismissal (completed 2026-10-01)
-- [ ] **Phase 12: Calibration & Release** - Tune open/save weights and the engagement cap from prod data by read-only replay, release, and document
+- [x] **Phase 12: Calibration & Release** - Tune open/save weights and the engagement cap from prod data by read-only replay, release, and document (completed 2026-10-02)
 
 ## Phase Details
 
@@ -200,7 +200,7 @@ Plans:
   3. The calibrated release is deployed to production with a clean startup, and engaged articles in prod show engagement in their badges and "Why N?"
   4. CLAUDE.md documents the V7 schema, the capture rules, the extended learned model (thumbs first, separate additive cap, negative-base skip, scored articles only) and the engagement tuning levers
 
-**Plans**: 5/5 plans executed
+**Plans**: 5/5 plans complete
 
 Plans:
 **Wave 1**
@@ -241,4 +241,4 @@ Phases execute in numeric order: 8 → 9 → 10 → 11 → 12 (Phase 11 depends 
 | 9. Engagement Learning Model | v0.3.0 | 6/6 | Complete    | 2026-09-30 |
 | 10. Explainable Engagement in the UI | v0.3.0 | 4/4 | Complete    | 2026-09-30 |
 | 11. Gap Discovery | v0.3.0 | 4/4 | Complete    | 2026-10-01 |
-| 12. Calibration & Release | v0.3.0 | 5/5 | In Progress|  |
+| 12. Calibration & Release | v0.3.0 | 5/5 | Complete    | 2026-10-02 |

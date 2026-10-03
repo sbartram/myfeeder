@@ -41,8 +41,8 @@
 ### Calibration
 
 - [x] **CAL-01**: The replay SQL and its drift guard are regenerated for the extended CTE in the same change
-- [ ] **CAL-02**: The replay reports dormant (engaged-but-unscored) engagement, topics at the cap, the tier histogram with engagement on and off, and a simulated backfill
-- [ ] **CAL-03**: The engagement weights and cap are tuned from prod data, committed in yaml and documented in CLAUDE.md
+- [x] **CAL-02**: The replay reports dormant (engaged-but-unscored) engagement, topics at the cap, the tier histogram with engagement on and off, and a simulated backfill
+- [x] **CAL-03**: The engagement weights and cap are tuned from prod data, committed in yaml and documented in CLAUDE.md
 
 ## Future Requirements
 
@@ -96,8 +96,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GAP-04 | Phase 11 | Complete |
 | GAP-05 | Phase 11 | Complete |
 | CAL-01 | Phase 9 | Complete |
-| CAL-02 | Phase 12 | Pending |
-| CAL-03 | Phase 12 | Pending |
+| CAL-02 | Phase 12 | Complete |
+| CAL-03 | Phase 12 | Complete |
 
 **Coverage:**
 - v0.3.0 requirements: 22 total

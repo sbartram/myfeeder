@@ -10,7 +10,7 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 ## Current State
 
-**Shipped:** v0.2.1 Interest Ranking (2026-09-29), in production on k3s (Helm revision 19). The milestone went out as three releases: v0.1.24 (dependency upgrade), v0.2.0 (interest ranking with a live TypeSafe key) and v0.2.1 (calibrated tiers 70/22). Archive: `.planning/milestones/v0.2.1-ROADMAP.md`, `.planning/MILESTONES.md`. v0.3.0 (Phase 8 engagement capture, V7) is in production since 2026-09-30 (Helm revision 20); ranking unchanged.
+**Shipped:** v0.2.1 Interest Ranking (2026-09-29), in production on k3s (Helm revision 19). The milestone went out as three releases: v0.1.24 (dependency upgrade), v0.2.0 (interest ranking with a live TypeSafe key) and v0.2.1 (calibrated tiers 70/22). Archive: `.planning/milestones/v0.2.1-ROADMAP.md`, `.planning/MILESTONES.md`. v0.3.0 (Phase 8 engagement capture, V7) went to production 2026-09-30 (Helm revision 20). v0.3.1 (Phases 9–12: engagement learning, explainability, gap discovery, calibrated constants 0.25 / 0.5 / 8) is in production since 2026-10-02 (Helm revision 21); startup and 10-minute soak clean.
 
 **Codebase:** ~5.4k lines of main Java, ~11.6k of test Java and ~12.5k of TypeScript/TSX. Spring Boot 4.0.8, Spring AI 2.0.1, Spring Cloud 2025.1.3, spring-ai-starter-typesafe 0.1.0 (jev-1.13.0), Flyway through V7.
 
@@ -59,9 +59,11 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ "Why N?", the vote toast and Interests show engagement-learned points separately from thumbs-learned points (server split fields only); open, star, board add, Raindrop and Forget refetch the article and light "Ranking changed" without re-sorting an open Priority list; vote effects flag replaced engagement and LearnedLimit reports binding clamps before the engagement cap — Phase 10 (feature branch, no release)
 - ✓ Engaged articles that matched no topic are suggested as new topics: Interests "Suggested topics" lists engaged, SCORED, unvoted, undismissed articles whose best noul is below the 0.35 near-miss; Create topic prefills a +20 draft whose save atomically marks the article handled, Dismiss is permanent; Jev is never called — Phase 11 (feature branch, no release)
 
+- ✓ Engagement weights and cap calibrated by the read-only prod replay (engaged, dormant, floor and simulated-backfill sections; drift guard and read-only/privacy tests extended); D-03 fallback on thin data kept open 0.25 / save 0.5 / cap 8, marked revisit; shipped as v0.3.1 — Phase 12
+
 ### Active
 
-- [ ] Engagement weights and cap are calibrated by the read-only replay with an extended drift guard (replay + guard extended in Phase 9; tuning waits for Phase 12)
+(none — milestone v0.3.0 phases complete; close with `/gsd-complete-milestone`)
 
 ### Out of Scope
 
@@ -136,6 +138,8 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | LearnedLimit precedence LEARNED_CAP → SIGN_CLAMP → WEIGHT_RANGE → ENGAGEMENT_CAP → NONE; toast never words ENGAGEMENT_CAP (Phase 10 D-10..D-13) | The note must name the limit that actually binds | ✓ Good — pinned by unit and HTTP tests |
 | Accept review edges WR-01 (star-then-vote GET race), WR-02 (narrowed unpicked topic has no note), WR-04 (cancelling parts read "No learned adjustment yet") and board-list badge staleness ≤30s (Phase 10 UAT) | Rare, self-healing on refresh, and consistent with v0.2.1 vote behavior | — Pending re-check at Phase 12 release |
 | Gap-discovery window = first recording per engagement kind (`article_engagement` keeps the first `created_at` per (article, kind)); repeating the same kind does not refresh it (Phase 11 WR-01, UAT) | No migration this phase (Phase 8 D-13); docs corrected to match the code | ✓ Accepted — a `last_engaged_at` column is the route if "latest engagement" is ever wanted |
+| Keep engagement constants 0.25 / 0.5 / 8 via the D-03 fallback (Phase 12) | Prod data below the D-02 floor (13 of 30 counted engaged articles, 0 of 3 topics with engagement); every grid candidate equalled cap 0 | ⚠️ Revisit — re-run the replay once the floor is met |
+| ENG-F4 keep engaged-but-unscored ineligible; ENG-F5 recommend a real stars/boards backfill (Phase 12 D-09/D-10) | 1 dormant of 16 engaged (< 25%); the simulated backfill stays within the nudge rule | — Backfill not scheduled; no measured benefit yet |
 | Suggestion writes (dismiss, topic-from-suggestion) are one `ON CONFLICT DO NOTHING` insert; the topic-create write shares `createTopic`'s transaction (Phase 11) | A topic and its handled mark must commit or roll back together | ✓ Good — `aFailedDismissalInsertRollsBackTheTopic`; UAT 3/3 |
 
 ## Evolution
@@ -156,4 +160,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-01 after Phase 11*
+*Last updated: 2026-10-02 after Phase 12*

@@ -3,44 +3,43 @@ gsd_state_version: "1.0"
 milestone: v0.3.0
 milestone_name: Engagement Learning
 current_phase: 12
-current_phase_name: Calibration & Release
-status: executing
-stopped_at: Phase 12 context gathered
-last_updated: "2026-10-02T20:12:40.395Z"
+status: completed
+stopped_at: Phase 12 complete — all phases complete
+last_updated: "2026-10-03T01:38:24.719Z"
 last_activity: 2026-10-02
-last_activity_desc: Phase 12 execution resumed (wave continue)
-state_head: 213828e2d20ff933d73632a1a2935c8e4a8bb359
+last_activity_desc: Phase 12 complete
+state_head: 07f99e51e071016f6a06b78669c901759498386a
 progress:
   total_phases: 5
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 24
-  completed_plans: 21
-  percent: 88
+  completed_plans: 24
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-01)
+See: .planning/PROJECT.md (updated 2026-10-02)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Phase 12 — Calibration & Release
+**Current focus:** Milestone v0.3.0 complete — ready for /gsd-complete-milestone
 
 ## Current Position
 
-Phase: 12 (Calibration & Release) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 12
-Last activity: 2026-10-02 — Phase 12 execution resumed (wave continue)
+Phase: 12
+Plan: Not started
+Status: All phases complete
+Last activity: 2026-10-02 — Phase 12 complete
 
-Progress: [█████████░] 88%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 19 (51 in v0.2.1 Phases 1–7, 5 in Phase 8)
+- Total plans completed: 24 (51 in v0.2.1 Phases 1–7, 5 in Phase 8)
 - Average duration: -
 - Total execution time: -
 
@@ -52,6 +51,7 @@ Progress: [█████████░] 88%
 | 09 | 6 | - | - |
 | 10 | 4 | - | - |
 | 11 | 4 | - | - |
+| 12 | 5 | - | - |
 
 **Recent Trend:**
 
@@ -84,6 +84,7 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [Phase 09]: engagement learning merged on branch gsd/phase-09-engagement-learning-model with no release (D-14); UAT 3/3, Nyquist compliant, SECURITY 16/16 closed
 - [Phase 10]: explainable engagement on branch gsd/phase-10-explainable-engagement-in-the-ui, no release; UAT 6/6 (WR-01, WR-02, WR-04 and board-list badge staleness accepted), Nyquist compliant, SECURITY 12/12 closed
 - [Phase 11]: gap discovery on branch gsd/phase-11-gap-discovery, no release; UAT 3/3; WR-01 resolved by accepting the first-recording-per-kind window and correcting the docs
+- [Phase 12]: v0.3.1 released (Helm rev 21, rollback 20); constants 0.25/0.5/8 kept by the D-03 fallback (revisit); ENG-F4 keep, ENG-F5 recommend backfill; UAT 3/3, SECURITY 21/21 closed
 
 ### Pending Todos
 
@@ -94,9 +95,9 @@ Settled for v0.3.0 before roadmapping (do not reopen):
 - [Phase 8] 08-REVIEW.md WR-01 open: `recordQuietly` swallows only `DataAccessException`, so a non-DB failure after `createBookmark` could surface an error and invite a duplicate-bookmark retry; IN-01..IN-06 open (non-blocking)
 - [Phase 8] 08-UI-REVIEW.md 19/24: Forget styled like the "Why N?" toggle (no danger hover), no "Forgetting…" pending label, Open Original buttons stay enabled for URL-less articles
 - [Phase 10] 10-REVIEW-DISPOSITION.md: WR-01 (star-then-vote GET race), WR-02, WR-04 accepted in 10-UAT; board-list badge can lag ≤30s after engagement (accepted); pre-existing WhyBreakdown ESLint setState-in-effect warning
+- [Phase 12] 12-REVIEW-DISPOSITION.md: 3 warnings and 8 info findings open; non-blocking
 - [Phase 9] 09-REVIEW-DISPOSITION.md: WR-01, WR-03, IN-01 and IN-04 fixed in Phase 10; WR-02 fixed in Phase 12 (12-01), and IN-02 and IN-03 stay open; all non-blocking
 - [Phase 11] 11-REVIEW-DISPOSITION.md: WR-02 (dismiss count/pending state not tied to the clicked row; heading count briefly low after a double dismiss) and IN-01..IN-05 open; non-blocking
-- [Phase 12] Waits on several weeks of prod engagement collected after the Phase 8 release
 - [Phase 2] 02-REVIEW WR-04 (Raindrop createBookmark POST retried) and WR-05 (helm --set secret mangling) still deferred; WR-01..03 closed in Phase 4
 - [Phase 5] 05-REVIEW.md WR-04 closed by quick 260926-hhz (decoded cursor date bounded to years 1..9999 → 404); WR-05 (an unserved row whose score rises past the fixed cursor boundary is skipped — mitigated in Phase 6: votes set the Ranking-changed hint); WR-01/WR-03 user-deferred
 - [Phase 3] 03-REVIEW.md WR-01..WR-05 (dialog save race, keyboard shortcuts behind modal, error copy, failed article load) still open
@@ -132,9 +133,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-10-02T16:44:33.901Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-calibration-release/12-CONTEXT.md
+Stopped at: Phase 12 complete — all phases complete
+Resume file: None
 
 ## Operator Next Steps
 
-- Discuss Phase 11 with /gsd-discuss-phase 11
+- Complete the milestone with /gsd-complete-milestone v0.3.0

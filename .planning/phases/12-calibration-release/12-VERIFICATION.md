@@ -1,7 +1,7 @@
 ---
 phase: 12-calibration-release
 verified: 2026-10-02T23:35:00Z
-status: human_needed
+status: passed
 score: 10/12 must-haves verified
 covered_files:
   - .planning/phases/12-calibration-release/12-01-PLAN.md
@@ -24,6 +24,7 @@ covered_files:
   - src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplayRunTest.java
   - src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java
   - src/test/resources/application.yaml
+
 covered_digest: "v2:sha256:ff6d65cd34aa900e820b6f3767fc0102a6d0245c0f7439b5dcdd84c5d81cd045"
 behavior_unverified: 0
 overrides_applied: 0
