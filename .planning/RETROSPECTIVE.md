@@ -2,6 +2,49 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v0.3.0 — Engagement Learning
+
+**Shipped:** 2026-10-02
+**Phases:** 5 | **Plans:** 24 (57 tasks) | **Commits:** 233 over 4 days
+
+### What Was Built
+- Engagement capture (V7): opens and saves (star, board, Raindrop) recorded as sticky, forgettable rows outside any transaction; released first as v0.3.0 with ranking unchanged
+- Engagement as a capped, zero-floored, thumbs-overridable implicit up-vote in the learned CTE, with an exact base + thumbs + engagement split and cap 0 bit-identical to v0.2.1
+- Explainable engagement in "Why N?", the vote toast and Interests, plus one shared post-engagement reaction that never re-sorts an open Priority list
+- Gap discovery: "Suggested topics" from engaged, unmatched articles, create-from-draft that atomically marks the suggestion handled, and permanent dismissal
+- Calibration replay extended (engaged, dormant, floor, simulated backfill) and the calibrated build released as v0.3.1
+
+### What Worked
+- Shipping capture first with ranking provably unchanged let prod collect engagement while Phases 9–11 were built
+- Test-first SQL for the highest-risk change: a 1,456-cell real-Postgres grid with an exact oracle and a "cap 0 equals SQL frozen from the v0.2.1 tag" check made the learned CTE rewrite safe
+- Applying v0.2.1's lesson: the replay drift guard got bypass tests up front (12-01/12-02), so no gap-closure plans were needed this time
+- Reusing one reaction (`afterEngagement`) and one draft path (`addDraft` with `sourceArticleId`) kept UI behavior consistent across six entry points
+- Code-review findings were carried forward and fixed in the next phase (09 WR-01/03 in Phase 10, 09 WR-02 in Phase 12)
+
+### What Was Inefficient
+- The calibration phase ran only days after capture shipped, so prod data stayed below the D-02 floor (13/30 articles, 0/3 topics) and the outcome was the D-03 fallback; the roadmap's own note asked for 2–4 weeks of engagement
+- Phases 8–11 again closed with stale verification digests, and again no `/gsd-audit-milestone` was run before close
+- The Phase 10 deferred ESLint item was never closed, so it surfaced at milestone close
+
+### Patterns Established
+- Best-effort side writes (`recordQuietly`) live in services with no transaction boundary, so they can never abort the user's action
+- Every derived-model change ships with an exact split proof plus a "disabled equals previous release" proof against frozen SQL
+- Self-validating `@ConfigurationProperties` (`Validator`) with fixed-text startup refusals for tuning constants
+- Ranking SQL never reads UI-state tables (the dismissal table), guarded by a test
+- Release-then-learn: ship new signal capture as its own release before any model consumes it
+
+### Key Lessons
+1. Schedule calibration by data volume, not by phase order: gate the calibration phase on the data floor, not on the calendar.
+2. For multi-phase milestones that rework shared files, run `/gsd-audit-milestone` once at the end instead of accepting stale-digest overrides twice.
+3. Exact-oracle grid tests and frozen-SQL equivalence are worth their cost for any query-time model change; they caught no regressions only because they existed before the change.
+
+### Cost Observations
+- Model mix: not tracked
+- Sessions: not tracked (4 calendar days)
+- Notable: zero Jev spend for the whole milestone; every engagement effect is computed at query time
+
+---
+
 ## Milestone: v0.2.1 — Interest Ranking
 
 **Shipped:** 2026-09-29
@@ -55,13 +98,17 @@
 | Milestone | Sessions | Phases | Key Change |
 |-----------|----------|--------|------------|
 | v0.2.1 | — | 7 | First GSD-managed milestone: phase UAT, security verification and code-review gap closures |
+| v0.3.0 | — | 5 | Release-then-learn (capture shipped first); test-first SQL with exact-oracle grids; review findings fixed in the following phase |
 
 ### Cumulative Quality
 
 | Milestone | Tests | Coverage | Zero-Dep Additions |
 |-----------|-------|----------|-------------------|
 | v0.2.1 | ~532 backend `@Test` (from 162) + 320 frontend | — | — |
+| v0.3.0 | ~717 backend `@Test` + 408 frontend (723 backend tests run at the Phase 12 gate) | — | — |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. (Needs a second milestone to cross-validate)
+1. Verification digests go stale when later phases rework shared files (v0.2.1, v0.3.0); plan one end-of-milestone audit instead of per-phase re-verification.
+2. Close tracked artifacts (deferred items, debug sessions) in the same commit that fixes them, or they resurface at milestone close (v0.2.1, v0.3.0).
+3. Test-only guards and derived SQL models need adversarial or exact-oracle tests written before the change (v0.2.1 learned it the hard way; v0.3.0 applied it with no gap closures).
