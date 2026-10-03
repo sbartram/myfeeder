@@ -2,19 +2,19 @@
 gsd_state_version: "1.0"
 milestone: v0.3.0
 milestone_name: Engagement Learning
-current_phase: 12
-status: completed
-stopped_at: Phase 12 complete — all phases complete
-last_updated: "2026-10-03T01:38:24.719Z"
+status: Awaiting next milestone
+stopped_at: Milestone v0.3.0 completed and archived
+last_updated: "2026-10-03T03:12:24.672Z"
 last_activity: 2026-10-02
-last_activity_desc: Phase 12 complete
-state_head: 07f99e51e071016f6a06b78669c901759498386a
+last_activity_desc: Milestone v0.3.0 completed and archived
+state_head: 13fd20331f39c3847a44b21042a6edb9d5e02ef8
 progress:
   total_phases: 5
   completed_phases: 12
   total_plans: 24
   completed_plans: 24
   percent: 100
+current_phase: 12
 ---
 
 # Project State
@@ -24,22 +24,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-02)
 
 **Core value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
-**Current focus:** Milestone v0.3.0 complete — ready for /gsd-complete-milestone
+**Current focus:** Planning next milestone (v0.3.0 Engagement Learning shipped 2026-10-02; run /gsd-new-milestone)
 
 ## Current Position
 
-Phase: 12
-Plan: Not started
-Status: All phases complete
-Last activity: 2026-10-02 — Phase 12 complete
-
-Progress: [██████████] 100%
+Phase: Milestone v0.3.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-10-02 — Milestone v0.3.0 completed and archived
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 24 (51 in v0.2.1 Phases 1–7, 5 in Phase 8)
+- Total plans completed: 75 (51 in v0.2.1 Phases 1–7, 24 in v0.3.0 Phases 8–12)
 - Average duration: -
 - Total execution time: -
 
@@ -70,21 +68,7 @@ Progress: [██████████] 100%
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Settled for v0.3.0 before roadmapping (do not reopen):
-
-- [v0.3.0]: Engagement skips topics with a negative base weight
-- [v0.3.0]: Engagement has its own additive cap, below the thumbs cap (20); thumbs take their share first
-- [v0.3.0]: Engagement is sticky (unstar, board removal and board delete keep it); a thumbs vote overrides it, and a minimal reading-pane "Forget engagement" control deletes the rows (no tombstone)
-- [v0.3.0]: No V7 backfill of existing stars or boards; the Phase 12 replay simulates one
-- [v0.3.0]: Open endpoint is a bodyless, idempotent `PUT /api/articles/{id}/engagement/open` returning 204, kind `OPEN_ORIGINAL`
-- [v0.3.0]: Engaged-but-unscored articles stay ineligible for scoring; dormant engagement is measured by the calibration replay, with no status field
-- [v0.3.0]: Gap discovery = "Suggested topics" list + near-miss filter + dismissal; all V7 schema (engagement and dismissal tables) ships in one migration in Phase 8
-- [v0.3.0 roadmap]: Capture ships and releases first with ranking unchanged, so prod accumulates engagement before calibration; CAL-01 (replay + drift guard regeneration) lands with the learned-CTE change in Phase 9; Phase 11 depends only on Phase 8
-- [Phase 08]: 08-05: user answered 'approve b' at the D-13 checkpoint; v0.3.0 released (tag at db5acd7, image sha256:7a785af7, Helm rev 20, rollback rev 19), V7 applied to prod, ranking and why UNCHANGED, smoke PASS
-- [Phase 09]: engagement learning merged on branch gsd/phase-09-engagement-learning-model with no release (D-14); UAT 3/3, Nyquist compliant, SECURITY 16/16 closed
-- [Phase 10]: explainable engagement on branch gsd/phase-10-explainable-engagement-in-the-ui, no release; UAT 6/6 (WR-01, WR-02, WR-04 and board-list badge staleness accepted), Nyquist compliant, SECURITY 12/12 closed
-- [Phase 11]: gap discovery on branch gsd/phase-11-gap-discovery, no release; UAT 3/3; WR-01 resolved by accepting the first-recording-per-kind window and correcting the docs
-- [Phase 12]: v0.3.1 released (Helm rev 21, rollback 20); constants 0.25/0.5/8 kept by the D-03 fallback (revisit); ENG-F4 keep, ENG-F5 recommend backfill; UAT 3/3, SECURITY 21/21 closed
+v0.3.0 decisions are archived in `.planning/milestones/v0.3.0-ROADMAP.md` (Milestone Summary) and PROJECT.md; none are pending for the next milestone yet.
 
 ### Pending Todos
 
@@ -121,6 +105,7 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 | Category | Item | Status | Deferred At | Milestone |
 |----------|------|--------|-------------|-----------|
+| deferred_items | 10/deferred-items.md: ESLint `react-hooks/set-state-in-effect` error in `WhyBreakdown` footer-collapse effect | acknowledged — still open (WhyBreakdown.tsx:19) | 2026-10-02 | v0.3.0 |
 | debug_sessions | boottestrun-live-jev-unconfigured | diagnosed (fixed by 04-09 dev-profile overlay) | 2026-09-29 | v0.2.1 |
 | uat_gaps | 05/05-UAT.md (G-05-7) | diagnosed (fixed by 05-08 served-tuple cursor) | 2026-09-29 | v0.2.1 |
 | todos | 2026-09-23-tune-raindrop-resilience-and-fix-claude-md-aspectj-note.md | (presence-only) — still open: Raindrop retry-exceptions/backoff | 2026-09-29 | v0.2.1 |
@@ -133,9 +118,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-10-02T16:44:33.901Z
-Stopped at: Phase 12 complete — all phases complete
+Stopped at: Milestone v0.3.0 completed and archived
 Resume file: None
 
 ## Operator Next Steps
 
-- Complete the milestone with /gsd-complete-milestone v0.3.0
+- Start the next milestone with /gsd-new-milestone

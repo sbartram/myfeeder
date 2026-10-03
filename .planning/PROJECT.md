@@ -2,7 +2,7 @@
 
 ## What This Is
 
-myfeeder is a self-hosted, single-user feed reader (Spring Boot 4 + React) running on a homelab k3s cluster. It subscribes to RSS, Atom and JSON Feed sources, polls them on a schedule, and presents articles in a three-panel reader with folders, boards, reader view, and Raindrop.io forwarding. Since v0.2.1 it also has **interest ranking**: every new article is judged once by TypeSafe's Jev judgment model against the reader's written interest profile and weighted topic rubric, and a Priority view surfaces the articles that matter most, with an explainable 0–100 score that thumbs up/down feedback tunes without extra Jev calls.
+myfeeder is a self-hosted, single-user feed reader (Spring Boot 4 + React) running on a homelab k3s cluster. It subscribes to RSS, Atom and JSON Feed sources, polls them on a schedule, and presents articles in a three-panel reader with folders, boards, reader view, and Raindrop.io forwarding. Since v0.2.1 it also has **interest ranking**: every new article is judged once by TypeSafe's Jev judgment model against the reader's written interest profile and weighted topic rubric, and a Priority view surfaces the articles that matter most, with an explainable 0–100 score that thumbs up/down feedback tunes without extra Jev calls. Since v0.3.0 the ranking also **learns from engagement**: opening an article's original link or saving it (star, board, Raindrop) is a small, capped, thumbs-overridable implicit up-vote derived at query time, explained separately from votes in "Why N?", forgettable per article, and engaged articles that no topic covers are offered as topic suggestions.
 
 ## Core Value
 
@@ -10,22 +10,18 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 ## Current State
 
-**Shipped:** v0.2.1 Interest Ranking (2026-09-29), in production on k3s (Helm revision 19). The milestone went out as three releases: v0.1.24 (dependency upgrade), v0.2.0 (interest ranking with a live TypeSafe key) and v0.2.1 (calibrated tiers 70/22). Archive: `.planning/milestones/v0.2.1-ROADMAP.md`, `.planning/MILESTONES.md`. v0.3.0 (Phase 8 engagement capture, V7) went to production 2026-09-30 (Helm revision 20). v0.3.1 (Phases 9–12: engagement learning, explainability, gap discovery, calibrated constants 0.25 / 0.5 / 8) is in production since 2026-10-02 (Helm revision 21); startup and 10-minute soak clean.
+**Shipped:** v0.3.0 Engagement Learning (2026-10-02), in production on k3s as v0.3.1 (Helm revision 21; startup and 10-minute soak clean). The milestone went out as two releases: v0.3.0 (engagement capture, V7 schema, ranking unchanged; Helm revision 20) and v0.3.1 (engagement learning model, explainable engagement UI, gap discovery, calibrated constants 0.25 / 0.5 / 8). Archives: `.planning/milestones/v0.3.0-ROADMAP.md`, `.planning/milestones/v0.2.1-ROADMAP.md`, `.planning/MILESTONES.md`.
 
-**Codebase:** ~5.4k lines of main Java, ~11.6k of test Java and ~12.5k of TypeScript/TSX. Spring Boot 4.0.8, Spring AI 2.0.1, Spring Cloud 2025.1.3, spring-ai-starter-typesafe 0.1.0 (jev-1.13.0), Flyway through V7.
+**Codebase:** ~6.0k lines of main Java, ~16.2k of test Java and ~15.0k of TypeScript/TSX. Spring Boot 4.0.8, Spring AI 2.0.1, Spring Cloud 2025.1.3, spring-ai-starter-typesafe 0.1.0 (jev-1.13.0), Flyway through V7.
 
-## Current Milestone: v0.3.0 Engagement Learning
+## Next Milestone Goals
 
-**Goal:** Opening or saving an article teaches the ranking what I care about, with no extra Jev calls, and every learned point stays explainable and reversible.
+Not defined yet; start with `/gsd-new-milestone`. Candidates carried out of v0.3.0:
 
-**Target features:**
-- Engagement capture: a V7 `article_engagement` table records, idempotently, opening the original link (`o` or a click) and saving an article (star, board, Raindrop)
-- Topic nudge: an engagement is an implicit, fractional up-vote in the derived `learned` CTE; a save weighs more than an open; each article counts once, at its strongest engagement; an explicit thumbs vote on the article overrides it; engagement has its own cap below the thumbs cap
-- Explainability: "Why N?" and the Interests learned line separate engagement-learned points from thumbs-learned points
-- Gap discovery: opened or saved articles that matched no topic are surfaced as topic suggestions, reusing the "Create topic from article" draft
-- Calibration: engagement weights and cap are tuned by the read-only blend replay, and its drift guard is extended to the new CTE
-
-**Key context:** Positive-only: an article I don't open never counts against it. Selection, auto-mark-read and dwell time are not signals (skimming with j/k would be noise), and neither is reader view. Feed affinity is deferred. Carried-forward cleanup (ESLint, Raindrop tuning, review advisories) stays out of this milestone.
+- Re-run the engagement calibration replay once prod reaches the D-02 floor (≥ 30 counted engaged articles, ≥ 3 non-negative topics with engagement; 13/30 and 0/3 at close) and retune 0.25 / 0.5 / 8 if a candidate beats the defaults
+- ENG-F5: a real one-time backfill of existing stars and boards as engagement (recommended by the Phase 12 replay, not scheduled)
+- Deferred engagement features: reading-pane engagement status line (ENG-F1), "matched no topic" notice after engaging (ENG-F3), feed affinity
+- Cleanup: frontend ESLint errors (incl. WhyBreakdown `set-state-in-effect`), InterestsDialog "primarily about" copy, Raindrop retry/backoff tuning, open review advisories
 
 ## Requirements
 
@@ -54,16 +50,16 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - ✓ Thumbs up/down (buttons + `u`/`d`, Shift+D narrow picker) stores one reversible `article_feedback` row; the learned adjustment (capped ±20, sign-clamped, within ±50) is derived in SQL on every read, so the badge, Why row and Priority order update with no Jev call and no write to topic weights; effect toast, no-match "Create topic from article" draft, learned line per topic in Interests — v0.2.1 (Phase 6)
 - ✓ Interest ranking live in production (v0.2.0 with a real TypeSafe key, v0.2.1 calibrated): launch backfill drained 183 legacy articles in 6m54s with 0 FAILED rows and the breaker CLOSED; blend constants tuned by a read-only prod replay (profile-points 100, tiers 70/22, learn-rate 2, learned-cap 20) and served to the badge via `/status` `tiers`; Jev retry/breaker log lines; CLAUDE.md documents the Jev config, throttle levers and tuning procedure — v0.2.1 (Phase 7)
 
-- ✓ Engagement capture: opening the original link (`o`/Open Original, fire-and-forget, tab always opens) and saving (star, board, Raindrop) record sticky, idempotent `article_engagement` rows (V7); a reading-pane "Engaged: … · Forget" line deletes them; ranking unchanged — v0.3.0 (Phase 8)
-- ✓ Engagement nudges topic weights as a fractional, capped, thumbs-overridable implicit up-vote, derived at query time in `LEARNED_CTE` with no Jev calls (open 0.25 / save 0.5 / cap 8, cap 0 = exactly v0.2.1); the backend split fields and `ENGAGEMENT_CAP` limit are served; replay and drift guard extended (CAL-01) — Phase 9 (merged to the feature branch, no release per D-14)
-- ✓ "Why N?", the vote toast and Interests show engagement-learned points separately from thumbs-learned points (server split fields only); open, star, board add, Raindrop and Forget refetch the article and light "Ranking changed" without re-sorting an open Priority list; vote effects flag replaced engagement and LearnedLimit reports binding clamps before the engagement cap — Phase 10 (feature branch, no release)
-- ✓ Engaged articles that matched no topic are suggested as new topics: Interests "Suggested topics" lists engaged, SCORED, unvoted, undismissed articles whose best noul is below the 0.35 near-miss; Create topic prefills a +20 draft whose save atomically marks the article handled, Dismiss is permanent; Jev is never called — Phase 11 (feature branch, no release)
+- ✓ Engagement capture: opening the original link (`o`/Open Original, fire-and-forget, tab always opens) and saving (star, board, Raindrop) record sticky, idempotent `article_engagement` rows (V7); a reading-pane "Engaged: … · Forget" line deletes them; ranking unchanged — v0.3.0 (Phase 8, released as v0.3.0)
+- ✓ Engagement nudges topic weights as a fractional, capped, thumbs-overridable implicit up-vote, derived at query time in `LEARNED_CTE` with no Jev calls (open 0.25 / save 0.5 / cap 8, cap 0 = exactly v0.2.1); the backend split fields and `ENGAGEMENT_CAP` limit are served; replay and drift guard extended (CAL-01) — v0.3.0 (Phase 9, released in v0.3.1)
+- ✓ "Why N?", the vote toast and Interests show engagement-learned points separately from thumbs-learned points (server split fields only); open, star, board add, Raindrop and Forget refetch the article and light "Ranking changed" without re-sorting an open Priority list; vote effects flag replaced engagement and LearnedLimit reports binding clamps before the engagement cap — v0.3.0 (Phase 10, released in v0.3.1)
+- ✓ Engaged articles that matched no topic are suggested as new topics: Interests "Suggested topics" lists engaged, SCORED, unvoted, undismissed articles whose best noul is below the 0.35 near-miss; Create topic prefills a +20 draft whose save atomically marks the article handled, Dismiss is permanent; Jev is never called — v0.3.0 (Phase 11, released in v0.3.1)
 
-- ✓ Engagement weights and cap calibrated by the read-only prod replay (engaged, dormant, floor and simulated-backfill sections; drift guard and read-only/privacy tests extended); D-03 fallback on thin data kept open 0.25 / save 0.5 / cap 8, marked revisit; shipped as v0.3.1 — Phase 12
+- ✓ Engagement weights and cap calibrated by the read-only prod replay (engaged, dormant, floor and simulated-backfill sections; drift guard and read-only/privacy tests extended); D-03 fallback on thin data kept open 0.25 / save 0.5 / cap 8, marked revisit; shipped as v0.3.1 — v0.3.0 (Phase 12)
 
 ### Active
 
-(none — milestone v0.3.0 phases complete; close with `/gsd-complete-milestone`)
+(none — define the next milestone's requirements with `/gsd-new-milestone`; candidates are listed under Next Milestone Goals)
 
 ### Out of Scope
 
@@ -77,6 +73,9 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 - Negative signal from skipped (not opened) articles — skipping is usually lack of time, not disinterest (v0.3.0 decision: positive-only)
 - Dwell time, selection or reader view as engagement — j/k skimming and auto-enabled reader view make them noisy (v0.3.0)
 - Feed affinity (per-feed bonus from open rate) — deferred; topic nudge + gap discovery first (v0.3.0)
+- Writing learned points into `interest_topic.weight` — the derived model keeps every learned point reversible (v0.3.0)
+- LLM-drafted topic suggestions — contradicts "no extra Jev calls"; the user writes the topic (v0.3.0)
+- Separate weights per save kind, counting repeat opens/saves, a "pause learning" toggle — needless tuning surface or inflation; cap 0 disables learning (v0.3.0)
 - Spring Boot 4.1 / react-router 7 / frontend major upgrades — Spring Cloud has no GA line for Boot 4.1 yet; router major is unrelated churn
 
 ## Context
@@ -90,7 +89,7 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 
 ## Constraints
 
-- **Tech stack**: Spring Boot 4.0.8, Java 25, Spring Data JDBC (not JPA), Flyway migrations (next is V7), Jackson 3.x (`tools.jackson.*`), React 19 + TanStack Query + Zustand — follow existing conventions in CLAUDE.md
+- **Tech stack**: Spring Boot 4.0.8, Java 25, Spring Data JDBC (not JPA), Flyway migrations (next is V8), Jackson 3.x (`tools.jackson.*`), React 19 + TanStack Query + Zustand — follow existing conventions in CLAUDE.md
 - **Build**: Gradle Kotlin DSL only (never Maven), even though the reference article shows Maven coordinates
 - **Resilience**: Jev calls wrapped with `@CircuitBreaker` + `@Retry` on a dedicated API-client bean (`JevApiClientImpl`), following the Raindrop pattern; since Phase 4 the breaker is the outer aspect (aspect orders 1/2), so it records one outcome per article, not per attempt
 - **Compatibility**: Spring AI TypeSafe 0.1.0 (built against Boot 4.0.7) runs on Boot 4.0.8; it is not in the Spring AI BOM, so its version is explicit
@@ -136,7 +135,7 @@ Unread articles I care about most appear at the top of a Priority view, ranked b
 | No release in Phase 9 (D-14); latency guarded at 10 × baseline + 250 ms with ~20k rows (D-17) | Uncalibrated weights stay off prod until Phase 12 | ✓ Good — no index or migration needed |
 | One shared post-engagement reaction (`afterEngagement`): by-id refetch, patch the Priority row only on a changed score, never invalidate `['priority']` (Phase 10 D-06/D-07) | Engaging while triaging must not re-sort the list | ✓ Good — SC-3 agreement test proves refresh makes position, badges and "Why N?" agree; UAT 6/6 |
 | LearnedLimit precedence LEARNED_CAP → SIGN_CLAMP → WEIGHT_RANGE → ENGAGEMENT_CAP → NONE; toast never words ENGAGEMENT_CAP (Phase 10 D-10..D-13) | The note must name the limit that actually binds | ✓ Good — pinned by unit and HTTP tests |
-| Accept review edges WR-01 (star-then-vote GET race), WR-02 (narrowed unpicked topic has no note), WR-04 (cancelling parts read "No learned adjustment yet") and board-list badge staleness ≤30s (Phase 10 UAT) | Rare, self-healing on refresh, and consistent with v0.2.1 vote behavior | — Pending re-check at Phase 12 release |
+| Accept review edges WR-01 (star-then-vote GET race), WR-02 (narrowed unpicked topic has no note), WR-04 (cancelling parts read "No learned adjustment yet") and board-list badge staleness ≤30s (Phase 10 UAT) | Rare, self-healing on refresh, and consistent with v0.2.1 vote behavior | ⚠️ Revisit — not re-checked at the v0.3.1 release; still accepted |
 | Gap-discovery window = first recording per engagement kind (`article_engagement` keeps the first `created_at` per (article, kind)); repeating the same kind does not refresh it (Phase 11 WR-01, UAT) | No migration this phase (Phase 8 D-13); docs corrected to match the code | ✓ Accepted — a `last_engaged_at` column is the route if "latest engagement" is ever wanted |
 | Keep engagement constants 0.25 / 0.5 / 8 via the D-03 fallback (Phase 12) | Prod data below the D-02 floor (13 of 30 counted engaged articles, 0 of 3 topics with engagement); every grid candidate equalled cap 0 | ⚠️ Revisit — re-run the replay once the floor is met |
 | ENG-F4 keep engaged-but-unscored ineligible; ENG-F5 recommend a real stars/boards backfill (Phase 12 D-09/D-10) | 1 dormant of 16 engaged (< 25%); the simulated backfill stays within the nudge rule | — Backfill not scheduled; no measured benefit yet |
@@ -160,4 +159,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-02 after Phase 12*
+*Last updated: 2026-10-02 after v0.3.0 milestone*

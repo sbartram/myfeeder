@@ -2,7 +2,7 @@
 
 ## Project
 
-**myfeeder** — no active milestone (v0.2.1 Interest Ranking shipped and archived in `.planning/milestones/`; start the next with `/gsd-new-milestone`). Project context and roadmap live in `.planning/` (`PROJECT.md`, `ROADMAP.md`, `STATE.md`, `MILESTONES.md`); research in `.planning/research/`; codebase map in `.planning/codebase/`. Stack, conventions and architecture are in the root `CLAUDE.md`.
+**myfeeder** — no active milestone (v0.3.0 Engagement Learning shipped 2026-10-02 as releases v0.3.0/v0.3.1 and archived in `.planning/milestones/`, after v0.2.1 Interest Ranking; start the next with `/gsd-new-milestone`). Project context and roadmap live in `.planning/` (`PROJECT.md`, `ROADMAP.md`, `STATE.md`, `MILESTONES.md`); research in `.planning/research/`; codebase map in `.planning/codebase/`. Stack, conventions and architecture are in the root `CLAUDE.md`.
 
 **Core Value:** Unread articles I care about most appear at the top of a Priority view, ranked by a score that reflects my stated interests and my thumbs up/down feedback, without ever breaking or slowing feed polling.
 
