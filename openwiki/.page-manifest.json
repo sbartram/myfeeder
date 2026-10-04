@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "pages": {
+    "/openwiki/architecture/overview.md": {
+      "pageVersion": "sha256:e587b7bf312395f5ed12c946fb01fb6ef476df3cb5512cf9b83c538f944ac5b7",
+      "completedBy": "openwiki/0.7.0",
+      "completedRunId": "085e0c0b-d837-48cf-bd4f-747b3e9fcecf",
+      "gitHead": "23e97027112d0c49eb9153d9bb400d859e364afb",
+      "sourceFingerprint": "sha256:ca6d62f83a28f55541894f6f80cebac38df9facbcd6639eb8030762b4b0c46f1"
+    },
+    "/openwiki/domain/concepts.md": {
+      "pageVersion": "sha256:7f0691ea6f601150fdb69dfaf92ed84635e07519d031bd56afac63cd5d67281e",
+      "completedBy": "openwiki/0.7.0",
+      "completedRunId": "085e0c0b-d837-48cf-bd4f-747b3e9fcecf",
+      "gitHead": "23e97027112d0c49eb9153d9bb400d859e364afb",
+      "sourceFingerprint": "sha256:ca6d62f83a28f55541894f6f80cebac38df9facbcd6639eb8030762b4b0c46f1"
+    },
+    "/openwiki/integrations/jev.md": {
+      "pageVersion": "sha256:19143a6316eb83663f76669d0ef320e5aac30331e18fc0b5f2fa7ac72c9d1d1b",
+      "completedBy": "openwiki/0.7.0",
+      "completedRunId": "085e0c0b-d837-48cf-bd4f-747b3e9fcecf",
+      "gitHead": "23e97027112d0c49eb9153d9bb400d859e364afb",
+      "sourceFingerprint": "sha256:ca6d62f83a28f55541894f6f80cebac38df9facbcd6639eb8030762b4b0c46f1"
+    },
+    "/openwiki/integrations/raindrop.md": {
+      "pageVersion": "sha256:eec714c52fcc89a348d32860c06db0486f8f4f7e9b92478264fa54fde311c528",
+      "completedBy": "openwiki/0.7.0",
+      "completedRunId": "085e0c0b-d837-48cf-bd4f-747b3e9fcecf",
+      "gitHead": "23e97027112d0c49eb9153d9bb400d859e364afb",
+      "sourceFingerprint": "sha256:ca6d62f83a28f55541894f6f80cebac38df9facbcd6639eb8030762b4b0c46f1"
+    },
+    "/openwiki/operations/runbook.md": {
+      "pageVersion": "sha256:b2de95a2861c5420477cd215fb1cb831ed58dff96123a3e4dce22fbd4ccac5f8",
+      "completedBy": "openwiki/0.7.0",
+      "completedRunId": "085e0c0b-d837-48cf-bd4f-747b3e9fcecf",
+      "gitHead": "23e97027112d0c49eb9153d9bb400d859e364afb",
+      "sourceFingerprint": "sha256:ca6d62f83a28f55541894f6f80cebac38df9facbcd6639eb8030762b4b0c46f1"
+    },
+    "/openwiki/quickstart.md": {
+      "pageVersion": "sha256:54185c26e9f8afe5cef2374649948a8074bd4413240fdb85209c4cb319762599",
+      "completedBy": "openwiki/0.7.0",
+      "completedRunId": "085e0c0b-d837-48cf-bd4f-747b3e9fcecf",
+      "gitHead": "23e97027112d0c49eb9153d9bb400d859e364afb",
+      "sourceFingerprint": "sha256:ca6d62f83a28f55541894f6f80cebac38df9facbcd6639eb8030762b4b0c46f1"
+    },
+    "/openwiki/workflows/feed-lifecycle.md": {
+      "pageVersion": "sha256:904ced6401b8c661ab434a19b3da874963f6a5689984fbdea0f65e76cfb6a3f3",
+      "completedBy": "openwiki/0.7.0",
+      "completedRunId": "085e0c0b-d837-48cf-bd4f-747b3e9fcecf",
+      "gitHead": "23e97027112d0c49eb9153d9bb400d859e364afb",
+      "sourceFingerprint": "sha256:ca6d62f83a28f55541894f6f80cebac38df9facbcd6639eb8030762b4b0c46f1"
+    },
+    "/openwiki/workflows/interest-scoring.md": {
+      "pageVersion": "sha256:d995651442e335524e4b98ba9ef66f70e3d7a07671d60b99def41d7db2a629c3",
+      "completedBy": "openwiki/0.7.0",
+      "completedRunId": "085e0c0b-d837-48cf-bd4f-747b3e9fcecf",
+      "gitHead": "23e97027112d0c49eb9153d9bb400d859e364afb",
+      "sourceFingerprint": "sha256:ca6d62f83a28f55541894f6f80cebac38df9facbcd6639eb8030762b4b0c46f1"
+    }
+  }
+}

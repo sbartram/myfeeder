@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:e587b7bf312395f5ed12c946fb01fb6ef476df3cb5512cf9b83c538f944ac5b7",
+  "claims": [
+    {
+      "id": "claim_40457456ebd3455b9606f00f7dd1995f",
+      "statement": "The config/, model/, repository/, service/, integration/, controller/ and scheduler/ packages now host a much larger set of classes than before: config/ adds TypeSafeConfig and InterestScoringConfig and JevEventLogging; service/ adds an interest/scoring family (InterestService, InterestStatusService, InterestPreviewService, InterestRescoreService, ArticleScoringService, ScoringQueue, ArticleFeedbackService, TopicSuggestionService, PriorityService, ArticleExtractionService); integration/ adds JevApiClient/JevApiClientImpl alongside Raindrop; controller/ adds Interest* controllers and TopicSuggestionController; scheduler/ adds InterestScoringSweep alongside FeedPollingScheduler.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/InterestScoringConfig.java",
+          "version": "repo-file-v1:sha256:b1f6d879b7f1819a44b5ba28707b7b06ebddba5d574118f8ee168a8f1ccd9e87"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/JevEventLogging.java",
+          "version": "repo-file-v1:sha256:cf8c43a0fc96ca88024aabcc0a3adb09f51009c8f2247c844866786887118cf5"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java",
+          "version": "repo-file-v1:sha256:c5320161214abde982cc75e36aafc93b9c2da7a721cf7f0633f1baf365300c84"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/InterestController.java",
+          "version": "repo-file-v1:sha256:ab48cdb2fea031a8a35d130c00a2af9d0728589e37f2861225a844373252f495"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/TopicSuggestionController.java",
+          "version": "repo-file-v1:sha256:42dc30cb35cd8a134a1566d0b4f08942dbca2f19e011578bdf5ae6f4df736fa1"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java",
+          "version": "repo-file-v1:sha256:45d9662f8e72767fc9197d3c6af87d5bd84cef792e3273333339da55c10e7ff9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/scheduler/InterestScoringSweep.java",
+          "version": "repo-file-v1:sha256:edc658400f8bc72eb4b534f45adffe20b1441aefe8fa438dfab6ec25a3debe6f"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleScoringService.java",
+          "version": "repo-file-v1:sha256:6707a29167c19ad1c5d50503ed6824eca455bb07001e3c25e202c287bfb4fbbf"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/InterestService.java",
+          "version": "repo-file-v1:sha256:edd40b75a1ff58bb2cf4a9c1d119e771e2ce48bc76767316d7540089c2a7fc77"
+        }
+      ]
+    },
+    {
+      "id": "claim_fe2e2f58c60d472fad4c9a2fd0475be3",
+      "statement": "Interest scoring is a second major subsystem alongside feed polling, built from: an app-owned TypeSafeClient bean defined in config/TypeSafeConfig so the starter's auto-configured bean backs off and a blank API key only disables scoring rather than crashing startup; a jev Resilience4j circuit-breaker+retry pair on integration/JevApiClient(Impl) that is configured and operated independently of the existing raindrop pair; a bounded interestScoringExecutor thread pool (config/InterestScoringConfig) sized by myfeeder.interest.concurrency feeding service/ScoringQueue; and a periodic sweep (scheduler/InterestScoringSweep) that is the only drain loop for scoring work, skipping while Jev is unconfigured, the breaker is open/forced-open, or the app is in cold start.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/InterestScoringConfig.java",
+          "version": "repo-file-v1:sha256:b1f6d879b7f1819a44b5ba28707b7b06ebddba5d574118f8ee168a8f1ccd9e87"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java",
+          "version": "repo-file-v1:sha256:c5320161214abde982cc75e36aafc93b9c2da7a721cf7f0633f1baf365300c84"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/scheduler/InterestScoringSweep.java",
+          "version": "repo-file-v1:sha256:edc658400f8bc72eb4b534f45adffe20b1441aefe8fa438dfab6ec25a3debe6f"
+        }
+      ]
+    },
+    {
+      "id": "claim_47a6a6b4f9e14812869fb14f0dd0afef",
+      "statement": "GET /api/articles/{id}/extracted-content (ArticleController -> ArticleExtractionService) implements a reader-view feature: it loads the article, fetches its original page through the same FeedFetcher used for feed polling (reusing its SSRF guard and size cap), extracts readable content with Readability4J, caches the result on article.extracted_content, and the frontend ReadingPane sanitizes the extracted HTML with DOMPurify using a stricter FORBID_TAGS/FORBID_ATTR:['style'] policy than normal feed content, auto-enabling reader view when the feed provided no content/summary and otherwise offering a manual toggle.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L173-L175",
+          "version": "repo-lines-v1:sha256:1286bac5e9c7e1dd496857a09d151b2944d9754483aa9d1e84095969c3205f93:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWYyZmNlMTg3MmUxN2E4MDdkYzcxOTA4Mjk2YWRmMjdhYWU1ZDFlZTFhYjhhOWE4OGMxMDczNjI2ZWFjMTdkYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjk2NDdmZjU1YWYzNTQ1N2Q2NGRiZTE2ZTU3OGQ3ZTcxNGM3YmZkZjNjMjQyYmM0ZTE1OGZlYjU0ODAwOGNjMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDVhYTgxMDllNDgwOTg3MzhlN2JhN2M2NTExZTliNzAxYTNhNTliNzI2YjQxMDY0M2Q1YzJkY2FiZWU3OTIyOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODQwMjIxZTYxMTBkYzgyZTA0ZWY3Y2M1Mzg3MmE1NTllZjMxZmQ1OWU1OGRlNGQwYmNkYWM5YjAwNGI3MTI5MCJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L38-L105",
+          "version": "repo-lines-v1:sha256:64604acbcb22c0e04a08ca9f486d421b22eebccc10e171426c1fbc7120faf6dd:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzY2Q1NWI3ZTFmZDY5YjMyNWNiYWUyYjlkZTYyNDI5NDFmNjNhZjhjNWM0ZWVhYjZmNmUyNDc1ZThhOTc3ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzODBlMzc0MzFmMzAwMGVhODg5Y2MwZmYyZmQ1MzJhNGY4OTVkMmVhNzg4MjY4NjM5MjJhM2RkNzdiNDM4ZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyYTQ3MmJlNDE1ZTU0YzlhYzY3MDAyMDE3MzczZTU1NWI1ZmY2ODE3ZDYzYzFmMWQzMzUyNjM2Y2Y2NTc0NGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0NzVjN2M0MjY3NTM1NDk5M2U0NTE3NmEzNjI1ZGMxNmUxMzg2MmM1ODUyNjZlYjIzMGVmODQ3MDA0OTFhOTMifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L86-L86",
+          "version": "repo-lines-v1:sha256:23b27dd74c55da38c1b7413ea98eded158e48f5286c7e5eb6da5044607267a67:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjNiMjdkZDc0YzU1ZGEzOGMxYjc0MTNlYTk4ZWRlZDE1OGU0OGY1Mjg2YzdlNWViNmRhNTA0NDYwNzI2N2E2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjNiMjdkZDc0YzU1ZGEzOGMxYjc0MTNlYTk4ZWRlZDE1OGU0OGY1Mjg2YzdlNWViNmRhNTA0NDYwNzI2N2E2NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjAwMTEyMDE4ZDljYmQ1NzA3MTJjZjZmZGQ3Y2ZmZDk3MzhhNzhjY2ViMWIwMjdmYzRkYjJiMDNlNmYxNjhjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDBjMmJmNzEwMzVhZDdjYTRiNDA4MTU4ZTAwOGFhYWQ0ZWY1OGY2OTNlNjg0YmRhMjk1NGI4MTUzNjI1ZGI5ZCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java",
+          "version": "repo-file-v1:sha256:669160a7f4079b0b4dd06d2b4b5a903b242f1e6cdce9690565452db01cd334b0"
+        }
+      ]
+    },
+    {
+      "id": "claim_93c945942e3e4c3d83cc4cbf5708eaff",
+      "statement": "GlobalExceptionHandler maps Jev-specific exceptions in addition to the pre-existing feed/Raindrop mappings: JevNotConfiguredException->503, CallNotPermittedException->503 (jev breaker open), TypeSafeBadRequestException/TypeSafeUnprocessableEntityException->422, and any other TypeSafeException->503; all Jev error details are fixed app text that never echoes a TypeSafe exception's message or body. The API surface also now includes /api/interest.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L71-L106",
+          "version": "repo-lines-v1:sha256:690c4876fba501f2d42756c49014fc74bfe7cd59241815ae6ce419b91c7769fe:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmYzk1ODRiNzdlMzI2ZmEzNDNkZjg5NGZiZDA2NzNlZWRlNDUxN2U1MzNhYjI1MDM1YzI1Yzg4NTliODI5YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkMDFkNWI3MDU2NGM3MjA1YWRiNDMwMGI4MGFhNDg1ZDI4ZDM4YTUxZWI5YjU5NzRkOTViNjBiNmIwNzk2MjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5a2c9c93f4d84e0d8659766dc50bb6f7",
+      "statement": "MyfeederProperties implements Spring's Validator and validates myfeeder.interest.* properties at bind time: concurrency/queue-capacity (scoring executor/queue sizing), sweep-delay/sweep-initial-delay/sweep-batch-size (InterestScoringSweep cadence), blend.tiers.high/neutral (badge thresholds), blend.engagement.open-weight/save-weight/cap (engagement learning, cap 0 disables it, otherwise 0<=open-weight<save-weight<1 and 0<cap<learned-cap), and suggestions.near-miss (gap discovery threshold, 0<near-miss<=0.5), rejecting startup with fixed text that never echoes the bound value.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java#L1-L139",
+          "version": "repo-lines-v1:sha256:a56d362534dde7bd36d8e5712a113e5976fea7799f105c49d7dcf3e7c36e68ef:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmODUwMjJjNDMzMWY0NDcyM2NhZjVhNDlhMTA0NmIxN2U3ZWQwMGYyZDExZjdlNzY3ODliNGE4MDA0MjlmOGY3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_c8c03685e8c64f5ba95b71eca38c2567",
+      "statement": "The frontend has a fourth major UI surface alongside the feed tree/article list/reading pane panels: the Priority view (PriorityList, routed at /priority in App.tsx) paired with the Interests dialog (InterestsDialog), opened from Settings or from the reading pane's create-topic action, which exposes interest-scoring configuration and a ranked triage queue.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/App.tsx#L116-L156",
+          "version": "repo-lines-v1:sha256:da58d187e17d7339d17e3c29e4706c438eb8f7c0162ea1972dc3b08ef2223fb4:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5ZTFlZjNmOThmNDEwY2U5ZTFmZGJhYmM2ZTQzZDViNzUzM2RlZGRhMGI0MTM5MDJiNGMxODM0YjJiMDhkNTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiMTA2M2M0ZGVhNjhhMzgxNjYxMTBiYWQyZDMzOGI0ZDcyZTAyZDM3YmUwODE1YTc4NDUxZTk5MzMyZDZkZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFkMWRmNDBjYTY1NjYyMmQwNDE4NzNmMjg5NGJmODdjZmRkZWExMDQyZWI3YWI1YTZhYWQ3ZTIxMDZkZGRjMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRlMmQ5NTc4ZmVkMmEyZDYyOWMyMGRkMjMyMzYzYzQ4MzllOWEyZDA0YTNhNTJhYmEwYzJjOTljMzljYjM1OWUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-04T13:52:44.431Z"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:54185c26e9f8afe5cef2374649948a8074bd4413240fdb85209c4cb319762599",
+  "claims": [
+    {
+      "id": "claim_e003891fed45465983fc43514a565117",
+      "statement": "myfeeder is a self-hosted, single-user feed reader (RSS/Atom/JSON Feed) built on Spring Boot 4.0.8 and Java 25, using Spring Data JDBC (not JPA) with Flyway migrations, Redis caching, and Resilience4j resilience.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L1-L47",
+          "version": "repo-lines-v1:sha256:c12c1a460e6494d83ee243da1006092cc8bd44716cde5646e0898e3f7e8a318d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MTIyYmYyYmM2MmQ0OWZlYzRlYTBmMzU1YmIwMDBjYWJlZjJlMzk2ODc3OGI1MGMwNWVjMjNjOTc4YTY5NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ0MjNhN2QwN2RmNTg5ODkxOTM2OTM2Y2QwNmNhOGRiN2NhYmFhOWZlNWQ4NWY1YWNhYzJjZTVhNmUxZDRlMTYifQ"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L1-L30",
+          "version": "repo-lines-v1:sha256:7c5fc8e3f055ef2d675ea87b083b90dde26a2ae3272a1c6f5a1eb1bba54ad3da:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0MDQwMTAzMTViZGJiMGZlYTBmZDZmZjAyMTRkOGJjOTIxY2UyODM2ZDFjYzZiY2I4ODQ5ZjM1NzZjZjVhNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljZjQ5NmE2MWU1ZWVmMDUzZjYxMGYwMWRhMDZkYzJkMGMyZjgyYzY0MDNmZDk3NDhlYzZiN2YwYTI0NjBiODYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5ZDYxMTg1MDJhOWQ3ZTRmOWYyZmNmMjJkNGMzYTA5NDhmOWY5NjJiNGZjOTU4Y2MzOTliMzFiZjhlOTQxYjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_897293994ad948fd9cb03880f7c5438a",
+      "statement": "Spring AI's Anthropic chat starter is declared on the classpath (spring-ai-starter-model-anthropic) and configured, but no controller or service in the codebase exposes a chat feature; it remains unused in production.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L40-L41",
+          "version": "repo-lines-v1:sha256:5ff5918e6977f05a4a34948f0dc7b2d854e4b5d65f337b5c05ab59187c245a07:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWU5MzcxM2UwYjM4NDVkMWZkMTI1MzNiN2QzOTFiMmVmYTg1YTIzZmIwNjI1NTQ3Y2NjZTgwNTU2ZmJjMTRmNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzQyMmRiMzBlYzkxYjNkMzkxZDA2ODQ5NWUzYzI3ZDFkY2EzZmZhZjQ0N2FhMTk0NTNhYTNmNTY2NTM5ZjhkMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTkzZGM0MzQzODRhMWE0YjNjOTgzZWYxNGU0ZWNiNzFmMTEyNTQzZDk2ZTM4N2RhOGYzODQxYmRjYTQzM2Y4OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDRjYWVlZWQ5NDdjNjc5ZDQ5MTYwZTA2Zjc1ODk4ZjE5Njg1N2I2ZjIyNjk1MTJmOTZiOTIwYWU2ZjdiMzI5ZSJ9"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L28-L41",
+          "version": "repo-lines-v1:sha256:c567c61b9f0e8060741ebf966b93f99ddeea121978e94b74fd23cdf0592647d2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxYjYyMmRhZjQzM2FkN2E2NTgwMmZjMjhkZWRkNjQ1OWM5MjFmMzY5NzVjNGQxNzA3ZjM2NTg3MjQ2YzYyMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MTYyODVmZDM1OGUzMGE1YjBmMzkzNGQ5OTNkZGY0ZmFkY2RkNGU3NTczNGE1YjQxMTcyYmZmZDM5YTJmZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjZGVlOGRjNjY4MzAzMzU5Y2JhZjZiMjBkYWVhM2Y0MGQ5ZjFmMzU5NGY1Yzg0MWY4MWM4M2M0NDRlMDg4YjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0ZGM2N2M2YjBlZTQ2MzcwYjA1NjkwNjRmZGM5NGNiYjg2OGZhYTQzMDQyMTFlZTAzOTEyODI5ZDFkM2NiNmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cade9d1f987d4e4692084e885d3625c3",
+      "statement": "The AI-scoring integration actually used in production for interest ranking is the Jev/TypeSafe client (org.springaicommunity:spring-ai-starter-typesafe, pinned explicitly outside any BOM), with the app owning its own TypeSafeClient bean rather than relying on Spring AI auto-configuration.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L40-L41",
+          "version": "repo-lines-v1:sha256:5ff5918e6977f05a4a34948f0dc7b2d854e4b5d65f337b5c05ab59187c245a07:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWU5MzcxM2UwYjM4NDVkMWZkMTI1MzNiN2QzOTFiMmVmYTg1YTIzZmIwNjI1NTQ3Y2NjZTgwNTU2ZmJjMTRmNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzQyMmRiMzBlYzkxYjNkMzkxZDA2ODQ5NWUzYzI3ZDFkY2EzZmZhZjQ0N2FhMTk0NTNhYTNmNTY2NTM5ZjhkMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTkzZGM0MzQzODRhMWE0YjNjOTgzZWYxNGU0ZWNiNzFmMTEyNTQzZDk2ZTM4N2RhOGYzODQxYmRjYTQzM2Y4OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDRjYWVlZWQ5NDdjNjc5ZDQ5MTYwZTA2Zjc1ODk4ZjE5Njg1N2I2ZjIyNjk1MTJmOTZiOTIwYWU2ZjdiMzI5ZSJ9"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L30-L46",
+          "version": "repo-lines-v1:sha256:12f056b89462a5cf60a796bd1cab68ce083710fe64016371c482ec97d61f42f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljZjQ5NmE2MWU1ZWVmMDUzZjYxMGYwMWRhMDZkYzJkMGMyZjgyYzY0MDNmZDk3NDhlYzZiN2YwYTI0NjBiODYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3Y2E2MmQ4Y2YwMTViYjkyYTQ1MzIwY2MyYzZkZjYxYTExNzQ2Y2UyN2IyOTU0Mzc1YTBlMWEwYmMzNzM0MjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlN2E0NzNmNmI4NWI1ZmMwODJiYTQ3ZTA2NmUyNWZmNTYxZjcwZTU5MjVmN2VlZmJjZTMwYWI1ZmVmYjBmZjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyYWJhNjYyNjhiZWE3Y2E2NzJjZGYxYTc3YjM5MjNiMjg3MzE4NGFhNjBiZTg0NDU4M2NiNTcxMjk1OTBhYmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_48e8856c4c824045ac97107990702825",
+      "statement": "The backend package structure (config/, service/, integration/, controller/) now contains both the original feed/article/folder/board code and a parallel set of interest-ranking/Jev-related types (e.g. TypeSafeConfig, InterestScoringConfig, InterestService family, JevApiClient/JevApiClientImpl, Interest*/TopicSuggestion controllers), confirmed against the current source tree package listing.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L48-L62",
+          "version": "repo-lines-v1:sha256:fd0fa28221cb558e51edeec35b7ed008c5c439a69ed0f6f86434c45ba54accf3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmZDYwMzg4MmQ3Y2JiYmZhZmI1NWI4MzhlYTRkMzgyMzUyOWU4OTJmOWQ1ZDBjNjE3ODVhZDE2MDdmMTdmNTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRjYThmOWQ5NzgwN2Y0MjVjYWJhMzFjYmU0ZmMzOThlMGY3MGJhYjRkMzIyMTgxOWJhNWRlNjRkNTM4YzU0NGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxZWY2OGNhODdjZTc4NTMzODdmNGFlMzc2MzMxZmJhMGY3NmViNjE4OGY4YjRmNmRlOWJiMWVhMjVlYzQzNTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dccd3f470f924f1d933a2956f3da7f61",
+      "statement": "Flyway migrations run V1 through V7: V1-V5 cover the original feed/article/folder/board/extracted-content schema, while V6__interest_scoring.sql and V7__engagement.sql add the interest-ranking and engagement-learning schema introduced in the v0.2.1 and v0.3.0 milestones.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L118-L118",
+          "version": "repo-lines-v1:sha256:55eff2aaccb9369857aafa19bee98c3375664689a615164722202ce2fa4705c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVlZmYyYWFjY2I5MzY5ODU3YWFmYTE5YmVlOThjMzM3NTY2NDY4OWE2MTUxNjQ3MjIyMDJjZTJmYTQ3MDVjMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVlZmYyYWFjY2I5MzY5ODU3YWFmYTE5YmVlOThjMzM3NTY2NDY4OWE2MTUxNjQ3MjIyMDJjZTJmYTQ3MDVjMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjMxNzZlZmMwYTUzOWZmMmRiZWE2ZGZiOTQwMjM5NGM0ZGNiOGJjMWFhY2YzOTQxYjA1N2ZmNWEyODczMGY3MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDE4NGI1MDFlZWUyM2Q5ZDdiZjdlYTQxODUwZDQ4YjIxMjgyZTMyY2ViNzJjMzlhNzAxNjhhMTJmMjBhNDA1YyJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V6__interest_scoring.sql",
+          "version": "repo-file-v1:sha256:d30123e21133a3c127d7e4c5b4222e85de21cea87090447fb0f2ceb0ac699adc"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V7__engagement.sql",
+          "version": "repo-file-v1:sha256:23c8aa1ef98430548e9ccc56722b6e4da2b4add3836a939f45d75c8fb452f2e7"
+        }
+      ]
+    },
+    {
+      "id": "claim_8a7225ccf5694258b2c85116f7d291f4",
+      "statement": "Two major milestones shipped since the app's original build: v0.2.1 Interest Ranking (Phases 1-7, shipped 2026-09-29) adding the Jev-powered scoring pipeline, rubric editor, blended Priority view and thumbs feedback; and v0.3.0 Engagement Learning (Phases 8-12, shipped 2026-10-02) adding engagement capture, a learned-engagement ranking term, explainable UI breakdowns, and gap discovery.",
+      "evidence": [
+        {
+          "resource": "repo://.planning/ROADMAP.md#L1-L36",
+          "version": "repo-lines-v1:sha256:add859c1830536d47f3d0e9df6e263f442acfd68167845dcc9aefa9c410a571d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxNTVlMDNhOTMzNTY5YjliZDkwYTUyYTNiOWNkMTY1NjA1M2U1NmM5MDVkZDUxZDlmMTFjNjM0MzA5M2ZjYjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyZjg3M2RjMGM3NzU5ZTNiMTRmNTcxNzM0YWJjYWNjYWZmNWY4NGE1ZmZmOGM4ODdmOTdkMTdhMjdhY2U5MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZhM2E3MzIxZDVmZjUyZWJiOWU2ZDg3N2Q1NWU0YmJjNDhlNTViODI2MTBjOWE1ZmMzMTBhOGVjMWMyMTQ4YzgifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-04T13:52:44.431Z"
+  }
+}
