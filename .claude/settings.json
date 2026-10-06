@@ -2,21 +2,32 @@
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true
   },
-  "permissions": {
-    "allow": [
-      "mcp__codegraph__*"
-    ]
-  },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "bd prime --hook-json",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "codegraph prompt-hook"
+            "command": "codegraph prompt-hook",
+            "type": "command"
           }
         ]
       }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "mcp__codegraph__*"
     ]
   }
 }
