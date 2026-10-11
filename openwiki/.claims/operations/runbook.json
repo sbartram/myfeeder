@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a622ba710effec0e40f5c27b360ebdfaffd21e6620024d3e47aa95a8d5bc08ee",
+  "claims": [
+    {
+      "id": "claim_b885e34d37834d999b20bfc0b2452712",
+      "statement": "deploy.sh requires MYFEEDER_PG_PASSWORD and MYFEEDER_ANTHROPIC_API_KEY (no fallback) and treats MYFEEDER_RAINDROP_API_TOKEN and MYFEEDER_TYPESAFE_API_KEY as optional, defaulting each to an empty string and printing a warning when unset.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh#L12-L31",
+          "version": "repo-lines-v1:sha256:1a6de83ba30591c8f42f8c69096628c140091e6ac562161b7d647def61b17e23:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjYmFmZDA2MDYxMGNkYWM2MDA4OGY3YWJmY2Y3NmM1Y2E0YmY4ODM1ZTc4MDdlMWY1ZTUxMmRmZjk5MmE3YTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzNDNlZDQ5ODE4OTkzNmU2MDJjMjZjMDc0NzllYjcwYThkNGFiZDE1YWVjNTdmMzdkZTZlZWFlN2RiMmU4YzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjllNDM5ZmNlZDE4MDU5ZjFiMmY3ZDJlZjEyOTMzMjc3ODE5NDFkNDgyZDI5Mzg0YzVjMTg1N2EwZGYzN2FkNTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzY2QwNTdiYjIyM2FmMmYzMjQxNmZhYzMwYWFkNGRhZTA2MmVmNjIxNzJkYTdkNmU4ZGFjZDdkYzVmOGVjZmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4b6c30f3027d4d92a0820d9dc2429e12",
+      "statement": "All deploy.sh secret values (postgres password, Anthropic key, Raindrop token, TypeSafe key) are passed into `helm upgrade --set`, so none of them may contain a comma or a backslash without corrupting the Helm --set parsing.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L150-L150",
+          "version": "repo-lines-v1:sha256:131072ecf5f2d2dcecf11c9f208b5fa2fc07075f76f8b3893044f849cdf8262b:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTMxMDcyZWNmNWYyZDJkY2VjZjExYzlmMjA4YjVmYTJmYzA3MDc1Zjc2ZjhiMzg5MzA0NGY4NDljZGY4MjYyYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTMxMDcyZWNmNWYyZDJkY2VjZjExYzlmMjA4YjVmYTJmYzA3MDc1Zjc2ZjhiMzg5MzA0NGY4NDljZGY4MjYyYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2Y4NmUzOGZhZGE3NjQ5ZDlmNDFmNTcwYzAyZmQwMjkwYzc4ZjQxMzdhNTBmNjRiYTFjZWYzYzllMTNkNDc1MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2VkM2Q1MDQ4MjEyN2FjOTZmMjIyMjcxZjUyYTkzMTMwNjRjYTA4OTdjZmU3MjNhYWI5MmY1ZmM4MzBhYTVmZSJ9"
+        },
+        {
+          "resource": "repo://deploy.sh#L24-L32",
+          "version": "repo-lines-v1:sha256:b2c07ba01b4213df0bc97a89b5c62a37399adfc647e87a45a3eec62361c7bc95:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWMwNjVhMTcwNWUzNzNjM2UzNGEyMzUzOWFiMThiOWY1ZGRiMzk2MjAyZWM0Y2QzZGFhNzIzOWMzNjA2ZWYzYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDNjZDA1N2JiMjIzYWYyZjMyNDE2ZmFjMzBhYWQ0ZGFlMDYyZWY2MjE3MmRhN2Q2ZThkYWNkN2RjNWY4ZWNmYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWY3YzU3OTQ4YTE0ZmNiOTIzNjljN2IzOTQwN2YzZTMyMWZjNzIzMDQzYzk4Zjc5OWI1NDI5ZTA2ZGI4ZjE5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4fb804105ce64a6dbde74c08ce7b184f",
+      "statement": "A blank MYFEEDER_TYPESAFE_API_KEY does not crash the app: TypeSafeConfig's bean still builds, isConfigured() returns false, and interest scoring (the sweep and on-ingest scoring) silently no-ops instead of erroring.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L236-L236",
+          "version": "repo-lines-v1:sha256:d721598ff80c6e35781bf82aebf36f60c526a9efbf6a5797c1967188014a27a1:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDcyMTU5OGZmODBjNmUzNTc4MWJmODJhZWJmMzZmNjBjNTI2YTllZmJmNmE1Nzk3YzE5NjcxODgwMTRhMjdhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDcyMTU5OGZmODBjNmUzNTc4MWJmODJhZWJmMzZmNjBjNTI2YTllZmJmNmE1Nzk3YzE5NjcxODgwMTRhMjdhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmQ4NjlhMGM5YWQ1YmJhMjZhNGFiNjcyYmIwZWJjYzkzNGQzYjI2MGYyNGMwYzQ5NTM3MzRiYzg4N2Q0ZDdkYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmIyNjE1M2YxNWQ0YzQyOTA3YzA0YWMxMWY2MmRlNjA4ZTIzZGI3NWVkYWJlMmRmNDM5MzUyMzBhM2YzMGI5NyJ9"
+        },
+        {
+          "resource": "repo://CLAUDE.md#L242-L242",
+          "version": "repo-lines-v1:sha256:2792cc3857e708588bbbe94a695c3f120984037c59b9c4b418be1c7966aa998a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjYyYWM5YjQxOWNhZjRlOWVjMmY1Mzg2NWI2YWJlMmUxMzkzOWRmOWJkOTFkYWE5NmM5MjU2MDllNmZhNTcxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODNhOTRmZjYwYjRlYmZlNmRjN2M3ODJlMjIxNGRkODJiMWY2MzU4MzM0NzdhOWU5MjNlYjY5MDA4NjA3ZTdmNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cbbc1b0e6b34487c8e0e37486fe565a5",
+      "statement": "Minor releases (new schema migration, new dependency, or new view) are cut with `./gradlew release -Prelease.versionIncrementer=incrementMinor` instead of the default patch increment.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L137-L137",
+          "version": "repo-lines-v1:sha256:2fb8a8063d77108c91ecf68fd665918316f04f63c990c8b5ab07b60218e9d087:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmZiOGE4MDYzZDc3MTA4YzkxZWNmNjhmZDY2NTkxODMxNmYwNGY2M2M5OTBjOGI1YWIwN2I2MDIxOGU5ZDA4NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmZiOGE4MDYzZDc3MTA4YzkxZWNmNjhmZDY2NTkxODMxNmYwNGY2M2M5OTBjOGI1YWIwN2I2MDIxOGU5ZDA4NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzFiNDZhM2JkM2Q3YWQwMjJmODg5N2NhMmIwNTUyMjFiZjcxNGIyMWFhNzRlNTIwNjZmODY1ZDQ3ZDJjMzU2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWRkM2U1ZTEzMTc2OTlkNTc0NzM3MmQ3Y2E0OWNlNDIyNTU1NTZhNTBlZmJhZGM1ODRjMjVjZDI4Y2E0NjE0MyJ9"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L82-L95",
+          "version": "repo-lines-v1:sha256:8465135d799683f416cfd387d16ed2fc3b0a8138d8f9c8ef1b029861daf77870:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5MzQxZDRkNjk3NGFjOGUzMGJlMDBiNDVjMzdjMDk1MGUwNjIyM2MzZGY2NjZjNjk5YTZmODI0MTZhYjExNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmZmVmYTQ1OTc2MWI0Njk0NzI0ZWE0ZTE3ZGU2MDZiYjNiZTEwZmU2YWE0ZGRjNmM2MjQ2NWI0NzQ2Zjk0MTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b56709bd9a9642f5bcf5541af45dcd68",
+      "statement": "Because `./gradlew release` already creates an annotated vX.Y.Z tag, a GSD milestone named after the release it shipped in must not receive a second tag from /gsd-complete-milestone, and an existing release tag must never be moved or overwritten.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L149-L149",
+          "version": "repo-lines-v1:sha256:59f1775289b1923135fb4f77ae4df51e1279db032ac1b7458b86e1e0c650ca0f:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTlmMTc3NTI4OWIxOTIzMTM1ZmI0Zjc3YWU0ZGY1MWUxMjc5ZGIwMzJhYzFiNzQ1OGI4NmUxZTBjNjUwY2EwZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTlmMTc3NTI4OWIxOTIzMTM1ZmI0Zjc3YWU0ZGY1MWUxMjc5ZGIwMzJhYzFiNzQ1OGI4NmUxZTBjNjUwY2EwZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjdmYzgyNTA3NjE1MTM4NzEzODdiOGY2YTlkMTJmYTk2N2Y1ZThmYTk3ODJlYWE0NDExYzgyOGRlYTcxYTkwZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjQxYzAxZjAzMzg0YTAxMDk5NWI1YzIyNjI1ZGUzYjY4YWY2ZThjNmU3YzhlNTg4ZDBmMTg5ZDBlMGM5ZGVjOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c065d1a25ab14e48ba14e1cb361e229f",
+      "statement": "The interest-scoring sweep is throttled by two config properties, myfeeder.interest.sweep-batch-size (default 50, caps eligible articles enqueued per run) and sweep-delay (default PT2M, run frequency); lowering the former and/or lengthening the latter is the documented response to 429s or circuit-breaker trips.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L240-L242",
+          "version": "repo-lines-v1:sha256:f0b56566f2528aa8a80a415e69c332f456ddae4002d5d4bc106caf92e1050d53:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWE3MzkxODNkN2JiMjQwOWU1ZDBmYmQzMTc5M2E2NTAzNzczOWZkNzA3YmZmYmNlNDI5NmJjN2Y2Y2Q1MWFjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmIyNjE1M2YxNWQ0YzQyOTA3YzA0YWMxMWY2MmRlNjA4ZTIzZGI3NWVkYWJlMmRmNDM5MzUyMzBhM2YzMGI5NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODNhOTRmZjYwYjRlYmZlNmRjN2M3ODJlMjIxNGRkODJiMWY2MzU4MzM0NzdhOWU5MjNlYjY5MDA4NjA3ZTdmNyJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/scheduler/InterestScoringSweep.java#L20-L69",
+          "version": "repo-lines-v1:sha256:f20d8cfecfbea043e07de407fe389d48500e778f7a98d3f2f81332e0306f0f52:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0YTRjNzRjNmNlMjE0YjM5ZjgzZDEwMGY1YjVhZmQ3YmYxZmRhY2Y0MzM0MGIyYzBhODRmODgwOGMwNDBkNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyMDgwMWQxYTA0ZDI0ZDk2ZGQ3NDk3YTZkOGY4NmViZWVmNTY1OGFiZDhlMjQ2YzIyZWE4OTMxOWE0MDliZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e9084f38b1cc4a849966a84cf29ec90c",
+      "statement": "An out-of-band `kubectl set env deploy/myfeeder MYFEEDER_INTEREST_SWEEPBATCHSIZE=...` override restarts the pod immediately but is not reliably cleared by a later `helm upgrade`'s three-way merge, so once the value is committed to application.yaml and deployed normally, the override must be explicitly removed with `kubectl set env ... MYFEEDER_INTEREST_SWEEPBATCHSIZE-`.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L242-L242",
+          "version": "repo-lines-v1:sha256:2792cc3857e708588bbbe94a695c3f120984037c59b9c4b418be1c7966aa998a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjYyYWM5YjQxOWNhZjRlOWVjMmY1Mzg2NWI2YWJlMmUxMzkzOWRmOWJkOTFkYWE5NmM5MjU2MDllNmZhNTcxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODNhOTRmZjYwYjRlYmZlNmRjN2M3ODJlMjIxNGRkODJiMWY2MzU4MzM0NzdhOWU5MjNlYjY5MDA4NjA3ZTdmNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_1cb0d4a04ff542e7972c8b948546285b",
+      "statement": "The emergency stop for interest scoring is redeploying with MYFEEDER_TYPESAFE_API_KEY unset, relying on the same optional-secret behavior (isConfigured() false, no crash) rather than a dedicated kill switch.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L242-L242",
+          "version": "repo-lines-v1:sha256:2792cc3857e708588bbbe94a695c3f120984037c59b9c4b418be1c7966aa998a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjYyYWM5YjQxOWNhZjRlOWVjMmY1Mzg2NWI2YWJlMmUxMzkzOWRmOWJkOTFkYWE5NmM5MjU2MDllNmZhNTcxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODNhOTRmZjYwYjRlYmZlNmRjN2M3ODJlMjIxNGRkODJiMWY2MzU4MzM0NzdhOWU5MjNlYjY5MDA4NjA3ZTdmNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f0ff664440c24381b3ec6f47fcbf07eb",
+      "statement": "scripts/interest-calibration-replay.sh replays the Priority blend's interest/engagement scoring against production data read-only (every psql session runs with default_transaction_read_only=on), requires MYFEEDER_PG_PASSWORD, defaults PGHOST to pg.bartram.org (requiring LAN/split-horizon DNS access), and refuses to run without the password.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/interest-calibration-replay.sh#L1-L22",
+          "version": "repo-lines-v1:sha256:f3c93f70ed90a8a26b844fc8558ba74ff795592fe8edd5ded57dcaf07c07641e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0ZGM3N2RjNTliYmM2YWJmY2Q2NWU3MGY0OTFkM2UxMTFhODU1YTRmYmYyNWQ3MjIzNzJiYzE3NTU5OTk2ZGIifQ"
+        },
+        {
+          "resource": "repo://scripts/interest-calibration-replay.sh#L70-L80",
+          "version": "repo-lines-v1:sha256:2233b506fa95ed3580d17357421b775f41a448e1094eb93981bcce6ad3319cd8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlMDJiMGVlY2FmYjhhOTI0YzdmNzIxYjFhMDkyMWQwZDg1YjZlZDE1MGQ4MDA5ZTBiODFkMGZlY2E5OTc1YWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzNTNjYjM2YWE0YTU1MDJjYTQwNzBhNmE1MjU4YjNmYThjNTQ4NjhhZDAxNjAyNmMwZGYxMzNkMDEyZTdhMzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhMDkzYjgxODk5MjRjOTAwMDZlZGQ1YmNkYzY5YTAwNzU4ZDQ4YzNlMTU2NGY4NmVlZGQ0OTFiMWVmNjJhZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzZTJhNWQ1MjFlZmI1ZjhlNTU2MmQ2MjVjMDkxYzg0ODkyYWFmYjNhNjNiOTUxYjViYzI1ZTlmZjZlMDY5YmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_918a94d81a044830acc7ce9d6600d509",
+      "statement": "interest-calibration-replay.sh validates every candidate constant set against the same rule MyfeederProperties.Interest.Blend.Engagement.isValid enforces at app startup (cap 0, or 0 <= open < save < 1 and 0 < cap < learned-cap) before connecting to the database, failing fast on an invalid set.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/interest-calibration-replay.sh#L55-L68",
+          "version": "repo-lines-v1:sha256:1ccc0fd821ad456833faea8d9e9af4cc573584da5a40033ad284a022f45786b5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5MWJkN2I3ZjMzYzNlNGRmODc3MDk3OTk1MmQ4NDM0NzkzOTUyNGJmMmFkNjI0Y2I0MTUwNmQzY2FhZTViYjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxMTdmYTAwNmJhOTIwODUwMGIyOTMwY2U2OWNiZGU0MzZjNjQ3YWZhOTE3Y2I3Mzk2YTliYzkxMTFhNDZkZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhMDkzYjgxODk5MjRjOTAwMDZlZGQ1YmNkYzY5YTAwNzU4ZDQ4YzNlMTU2NGY4NmVlZGQ0OTFiMWVmNjJhZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkM2VlMmJjNTFiYjliN2Q4ODQ4M2RmMzI4MWIwZjA5ZWU2ZWFiNDQ4OWY0MTlkMGU0NDA4ZGE4YTNhNGJkYTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f6f50ca92f3b49e18b17148eb57a2dc0",
+      "statement": "The replay writes output atomically: each candidate's .tsv is written to a .tmp path and renamed only after psql succeeds, so a failed run leaves no stale output file.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/interest-calibration-replay.sh#L93-L107",
+          "version": "repo-lines-v1:sha256:598f095c557365352b34b2346999fdf60f0242236e85616452eccbe0be5b38d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjMzE0YmU5NzkzZTc3Y2JjMGM1MWRjYjMzMmI1NjA1ZGQ3NDdmODE0NmI5ZThkOGVmNmM4ZmRlNjc0Y2I1OGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxMTdmYTAwNmJhOTIwODUwMGIyOTMwY2U2OWNiZGU0MzZjNjQ3YWZhOTE3Y2I3Mzk2YTliYzkxMTFhNDZkZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjYzYwOWE0NzMwOWJmYjcwMDc3ODAzYzYzZjQ0NWJiMzNmZDhjYmEzOThkNWUyMDM2YzFjYjE2NDBlNjE5YzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d2041be612cb4dc19070796ecb64bb8c",
+      "statement": "The calibration replay's decision rule D-02 is a data floor requiring at least 30 engaged SCORED unvoted articles and at least 3 non-negative topics with measurable engagement before tuning; below the floor the correct action is to wait rather than tune on thin data.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L208-L212",
+          "version": "repo-lines-v1:sha256:56fad2ea34dbd7501225b94df7bbef58ded29f92ce37dd0b050b1d93080f4af6:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWVkMTBmYTZkNTk2OGI1Yzk4NDI4MWY4NTFmYjk2NmE4Mzc4YjUyODBjMjBjMTFhMjcxNWI5ZDAwZWE2MzYyNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2QxNzM1M2I2NDcwMDAzODdhNWY2ZDhjNTVkMTU4ZjIyNDRkODcyYzE4MWRhOWY5ODFlMGJlMjg4MTBhZWYyMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGE2ZWQ4NjIwM2VlNjgxOGViYmYwYWRlNWMwMWVkZWE5MmQyYWFlNDViMzRmMDUzZDY3ZGZjZWFmODRkZWFiOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTE4OGI1YmUxOTZmNTYzMThmYWUwNGQ3Njk1MDg0ZmZiYmZmNjc5YjkzZmI0M2Q2ZjYyMmIxZDQxODc1ZGVkMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_35143de2492e4874b70f474c05fbf9e2",
+      "statement": "The calibration replay's decision rule D-04 is a nudge rule: keep the shipped engagement defaults unless a candidate's high-tier share differs from the cap-0 baseline by more than 5 points, and never pin a topic at the engagement cap unless it has reached the confirmed article-count threshold.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L213-L213",
+          "version": "repo-lines-v1:sha256:a029c775eaec7d86c14efb6764d695259f9a2b0be3cf5deec6a14fc122f6de6e:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTAyOWM3NzVlYWVjN2Q4NmMxNGVmYjY3NjRkNjk1MjU5ZjlhMmIwYmUzY2Y1ZGVlYzZhMTRmYzEyMmY2ZGU2ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTAyOWM3NzVlYWVjN2Q4NmMxNGVmYjY3NjRkNjk1MjU5ZjlhMmIwYmUzY2Y1ZGVlYzZhMTRmYzEyMmY2ZGU2ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGY2NzEzY2QyODA1MjNjZmEwOTVmMjZiNmZkNmMwNmM3OTA0NmUwYTc1MGNhMjk1Y2Q2NjhiNzQ3Y2QxYTdjOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzM4YjMwYTQ4ZDNhN2Y4NGQzN2FkMzcyMzQ5ZDBhYmI4MzVmYzNkZWRmNDViYzA0Yjg5MGY3MTFkYTgwZGQzZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_70a3b79692c0469d8da0f52996198951",
+      "statement": "Calibrated engagement/interest tuning values are committed into main application.yaml and src/test/resources/application-dev.yaml (and never set via Helm --set or a Kubernetes env override), while the test application.yaml keeps fixed constants because integration tests assert against them.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L190-L217",
+          "version": "repo-lines-v1:sha256:b7fba6178430971188e0864368b98e6c146910064894d0195de472a271f328e1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyYzk3YzAxODk2YjJjNWE1ZjY1OTIzNjJlNWY2MTQ1NmUyMTI1NmNhZWM1MmZiOTgwMjA5OGNkNWJiNjFhNjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2ZDllNWEyY2QzNGFkNjUxMmVkNjQ4ZWYwM2E1ZTk1OWQ1MGExMjk4ZDgzZDg0NTYwNTFmZDY0Y2Y3M2M2MGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwMzRhNjVkYmFhNjhjZGYwNzkyZmQ1YzBjMjcwNGYxZjFjOTNkYjVkZjU2MDRlMzViMDM4YWI5NTEyMmRlYmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzYzdjMDdmOGUwOTA3ODRiZGI2ZDI5ZjgxY2RhYTg4NTZiZWUxMTY3MDg4OWUxOTBlYzNiYTgyNmY4NDBmYzIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a5e5a20acdf7479fbc9d8a3ffa99f73a",
+      "statement": "Shared cross-repository infrastructure facts (registry host, pg.bartram.org, k3s node layout, load-balancer IPs, deploy conventions) are documented in HOMELAB.md, a sibling file outside this repository referenced from CLAUDE.md as @../HOMELAB.md rather than duplicated in myfeeder docs.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L288-L290",
+          "version": "repo-lines-v1:sha256:80349d9a123f589c8fb793918a64e4ab034702d21fc9e7916c94ab7c847b526f:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjEzMjk4MzU5MDZjM2IzYzNkNDMwYmI5NTQ3ZGVhYmNhNTE1NjFiZDlkNTc5MjA2YTlhNTlkZDliYTJjZDlkMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDJhZTJhMDA3M2VmZjljMGY2MzM2ZmQ2MGE3ZmE5ZDViYjk4MTBlM2UwMTlmNjliZWIwMmEzZmFlMjllZmIwMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmFiM2NkNTBkNzNlMDQyNWVmYzc4ODQ0NGRlMGFmYmFiZjg1YjlhMjc4MTYzYjJiYjIyYzg1MTM1YWZhNWVlOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWIxYmM1YmM0YTIzN2Y1NzhlNmFmNGE0MTVkMDY0N2Y5OTEwYjAzYjM2NGUxZTI3YzFmMWRiYWE3NDNkMDNiYSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-11T14:50:52.613Z"
+  }
+}

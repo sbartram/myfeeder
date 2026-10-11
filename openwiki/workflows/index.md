@@ -1,9 +1,5 @@
----
-type: Documentation Index
-title: "Workflows"
-description: "Files and subdirectories in Workflows."
----
-
 # Files
 
-- [Feed Lifecycle Workflow (Subscribe, Poll, Backoff, Retention)](feed-lifecycle.md) - Walks through how a feed is subscribed, scheduled, polled on a recurring basis with error backoff, kept in sync via application events on save/delete, and eventually has old article content cleared by the retention job. Key file for anyone changing polling, scheduling, or article ingestion behavior.
+- [Engagement Capture, Learned Weights, and Topic Suggestions](engagement-and-suggestions.md) - How reader actions (open/star/board/Raindrop) are recorded as engagement, how engagement blends with thumbs feedback into learned topic weights, and how the same engagement rows drive gap-discovery topic suggestions.
+- [Feed Lifecycle Workflow (Subscribe, Poll, Backoff, Retention, Extraction)](feed-lifecycle.md) - Walks through how a feed is subscribed, scheduled, polled with error backoff via application events, deduplicated, and how old content is retained/cleared, plus the reader-view article extraction path that reuses the same fetch/SSRF guard.
+- [Interest Scoring Workflow (Jev Ranking Pipeline)](interest-scoring.md) - How articles flow from ingestion through the scoring queue and sweep to a Jev judgment and a stored score, including profile/topic setup, cold start, eligibility windows, the rubric-change discard rule, and status polling.

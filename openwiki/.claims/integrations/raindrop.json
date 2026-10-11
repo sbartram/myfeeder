@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:95872e210c3390a33bf42bf20058bd11f3f154b4c4f543764fe99e42ee3422ae",
+  "claims": [
+    {
+      "id": "claim_579406dd8d3549b1b3b95d0723eb0b21",
+      "statement": "RaindropService.saveToRaindrop calls engagementStore.recordQuietly(article.getId(), EngagementKind.RAINDROP) immediately after raindropApiClient.createBookmark(...) returns successfully, inside RaindropService itself and outside the @CircuitBreaker/@Retry-wrapped RaindropApiClientImpl bean.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L32-L54",
+          "version": "repo-lines-v1:sha256:a7636112756c3bee18f5619caca65252276cb4029dfec961411ada1de38320fd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxNDQ5ZTM1ODMyZGRhYzYyZDcyNGQxYTFiNGI1ZDdlM2NmMzk3MWE5NDMzY2FiZDFkN2U0YWRmODA3NWFjNzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3NmE0Nzk0ZTBiNjczYzM3MmIyMDg4YWM0ZTBmNGIyMWZjZGQ2M2FiZDBiZGE1NWFmOTRmN2FlYmQ1NGEyNmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0ZGU0ZWZjMjJiZjlhZmU3ZWJmMzhjZDI0NTM2YmU5NmQ4NGQxNDU2YzUyZGY0MzhjYjk4ZTk4MDNjZmEzMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ec8950455b4f42b69a8213c04be62695",
+      "statement": "Because business validation in RaindropService throws first and RaindropApiClientImpl's fallback methods always rethrow on failure, saveToRaindrop records RAINDROP engagement only when createBookmark actually succeeds; a disabled/unconfigured integration, missing collection, or failed/circuit-broken HTTP call records nothing.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L68-L84",
+          "version": "repo-lines-v1:sha256:bc8a16de91f5fae8e68ed204f9fec99585fe0522116fb80cb311b80c998cd603:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNDhhNDIxNzRhMzFhYzEzMDBkNWI0OTFkMzRjYTgxZWQ5MWU0NjNiNGUwYzA2ZWQ1NTdjY2Q5ZDVjM2Q0YjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0N2MxNzdhZDMyYmQ0OGRiMzJjYmI4ZmM1YTZiMjQ3Yjg3MjRhYmY1YWM5YTNiZDVjMTY4YjQzMjdlMzRlYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5ODA1MTc3NmY2ZGRhZDA0NmQzZjMzNGJmZjY2MDRmOGRmYTdjMGZjNjJjNmNjNjliOGJlODQzMDNkODc3NDcifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L27-L54",
+          "version": "repo-lines-v1:sha256:88bf53c14fa897d9404d022b4841ae61eb3ce2e488fde17c5139a72bad9a0559:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2MzlmM2VlMDc1NTc3MDRkZGU4YWNlYjY3MWJjOGZjNmE2ZTkzNjg4YjBmMzI1MzI2MTQ1ODM4MGVlYmMxODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0ZGU0ZWZjMjJiZjlhZmU3ZWJmMzhjZDI0NTM2YmU5NmQ4NGQxNDU2YzUyZGY0MzhjYjk4ZTk4MDNjZmEzMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_233d24b2126f408fb4635dc436814d5c",
+      "statement": "ArticleEngagementStore.recordQuietly performs a best-effort, non-transactional INSERT ... ON CONFLICT (article_id, kind) DO NOTHING via ArticleEngagementStore.record, never throws (a DataAccessException is caught and logged at WARN with only the article id, kind, and exception's simple class name), and is idempotent so repeated calls for the same article/kind are harmless.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java#L26-L45",
+          "version": "repo-lines-v1:sha256:44ccd8c3274d7e2ec8319a11677d12d01572962a052ebf1ee9af87ce522b9794:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjMjQ5YWIwZjBmMTVmMTQxZWFhYjM0NjYxMTYwNDc1YjhkZTFmNGQ4NWY5YTZkNDBmY2E0MTI0MmQ1NDRiYzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJlZWI2MzZjNjA2NDM0Mjc4M2EwMDg2MTExOTNlZDMyZjM3MjM2MmE5MGVkMjMyZjlhNGExMjI1YmY4OTNiNzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjMGMwYjgxNTU0YWZiNjAxZDU5NDI1MDY3MWRjMGFmNDhjOThmNjZiMzBjNWJlZmNlYzliYmM4Mzk3N2MyNzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_136aafeec3e3477181fcded8afe27850",
+      "statement": "RaindropServiceTest verifies, using Mockito InOrder, that createBookmark is invoked before engagementStore.recordQuietly(..., EngagementKind.RAINDROP), and that a second successful saveToRaindrop call records the RAINDROP engagement a second time.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/integration/RaindropServiceTest.java#L80-L134",
+          "version": "repo-lines-v1:sha256:230aa23314e184a78fb1e669507e4dd5a8e550cf433049ef96570f25a050c5ab:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyZjc0ODdmMzAxODBhNDFhNDlkNmM5ZGYwYWE1NjJiZDk5NGI3MWMzMjUxZTUxMzA5YWIzZDhmYWRkZWM1MzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3NjMzZTY4MDBlMmJiZWFjZjlhM2QzZjc5YmExNWMyM2Q5NTkwZjIwOWY5NzNlY2FiNzE3MDFkY2M5NGI4MDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4ZWFmM2UxZGIyODRmNmE2ZmQ0ZTA2NmFlMmZiNjU0YWU2OGZkZmNmM2U3ZTRkY2E0YzJkZDIxNGE0OWI5ZDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_25249d025a834da08e21662edc323fda",
+      "statement": "The Raindrop RaindropService/RaindropApiClientImpl split — business checks in the service, @CircuitBreaker/@Retry annotations on the separate API-client bean to avoid Resilience4j's self-invocation AOP-bypass trap — is the template convention that the Jev (TypeSafe) integration's JevApiClient/JevApiClientImpl also follows, differing in that Jev's judge method has no fallbackMethod and lets typed SDK exceptions propagate instead of wrapping-and-rethrowing.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L32-L54",
+          "version": "repo-lines-v1:sha256:f7da003b1b5fe7757eb4b25ee566fd41e2e988dc5a9b4bc451bc062b504f1908:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzMDM0Y2UzZTdjMGE5NTExYTlkOTBlODdhYmZkMTBmOGJhZDU4Zjc1NTVkNDA0ZGI3MjIzYWMzYzg0YzZjYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkYzJiMzExYWJlODc1NzJlOGE3Y2MwZDk5NmE2NTg0NDA3NmU1MjMyZDIxYjdhODU0NzVmOWI0MDU1Yjc0OTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0NGY5ZTM2ZWIwMWIzZDA0MWViNDYwODUyYzZiYWNjMTBiMTNkNWQxZjUwN2IxNjk4YjQ0ODljNWQ5OThkMWMifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L1-L25",
+          "version": "repo-lines-v1:sha256:551663a07b71cebcd517b2058edd9765c27fc0e006a068a44227251eb003323c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhMWQ4NWQyMTc4ZWE3NmVlYjc2OWZlMzdjNTIyMzBkZTRlMDRhYTUxYmEyN2Y5YzNkYjE3NjE0OTdhMGQxZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlMzU0ZGE3MGNjMzFiYjJiMGJlMTIxNGM4MTFlMTFiZDU1YzI1ZGEzM2I4MDNmYjcxNDk2OWU0M2U5NGJhZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmYjllNTg2OTFjOTU1MjVhZTQ1NWQzZDhmMWYwNWY1NzdjOTg1ZTcwMjY5ZWUzMmMyODU2YjQ3ZWQyMDc1NmYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-11T14:50:52.613Z"
+  }
+}

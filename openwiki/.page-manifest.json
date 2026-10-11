@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "pages": {
+    "/openwiki/architecture/overview.md": {
+      "pageVersion": "sha256:3cab26661887dea4b4fd61209474fc3bb675a03da0e26ee229fb4cd8344945a5",
+      "completedBy": "openwiki/0.7.2",
+      "completedRunId": "64ab75df-4b1b-4538-8165-0777bb9ea7f2",
+      "gitHead": "285bb13c624440a55f221c3db36dc72acf82f018",
+      "sourceFingerprint": "sha256:ab53474bdb5a5758e3f15d8b33acab4d188d9942a32c1dfc5d1a0ddf3a254e5e"
+    },
+    "/openwiki/domain/concepts.md": {
+      "pageVersion": "sha256:ff073d5d68ea39dac15f242ca3f83246022620507e94af4b7f51333a02bc5230",
+      "completedBy": "openwiki/0.7.2",
+      "completedRunId": "64ab75df-4b1b-4538-8165-0777bb9ea7f2",
+      "gitHead": "285bb13c624440a55f221c3db36dc72acf82f018",
+      "sourceFingerprint": "sha256:ab53474bdb5a5758e3f15d8b33acab4d188d9942a32c1dfc5d1a0ddf3a254e5e"
+    },
+    "/openwiki/integrations/jev-scoring.md": {
+      "pageVersion": "sha256:04ff81f677ca6175d066255df35c5657b8638f0bf87dac56714f090a7f952007",
+      "completedBy": "openwiki/0.7.2",
+      "completedRunId": "64ab75df-4b1b-4538-8165-0777bb9ea7f2",
+      "gitHead": "285bb13c624440a55f221c3db36dc72acf82f018",
+      "sourceFingerprint": "sha256:ab53474bdb5a5758e3f15d8b33acab4d188d9942a32c1dfc5d1a0ddf3a254e5e"
+    },
+    "/openwiki/integrations/raindrop.md": {
+      "pageVersion": "sha256:95872e210c3390a33bf42bf20058bd11f3f154b4c4f543764fe99e42ee3422ae",
+      "completedBy": "openwiki/0.7.2",
+      "completedRunId": "64ab75df-4b1b-4538-8165-0777bb9ea7f2",
+      "gitHead": "285bb13c624440a55f221c3db36dc72acf82f018",
+      "sourceFingerprint": "sha256:ab53474bdb5a5758e3f15d8b33acab4d188d9942a32c1dfc5d1a0ddf3a254e5e"
+    },
+    "/openwiki/operations/runbook.md": {
+      "pageVersion": "sha256:a622ba710effec0e40f5c27b360ebdfaffd21e6620024d3e47aa95a8d5bc08ee",
+      "completedBy": "openwiki/0.7.2",
+      "completedRunId": "64ab75df-4b1b-4538-8165-0777bb9ea7f2",
+      "gitHead": "285bb13c624440a55f221c3db36dc72acf82f018",
+      "sourceFingerprint": "sha256:ab53474bdb5a5758e3f15d8b33acab4d188d9942a32c1dfc5d1a0ddf3a254e5e"
+    },
+    "/openwiki/quickstart.md": {
+      "pageVersion": "sha256:c2a99170ddb0ae8b0d9dfcdc25337ae701a47927e146b67c80e1f3d842cd7ef9",
+      "completedBy": "openwiki/0.7.2",
+      "completedRunId": "64ab75df-4b1b-4538-8165-0777bb9ea7f2",
+      "gitHead": "285bb13c624440a55f221c3db36dc72acf82f018",
+      "sourceFingerprint": "sha256:ab53474bdb5a5758e3f15d8b33acab4d188d9942a32c1dfc5d1a0ddf3a254e5e"
+    },
+    "/openwiki/testing/guide.md": {
+      "pageVersion": "sha256:9c933071023d283322d0b06db374d01c3566858645f61a422fe6a1b315de0b6b",
+      "completedBy": "openwiki/0.7.2",
+      "completedRunId": "64ab75df-4b1b-4538-8165-0777bb9ea7f2",
+      "gitHead": "285bb13c624440a55f221c3db36dc72acf82f018",
+      "sourceFingerprint": "sha256:ab53474bdb5a5758e3f15d8b33acab4d188d9942a32c1dfc5d1a0ddf3a254e5e"
+    },
+    "/openwiki/workflows/engagement-and-suggestions.md": {
+      "pageVersion": "sha256:08a868facb0073d8ea94b5dd5b9714385daf63c9cf554c91b5cb8df2c9274c47",
+      "completedBy": "openwiki/0.7.2",
+      "completedRunId": "64ab75df-4b1b-4538-8165-0777bb9ea7f2",
+      "gitHead": "285bb13c624440a55f221c3db36dc72acf82f018",
+      "sourceFingerprint": "sha256:ab53474bdb5a5758e3f15d8b33acab4d188d9942a32c1dfc5d1a0ddf3a254e5e"
+    },
+    "/openwiki/workflows/feed-lifecycle.md": {
+      "pageVersion": "sha256:1e474cf693bc0a5b9dc0090c3a5c210d23139094f4e93ab2250a4ad9bce6fbb0",
+      "completedBy": "openwiki/0.7.2",
+      "completedRunId": "64ab75df-4b1b-4538-8165-0777bb9ea7f2",
+      "gitHead": "285bb13c624440a55f221c3db36dc72acf82f018",
+      "sourceFingerprint": "sha256:ab53474bdb5a5758e3f15d8b33acab4d188d9942a32c1dfc5d1a0ddf3a254e5e"
+    },
+    "/openwiki/workflows/interest-scoring.md": {
+      "pageVersion": "sha256:7ef982592d4b72812322d4222a736bfd13e5317ccddb7f8c5f40e416dfe424a1",
+      "completedBy": "openwiki/0.7.2",
+      "completedRunId": "64ab75df-4b1b-4538-8165-0777bb9ea7f2",
+      "gitHead": "285bb13c624440a55f221c3db36dc72acf82f018",
+      "sourceFingerprint": "sha256:ab53474bdb5a5758e3f15d8b33acab4d188d9942a32c1dfc5d1a0ddf3a254e5e"
+    }
+  }
+}

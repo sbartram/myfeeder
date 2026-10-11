@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c2a99170ddb0ae8b0d9dfcdc25337ae701a47927e146b67c80e1f3d842cd7ef9",
+  "claims": [
+    {
+      "id": "claim_ec76359c6562431a80b41a3a57258a74",
+      "statement": "myfeeder layers Jev-powered (TypeSafe) interest/priority scoring, reader engagement capture, and topic gap-discovery suggestions on top of its original feed-polling and Raindrop.io export functionality; these are implemented via dedicated model/repository/service/integration/scheduler classes (InterestProfile, InterestTopic, ArticleScore, ArticleFeedback, ArticleEngagement, TopicSuggestionStore, JevApiClient, InterestScoringSweep) rather than being part of the original design brief.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L164-L233",
+          "version": "repo-lines-v1:sha256:4fe1d837306c655e0c886c8e29ed30fb2d74ba9399cc53e53241dd506bafd9ee:eyJzZWxlY3RlZExpbmVDb3VudCI6NzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxMDA5MTA5MjgzMjE2NmY2NjViNGFhMTgyZTRkNTUxYTI3MTQzN2IyMGMzNjU1NTc0Zjg2M2ZjNzA3YTQxNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ1Y2NmYTc4YjgwN2NlMDViZWY3OTMwYWRmYzY2Y2JmMGZmYTc2ZWQ1Y2QzY2ZmZDkwZmYzM2UxYTIyYjQ1MjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3NWU1Mzc2OTA0YmVjNzU4YjI5ZWY4YWMxN2Y3MDgyMDBkZmM3MWMxNzNmMjQ2ZjgzNzI3NWI0M2QyNzJmYTUifQ"
+        },
+        {
+          "resource": "repo://CLAUDE.md#L52-L62",
+          "version": "repo-lines-v1:sha256:7dd5a7ed7432b634946c8ce1d4b5748bb9f408d45bb0f489b0c8f4e161f64d49:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhZDM4ZmZkZDJmZDRhZjA0MjQxZDg1YjY1YzlkMzM4YzQ0NDRkNWE3ZTUyODU5ODc2NTAzZGQ5NGYxZGQyYTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzNzhhYjJjN2M0YTFjZWM2MDJhYTk4YzQ0YTM0MzlmOWQ0MDExMTcwNGJjMTRkY2M0YmM1NDc1N2Y4N2QzYTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxZWY2OGNhODdjZTc4NTMzODdmNGFlMzc2MzMxZmJhMGY3NmViNjE4OGY4YjRmNmRlOWJiMWVhMjVlYzQzNTkifQ"
+        },
+        {
+          "resource": "repo://docs/initial-design.md",
+          "version": "repo-file-v1:sha256:54c8fc558d1d48443b9a95874ba339c41431ac3cf6bf9a1cab592cf19f9332ba"
+        }
+      ]
+    },
+    {
+      "id": "claim_199a5819cd474dbfb72db7bc1c4e2295",
+      "statement": "The app depends on org.springaicommunity:spring-ai-starter-typesafe (pinned via an explicit typesafeVersion property since it is not covered by the Spring AI BOM) for Jev interest scoring, and the application itself owns the TypeSafeClient bean rather than relying on starter auto-configuration.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L236-L236",
+          "version": "repo-lines-v1:sha256:d721598ff80c6e35781bf82aebf36f60c526a9efbf6a5797c1967188014a27a1:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDcyMTU5OGZmODBjNmUzNTc4MWJmODJhZWJmMzZmNjBjNTI2YTllZmJmNmE1Nzk3YzE5NjcxODgwMTRhMjdhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDcyMTU5OGZmODBjNmUzNTc4MWJmODJhZWJmMzZmNjBjNTI2YTllZmJmNmE1Nzk3YzE5NjcxODgwMTRhMjdhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmQ4NjlhMGM5YWQ1YmJhMjZhNGFiNjcyYmIwZWJjYzkzNGQzYjI2MGYyNGMwYzQ5NTM3MzRiYzg4N2Q0ZDdkYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmIyNjE1M2YxNWQ0YzQyOTA3YzA0YWMxMWY2MmRlNjA4ZTIzZGI3NWVkYWJlMmRmNDM5MzUyMzBhM2YzMGI5NyJ9"
+        },
+        {
+          "resource": "repo://CLAUDE.md#L41-L41",
+          "version": "repo-lines-v1:sha256:7422db30ec91b3d391d068495e3c27d1dca3ffaf447aa19453aa3f566539f8d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzQyMmRiMzBlYzkxYjNkMzkxZDA2ODQ5NWUzYzI3ZDFkY2EzZmZhZjQ0N2FhMTk0NTNhYTNmNTY2NTM5ZjhkMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzQyMmRiMzBlYzkxYjNkMzkxZDA2ODQ5NWUzYzI3ZDFkY2EzZmZhZjQ0N2FhMTk0NTNhYTNmNTY2NTM5ZjhkMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWQ2OTAzYTVlZjUxNDVkNDQ2YzkyOGQwOGQ1NTFhN2JjMjRlM2IwMGIwMjhiNjU4YTM4MWZkNmUyNGRlMTEzYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDRjYWVlZWQ5NDdjNjc5ZDQ5MTYwZTA2Zjc1ODk4ZjE5Njg1N2I2ZjIyNjk1MTJmOTZiOTIwYWU2ZjdiMzI5ZSJ9"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L28-L46",
+          "version": "repo-lines-v1:sha256:2d62c09426791800e99b8674f456e023debacf0034a7d8653a20bc86248471e0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxYjYyMmRhZjQzM2FkN2E2NTgwMmZjMjhkZWRkNjQ1OWM5MjFmMzY5NzVjNGQxNzA3ZjM2NTg3MjQ2YzYyMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3Y2E2MmQ4Y2YwMTViYjkyYTQ1MzIwY2MyYzZkZjYxYTExNzQ2Y2UyN2IyOTU0Mzc1YTBlMWEwYmMzNzM0MjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjZGVlOGRjNjY4MzAzMzU5Y2JhZjZiMjBkYWVhM2Y0MGQ5ZjFmMzU5NGY1Yzg0MWY4MWM4M2M0NDRlMDg4YjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyYWJhNjYyNjhiZWE3Y2E2NzJjZGYxYTc3YjM5MjNiMjg3MzE4NGFhNjBiZTg0NDU4M2NiNTcxMjk1OTBhYmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_31ca30c3a9604ef5891805261374e5f1",
+      "statement": "The backend targets Spring Boot 4.0.8 on Java 25, built with Gradle Kotlin DSL and the axion-release plugin for versioning.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L7-L7",
+          "version": "repo-lines-v1:sha256:9a302d68dcf8dd3ee72987f3e29a791659fc0212f50011e7b3dc5c31752dcb47:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWEzMDJkNjhkY2Y4ZGQzZWU3Mjk4N2YzZTI5YTc5MTY1OWZjMDIxMmY1MDAxMWU3YjNkYzVjMzE3NTJkY2I0NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWEzMDJkNjhkY2Y4ZGQzZWU3Mjk4N2YzZTI5YTc5MTY1OWZjMDIxMmY1MDAxMWU3YjNkYzVjMzE3NTJkY2I0NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzdlYWI0ZGJiMGQ3ZDdmZGE0NzFkNTI0M2JmMzZkZGU4OWI2YTA4OTVlYTJmN2ZiMTVkNGMzYTYxNTU5YjdhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTlhNDQ0MjU4MDIyYmJmOThhYWMyYmNlMDMwNjk4MWI5YjdlMGNjMWZlNjBiN2ZmZGU1ZGE1NGMzY2U5Y2Q2YyJ9"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L1-L16",
+          "version": "repo-lines-v1:sha256:b71e1867fde8034b78f0df1602e43c127e8c086a4f3e0d426acef3543b36868f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0MDQwMTAzMTViZGJiMGZlYTBmZDZmZjAyMTRkOGJjOTIxY2UyODM2ZDFjYzZiY2I4ODQ5ZjM1NzZjZjVhNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc2NWMyNzg4MzUzYzY1MjQ0MzlmMzY5YmU1NTZiMDgyNzI1ODBjODk3ZGY4MzcwM2MwZmI1YjMyZjU0OWFmNDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4908aa40b5a746bb84db31c145a37fba",
+      "statement": "The database schema evolves through Flyway migrations V1 through V7, with V6 introducing the interest-scoring tables (interest_profile, interest_topic, article_score, article_topic_score, article_feedback, article_feedback_topic) and V7 introducing engagement and topic-suggestion-dismissal tracking (article_engagement, topic_suggestion_dismissal).",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L118-L118",
+          "version": "repo-lines-v1:sha256:55eff2aaccb9369857aafa19bee98c3375664689a615164722202ce2fa4705c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVlZmYyYWFjY2I5MzY5ODU3YWFmYTE5YmVlOThjMzM3NTY2NDY4OWE2MTUxNjQ3MjIyMDJjZTJmYTQ3MDVjMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVlZmYyYWFjY2I5MzY5ODU3YWFmYTE5YmVlOThjMzM3NTY2NDY4OWE2MTUxNjQ3MjIyMDJjZTJmYTQ3MDVjMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjMxNzZlZmMwYTUzOWZmMmRiZWE2ZGZiOTQwMjM5NGM0ZGNiOGJjMWFhY2YzOTQxYjA1N2ZmNWEyODczMGY3MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDE4NGI1MDFlZWUyM2Q5ZDdiZjdlYTQxODUwZDQ4YjIxMjgyZTMyY2ViNzJjMzlhNzAxNjhhMTJmMjBhNDA1YyJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V6__interest_scoring.sql",
+          "version": "repo-file-v1:sha256:d30123e21133a3c127d7e4c5b4222e85de21cea87090447fb0f2ceb0ac699adc"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V7__engagement.sql",
+          "version": "repo-file-v1:sha256:23c8aa1ef98430548e9ccc56722b6e4da2b4add3836a939f45d75c8fb452f2e7"
+        }
+      ]
+    },
+    {
+      "id": "claim_ea695ee045d4449e9d569649209a81a3",
+      "statement": "CLAUDE.md is the fastest-changing, most detailed engineering reference in the repository (build commands, gotchas, conventions, and the full Interest Ranking / Jev Scoring and Resilience sections), while docs/ (initial-design.md, backlog.md) and .planning/ hold historical product-brief and phase-by-phase design/process records rather than current authoritative behavior; AGENTS.md defines the contract for just-in-time OpenWiki retrieval and prohibits hand-editing generated OpenWiki pages.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L1-L16",
+          "version": "repo-lines-v1:sha256:8926524de63a1266e7592d9f1256ec367b67e9fa0583f343808e3e51f19d4990:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmMTgwZjljMTI2OTAzYmNjMzMxYWE5NTQ1NmU0OTQ0NGE3ZDRkMDExZThhMmE4M2Y1ZGM4NzAyMzkxODEyZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5Zjc4NzE0ODkzYWE3Nzk0MmNlYTFjNGEyZTAyMzFkYmI3ZmEyYTQxYTcwYzgxNDYwYTNjNjc1NjJkYTNhYWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0MzMxNTEzNTJiYmRlYjJkODBlMWYwMDJiNmQ2YTg4MGMxY2E4MmYzOTA1ZDk3YWIwMzZiYTcwNTliZTM5MDcifQ"
+        },
+        {
+          "resource": "repo://CLAUDE.md#L1-L7",
+          "version": "repo-lines-v1:sha256:94de06de4ad9ef1c61392a80bbcf53df91e3ee93a8677bdbded1c5870f5a9cff:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTYxMjJiZjJiYzYyZDQ5ZmVjNGVhMGYzNTViYjAwMGNhYmVmMmUzOTY4Nzc4YjUwYzA1ZWMyM2M5NzhhNjk1YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWEzMDJkNjhkY2Y4ZGQzZWU3Mjk4N2YzZTI5YTc5MTY1OWZjMDIxMmY1MDAxMWU3YjNkYzVjMzE3NTJkY2I0NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTlhNDQ0MjU4MDIyYmJmOThhYWMyYmNlMDMwNjk4MWI5YjdlMGNjMWZlNjBiN2ZmZGU1ZGE1NGMzY2U5Y2Q2YyJ9"
+        },
+        {
+          "resource": "repo://docs/backlog.md",
+          "version": "repo-file-v1:sha256:3f0ff963d629fece08439ddfd0006d3f67a155fd6f045fe2960c72bae0de079c"
+        },
+        {
+          "resource": "repo://docs/initial-design.md",
+          "version": "repo-file-v1:sha256:54c8fc558d1d48443b9a95874ba339c41431ac3cf6bf9a1cab592cf19f9332ba"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-11T14:50:52.613Z"
+  }
+}

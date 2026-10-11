@@ -1,9 +1,22 @@
 ---
 type: Integration
 title: Raindrop.io Integration
-description: Documents how myfeeder exports saved articles to Raindrop.io — the RaindropService/RaindropApiClient split, the Resilience4j circuit breaker and retry configuration, the RaindropNotConfiguredException fallback-rethrow pattern, and how the API token is configured without being stored in the database.
+description: Documents how myfeeder exports saved articles to Raindrop.io — the RaindropService/RaindropApiClient split, the Resilience4j circuit breaker and retry configuration, the RaindropNotConfiguredException fallback-rethrow pattern, the API token configuration, and the RAINDROP engagement record that follows a successful save.
 resource: src/main/java/org/bartram/myfeeder/integration
-tags: [integration, raindrop, resilience4j, external-api]
+tags: [integration, raindrop, resilience4j, external-api, engagement]
+verified:
+  - by: openwiki/0.7.2
+    at: 2026-10-11T14:50:52.613Z
+sources:
+  - id: openwiki-source-cef6cf34b0ee266bb62a613f
+    resource: repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java
+  - id: openwiki-source-8d62a855cfcce2a529d94a39
+    resource: repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java
+  - id: openwiki-source-8c225e8495f0b2dcc9d139b4
+    resource: repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java
+  - id: openwiki-source-0d2b45d6d13f3d35d664203b
+    resource: repo://src/test/java/org/bartram/myfeeder/integration/RaindropServiceTest.java
+generated: { by: "openwiki/0.7.2", at: "2026-10-11T14:50:52.613Z" }
 ---
 
 # Raindrop.io Integration
@@ -17,7 +30,7 @@ This split (commit `2e33949`, "move Raindrop resilience annotations to the API c
 - **`RaindropService`** (in `integration/`, but the business-rule layer) looks up the `IntegrationConfig` row for `IntegrationType.RAINDROP`, checks `enabled`, deserializes `RaindropConfig` (which holds the selected `collectionId`), and throws `IllegalStateException` (not configured/disabled, →409) or `IllegalArgumentException` (no collection picked, →400) *before* ever calling the API client. It also exposes `listCollections()`, cached via `@Cacheable("raindrop-collections")` (backed by Redis), so the Settings UI's collection picker doesn't hit Raindrop's API on every render.
 - **`RaindropApiClientImpl`** (implements `RaindropApiClient`) owns the actual `RestClient` calls (`listCollections`, `createBookmark`) and carries the `@CircuitBreaker(name = "raindrop")` + `@Retry(name = "raindrop")` annotations. This is a **separate Spring bean** deliberately: Resilience4j's annotations are AOP-proxy-based, so if `RaindropService` called an annotated method on *itself* (self-invocation), the proxy — and the resilience behavior — would be bypassed. Putting the annotated methods on a distinct bean that `RaindropService` calls through avoids that trap.
 
-**Convention for future external integrations:** follow this same pattern — `@CircuitBreaker`/`@Retry` on the API-client bean, not the service, with business-rule checks happening in the service before the client call.
+**Convention for future external integrations:** follow this same pattern — `@CircuitBreaker`/`@Retry` on the API-client bean, not the service, with business-rule checks happening in the service before the client call. This Raindrop split is in fact the template that the [Jev (TypeSafe) Interest-Scoring Integration](jev-scoring.md) also follows: `JevApiClientImpl.judge` carries `@CircuitBreaker(name = "jev")` + `@Retry(name = "jev")` exactly like `RaindropApiClientImpl`'s methods, while `JevApiClient.isConfigured()` and the caller-side eligibility/business checks sit outside the breaker, mirroring `RaindropService`. The two integrations differ in failure handling (Raindrop wraps and rethrows through a fallback method; Jev lets typed SDK exceptions propagate with no `fallbackMethod` at all), so read that page for the specifics of its variant.
 
 ## The fallback rethrow trap (and why it matters)
 
@@ -46,6 +59,12 @@ resilience4j:
           - org.bartram.myfeeder.integration.RaindropNotConfiguredException
 ```
 
+## A successful save also records RAINDROP engagement
+
+`RaindropService.saveToRaindrop` calls `raindropApiClient.createBookmark(...)` and, only once that call returns without throwing, immediately calls `engagementStore.recordQuietly(article.getId(), EngagementKind.RAINDROP)` — still inside `RaindropService`, i.e. **outside** the `@CircuitBreaker`/`@Retry`-wrapped bean (`RaindropApiClientImpl`). Because the business checks throw first and the API client's fallback methods always rethrow on failure, a disabled/unconfigured integration, a missing collection, or a failed/circuit-broken HTTP call records nothing — only a real created bookmark does. `ArticleEngagementStore.recordQuietly` is a best-effort, non-transactional `INSERT ... ON CONFLICT (article_id, kind) DO NOTHING`: it never throws (a failure is logged at WARN with the article id and the exception's simple class name only), so a failed engagement insert can never unwind or fail the user's save. The insert is idempotent, so re-saving an already-bookmarked article is harmless.
+
+This RAINDROP row is one of three save-path engagement kinds (alongside STAR and BOARD) that feed the learned-topic signal and the post-save UI refresh — see [Engagement and Suggestions Workflow](../workflows/engagement-and-suggestions.md) for what recording this engagement kind then triggers (the `afterEngagement` reaction, learned-topic CTE input, and the reading pane's "Engaged: …" line).
+
 ## Configuration and secret handling
 
 The Raindrop **API token is a config property, not a DB value**: `myfeeder.raindrop.api-token` binds to env var `MYFEEDER_RAINDROP_API_TOKEN` (see `MyfeederProperties.Raindrop`). `V4__strip_raindrop_api_token.sql` (see [Domain Concepts](../domain/concepts.md)) removed an earlier design where the token lived inside `integration_config.config`'s JSON blob — don't reintroduce that. `RaindropApiClientImpl.requireConfigured()` throws `RaindropNotConfiguredException` whenever the token is blank, which is the trigger for the whole ignore-exceptions/rethrow chain above.
@@ -54,4 +73,4 @@ In deployment, the token flows: local env var → `deploy.sh` (`MYFEEDER_RAINDRO
 
 ## Testing this integration
 
-`RaindropServiceTest` covers the business-rule layer (not-configured/disabled/no-collection paths, cache behavior). `RaindropApiClientImplTest` covers the HTTP client and the fallback rethrow behavior specifically. See [Testing Guide](../testing/guide.md).
+`RaindropServiceTest` covers the business-rule layer (not-configured/disabled/no-collection paths, cache behavior) and the engagement-recording addition: it asserts (via `InOrder`) that `createBookmark` is called before `engagementStore.recordQuietly(..., EngagementKind.RAINDROP)`, and that calling `saveToRaindrop` twice records the engagement twice (idempotency is `ArticleEngagementStore`'s job, not the caller's). `RaindropApiClientImplTest` covers the HTTP client and the fallback rethrow behavior specifically. See [Testing Guide](../testing/guide.md).

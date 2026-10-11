@@ -1,9 +1,3 @@
----
-type: Documentation Index
-title: "Architecture"
-description: "Files and subdirectories in Architecture."
----
-
 # Files
 
-- [myfeeder Architecture Overview](overview.md) - Explains the runtime architecture of myfeeder — Spring Boot 4 backend package layout, Spring Data JDBC persistence, React 19 SPA frontend build/embed process, and how backend and frontend fit together in one deployable jar.
+- [myfeeder Architecture Overview](overview.md) - Explains the runtime architecture of myfeeder — Spring Boot 4 backend package layout (feed/board core plus interest-scoring and engagement additions), Spring Data JDBC persistence, HTTP layer conventions (GlobalExceptionHandler, RestClient/timeout config, Resilience4j), the scoring executor, and the React SPA frontend build/embed.

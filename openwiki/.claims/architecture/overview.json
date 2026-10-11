@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:3cab26661887dea4b4fd61209474fc3bb675a03da0e26ee229fb4cd8344945a5",
+  "claims": [
+    {
+      "id": "claim_73a4dd383056411a9af48ab18f9275dd",
+      "statement": "GlobalExceptionHandler (@RestControllerAdvice) maps NotFoundException→404, IllegalArgumentException→400, OpmlParseException→400, IllegalStateException→409, FeedParseException→422, FeedFetchException→422, RaindropNotConfiguredException→503, JevNotConfiguredException→503, CallNotPermittedException→503, TypeSafeBadRequestException/TypeSafeUnprocessableEntityException→422, and any other TypeSafeException→503, each to a ProblemDetail response.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java",
+          "version": "repo-file-v1:sha256:7c32c42bd6cd11de7d12ca516a96f79bb0dd80fcbee5a18199fd09d608d91227"
+        }
+      ]
+    },
+    {
+      "id": "claim_6b3e89e54279428bb11e8d4db061421a",
+      "statement": "The Jev exception handlers in GlobalExceptionHandler always return fixed, app-owned detail text and never forward a TypeSafe exception's own message or response body, because TypeSafe error content can echo request details.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L71-L105",
+          "version": "repo-lines-v1:sha256:edf5da9e2c8d1bfa5d6987cddad840f1c110953af343b4a736ff921ea722b28c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmYzk1ODRiNzdlMzI2ZmEzNDNkZjg5NGZiZDA2NzNlZWRlNDUxN2U1MzNhYjI1MDM1YzI1Yzg4NTliODI5YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkMDFkNWI3MDU2NGM3MjA1YWRiNDMwMGI4MGFhNDg1ZDI4ZDM4YTUxZWI5YjU5NzRkOTViNjBiNmIwNzk2MjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_38ebd31154044e7296d5cb7c01611561",
+      "statement": "RestClientConfig registers a RestClientCustomizer bean (org.springframework.boot.restclient.RestClientCustomizer) that adds a myfeeder/<version> User-Agent header to the auto-configured RestClient.Builder.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/RestClientConfig.java",
+          "version": "repo-file-v1:sha256:59e251d92d80154e8321de8893781b8485360b3008daaa1aa931a7fb1ede2cb3"
+        }
+      ]
+    },
+    {
+      "id": "claim_d228e1e00daf4080a999bba99f6f0ebc",
+      "statement": "Outbound RestClient connect/read timeouts and redirect policy are configured via the plural spring.http.clients.connect-timeout/read-timeout/redirects keys (metadata in spring-boot-http-client-*.jar); the deprecated singular spring.http.client.* keys are silently not bound in Spring Boot 4.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L252-L252",
+          "version": "repo-lines-v1:sha256:4b7dc6b6e68b57aa4b2c96ac3ec6c874b85789a2e22b0a087624c68b350c0ea7:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGI3ZGM2YjZlNjhiNTdhYTRiMmM5NmFjM2VjNmM4NzRiODU3ODlhMmUyMmIwYTA4NzYyNGM2OGIzNTBjMGVhNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGI3ZGM2YjZlNjhiNTdhYTRiMmM5NmFjM2VjNmM4NzRiODU3ODlhMmUyMmIwYTA4NzYyNGM2OGIzNTBjMGVhNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmRhZDNlN2RhMTIzODE1M2JhMjk0MWI2NjI4ZWRjZWU0NzkxN2JiMDM3YmRhZGExY2UyODEzY2U3N2JjNDg2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2M4MDc2YjNlMTM2MTZhMjAwYzg1NzJlYzYxZTc5N2Q5YjE4MTUxMmYwNWIxYzY4ZTMyYWE0ZDljZDE5MTAzMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_07f47e2583ed4e91b2e59fafd413b09a",
+      "statement": "TypeSafeConfig defines the TypeSafeClient bean itself (instead of the TypeSafe starter's auto-configuration) so a blank API key never crashes startup; it builds a Jev-only Reactor Netty request factory (connect 5s, read = spring.ai.typesafe.timeout) on a clone() of the auto-configured RestClient.Builder, and sets baseUrl explicitly so the SDK never falls back to its own TYPESAFE_* environment variables.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L23-L61",
+          "version": "repo-lines-v1:sha256:fde25f643fd3b97ff438f82f3b7a177d8dd3ef273ab9714b2b879e52f27a242b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkNGViYzFjYzMwYzU0ZmI0OWY0M2ZkY2EyNjlkMDZkNDk5YmI5ZGQxN2ZkYmY2OGY0ZjgwM2Y5MDU0NWI4NjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyZGZkMmY1ODRlMjNhMzhjOTQwZmZkNzdmZDkwZDU5ZDA5NGVjMmI1YjczNTdhZGY1ZWQyMTUwOWNjNTFkMWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_312b5df398154974aae79870f593b55b",
+      "statement": "Both RaindropApiClientImpl and JevApiClientImpl put @CircuitBreaker(name=\"...\") and @Retry(name=\"...\") on the API-client bean rather than the service layer, so business validation (not-configured/disabled checks) runs outside the breaker and only the real HTTP/SDK call is wrapped; self-invocation would bypass the AOP proxy, which is why the annotated methods live on a bean the service calls into.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L34-L53",
+          "version": "repo-lines-v1:sha256:4dea63b6d8809da18ee6d6686a9ac891fb002d8dbeaece66862563df247e8492:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxNjlkMjU1NzQ3MjZkMWRiMmI0N2Y5NjA5NjFkMzc1MWVjZWI3ZGM1ODliN2UxMTAyMTFlYjZjOTBhNDRkZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmYTc4MDI5MzgwNWI0YzkyMDk5ZGE1ZThlY2U1OTEzMTg1ODRlZDE1YWZhZDAwNDEyNmQ3YWJjNWIwZWU5YzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1MGI1MjNjNzg4ZGNmMmU4N2Q4ZjYxYzcxZjBjNDI2MGUwNTY0ZjVlN2NlMGJlZmQ2NDAyMjQzNGZmNWUzNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmZTk4YmMwNDIwNTQ1NjFhOTE5NTkzOTk3NDkyZTAyMDdhNGMyYzg2ZGNiM2U5NzBjNmIyYjMyZTE5ZmE4YjQifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L26-L56",
+          "version": "repo-lines-v1:sha256:8332019c14e4bbb7bf25791e6ddb587388dbd6ef13892bef84ba7a2576732d59:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyMjNiYzE5ZWFjMWM4ZjA4MDYwMzZjYTg4ZTY4MDRjYzQ0MTBjYmM5N2I5YzZkNjI0ZDlhMDAxYzJiNWVkYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzMjA3ZTMwOGZkNmU3YWUxMThjNGM1YzY0YmVhMmNhNjA5ZTlhMDVhMDVlODY4MDFiZmY5ZWEzNmY2ZGNiYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxZjBjNjExMmQ0N2M1MjExMzE2YTc4OTAxODJkOTk1ODc1YzZmZmQ3Y2RjMWMzNmUwMDk2ZDgwNGJhNDhjZjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2Nzk5ZDdlYjZjYmFmMzM3MzEzZDU0NzRmYzBlZThmNzhmMjYwYzAzNDVmOWFmYjU5MDIyOTA1OTZkYzE5M2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_40aeb34d3cb64c3ebcd7d512a576f679",
+      "statement": "The Resilience4j annotations only take effect because spring-boot-starter-aspectj is on the classpath; execution order is set globally via resilience4j.circuitbreaker.circuit-breaker-aspect-order: 1 and resilience4j.retry.retry-aspect-order: 2 (lower = outer) so the breaker wraps the retry and records one outcome per logical call rather than per retry attempt.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L159-L159",
+          "version": "repo-lines-v1:sha256:5d0f0bb55f483bcbec973740f2ac49b5e091a9dd6ba07fd14118983c5546e27a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWQwZjBiYjU1ZjQ4M2JjYmVjOTczNzQwZjJhYzQ5YjVlMDkxYTlkZDZiYTA3ZmQxNDExODk4M2M1NTQ2ZTI3YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWQwZjBiYjU1ZjQ4M2JjYmVjOTczNzQwZjJhYzQ5YjVlMDkxYTlkZDZiYTA3ZmQxNDExODk4M2M1NTQ2ZTI3YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTM0ODJiMjUxZjNhMzQ1NTY1ZDNkODMwYmJlMTBkM2VhZjEzYmI1YTA3NzMzNDJkN2QxZWQzZGVkNWM5NTE0NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2U3YmNkNGExNjQ5ODY4YTJjY2Q1MDk0ODA2NDM2ZGZlNWI2ZjliZjdjMzA3MzUzMjMyYTNkNWQ4NTEzZmNkNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b33ea51354784df6b980bdea645dd951",
+      "statement": "Each client's not-configured exception (RaindropNotConfiguredException, JevNotConfiguredException) is listed under ignore-exceptions for both its circuit-breaker and retry instances so a missing token/key never opens the breaker or burns a retry attempt; RaindropApiClientImpl uses a fallbackMethod that re-throws RaindropNotConfiguredException as-is and wraps other failures as IllegalStateException (409), while JevApiClientImpl has no fallback and lets typed TypeSafe exceptions and CallNotPermittedException propagate unchanged.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L160-L160",
+          "version": "repo-lines-v1:sha256:3ce1a196c2d77aa5482cd9288b75522335419add6231241af6a593d6552623fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NlMWExOTZjMmQ3N2FhNTQ4MmNkOTI4OGI3NTUyMjMzNTQxOWFkZDYyMzEyNDFhZjZhNTkzZDY1NTI2MjNmYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NlMWExOTZjMmQ3N2FhNTQ4MmNkOTI4OGI3NTUyMjMzNTQxOWFkZDYyMzEyNDFhZjZhNTkzZDY1NTI2MjNmYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGYxNzhmODhmNmE5MTgxZDM3NGNhODAxOWEzMDJmMmE0OGRkYjhhZThkNGIzYmM3ZDNhYzQ3ZjE0NjI1OWE3OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDVjY2ZhNzhiODA3Y2UwNWJlZjc5MzBhZGZjNjZjYmYwZmZhNzZlZDVjZDNjZmZkOTBmZjMzZTFhMjJiNDUyNiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L46-L49",
+          "version": "repo-lines-v1:sha256:3aab0a7280d64e4215fe403805517ab5d11a3b24ab8e557d6e6ca21eb1149060:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTY2NjEzNGZkZTk5NWQ4Yzc0YjdiYzM2NjM0YTNmM2YwYjgyYzU5YjY4YTVkNDQ1NjcyM2JjYmNmYWFlNTA2MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWRjMmIzMTFhYmU4NzU3MmU4YTdjYzBkOTk2YTY1ODQ0MDc2ZTUyMzJkMjFiN2E4NTQ3NWY5YjQwNTViNzQ5MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTk5YmRlZmVlYWNhNjM0MGUwMjkwZGM4NmU4ODljODlkNWUxODlhYTViYTQ0YjU4NWIzYjcwNzM0ZjRhNjJkOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWRlZmY5M2ZiZmZlOGMyNjc4ZWEyOTZlY2U1N2MxMTkwN2ZlYzg4MzA1NDEyNzcyOWQ3OTI2N2RmNjI2ZjdiOSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L68-L84",
+          "version": "repo-lines-v1:sha256:bc8a16de91f5fae8e68ed204f9fec99585fe0522116fb80cb311b80c998cd603:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNDhhNDIxNzRhMzFhYzEzMDBkNWI0OTFkMzRjYTgxZWQ5MWU0NjNiNGUwYzA2ZWQ1NTdjY2Q5ZDVjM2Q0YjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0N2MxNzdhZDMyYmQ0OGRiMzJjYmI4ZmM1YTZiMjQ3Yjg3MjRhYmY1YWM5YTNiZDVjMTY4YjQzMjdlMzRlYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5ODA1MTc3NmY2ZGRhZDA0NmQzZjMzNGJmZjY2MDRmOGRmYTdjMGZjNjJjNmNjNjliOGJlODQzMDNkODc3NDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1cbee4ab3bf342d09d646229809c8ac8",
+      "statement": "InterestScoringConfig defines the interestScoringExecutor ThreadPoolTaskExecutor bean (threads jev-score-) registered with defaultCandidate=false so it never satisfies Boot's @ConditionalOnMissingBean(Executor.class) and does not replace applicationTaskExecutor; core and max pool size both equal myfeeder.interest.concurrency, and the bounded queue keeps the default abort rejection policy on purpose so ScoringQueue can catch TaskRejectedException and release the article id for retry by the sweep.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/InterestScoringConfig.java",
+          "version": "repo-file-v1:sha256:b1f6d879b7f1819a44b5ba28707b7b06ebddba5d574118f8ee168a8f1ccd9e87"
+        }
+      ]
+    },
+    {
+      "id": "claim_f63a6d97cd0f489799f415afbd19f621",
+      "statement": "Consumers inject the scoring executor with @Qualifier(InterestScoringConfig.EXECUTOR); there is no @Async anywhere in the scoring path, so work is handed to the executor explicitly.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/InterestScoringConfig.java#L20-L23",
+          "version": "repo-lines-v1:sha256:d26a669dbeb4653c1768d4534cb27f0a3b2f12d403fc8e5fc0da1628c902e2f2:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjIzY2I0YzEzZDY3NzU5ZDU0Zjc2NzFkNDQwMzQ5NzJkMDkwM2EzOWQwOGFmYWU3M2JiOTgxZWI5YWIwZGNmMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjFjZDdhNzU0YjM2MDYzYmRkODliYjlmMWU5OWY0NzZiMDQyZGZkZjlkMjNmMWY3NTdiMTlkYWUzMDQ1NjNhZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODY1NmQ3MzJmOGNiODNlNmJmNTEyNWQxZTU1YmM0Zjg4MTMxMzllNDcxZDJlMmM0OTQzMWZhNzk1NjFjNmIwYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzc0Y2Q4NmNjMThiYTJjZDFlZjViMjVhMGUzYjBiMDBkOGRjODY0YjliNjU1NzRkNzQ2M2JjMDE1ZmY2NzkyZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c45bf72caf8e40cba29920ea2bc043f1",
+      "statement": "useInterestStatus polls GET /api/interest/status every 15s only while the status is configured, not in cold start, and has eligibleUnscored > 0; useInterestTiers reads the tiers field off the same status query with staleTime Infinity and falls back to DEFAULT_TIERS until loaded.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useInterest.ts#L14-L47",
+          "version": "repo-lines-v1:sha256:f816a16d10d71092727703db331f1f3edd78399ea5fdfc050110ff00a0e768eb:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4MmM0ODFjMWQ3YTk5NjNmOGM5MzJmYWIyMzUyMjgwMDAwMGMzMjAzODg4Mjg1NzY0NzM1MWFhZTRlNDk0NWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI3MjIwOWJkZDA3NmRhOWJmNTZiMzUxMmI4MzllMjczODZlMjYwZGUxNjRkMDlmNzU1NzBkZjA3YmI0ZDI5ODIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bdec9feb83e344b5864053b809c43fdd",
+      "statement": "useOpenOriginal opens the article's original URL via window.open synchronously, then fires a bodyless PUT /api/articles/{id}/engagement/open whose errors are swallowed; useForgetEngagement issues DELETE /api/articles/{id}/engagement; both call afterEngagement on success.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useEngagement.ts#L21-L58",
+          "version": "repo-lines-v1:sha256:eeda6e9c492cdcde3259474b588ec6e6e7c6011a85ec14c43bd6c75cee4afeb3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYTJlMTdiMjcxNzgwODY5OWIyOTkwZTk2Yjk4OGM4MmU1NGNlMWQ4MjI3MzFkN2M2N2Q0ODQ5YmJmNGNjMTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkYzBlNDJiOTA4OTM2ZDMzYjczOGJiOTg2YjA0MDhkMWJkZjQwNzQ4MWI3NjgzZTFkMTUwYzM2NWYzNzFmOTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e66e8e3f817c4d35968322646f0f2c45",
+      "statement": "afterEngagement(qc, id, onPriority) refetches the article by id with staleTime 0, invalidates ['interest','learned'], ['interest','suggestions'] and ['articles'] (and, off the Priority view, other open by-id articles) via invalidateAfterLearnedChange, and only while on /priority patches that row's interestScore in place and sets the Ranking changed flag when the refetched score differs; ['priority'] itself is never invalidated or refetched by this reaction.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/engagementReaction.ts#L18-L86",
+          "version": "repo-lines-v1:sha256:b59d26fcf672f77fe90cb7e00acaef619e091b86c1ccf571dddef47ddc619374:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmYmQ2YjU2ZmU3YzE1MGFlZjNkZmYzZGExZWRjZjVhNTBjMjY4NzA4NTAxNzNkNDBlMTBjMDJhNjk0NjkyOTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI3ZjNiYWE1NWU4MWJjMWQwOTBiZjg2NGRkNjhmZDczOWFhMmFhMDEwODA2NzFlNTE0YjE1YWY1ZGU2MjUzYzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7bc35f788d404853b2277790e16564f1",
+      "statement": "TierContext is populated from useInterestTiers() inside App.tsx's MainLayout and provided to the component tree so score-tier thresholds are shared consistently across views.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/App.tsx#L114-L116",
+          "version": "repo-lines-v1:sha256:d364a92f7cd21bd2b3e4267216941edc73b981514af386e73f88b944ffc48cd4:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTcyMTZlOGU5YzBhMWE2OGQwNmMyZmJhYTVmZDIxMzk0ODJiOGVmZDBhMTkzMTViOTE1ZTZjY2U4NDlkODlkYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzllMWVmM2Y5OGY0MTBjZTllMWZkYmFiYzZlNDNkNWI3NTMzZGVkZGEwYjQxMzkwMmI0YzE4MzRiMmIwOGQ1NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTNlNWU1ZDdhNTU3ZDIxODBlYmQ1OGNlOGZhODkwMmE5NTVkODU4Mzk4OGZiODc0MGMyMzg5N2VmYTNiMjJhYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjhhM2VlYWRhOWZkYmEyNGY2MmYyOTE0ZjJkYmU4ODZkYzZhMDA4NzA5NjdiMDBmYjA3MmY4OWY5MjAzNDY0YyJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/App.tsx#L93-L96",
+          "version": "repo-lines-v1:sha256:bce125ac6712ec47840dad9e37b0dc887c59ae55eb57eec02f6077940621d618:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDdlMWNkMmMzZTVmZWFlNjhkYjg5MTI1MTI5MmM1Njg4Yjk4Y2VlYjJiNDM1YjNjMzc1ZDZlZmFlMmQyOGNmYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmI5NTBhNmJhYzJiMDVkNjAyZDQ5Nzc4NWNmZjU4MDZkZTRmNWI1MTc5NDFjMWRlNTYyOWU4YjhhMjA3NTZkZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjcyMDMyZTNlZDliOWMzOThlNGZjMTQ4MTI0YWU3MTJiNTQzZTIyOGU0NjVlNmZlOTk3MDIwZGY5YTcxZDlmYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7edfe63df8024295bd27811f425f3931",
+      "statement": "The /priority route renders PriorityList, and leaving /priority removes the PRIORITY_KEY query cache so re-entry always fetches page 1 fresh.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/App.tsx#L125-L125",
+          "version": "repo-lines-v1:sha256:abf43d0438b4fa8b03e2d08ccc3648d34749f3b58790038c40db0f02617799a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWJmNDNkMDQzOGI0ZmE4YjAzZTJkMDhjY2MzNjQ4ZDM0NzQ5ZjNiNTg3OTAwMzhjNDBkYjBmMDI2MTc3OTlhNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWJmNDNkMDQzOGI0ZmE4YjAzZTJkMDhjY2MzNjQ4ZDM0NzQ5ZjNiNTg3OTAwMzhjNDBkYjBmMDI2MTc3OTlhNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWNjODYwNjhhZjhhNWRiMDk4NGFiODA1ODUxMGFhMjFjMjlhZjc4NzU3ODY2MGViZGJkNGVkMzU2N2MwNTY0ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmE1NTNjNWYxNzFiMDYyZjIxZDc1MjJkNmQyZmZiMGQ0NDg0MTZhZDVlZmRkZTAzZTUyY2ViZjg1ODg5OWRhNCJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/App.tsx#L97-L104",
+          "version": "repo-lines-v1:sha256:247ded277516c02c2c4083805777009168814158167db9640532c34d3faeefb6:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTUzMTc4NTQ5YjQ2ZjMwNTA0ZGFhMDRiY2FlY2Q0MDJmMmYxMjZjODA3YmIzMTMxNDZmZjJkNjE2YjUyNWI0YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzIwODVmMTc0MmM4ZDBiMTQ4NTg0ZGMyMmI1MDdmNTEwMWNmYWE5MzFmZmQ4YWM3M2E2ZjZmN2U4ZjQxMWQ0ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTU2YmFmZjY2NTBiNzAwODFjM2VlNGI1YTQzY2Q3NzNmYTQwMDJhNDJjMzJmNjkxY2E5MzBlNDU3Y2ZjNThlMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWQ5YTEzMzg2NjJmMTZlNjBmYzY5YzU1NmI2ZTQ3ZjIzMThkZDc3ZTc3ZjMyMjViOTNiYzBiNzUxNGJlMWVmOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_199aaccf7d7b42edbd53bc7e60751826",
+      "statement": "ReadingPane auto-enables reader view when a feed item has no content/summary and otherwise exposes a manual toggle button that reads 'Reader View' or 'Feed View' depending on state; extracted HTML is sanitized with DOMPurify FORBID_TAGS/FORBID_ATTR: ['style'] so publisher styling never overrides the app theme.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L72-L72",
+          "version": "repo-lines-v1:sha256:db05577e52a8d1fc460403f654c569f69ae4c505f5027af6b85c85fd23476f00:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGIwNTU3N2U1MmE4ZDFmYzQ2MDQwM2Y2NTRjNTY5ZjY5YWU0YzUwNWY1MDI3YWY2Yjg1Yzg1ZmQyMzQ3NmYwMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGIwNTU3N2U1MmE4ZDFmYzQ2MDQwM2Y2NTRjNTY5ZjY5YWU0YzUwNWY1MDI3YWY2Yjg1Yzg1ZmQyMzQ3NmYwMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2RiY2VlMmQ5NzFhYjNkMTkwN2E2YmEwM2VmNzE2MTA2MDU1M2UyZmQxNDk4ZjE5YjkxMTRhOWQxMjBmZjY5ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjM5MTcyZjVhOTExM2NjNGNhYWNhNjhiNTMwODM5NGZlZjBkZTU3MDNmNDYzNGVmZjcxOTZiYzljZGY2YzQxZCJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx#L174-L174",
+          "version": "repo-lines-v1:sha256:f06d0d6d86f13a7932c8b6dd2986c389b07f2f06c82f0bb1ba41d36dfe211af5:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjA2ZDBkNmQ4NmYxM2E3OTMyYzhiNmRkMjk4NmMzODliMDdmMmYwNmM4MmYwYmIxYmE0MWQzNmRmZTIxMWFmNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjA2ZDBkNmQ4NmYxM2E3OTMyYzhiNmRkMjk4NmMzODliMDdmMmYwNmM4MmYwYmIxYmE0MWQzNmRmZTIxMWFmNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGQ1ZjU2YjhjYTNiMmJmNTAwMTcwZDFkNzVhODhmZmJjYjE1NWNjYzczOTA5NjVjMWMzM2NjZjA5ZGEzMTlhOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWVlMDU3ZDRiMGM2MmIyYTlkNmM3MTNjYTU3MzBhYWNlMzAwMzBmMGQ0YzM0MzZlOTFhNGM5NTJiNjUwNmZjZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2d80f6b401df433faaf5d4e64bfe85e2",
+      "statement": "PriorityPage uses an opaque cursor that base64url-encodes the served (score, date, id) sort tuple rather than a plain article id, distinct from the plain Long-based cursor used by PaginatedResponse.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/PriorityPage.java#L15-L39",
+          "version": "repo-lines-v1:sha256:6003e5655fac3855b15a62f70d16c6e004c17f7eab16f574fa4eed63db816dbb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyNDIxYWIyNWVlMTRjNzVmZGFhMGY4OTgyZmFlODdlMDAzMTIwMTMyZTU5N2MwNTEzMTQ1MzZlYjhlNDYzMjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhMzAxNzdiNTZkNWE3MWJmZTNhMGM4MWUxNTgzN2Y3Y2FiMmU5ZjQyYmE4NTJjYmE3NzQyYWRmNzM0YTQzOTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlNGIxZjcwOTZlYmM3NDg0YTAzYzkzYWFiMTEwOGYzMjI5ZGJlMzgyNDRlOTcwODFlNTFlMDI1OTM5NDYyZmYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-11T14:50:52.613Z"
+  }
+}
