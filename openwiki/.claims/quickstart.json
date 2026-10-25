@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:74908010b4be452c005bf661def6fe5c46ef83fe238252acac1c886cd3014221",
+  "claims": [
+    {
+      "id": "claim_6f389fc18fd04a828723b8d77882f1be",
+      "statement": "myfeeder is a self-hosted single-user feed reader (RSS/Atom/JSON Feed) built on Spring Boot 4.0.8 / Java 25 with a React 19 SPA frontend embedded into the jar, using Spring Data JDBC + Flyway for persistence and Redis for caching.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L1-L45",
+          "version": "repo-lines-v1:sha256:ab35a55acb9cf1e750d5a486a557235fea1f0ae57db5fe4c9ba5e93aceeed7d7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MTIyYmYyYmM2MmQ0OWZlYzRlYTBmMzU1YmIwMDBjYWJlZjJlMzk2ODc3OGI1MGMwNWVjMjNjOTc4YTY5NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3YzFjZmUxZDczZWZlYWIxYzEzODE1NjNmMWM5MDY2MmUwMjkwMWIwMmU3OGQ2NTk2YWJlNWVkMTVhMDYxY2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1ZTFlODEyMDU2MzAxYWFjMGIwMWVmNTY4ZjdiYTZmYWE2NTBhNDEyM2UyMDYyYzI3MjA0OGFmMjI1YjM2ZGMifQ"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L1-L60",
+          "version": "repo-lines-v1:sha256:1a7253a2fc424eae414c79b7b452c308608178d103a82cfad39611407232cb36:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0MDQwMTAzMTViZGJiMGZlYTBmZDZmZjAyMTRkOGJjOTIxY2UyODM2ZDFjYzZiY2I4ODQ5ZjM1NzZjZjVhNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4M2NjMmRhOTcxNmE5OTgzMGM3MzIwYjY5ZWEwNGYyOThkYWZkZmJiYTllMDZjOGM5NGY0MDI2NDQ3MDI4OGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxYTRmYjNkNjUwOTM5Y2YxNDQ4OTljNTI1OGU4NjA5MTc1ZDk1MjBkZGU2YmJkZWMwZmE5ZGVjOGRjZmFjYTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1bdfccf4d3d24a91b0c1a383fa21d46e",
+      "statement": "Past the v0.2.x and v0.3.x milestones, myfeeder scores ingested articles for personal interest via an external Jev (TypeSafe) rubric, ranks them in a Priority view, learns from thumbs feedback and implicit engagement (opens, stars, board adds, Raindrop saves), and surfaces topic-suggestion gaps for engaged-but-uncovered articles, in addition to its original feed-reading and Raindrop export features.",
+      "evidence": [
+        {
+          "resource": "repo://.planning/MILESTONES.md#L1-L27",
+          "version": "repo-lines-v1:sha256:518af53700e91a9a6a9f9ed5758bf84131ca3d02a3150fe2a30a5fdb41fcc1a3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5NTllYjVkYjE5NjNiMDZjNjczZDc3M2I1NjIxYmYwYmRhYjdjYjVmNTQ3Mzc2ZDFjZTAzMzVjYTAzNGE0YzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMwYmM1MDI3MWU2MmY5Mzg3YWVmZWZjMDlkZTQ3MGE0ODY5ZTE5ZWNmMzA5ZTIxZGE3ZGNlNjI3NThjOTQ0Y2MifQ"
+        },
+        {
+          "resource": "repo://CLAUDE.md#L164-L232",
+          "version": "repo-lines-v1:sha256:550a2e90255b72ee7c7dc4a05d21e37e6ced4aa8017f8e24a41503e2fb397f43:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxMDA5MTA5MjgzMjE2NmY2NjViNGFhMTgyZTRkNTUxYTI3MTQzN2IyMGMzNjU1NTc0Zjg2M2ZjNzA3YTQxNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyNDljMTc5ZmVjOTBhZjRjMTg1MzAwZWRhZjEwMmNlY2I1MmE1MzdkOWViYzk3NDVhZTQ0NzE3MTY3OGFkMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ1Y2NmYTc4YjgwN2NlMDViZWY3OTMwYWRmYzY2Y2JmMGZmYTc2ZWQ1Y2QzY2ZmZDkwZmYzM2UxYTIyYjQ1MjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJkODY5YTBjOWFkNWJiYTI2YTRhYjY3MmJiMGViY2M5MzRkM2IyNjBmMjRjMGM0OTUzNzM0YmM4ODdkNGQ3ZGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_26f4a502f92d482cb0f6f55146d4974d",
+      "statement": "The v0.2.x milestone (phases 01-07, shipped as v0.1.24 to v0.2.1) introduced the app-owned TypeSafeClient Jev bean, the V6 interest-scoring schema, the background scoring sweep, and the query-time blend CTE behind the Priority view and tier badges; the v0.3.x milestone (phases 08-12, shipped as v0.3.0 to v0.3.1) added engagement capture (V7 schema), folded engagement into the learned-weight blend, made the split explainable in the UI, and added topic-suggestion gap discovery.",
+      "evidence": [
+        {
+          "resource": "repo://.planning/MILESTONES.md#L1-L53",
+          "version": "repo-lines-v1:sha256:16432c4257919804252c0d3caa1b77677f375a98808d9d6f62e144fea81f8b2c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5NTllYjVkYjE5NjNiMDZjNjczZDc3M2I1NjIxYmYwYmRhYjdjYjVmNTQ3Mzc2ZDFjZTAzMzVjYTAzNGE0YzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyY2VlZDZjNGViMjM0MDAyMjAyOTk2ZGZhYjJiNzMzMTcyZTZkMmM0ZGY0OTViNjYwZTQwZmVkYTlhMzQ3NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxNmRlZWIyODg5MmIxY2RlYmZlNWMxMmMyY2Q2MjBiNWI4ZjI5Mjg5YzFmZmUzZDRmNWZjMWIyZTZhNGVhN2QifQ"
+        },
+        {
+          "resource": "repo://CLAUDE.md#L118-L119",
+          "version": "repo-lines-v1:sha256:355c116b2432378c388dd937230f535379ba4dafac70337c5a8df2a04697d699:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVlZmYyYWFjY2I5MzY5ODU3YWFmYTE5YmVlOThjMzM3NTY2NDY4OWE2MTUxNjQ3MjIyMDJjZTJmYTQ3MDVjMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjMxNzZlZmMwYTUzOWZmMmRiZWE2ZGZiOTQwMjM5NGM0ZGNiOGJjMWFhY2YzOTQxYjA1N2ZmNWEyODczMGY3MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2EyOGZhNjUyMDg2MjA0MjdjNjkwMTA4NzAwNWY4NTEwMmFmMWQwMWI2NGQ4YTFlM2Q2NGRkMTA0N2VkNDc5MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e5646e8002b84a2e85d999eb856840bd",
+      "statement": "CLAUDE.md and AGENTS.md serve distinct audiences in this repo: CLAUDE.md is the fastest-changing engineering reference for day-to-day build/run/architecture/gotcha questions, while AGENTS.md is the usage contract for agent tooling (OpenWiki retrieval, CodeGraph, Beads issue tracking) rather than application behavior.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L1-L27",
+          "version": "repo-lines-v1:sha256:f91eef37151b72e93dd488fb9d75f985bb8c611aa71a9b4f7f3f6e447141272d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmMTgwZjljMTI2OTAzYmNjMzMxYWE5NTQ1NmU0OTQ0NGE3ZDRkMDExZThhMmE4M2Y1ZGM4NzAyMzkxODEyZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyNTRiYjU2MTQ5NTQ1NjExYTJhOWVhNmFkYjAzYWJmMzk3ZTNhZDAzZmMzZmE4ZGIwZjNkOWY5ZjNiMzJiZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1ZTEwZWZkNTdjOGU4NzMwMTI1ODZiYTkyY2MzM2FlMWE5ODc3YmQ1YWMwMWY4MGMzNGQ3ZDgyMWRiODE0YzEifQ"
+        },
+        {
+          "resource": "repo://CLAUDE.md#L1-L10",
+          "version": "repo-lines-v1:sha256:866a857c80add023ff25503be4a4d0f0233beee1afc82e9cc6737eaabb14804f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MTIyYmYyYmM2MmQ0OWZlYzRlYTBmMzU1YmIwMDBjYWJlZjJlMzk2ODc3OGI1MGMwNWVjMjNjOTc4YTY5NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkODU0MDBjNGE4YjYwNzg5ZDI4NjJmNjI5OGYxMWZhMjUwMzFkOGI3ZjkwMWZiY2I3MDhjYzk3ODNiMDIyNGYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-25T13:07:33.493Z"
+  }
+}

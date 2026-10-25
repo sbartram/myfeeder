@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:9b56ccf9a609b6c637cd68927a0f5c68a10ae059ba8ea368b4d79e71e0b2c3c8",
+  "claims": [
+    {
+      "id": "claim_742796486bee4e7db8ef3ce40f87cd58",
+      "statement": "JevApiClient.isConfigured() returns whether the TypeSafe key has text, never calls Jev, never throws, and carries no resilience annotations, making it the single safe 'configured' check used outside the circuit breaker.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClient.java#L9-L14",
+          "version": "repo-lines-v1:sha256:5f9027a1216dfebb494de3f943666be5f001cdf6c75ed050a8043dfec726a4b6:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzljYmJjNjU0NjlkYjFjYTI4NDJlZmQ5N2RmN2VlMmNlNmNjMTU3MTQ4MmQwMWExOGI3OTBhMTBjN2M1MTBmMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmQ5Yzk1NTE0NjM4NmY1YTRmMjYzNzkwMGZjZWM2NjhiOTI5MTVlODZhNDJhMmM1ODRlYTFhYTkzYzYwZTQzOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODFiNzVjZWMyOTkwZjBmYzI0ZmU0MjFlMmNmZDA4ZWRkNmJiNTg1ZTU5MDI2NjlhOTRjY2M2OTJjODNhNjA2OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTJjNTJhNGNhZDEyODZiN2JlNzMyYmZjYWJiMDZhMTdiOGU1YWQxM2IwNzcwNDc4Y2M1NTM0MjAyYThjYTRiNiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L34-L38",
+          "version": "repo-lines-v1:sha256:d289e905a3e9948a5ae93a589f4d18e220885c44d1b13bd3ca8bc92055b9b776:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDE2OWQyNTU3NDcyNmQxZGIyYjQ3Zjk2MDk2MWQzNzUxZWNlYjdkYzU4OWI3ZTExMDIxMWViNmM5MGE0NGRmZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzUwYjUyM2M3ODhkY2YyZTg3ZDhmNjFjNzFmMGM0MjYwZTA1NjRmNWU3Y2UwYmVmZDY0MDIyNDM0ZmY1ZTM2NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGY1NTcyMWMxNWYyNTg2YThlYzk1NDFmMjE5OTliNDFmZWMxYzkwMWU0NDIxNDQyYWFhZjJkYmIwNTI4ZmE2YyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_fba3bd39fd624b2bb34f34c694af2567",
+      "statement": "JevApiClientImpl.judge validates requested questions are Noul or Score (rejecting Choice before the billed HTTP call), copies caller state into a new LinkedHashMap with null values removed without mutating the caller's map, and sends an empty state as {}.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L50-L65",
+          "version": "repo-lines-v1:sha256:7801bd6ac9c2d9048333a7f7852ed4fc7a289fade9ea6fa6f0c7b0f8c9f89b91:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5M2UzODAxNTM5OGViYjgyOTVjNmM0YTc3NGJjNGUyNGZlYTI1ZGRkNDcyMDNjOGY3Y2IxMWZlN2QxMjc5MjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmMDkwOTZkODkzOWNlYjk2MDE4ODRhMjY2MmIxZDBkNjg0Y2NjMmM0YjM3MTUxMjg4ZmFiMWRhNDkwNWRhNmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmM2VlZmNjMmMxMjlkOTMyZThjZmYwMjM5NTM3ZDY3NDY3NmRmYzU5YTIwOTNjYWI5YjFmMzRiNTJlOGZhNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyM2QxNDAwMGIzNWJjOTg2MzNjNzAzZDE5Y2JiNjc3YjgzMTJiZmZlMWU2NDE0N2U0MjZjMGUyMGMwZjA1MjcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a4b6b8d6bdf045bca39fafcf5246b3ca",
+      "statement": "JevApiClientImpl logs TypeSafeAuthenticationException/TypeSafePermissionDeniedException (401/403) with only HTTP status and request id before rethrowing, never the exception message or response body, since those can echo request content.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L63-L70",
+          "version": "repo-lines-v1:sha256:51898d394b5cd360946c7149b1127d7892eda766c88a093001d135ee203bec2a:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjFlODdmZThiMGFiZWI4YWIxODdhZDE4MGU0ZjI3MTZhMDRmMzcxNWMxN2EyYmQ2ZGZiMjMyYjQzNWNhMDkxOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZiMDQ0OTE0Njk3MjJlODM2M2E5NGU0MDQ0NTM4ZTAxM2EyYTIxN2UzNmIxZTU2OGJhNjBhY2I3YjRjOGYyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWVmYWQ5MDI4OWE5MjNjY2UzODNjMDI1ZDA1NDg5YTk0NTQ0NjhkZWNmMjNjNDFmZjUyNTM1NGZkNDNmNDA1MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDAwMzJkYjQwNGFlNzE4M2ZiM2EzMThhZDgwZWU3MDgyMDhkM2UzNjc0NDc2YTUxZmRhZDIxZjNlN2M4NmJhNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b797a74021d54129b9b06bc533dc04e4",
+      "statement": "JevApiClientImpl.judge carries no fallbackMethod, so typed SDK exceptions and CallNotPermittedException (open breaker) propagate unchanged to GlobalExceptionHandler instead of being wrapped into a generic failure.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L46-L49",
+          "version": "repo-lines-v1:sha256:3aab0a7280d64e4215fe403805517ab5d11a3b24ab8e557d6e6ca21eb1149060:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTY2NjEzNGZkZTk5NWQ4Yzc0YjdiYzM2NjM0YTNmM2YwYjgyYzU5YjY4YTVkNDQ1NjcyM2JjYmNmYWFlNTA2MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWRjMmIzMTFhYmU4NzU3MmU4YTdjYzBkOTk2YTY1ODQ0MDc2ZTUyMzJkMjFiN2E4NTQ3NWY5YjQwNTViNzQ5MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTk5YmRlZmVlYWNhNjM0MGUwMjkwZGM4NmU4ODljODlkNWUxODlhYTViYTQ0YjU4NWIzYjcwNzM0ZjRhNjJkOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWRlZmY5M2ZiZmZlOGMyNjc4ZWEyOTZlY2U1N2MxMTkwN2ZlYzg4MzA1NDEyNzcyOWQ3OTI2N2RmNjI2ZjdiOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_af3524ebd1e14b3783ca6b4f14b63c85",
+      "statement": "The interestScoringExecutor bean (InterestScoringConfig) has core pool size equal to max pool size equal to myfeeder.interest.concurrency (default 1), queue-capacity 1000, is registered with defaultCandidate=false so Boot's applicationTaskExecutor stays the default Executor, and is injected only via @Qualifier(InterestScoringConfig.EXECUTOR); no @Async is used anywhere in the scoring path.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/InterestScoringConfig.java#L25-L39",
+          "version": "repo-lines-v1:sha256:0154995f7942c680c66c810698f5350bed048e2d2e0e25718a1a210e28176b3f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5YjkyNWM5NDJmMDJkMzI5ZTljYWQwOTQyYzNiNzg3ZDkwNDA2YjgzZDNlOWU2MWU2ZGIyNTExNWNhNzRmNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0MWUwYTAwODBjZDEwZGRlZDUyMTM5N2U3NjgyMWNlYjFkYzk0NzFjZGY0NDBjNDM0MzVlMmE2MTAyNWI4NjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L34-L37",
+          "version": "repo-lines-v1:sha256:78cad33ba1786b0b3edaa992cf62b20a9643f5ade6437f1bdd91cd3196b1c8d8:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGRlZGU5NGI1ZDI5MWZjMzMwNGNmYjczYTU0NTMxMzVmMDhkZDY5YzBkYjFkMjRmMjU3MzJmNTgxOTdmZGUxMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjE4YTJkM2NiYjE1YmE4YTU5OWUzNmRjODA0MjUwY2RiMjg1ODA5OTFkNzAxZWMwYzEwMWNmZGMxOTY1ZDNjZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDJjODJjOWExZmEzNTM1NzEwODRhYjNlYjJlMDRkNmU5MTFkMTc1YTViMGY0NDM0NGMzNDY2NTM0YjAzYTgzZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWUxMDZhYjNiYWZkYjI5ZGVmMTg5MjRiM2VhYmJjYTMzOWQ2ODhkNmU0NDg1YzM3M2U2OTY2MTg3ZGFlZDhiOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_215ec357a2204133befa2fad82021264",
+      "statement": "ScoringQueue relies on the executor's default abort rejection policy: when execute() throws TaskRejectedException because the bounded queue is full, ScoringQueue removes the article id from its in-flight set so the next sweep run can resubmit it, instead of leaving it permanently marked in-flight.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ScoringQueue.java#L52-L72",
+          "version": "repo-lines-v1:sha256:de729a69c86852371b9328141c76e0e8d4b991f07623f199fbc7e57c7bc2e821:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5YzNlYmQyOGU2NzkwMmRjNzMyYWFlMGIwOTQ1MjJlZmM3MmExZDJjZjE4Y2VlYmRjMzhkZmQ4OGEyNmM3YTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmM2FiZDljNTY2NTA3YjcwNTBlNjJjODUxODhhZjcxZDg2MWE5OTRmMzUzOWEyNTA2ZTZkNGU0NDM3YWZhNmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhZDY2OGNlZTFiYmY4MjEyZDNlNzE5NGZhYWU4YTVhMDBhMDFkN2FiMmUzMjVkMmM5YjQ5N2Y5ZDc1MmMxNDIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef2c1e58331c4b8e8a99e63cf98a41ae",
+      "statement": "TypeSafeConfig defines the TypeSafeClient bean itself so the starter's @ConditionalOnMissingBean backs off, because the starter's own auto-configured bean would assert api-key has text and crash startup on a blank key; the app-owned bean instead logs a fixed 'TypeSafe Jev not configured; interest scoring disabled' message and leaves the app running.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L23-L48",
+          "version": "repo-lines-v1:sha256:b46d6e675f7853ae8957f068081841f0385834ae5edb9d4f93bf0fea780734ca:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkNGViYzFjYzMwYzU0ZmI0OWY0M2ZkY2EyNjlkMDZkNDk5YmI5ZGQxN2ZkYmY2OGY0ZjgwM2Y5MDU0NWI4NjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBhMTU3NzMyOGQ3MzA0Mzg4NmZlZTA2MDNhYTBlZWMxY2U0ZjFiODU2ODQ5ODE4Y2ZmMjdjOGFiOWU3NWU1MGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9649ebbdc80a4bec9b1e4d902e522768",
+      "statement": "The TypeSafe API key is passed to the SDK only via a Supplier (not the String overload, which requires non-blank text at build time) so it is never logged, not even its length or prefix; baseUrl is set explicitly so the SDK never reads its own TYPESAFE_* environment variables.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L43-L61",
+          "version": "repo-lines-v1:sha256:1df96af2ef284f64c92c13fb281d6c728ad25754ab12e714b97c43ebaadd9360:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ZTU5MDY5YzNmMzg3NzE5ZWZlZDI1NmM2YzRiZjIxOWNjYzRmNmU0YjQxYWJmZDQ0NzYxZDQ1NDkyMTRkMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2YWNiZWE3MTNkZjViYWZlZTdkZWExYTg0NzY5YjIxYjBjNmVjMDQzNjhhMTRlODg5MzNkNzAxZmFhMzdmNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyZGZkMmY1ODRlMjNhMzhjOTQwZmZkNzdmZDkwZDU5ZDA5NGVjMmI1YjczNTdhZGY1ZWQyMTUwOWNjNTFkMWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3cb9325071a142ef94b725a67f5e217d",
+      "statement": "The TypeSafeClient bean uses a Jev-only Reactor Netty request factory (connect timeout 5s, read timeout = spring.ai.typesafe.timeout, default 30s) installed on a clone() of the auto-configured RestClient.Builder, preserving the shared User-Agent customizer without altering the transport used by feed fetches or the Raindrop client; this transport must never be reused elsewhere or rebuilt as a second TypeSafeClient bean.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L30-L34",
+          "version": "repo-lines-v1:sha256:2226d9c47a9aa53a0fae7fa6a74fa2d4d7b3f791d10555726c9d147c28af80a8:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDZlNjI2M2JkNjY2YzgwNDMyMDEyMzEwNDljZTBhZDM5MjE5YTQzMmZiYjU4NTk2OTJiNTUxZDQ2ZDI0MjkyMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcyYTQyOTM4MmIyZTE0NzE4ZTBlMzdiMDU3MGE4YTE3MDI5OTFmY2Q4NDk4Y2Q4NDA2MGE4YmY0ZjA1MDE3YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWZmMzFmY2YwZmRmZmFiMTAwM2I2ZTA5NDAzOTY5OTBlY2RkOTEzYTc4MTI2ODEzYjBlN2NmNjAyNmMwZDc5YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2U0MDQyNjgzNWIzZjYxMDVkMDQ1NDYyYjk5MWZjM2JjODE2Yzc1YmRhOGM5MGRjMjg2YTMxZGIyNmNlYzNiOCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L43-L61",
+          "version": "repo-lines-v1:sha256:1df96af2ef284f64c92c13fb281d6c728ad25754ab12e714b97c43ebaadd9360:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ZTU5MDY5YzNmMzg3NzE5ZWZlZDI1NmM2YzRiZjIxOWNjYzRmNmU0YjQxYWJmZDQ0NzYxZDQ1NDkyMTRkMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2YWNiZWE3MTNkZjViYWZlZTdkZWExYTg0NzY5YjIxYjBjNmVjMDQzNjhhMTRlODg5MzNkNzAxZmFhMzdmNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyZGZkMmY1ODRlMjNhMzhjOTQwZmZkNzdmZDkwZDU5ZDA5NGVjMmI1YjczNTdhZGY1ZWQyMTUwOWNjNTFkMWUifQ"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L10-L18",
+          "version": "repo-lines-v1:sha256:5a5dc2f35f052c8d0e8127ba1d78e4ac070bd2374a4d45986fbed128e6ca4129:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjNmOTYzYWEyNTEwNTU3Nzc1MjFiNjcyODVmMzBmMjAxZDA4NzdiMDVjMzU3MjdiNjdkOTJlZTFiNjQ2ZGYwNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTYwYWVjZTI5ZDIxZTA0NTAxYjY3ODdkMmIzNmViOGFiNzllNmRlMGJlMDUzMTY5ZDNkNGUzMzY4NWIwM2E4YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTBiNDU3NzAxMmIxM2RkZTllNDY3ZWNjNTI3Mzk4Y2IxZTQ4MjRhNTM1ZmJlZWEwYTNjM2U4MTRjNDk4Mjg3NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDA2YjlmNGE4NmExOWZmYTg3MzJlYzhiODgyMWFlN2U0ZDIyMzc5NTQ3NmJkZGVlYTA2N2RhOWZlNTk5NDUxZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e5ab79320eb8418386a33556af34e21a",
+      "statement": "spring.ai.typesafe.retry.max-retries is set to 0, disabling the TypeSafe SDK's own retry entirely, making the Resilience4j 'jev' retry instance the sole retry layer; re-enabling SDK retries would multiply requests (e.g. 429s) since both layers would retry the same failure.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L102-L111",
+          "version": "repo-lines-v1:sha256:2513169e4cddd4cc5eec86f4dc44f2011f34f4fd6796a83aa0ec377d1f8fb1b3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwZGJlYzkzOWZjNDk3ZTUwNmU2NzU3N2YxNDU2NDNlMDQ0MGZjM2FlNjkyOWM1MDgxMDM4MjVkNzU5MWQ1OGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3NzEzNjZkNWVkYTY2YTNmMTg2ZjYzYWRiNmY2ZmZmMzI2MjhmMWIzODI3NDUzNGJjZjE4MDYyMzFjOGQ5NWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzODE0NTg1NWRhNmQ4MzAwOWZiOThmNjliOTZmNDc3M2NmNTIwMjMxNWRjYWQ3Njc5NjJkM2U4YjhkNTgyMzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwYjQ3NTI5MzI4ZDllYThlZTdkNGUwYWU2ZWQyMzM4OTQ4ODJjYTVjZjJkZDUwMjQwOWMwNTZhNjlmYTQ0ODcifQ"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L19-L20",
+          "version": "repo-lines-v1:sha256:786892667be78da5f6072f12207af3eb51114679dd6e888490114761a1a430bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDQyNzFmODg5ZmE5M2Q0OWY0ZDNjOTNjOWU3OGY4ZWVkYmE5YmQwNTczNDkxMThmNTUwMjlkMjFkNThhYmU4ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzVhODM1ZWNlNTdjNTUzMTQxZDk0Yjg2YzU3NDY2MTBkYjUzOGE4MTBlMDI5NWIxMTNkOGE2MTgwNmJjNWJhNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzgxNGE5YzhhMDZmNWE2ZTg4M2E5MTE1MWExNjc4NDNjM2I0M2Y4ZmE3NDU4MzU4MzRmMDM0NDA5MzU0Yzk3ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjgzZDUxNTY5ZjQ0NTc0NmJkZjY5ZWI3NjIzODQ3N2IzMGI5ZmZhMGE1NzhjOWYzM2ZjOWQ2MjRlM2RjYWU1YyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_382735e8ee02491c81c83c807a962a34",
+      "statement": "TypeSafeConfig.jevRetryInterval is a RetryConfigCustomizer that replaces the jev retry's wait function: on a TypeSafeRateLimitException carrying retryAfterMs it waits that value clamped to [0, MAX_RETRY_AFTER_MS=10000ms]; otherwise it doubles the configured base wait-duration (1s) per attempt (1s, then 2s for 3 total attempts).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L40-L41",
+          "version": "repo-lines-v1:sha256:f8f039576deee139f454b6a5f690f4bc421062749e3bb671c95d46eccca384d9:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJhYTAxNTJjZjk4NDZjZTVjOTgyOGNhZTk2NDlmYmI2MTcyNzMwMjg4MWQ3YTIwOTM5ZWY4ODFmNzAyZWYyNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2FmYjI2ZTIyOGYwMDk2Mzk0Y2FkYTBmYWYyNDY0NDg1OWM5YTc2OThlYjlkYmU5ZWVhNDBjZTdkM2NjMGRhOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjIwM2Q5MDA4MWFjZmYwYzk4Y2EwYzUxYjMyOGJiMTFmMzQ5MTU2YTM2NzkyYzljZjljNjFiOTJkM2Y4ZWQ5NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjEwNWNjM2M4MzE1MDk4OTk4NmEwMzFmMzM5YWU5ZDc4MmUzN2ZmNDVlMTAwZGZiYjEzYjE5YzFmY2YyMWU0ZCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L70-L84",
+          "version": "repo-lines-v1:sha256:f42910f534520e680a4ce106b3c1302a8ac82ed2d7bd065552b3437377710730:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ZTU5MDY5YzNmMzg3NzE5ZWZlZDI1NmM2YzRiZjIxOWNjYzRmNmU0YjQxYWJmZDQ0NzYxZDQ1NDkyMTRkMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlYjQ4OTljNmQ1NTNkZWFlOTFmZTc2YWYwYmNlODE1MjRiNGQyMTkyMTFiZDQ2M2MzYTA0MjJhZDhlY2FjMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a7bbee46417d4208ac1b8d121b91977a",
+      "statement": "The jev retry instance's retry-exceptions list only TypeSafeRateLimitException (429), TypeSafeInternalServerException (5xx/overloaded), and TypeSafeApiConnectionException (connection/timeout); it never retries TypeSafeBadRequestException (400), TypeSafeUnprocessableEntityException (422), or the 401/403 exceptions, and JevNotConfiguredException is ignored so an unconfigured key never burns a retry attempt.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L102-L111",
+          "version": "repo-lines-v1:sha256:2513169e4cddd4cc5eec86f4dc44f2011f34f4fd6796a83aa0ec377d1f8fb1b3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwZGJlYzkzOWZjNDk3ZTUwNmU2NzU3N2YxNDU2NDNlMDQ0MGZjM2FlNjkyOWM1MDgxMDM4MjVkNzU5MWQ1OGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3NzEzNjZkNWVkYTY2YTNmMTg2ZjYzYWRiNmY2ZmZmMzI2MjhmMWIzODI3NDUzNGJjZjE4MDYyMzFjOGQ5NWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzODE0NTg1NWRhNmQ4MzAwOWZiOThmNjliOTZmNDc3M2NmNTIwMjMxNWRjYWQ3Njc5NjJkM2U4YjhkNTgyMzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwYjQ3NTI5MzI4ZDllYThlZTdkNGUwYWU2ZWQyMzM4OTQ4ODJjYTVjZjJkZDUwMjQwOWMwNTZhNjlmYTQ0ODcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b1298781131f40bf95c37dacf468756c",
+      "statement": "The jev circuit breaker is the outer Resilience4j aspect (circuit-breaker-aspect-order 1) around the jev retry (retry-aspect-order 2), so it records one outcome per logical call rather than per HTTP attempt; its instance config is COUNT_BASED sliding window 20, minimum 10 calls, 50% failure-rate threshold, slow-call threshold >15s at 50% rate, wait-duration-in-open-state 60s with automatic transition to HALF_OPEN, and 3 permitted calls in HALF_OPEN.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L60-L84",
+          "version": "repo-lines-v1:sha256:365a1df18d550df3061422104008fa7ade4a3cdabbf09962929d40826e651bda:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmMDI4YTFjZWI5OWIzYWVhMTMzYmRiMzYwZTNiNWNiZjU3ODZmYThkM2E4YjEwZDVlM2RjMDk3YTA0NGJiZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlZjkwMGYyYWZhNjk1ODE4MjU2YmNlOWY3MGNmNWJlYTAyMjUwYThmN2Y4YWM3MGRhNGNlYzg3N2JiNjZjMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhYzQ1MTlkZmYzODVkNzk5ZWVmODBmZGZiOTg2YzFmMTE5ZGUyYjNhYjJkNDBmMzczYWFmZjE4NmJlOGY5MWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1OWI2NWU3Nzg1MzU4YTU0Yzc4MWQ1MDE3NTc3YmZjYjA0ZGEzYjMyMjI3ZDE5MmU3OWE0ZWQ4N2NjMTRiMTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ccfd21d724742efa6dedc76f92318ba",
+      "statement": "401 (TypeSafeAuthenticationException) and 403 (TypeSafePermissionDeniedException) are deliberately omitted from the jev circuit breaker's ignore-exceptions list, so they count as breaker failures; a bad or revoked API key returning 401/403 on every call will open the jev breaker once the failure-rate threshold is crossed.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L74-L92",
+          "version": "repo-lines-v1:sha256:acbeb3849cca380aa93398d60eeadad8a9c5d5f85c6b2c295b6f0941c92a00f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwZGJlYzkzOWZjNDk3ZTUwNmU2NzU3N2YxNDU2NDNlMDQ0MGZjM2FlNjkyOWM1MDgxMDM4MjVkNzU5MWQ1OGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzZDIwMmUyOGQxNTA3N2Y4MmMyYTgyODY4ZDRlNmIxMTIzOWYyNDM0OWZiNTkwYzE0YzY1NGIzODU4YjI4NjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhMmM1NmU4M2QzMjFhMWM3MzIxMjk3OGYwYzBlMGEzMzZmNjBkZDVjZjY4NzZkODFlZmMyOWRkN2Y2ZDJhMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4ZjIyNTkwNjRkMzlhZTE1MDAxZjZlZmYwOWRmYmIyNThjZjMyZmVkODFhMjczODIyNGQyY2RmYjQ4ODY4NDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_08012605885d42ff885c5231c3dc3c6e",
+      "statement": "GlobalExceptionHandler maps JevNotConfiguredException to 503, CallNotPermittedException to 503 ('Jev unavailable'), TypeSafeBadRequestException/TypeSafeUnprocessableEntityException to 422 ('Jev rejected the request'), and any other TypeSafeException to 503 ('The Jev request failed'), always using fixed app text rather than forwarding the TypeSafe exception's own message or response body.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L71-L105",
+          "version": "repo-lines-v1:sha256:edf5da9e2c8d1bfa5d6987cddad840f1c110953af343b4a736ff921ea722b28c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmYzk1ODRiNzdlMzI2ZmEzNDNkZjg5NGZiZDA2NzNlZWRlNDUxN2U1MzNhYjI1MDM1YzI1Yzg4NTliODI5YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkMDFkNWI3MDU2NGM3MjA1YWRiNDMwMGI4MGFhNDg1ZDI4ZDM4YTUxZWI5YjU5NzRkOTViNjBiNmIwNzk2MjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f934ce83eaef4e8f8cca8ace39c504fc",
+      "statement": "config/JevEventLogging subscribes to the jev Retry and CircuitBreaker event publishers obtained by name from the shared registries (the same instances the @CircuitBreaker/@Retry annotations use) and logs exactly three fixed-format lines carrying only exception simple class names and numbers, never a message, response body, or API key: a retry-attempt INFO line, a retries-exhausted WARN line, and a breaker state-transition WARN line using StateTransition.name().",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/JevEventLogging.java#L1-L50",
+          "version": "repo-lines-v1:sha256:cf8c43a0fc96ca88024aabcc0a3adb09f51009c8f2247c844866786887118cf5:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4NTAyMmM0MzMxZjQ0NzIzY2FmNWE0OWExMDQ2YjE3ZTdlZDAwZjJkMTFmN2U3Njc4OWI0YTgwMDQyOWY4ZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_61b522e3a3064b45b63395c9905f412f",
+      "statement": "The Jev event log lines can be found in production with `kubectl -n myfeeder logs deploy/myfeeder | grep 'Jev '`.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/JevEventLogging.java#L10-L18",
+          "version": "repo-lines-v1:sha256:3c22436138b548243f2f4c6a4dd93e7bc03c20ce3a23525dbcc88ed95b2a43f2:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWUzOGE1MWE2YjcxZGU3NWU4YmNjZDYxMWJiYzk3ZWVhZTI3MTMxZjMwMDAyYjNkNGIxNGQ2NWZkZThhZTUxNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDY3N2U0ZTY3NjdmYTFlMTQ4OTViMTgyMDRiYTMzYzA4ZDBkNDU5NGI4OTY5OTNhNzA4ZWMwNGY5NGNkNzY0OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzlmZDc4MGJhNmI5MTkwNWQyNmYyZDhmNDBjOTFjODk4ZTNhNGIzNzQ0YTVmMWFjMmZjOGM5YmIyNmZiNzkzMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_82c196fb94bd4e78bf09cb7c5ab2edf6",
+      "statement": "MYFEEDER_TYPESAFE_API_KEY is the required secret binding to spring.ai.typesafe.api-key; it is optional at deploy time, and a blank value disables interest scoring (isConfigured() false, sweep skips runs) without preventing application startup.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L150-L150",
+          "version": "repo-lines-v1:sha256:131072ecf5f2d2dcecf11c9f208b5fa2fc07075f76f8b3893044f849cdf8262b:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTMxMDcyZWNmNWYyZDJkY2VjZjExYzlmMjA4YjVmYTJmYzA3MDc1Zjc2ZjhiMzg5MzA0NGY4NDljZGY4MjYyYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTMxMDcyZWNmNWYyZDJkY2VjZjExYzlmMjA4YjVmYTJmYzA3MDc1Zjc2ZjhiMzg5MzA0NGY4NDljZGY4MjYyYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2Y4NmUzOGZhZGE3NjQ5ZDlmNDFmNTcwYzAyZmQwMjkwYzc4ZjQxMzdhNTBmNjRiYTFjZWYzYzllMTNkNDc1MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2VkM2Q1MDQ4MjEyN2FjOTZmMjIyMjcxZjUyYTkzMTMwNjRjYTA4OTdjZmU3MjNhYWI5MmY1ZmM4MzBhYTVmZSJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L10-L15",
+          "version": "repo-lines-v1:sha256:a15ff97e7e99f74c77ed550896cf6631c15547787d7d7d9271752c3ea981615a:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjNmOTYzYWEyNTEwNTU3Nzc1MjFiNjcyODVmMzBmMjAxZDA4NzdiMDVjMzU3MjdiNjdkOTJlZTFiNjQ2ZGYwNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjlmOTBiZTU1YTg2ZDYyMzFiZGNkMDY4NzA1NzZhMThjYjExYzZhYjRmYmI2OTFmMDFiZTExOTk0NWMwYjllNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTBiNDU3NzAxMmIxM2RkZTllNDY3ZWNjNTI3Mzk4Y2IxZTQ4MjRhNTM1ZmJlZWEwYTNjM2U4MTRjNDk4Mjg3NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzgxNGE5YzhhMDZmNWE2ZTg4M2E5MTE1MWExNjc4NDNjM2I0M2Y4ZmE3NDU4MzU4MzRmMDM0NDA5MzU0Yzk3ZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4154a75857d9418fa55bfe17d58b7a02",
+      "statement": "Operational throttle levers for Jev load include lowering myfeeder.interest.sweep-batch-size or lengthening sweep-delay in application.yaml for a durable fix, or the emergency kubectl env override `kubectl -n myfeeder set env deploy/myfeeder MYFEEDER_INTEREST_SWEEPBATCHSIZE=20` (which restarts the pod) for immediate mitigation, removed afterward with the trailing-dash kubectl form to avoid Helm's three-way merge keeping a stale override.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L242-L242",
+          "version": "repo-lines-v1:sha256:2792cc3857e708588bbbe94a695c3f120984037c59b9c4b418be1c7966aa998a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjYyYWM5YjQxOWNhZjRlOWVjMmY1Mzg2NWI2YWJlMmUxMzkzOWRmOWJkOTFkYWE5NmM5MjU2MDllNmZhNTcxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODNhOTRmZjYwYjRlYmZlNmRjN2M3ODJlMjIxNGRkODJiMWY2MzU4MzM0NzdhOWU5MjNlYjY5MDA4NjA3ZTdmNyJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-25T13:07:33.493Z"
+  }
+}

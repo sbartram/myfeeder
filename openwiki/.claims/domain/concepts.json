@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b430570635f7a1c1dd216f1bab36a0045e1a75a5b36ea38e9e61fc97aa7779f1",
+  "claims": [
+    {
+      "id": "claim_0efc58d7cd614b5193dcd2c8c9bce201",
+      "statement": "Migration V5__article_extracted_content.sql adds an `extracted_content TEXT` column to the `article` table, used to cache Reader View extraction output.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/db/migration/V5__article_extracted_content.sql",
+          "version": "repo-file-v1:sha256:40144184eb66db1770bd31199ab5e043f157d4218386b7cc428363058171a6a5"
+        }
+      ]
+    },
+    {
+      "id": "claim_5befa4eeb6524f579c3441db868624f4",
+      "statement": "Article has @Transient fields interestScore, interestBreakdown, feedback and engagement, none persisted on the article table itself; all four are populated only by ArticleService.findByIdWithBreakdown (GET /api/articles/{id} and feedback responses) and omitted from list responses.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/model/Article.java#L29-L43",
+          "version": "repo-lines-v1:sha256:318af0748056cb718ad203155ecc275aa468e78558f5db0502dd7fc052710d5d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxODVlMDAwYjc4NTI5YTVjMmJjNmZjMDY5ZjRmMzM3NTg4NzU2ZDYzYjQ0NjAxMDk1MGI1ZTg2NDlhMGNhNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiMGI1ZTBiNjRkOWNjOGU5ZmNiMDc4NzRiOGRkZGU4ZDY4NTNjMzQyMTMzNDgyODNiMWU4YTlkZDczMTFkYTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0MGJhZjVjYzAzN2MzYTU5NThmYTM1MzAxOGRiODljNjMxNGYwNWM1MWM1ZmRhOWQzMWJiMjhkZTg2OTc5YTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L32-L52",
+          "version": "repo-lines-v1:sha256:58e0258c069a9b37480d04e977a84fe4cfb0f84cdd89089349ffb934017ed373:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZkNjc3OTg1YjVjMjE2YWJmZThjNDBhODJhYzNkOGMyNWJmMzIxZTZmOTBiMjQ2ZGNiNjhhZmE2MWVmMDUxYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3MmJmMjUyOGY3ZTFlYTJhMDdjZThiNmVkZGIyNTM1MzUwMDA2ZTZkNTI0NzhjMTU2OTVhM2U5YWJhYzIxZTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_00f2c000f12d4bd2b42b509291da2f4e",
+      "statement": "GET /api/articles/{id}/extracted-content (ArticleController.extractedContent -> ArticleExtractionService.extract) implements Reader View: it 404s on an unknown article, 400s when the article has no URL, fetches the original page via FeedFetcher (reusing its SSRF guard, size cap and User-Agent), decodes bytes with jsoup, and extracts readable content with Readability4J, caching the result verbatim in article.extracted_content so later requests skip re-fetching.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L86-L89",
+          "version": "repo-lines-v1:sha256:7de5ee387f58f5adc3ecb19820a18c5beef19568cf99b64c51e67501b8d69938:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjNiMjdkZDc0YzU1ZGEzOGMxYjc0MTNlYTk4ZWRlZDE1OGU0OGY1Mjg2YzdlNWViNmRhNTA0NDYwNzI2N2E2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjAwMTEyMDE4ZDljYmQ1NzA3MTJjZjZmZGQ3Y2ZmZDk3MzhhNzhjY2ViMWIwMjdmYzRkYjJiMDNlNmYxNjhjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjFjZDZjYzg2M2Q3YWNlNjcwMjc2MmUyMmM2MTNiYzI3Y2E0MGI1Mzg3MmJjZTNlNzg1NDBhYzRjNTAwMmY1NCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java",
+          "version": "repo-file-v1:sha256:669160a7f4079b0b4dd06d2b4b5a903b242f1e6cdce9690565452db01cd334b0"
+        }
+      ]
+    },
+    {
+      "id": "claim_f9372160f5ee420b98076c9ab9a3bd88",
+      "statement": "ArticleExtractionService failures surface as FeedFetchException (original page fetch failed) or FeedParseException (Readability4J found no readable content or threw), both mapped to HTTP 422 by GlobalExceptionHandler.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java",
+          "version": "repo-file-v1:sha256:7c32c42bd6cd11de7d12ca516a96f79bb0dd80fcbee5a18199fd09d608d91227"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleExtractionService.java#L28-L65",
+          "version": "repo-lines-v1:sha256:6c5923909ce47cb82de4178c55e8cc9638397bb28100d7d75cf17e60752932c4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyYmMwODg1ZTdhNTQ3ZjY2YjZjMTg1NGY0NDU3Mjg3MWRmYTdhYTZlYjg5MjcxYTc5MzMyNzFhODhjNDkzOGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MGZiZDQ3Zjc5YjhkZDllMzllOGU0M2RkOWMxYTU3MDFhNGQxM2RlYTJhYjI2MmY4ZmUyYTg1ODEyMmIxMjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_54dba5f08b3b468f8d6b39bf592b2724",
+      "statement": "article.extracted_content is aged out together with content/summary by RetentionService's scheduled cleanup under myfeeder.retention.full-content-days, so Reader View re-extracts from the live page once retention clears the cache.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/RetentionService.java",
+          "version": "repo-file-v1:sha256:96a7c9c5b8ff44c903c11c27c3cb4f0e0567d82045bc4acfead34ca1924336fa"
+        }
+      ]
+    },
+    {
+      "id": "claim_46f8fbde24e446298cd6fd0a740111e3",
+      "statement": "The frontend ReadingPane auto-enables Reader View when an article has no content/summary and otherwise offers a manual toggle; extracted HTML is sanitized with DOMPurify using FORBID_TAGS/FORBID_ATTR: ['style'] before rendering so publisher inline styling is stripped in favor of the app theme.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.tsx",
+          "version": "repo-file-v1:sha256:1f8eaf1747b6f0aeba5005e2b67d1ef8acbd7b1647f41328812d93bbe83097f5"
+        }
+      ]
+    },
+    {
+      "id": "claim_733b06647358434da90cef20de27fdc5",
+      "statement": "Engagement capture (STAR, BOARD, RAINDROP) is recorded via ArticleEngagementStore.recordQuietly, a single INSERT ... ON CONFLICT DO NOTHING statement executed outside any transaction boundary of the triggering save, with failures swallowed and logged at WARN (kind, article id, exception class only) so a failed engagement insert never aborts the user's star/board/Raindrop action.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L52-L52",
+          "version": "repo-lines-v1:sha256:77cb616e7618ffa48c3039a51046e89606433776337123a728c5e5cdf7210a23:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzdjYjYxNmU3NjE4ZmZhNDhjMzAzOWE1MTA0NmU4OTYwNjQzMzc3NjMzNzEyM2E3MjhjNWU1Y2RmNzIxMGEyMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzdjYjYxNmU3NjE4ZmZhNDhjMzAzOWE1MTA0NmU4OTYwNjQzMzc3NjMzNzEyM2E3MjhjNWU1Y2RmNzIxMGEyMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjFhODdjNDk0Nzk1ZmUyNTc0ODY2MjFjNjYwODE5YjE5OTg2MWY3ZTJiNGU4NjNjMjgwYmQ0MzUwNTBhZjQyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmZhNjE4Yzc0ZTUzOGZmYjc2ODdkMjQ4ZDA2N2I3ZmYzYTk1MzYwZDM3ZDdlOTZmMjFhMTllYzY2ZGQ2OWNhMyJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java#L12-L45",
+          "version": "repo-lines-v1:sha256:ecabf3fd87e44e201d4c94a106f518f8a5c48a992f6cc4a6fca33ff688be0e05:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxNDE5ZWI2Nzg5ZGFkMjAwMTBlYWE5YTQwMzBlY2JiYTRhYjA1NDk3OTY5ZTBmMTIxMTVmN2JiZWRjYzRjOGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjMGMwYjgxNTU0YWZiNjAxZDU5NDI1MDY3MWRjMGFmNDhjOThmNjZiMzBjNWJlZmNlYzliYmM4Mzk3N2MyNzcifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L93-L93",
+          "version": "repo-lines-v1:sha256:a393c87dc548db4b71f60150af71d1ec1d3a7ca1000710aa6c7db4bd779d0e06:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTM5M2M4N2RjNTQ4ZGI0YjcxZjYwMTUwYWY3MWQxZWMxZDNhN2NhMTAwMDcxMGFhNmM3ZGI0YmQ3NzlkMGUwNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTM5M2M4N2RjNTQ4ZGI0YjcxZjYwMTUwYWY3MWQxZWMxZDNhN2NhMTAwMDcxMGFhNmM3ZGI0YmQ3NzlkMGUwNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGZmM2RlOGU1NGI3NjQ3M2I5OGJmNWQzODA0YTMzYjQ2YjIzZmM2ZDRkMTMzMTU0NDQ3MmYwNmJiZDU3M2I0OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWQzNmQ2ZDRiNGU2NzgzMGQyZTk2ZTliNTk2ODA2MDcxMmMzOTRhNGRkOTZmNTI1NmUwNzBhMzQ3NWRhOWZiZSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/BoardService.java#L78-L78",
+          "version": "repo-lines-v1:sha256:cf900bc46c0115e1ab6befb7e0518757c7a4418ac7446bfc08378e4dd380f549:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2Y5MDBiYzQ2YzAxMTVlMWFiNmJlZmI3ZTA1MTg3NTdjN2E0NDE4YWM3NDQ2YmZjMDgzNzhlNGRkMzgwZjU0OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2Y5MDBiYzQ2YzAxMTVlMWFiNmJlZmI3ZTA1MTg3NTdjN2E0NDE4YWM3NDQ2YmZjMDgzNzhlNGRkMzgwZjU0OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGJiM2Q1MDcxYzBjODEwOTE1MzkyNDFlZTM4OGVkMGIyZTZhM2M5ODFmNmZhNGM5MTEzNTEzZWYxNWNjZDk0ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDY3NzI2N2M1ZjZmNTJiZThlZjQ2ODA2NzAwNDEwNGI0OTNmZmYzYzRkNjQ3NGNjN2RhMzRlZjFiYTJmYTZmMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_bd2a9a369b5842dfa8ee3bedd00db62e",
+      "statement": "Engagement rows are sticky: unstarring, removing an article from a board, or deleting a board do not remove them; only DELETE /api/articles/{id}/engagement (Forget, which removes all kinds for the article at once) or a cascading article/feed delete (article_engagement.article_id REFERENCES article(id) ON DELETE CASCADE) removes engagement rows.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L113-L118",
+          "version": "repo-lines-v1:sha256:12c3e29107dbedb473de4bec8aa84553cb0ffe67eb7f22939d59190e061f0d34:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzZhNTUyODg0NTJiNGU5NzZjYzc4MTViYWM2YWQ5MTU0NjEyODNjN2JiOGJkMzkxMWUwZjI4MzAxZGUxMWM5YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmJjYTc1NTU2OWMzN2VhNDcxOGFlM2VjMDc3MzY2MDNhODMwYTExOTRkNDE4ZWVlN2U4ZWU0MWVlMTNhMjg4ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTkxYmMxNDRlMTBlM2Q0NTNiZTRlYmRjOTFkODdmZmUzYWU3NjI5Mzg0MmQ5ZGM2NjMyYmQ4MTJkYTQ4ZjQ0MyJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java#L58-L63",
+          "version": "repo-lines-v1:sha256:7e164394af15e82fbc85cf267a1e0fa017f7affb8f1afeee23225822ae849207:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTFiOWVmNTg0Y2Q4YmQ3M2EyODQ3YzhiNzFkMjJmYjhiNjIzMTMzZDdlNGM3ZmMyNmVmZDc4N2IxNTA1NTA4NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmJlZTNiNWIyNDYxZmZiMGRjNGY3NmRiMDFhYzg5ODc2N2VkZGUyNmE4ZjBlYjUwZjk4NjQ3ZGJlYTNhZDI4NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V7__engagement.sql#L1-L9",
+          "version": "repo-lines-v1:sha256:d22810a3cfdde2c943c32d913ab93e6ae2cd27f2fe6d53f6810941e5030f2ade:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTAwZjE3MjliZWNjMWExZjM4ODRkMTA4OTJkNWRlNTA1NTRkY2NmOTZiOTcxNjY5YzJmZjhlODEyMTc1ZTVkMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDk5NjdlYzFlZDM4MzZmOGViMTdhZmYxNzJiNWJmZWY3ZGU2MDQ4NWE0MzljNmNhMTFjNTkxZTE3NTU3MzlhZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWMxNzQ0MGI5NDg4MGU0N2Y1MDU4ZjU5MzQyMTQzYjRhNmI0NGE0YTdlOThiNGViODNkNTcxNWNhZmM2N2Y4MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5a7729343ae5492a865fe87cc6978dff",
+      "statement": "GET /api/articles/{id} includes the article's engagement kinds ([] when none) via ArticleService.findByIdWithBreakdown, while list endpoints never include the engagement field.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L32-L52",
+          "version": "repo-lines-v1:sha256:58e0258c069a9b37480d04e977a84fe4cfb0f84cdd89089349ffb934017ed373:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZkNjc3OTg1YjVjMjE2YWJmZThjNDBhODJhYzNkOGMyNWJmMzIxZTZmOTBiMjQ2ZGNiNjhhZmE2MWVmMDUxYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3MmJmMjUyOGY3ZTFlYTJhMDdjZThiNmVkZGIyNTM1MzUwMDA2ZTZkNTI0NzhjMTU2OTVhM2U5YWJhYzIxZTAifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-25T13:07:33.493Z"
+  }
+}

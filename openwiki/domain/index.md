@@ -1,9 +1,4 @@
----
-type: Documentation Index
-title: "Domain"
-description: "Files and subdirectories in Domain."
----
-
 # Files
 
-- [myfeeder Domain Concepts (Feed, Article, Folder, Board, Integration)](concepts.md) - Explains the core data model — Feed, Article, Folder, Board/BoardArticle, IntegrationConfig — their schema, relationships, Flyway migration history, and the business rules around article sort order, cursor pagination, and read/starred state that every API consumer must respect.
+- [myfeeder Core Domain Concepts (Feed, Article, Folder, Board, Integration)](concepts.md) - Explains the core content data model — Feed, Article, Folder, Board/BoardArticle, IntegrationConfig — their schema, relationships, Flyway migration history (V1-V5), Reader View extraction, and the business rules around article sort order, cursor pagination, engagement capture, and read/starred state that every API consumer must respect.
+- [Interest Scoring Domain Model (Profile, Topics, Scores, Feedback, Engagement, Suggestions)](interest-scoring.md) - Documents the interest-ranking schema introduced in V6/V7 — interest_profile, interest_topic, article_score, article_topic_score, article_feedback, article_feedback_topic, article_engagement, topic_suggestion_dismissal — their ownership, versioning, eligibility and cold-start predicates, and the learned-weight derivation.

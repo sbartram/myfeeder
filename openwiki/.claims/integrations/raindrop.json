@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c23c2b2553185b254c0cc528be7a9055dc7c1a10acf8d6b0d34b9ba7addd249e",
+  "claims": [
+    {
+      "id": "claim_d347e618477d42cc9c9585decd48213d",
+      "statement": "RaindropService.saveToRaindrop validates integration configuration (not-configured, disabled, no collection selected) and throws IllegalStateException or IllegalArgumentException before ever invoking RaindropApiClient, so business-rule validation runs outside the circuit breaker.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L32-L54",
+          "version": "repo-lines-v1:sha256:a7636112756c3bee18f5619caca65252276cb4029dfec961411ada1de38320fd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxNDQ5ZTM1ODMyZGRhYzYyZDcyNGQxYTFiNGI1ZDdlM2NmMzk3MWE5NDMzY2FiZDFkN2U0YWRmODA3NWFjNzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3NmE0Nzk0ZTBiNjczYzM3MmIyMDg4YWM0ZTBmNGIyMWZjZGQ2M2FiZDBiZGE1NWFmOTRmN2FlYmQ1NGEyNmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0ZGU0ZWZjMjJiZjlhZmU3ZWJmMzhjZDI0NTM2YmU5NmQ4NGQxNDU2YzUyZGY0MzhjYjk4ZTk4MDNjZmEzMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3ce9d2817a1440e39c92a2941aba7214",
+      "statement": "RaindropApiClientImpl is a separate Spring bean from RaindropService carrying @CircuitBreaker(name = \"raindrop\") and @Retry(name = \"raindrop\") on listCollections and createBookmark, avoiding the AOP self-invocation trap where annotations on a method called from within the same bean would bypass the proxy.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L14-L66",
+          "version": "repo-lines-v1:sha256:b4b89cd8b39a3ea9a71b1f1427758da7de757955260ae0c25d2ebc2a641b40e2:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZTM3NTJkMTU4OGE0ZGNkZWI2OWQ2MjA1ODg5ODlmMmM0NDQ2MmFlOTZkZjRjODc4Zjc4YzVhYmFhYjg1N2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwNzEzODA0MTM3MTUwNzYyNTliYjZiYWFhODhiNjFjZWEzOTYyYzQ5NzYwMzMwYWVjNTFmMWNjOTQzZTA0MWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0ZDY1YjJkMWM2MTcxYjc0MjM5NGE4ZmRjNTY3YWJkMDYxMTc5ZWRjZDcyMDU2ZmRjNjQ3MDA2NjQwMTEyODAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_70ba431de3ce4cdb93619f0ee89786fe",
+      "statement": "RaindropApiClientImpl's fallback methods (listCollectionsFallback, createBookmarkFallback) explicitly check for RaindropNotConfiguredException and rethrow it unchanged so it reaches GlobalExceptionHandler as a 503; any other throwable is wrapped as IllegalStateException(\"Raindrop.io is currently unavailable\") mapped to 409.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L68-L84",
+          "version": "repo-lines-v1:sha256:bc8a16de91f5fae8e68ed204f9fec99585fe0522116fb80cb311b80c998cd603:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNDhhNDIxNzRhMzFhYzEzMDBkNWI0OTFkMzRjYTgxZWQ5MWU0NjNiNGUwYzA2ZWQ1NTdjY2Q5ZDVjM2Q0YjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0N2MxNzdhZDMyYmQ0OGRiMzJjYmI4ZmM1YTZiMjQ3Yjg3MjRhYmY1YWM5YTNiZDVjMTY4YjQzMjdlMzRlYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5ODA1MTc3NmY2ZGRhZDA0NmQzZjMzNGJmZjY2MDRmOGRmYTdjMGZjNjJjNmNjNjliOGJlODQzMDNkODc3NDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2384afb830e6437caf32565f1b987757",
+      "statement": "RaindropApiClientImpl.requireConfigured throws RaindropNotConfiguredException whenever the configured apiToken is null or blank, and this exception type must be listed under ignore-exceptions for both the raindrop circuit breaker and retry instances so an unconfigured token never opens the breaker or burns retry attempts.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L26-L30",
+          "version": "repo-lines-v1:sha256:3333f47a297a3e75c157d3d5da96fdc3c2ae6ea7e7e1bd552cc1e40fcb8aee0b:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzIyM2JjMTllYWMxYzhmMDgwNjAzNmNhODhlNjgwNGNjNDQxMGNiYzk3YjljNmQ2MjRkOWEwMDFjMmI1ZWRjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTFmMGM2MTEyZDQ3YzUyMTEzMTZhNzg5MDE4MmQ5OTU4NzVjNmZmZDdjZGMxYzM2ZTAwOTZkODA0YmE0OGNmOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWE4ZTU0OGY2MmI1MDE4MDU3M2VlM2UyNDI4M2MwY2NlOGE2MWQ2MTNmNWMxZTdhN2EzMWM3MzdmM2I5YTNjNCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropNotConfiguredException.java",
+          "version": "repo-file-v1:sha256:fba88de39f50e5121376b44ea7155576391d049db734fb96d49ff02e3b18be99"
+        }
+      ]
+    },
+    {
+      "id": "claim_7ca1cd76fb00420fa792beb6a053fe28",
+      "statement": "The Raindrop API token is bound from myfeeder.raindrop.api-token / MYFEEDER_RAINDROP_API_TOKEN as a config property, not stored in the database; it is read once into RaindropApiClientImpl's constructor rather than looked up per request.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L16-L24",
+          "version": "repo-lines-v1:sha256:f8f401a37d3e96ed86fc62315cce189ad288844e8725c583f1479d930d3d56a5:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGY1OTcxOWEzYTRkY2IzZDE3YWZhNmExYzcwOWY1ZjFjM2UyOTYyOTk1ZTgzMjE4ZjJiNTg2NDQxNzU3NmM1MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjA4MWRlZTMzMzYyZjA3ZjFjMDk1ZTNjODQwM2ZkNTQxYjc5ZTY0NDYzMTQwOWUzOGE2NTg5MDY2ZjdjNDhjYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWM5OTdjNTNlMWUyZTBmMTlhYmJiYThjNTAyNmVhM2Q5YjZmZDBjNmE4OGM2ZjcwNDYxNDRjZTZmZjc1OGJkYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8bc55c3e86374da7a18e96a260d5d742",
+      "statement": "After RaindropApiClient.createBookmark returns successfully, RaindropService.saveToRaindrop calls ArticleEngagementStore.recordQuietly(article.getId(), EngagementKind.RAINDROP) to record a RAINDROP engagement, placed after the breaker-wrapped call so a blocked or failed save (breaker open, retries exhausted, not-configured) never records an engagement.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L27-L54",
+          "version": "repo-lines-v1:sha256:88bf53c14fa897d9404d022b4841ae61eb3ce2e488fde17c5139a72bad9a0559:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2MzlmM2VlMDc1NTc3MDRkZGU4YWNlYjY3MWJjOGZjNmE2ZTkzNjg4YjBmMzI1MzI2MTQ1ODM4MGVlYmMxODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0ZGU0ZWZjMjJiZjlhZmU3ZWJmMzhjZDI0NTM2YmU5NmQ4NGQxNDU2YzUyZGY0MzhjYjk4ZTk4MDNjZmEzMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c007629396cd455f8c70ad3f66fb827c",
+      "statement": "ArticleEngagementStore opens no transaction: record/recordQuietly issue a single autocommitting INSERT ... ON CONFLICT DO NOTHING statement, and recordQuietly catches DataAccessException and logs a WARN instead of propagating, so a failed RAINDROP engagement insert can never abort or roll back the user's Raindrop.io save.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java#L12-L45",
+          "version": "repo-lines-v1:sha256:ecabf3fd87e44e201d4c94a106f518f8a5c48a992f6cc4a6fca33ff688be0e05:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxNDE5ZWI2Nzg5ZGFkMjAwMTBlYWE5YTQwMzBlY2JiYTRhYjA1NDk3OTY5ZTBmMTIxMTVmN2JiZWRjYzRjOGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjMGMwYjgxNTU0YWZiNjAxZDU5NDI1MDY3MWRjMGFmNDhjOThmNjZiMzBjNWJlZmNlYzliYmM4Mzk3N2MyNzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_52d4adfd74bb4d56b85c91a02cb228b8",
+      "statement": "The RaindropService/RaindropApiClientImpl split (business validation outside the breaker, @CircuitBreaker/@Retry on a separate client bean) is the general convention for external integrations in myfeeder and is reused by the newer Jev/TypeSafe integration (JevApiClientImpl carries @CircuitBreaker(name = \"jev\") + @Retry(name = \"jev\")) with its own breaker name and tuning.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L159-L160",
+          "version": "repo-lines-v1:sha256:c5270e6a1bbd06dbb39e1c82b50976f86f8b37783077376bbdf4aee3f000c834:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWQwZjBiYjU1ZjQ4M2JjYmVjOTczNzQwZjJhYzQ5YjVlMDkxYTlkZDZiYTA3ZmQxNDExODk4M2M1NTQ2ZTI3YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NlMWExOTZjMmQ3N2FhNTQ4MmNkOTI4OGI3NTUyMjMzNTQxOWFkZDYyMzEyNDFhZjZhNTkzZDY1NTI2MjNmYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTM0ODJiMjUxZjNhMzQ1NTY1ZDNkODMwYmJlMTBkM2VhZjEzYmI1YTA3NzMzNDJkN2QxZWQzZGVkNWM5NTE0NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDVjY2ZhNzhiODA3Y2UwNWJlZjc5MzBhZGZjNjZjYmYwZmZhNzZlZDVjZDNjZmZkOTBmZjMzZTFhMjJiNDUyNiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L32-L54",
+          "version": "repo-lines-v1:sha256:f7da003b1b5fe7757eb4b25ee566fd41e2e988dc5a9b4bc451bc062b504f1908:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzMDM0Y2UzZTdjMGE5NTExYTlkOTBlODdhYmZkMTBmOGJhZDU4Zjc1NTVkNDA0ZGI3MjIzYWMzYzg0YzZjYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkYzJiMzExYWJlODc1NzJlOGE3Y2MwZDk5NmE2NTg0NDA3NmU1MjMyZDIxYjdhODU0NzVmOWI0MDU1Yjc0OTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0NGY5ZTM2ZWIwMWIzZDA0MWViNDYwODUyYzZiYWNjMTBiMTNkNWQxZjUwN2IxNjk4YjQ0ODljNWQ5OThkMWMifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-25T13:07:33.493Z"
+  }
+}

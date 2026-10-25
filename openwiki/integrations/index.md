@@ -1,9 +1,4 @@
----
-type: Documentation Index
-title: "Integrations"
-description: "Files and subdirectories in Integrations."
----
-
 # Files
 
-- [Raindrop.io Integration](raindrop.md) - Documents how myfeeder exports saved articles to Raindrop.io — the RaindropService/RaindropApiClient split, the Resilience4j circuit breaker and retry configuration, the RaindropNotConfiguredException fallback-rethrow pattern, and how the API token is configured without being stored in the database.
+- [Jev (TypeSafe) Scoring Integration](jev-typesafe.md) - Documents the outbound integration to the Jev/TypeSafe scoring API that powers interest ranking — the app-owned TypeSafeClient bean, the dedicated Reactor Netty transport, the single-retry-layer design (SDK retries disabled, Resilience4j owns retry+breaker), the scoring executor in front of the client, event logging, and the not-configured/blank-key degrade path.
+- [Raindrop.io Integration](raindrop.md) - Documents how myfeeder exports saved articles to Raindrop.io — the RaindropService/RaindropApiClient split, the Resilience4j circuit breaker and retry configuration, the RaindropNotConfiguredException fallback-rethrow pattern, token configuration, and the post-save RAINDROP engagement capture that feeds learned interest weights.

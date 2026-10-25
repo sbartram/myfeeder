@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c43725a13c551a4011cbce6f8d7bb0859269821a13cc8cfa58c648a10f69cc79",
+  "claims": [
+    {
+      "id": "claim_ccd65e4849284f7caff12c83207eeac3",
+      "statement": "deploy.sh requires MYFEEDER_PG_PASSWORD and MYFEEDER_ANTHROPIC_API_KEY (the script has no default for them and runs under set -euo pipefail), while MYFEEDER_RAINDROP_API_TOKEN and MYFEEDER_TYPESAFE_API_KEY default to empty with a printed warning, leaving Raindrop or interest scoring disabled in that deployment but the app still starting.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh",
+          "version": "repo-file-v1:sha256:9bbe60767396efc241f35198f9d57261d2bb5e0ec513ea8f8aa13e3f21bc148e"
+        }
+      ]
+    },
+    {
+      "id": "claim_f0317bc7cdd740df9e75fa48daa17ac0",
+      "statement": "Every secret value deploy.sh passes to helm upgrade goes through --set, so none of MYFEEDER_PG_PASSWORD, MYFEEDER_ANTHROPIC_API_KEY, MYFEEDER_RAINDROP_API_TOKEN, or MYFEEDER_TYPESAFE_API_KEY may contain a ',' or '\\\\', since either character breaks Helm's --set value parsing.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh#L24-L31",
+          "version": "repo-lines-v1:sha256:58900652d0fc7f0b312fe6dd574f20ca3cf66e97fb6ad629e0cb97886a8b1042:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWMwNjVhMTcwNWUzNzNjM2UzNGEyMzUzOWFiMThiOWY1ZGRiMzk2MjAyZWM0Y2QzZGFhNzIzOWMzNjA2ZWYzYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjM0M2VkNDk4MTg5OTM2ZTYwMmMyNmMwNzQ3OWViNzBhOGQ0YWJkMTVhZWM1N2YzN2RlNmVlYWU3ZGIyZThjNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWY3YzU3OTQ4YTE0ZmNiOTIzNjljN2IzOTQwN2YzZTMyMWZjNzIzMDQzYzk4Zjc5OWI1NDI5ZTA2ZGI4ZjE5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDNjZDA1N2JiMjIzYWYyZjMyNDE2ZmFjMzBhYWQ0ZGFlMDYyZWY2MjE3MmRhN2Q2ZThkYWNkN2RjNWY4ZWNmYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5e1eb8b0999a4219a54b4e167b8cafb7",
+      "statement": "deploy.sh's VERSION defaults to the output of `./gradlew currentVersion -q`, so a chart-only redeploy against an already-released tag (no new image build) must pass the version explicitly as the first argument, since axion-release's no-arg default resolves to the next snapshot version which matches no pushed image.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh#L4-L4",
+          "version": "repo-lines-v1:sha256:3cae3cb7c19f24881edb3610699bf9518a0e8d8141ca6eb343576d9fb8c10b2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NhZTNjYjdjMTlmMjQ4ODFlZGIzNjEwNjk5YmY5NTE4YTBlOGQ4MTQxY2E2ZWIzNDM1NzZkOWZiOGMxMGIyYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NhZTNjYjdjMTlmMjQ4ODFlZGIzNjEwNjk5YmY5NTE4YTBlOGQ4MTQxY2E2ZWIzNDM1NzZkOWZiOGMxMGIyYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGY4MTdlNWU1ZmQ3NGMxYWYxZDUwMGM2MWFmOGI0MzVlMTllNTYyM2UwN2FjOWMxMGNmNmFhODI4ODNiYTk1MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTIyNmQwZGVlYmViZmZjYjZlZTBjZThiN2UyMjAxODliYTQ3OWYyZDllYWU3ZDRjZWI4NzVhZGY5NGExMWM5OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d3b2aba437ca4caca99db7acd783ff83",
+      "statement": "The interest-scoring sweep batch size and delay can be throttled either durably via myfeeder.interest.sweep-batch-size and myfeeder.interest.sweep-delay in application.yaml (requiring a release) or immediately without a release via `kubectl -n myfeeder set env deploy/myfeeder MYFEEDER_INTEREST_SWEEPBATCHSIZE=20`, relying on Spring Boot relaxed env-var binding and restarting the pod.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L242-L242",
+          "version": "repo-lines-v1:sha256:2792cc3857e708588bbbe94a695c3f120984037c59b9c4b418be1c7966aa998a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjYyYWM5YjQxOWNhZjRlOWVjMmY1Mzg2NWI2YWJlMmUxMzkzOWRmOWJkOTFkYWE5NmM5MjU2MDllNmZhNTcxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODNhOTRmZjYwYjRlYmZlNmRjN2M3ODJlMjIxNGRkODJiMWY2MzU4MzM0NzdhOWU5MjNlYjY5MDA4NjA3ZTdmNyJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L38-L39",
+          "version": "repo-lines-v1:sha256:a81663580939af085cb6a15a3125ab5a6b094859bfbad3add7bb8f982c532e7d:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzJkMmIwY2ZiOGI3YjNjZDliMGIzYjI2ZTRmMmE0NjM5ZTdhMmEyYzA4ZmZiODk1MDhkOWFjODE4ODUyMmI5MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjllYmE0MmMyYzJmNWM1YjNiMDFlMWI4MjczYzM2NDIzNmRjZjJjZjBjYzk1ZmU5OGEyNzI2NTA4NTg5YWQ2OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDQxZjQxZWMzYWI1MGNmZmU2N2I0YmZlNzYxZDBlYzdhMzcwMTM4ZmMyZmJlMzBkYTU2OWVjYTcwNjU2ODA5MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzhmNmM1NjA3M2EzZjc0NmY4NjRkOGJiMjYxMTNlZmMzOWU1NjUzODc5MDE0MTUyM2ZjZDlmNWY0MzVkYzY4MCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_60c18071c2fd41a3ae63f668e58fc704",
+      "statement": "After committing a throttled sweep-batch-size to application.yaml, the out-of-band MYFEEDER_INTEREST_SWEEPBATCHSIZE env var must be explicitly removed with `kubectl -n myfeeder set env deploy/myfeeder MYFEEDER_INTEREST_SWEEPBATCHSIZE-`, because Helm upgrade's three-way merge does not remove an env var that was never declared in the chart's own manifests, so it would otherwise keep silently overriding the committed value.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L242-L242",
+          "version": "repo-lines-v1:sha256:2792cc3857e708588bbbe94a695c3f120984037c59b9c4b418be1c7966aa998a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc5MmNjMzg1N2U3MDg1ODhiYmJlOTRhNjk1YzNmMTIwOTg0MDM3YzU5YjljNGI0MThiZTFjNzk2NmFhOTk4YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjYyYWM5YjQxOWNhZjRlOWVjMmY1Mzg2NWI2YWJlMmUxMzkzOWRmOWJkOTFkYWE5NmM5MjU2MDllNmZhNTcxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODNhOTRmZjYwYjRlYmZlNmRjN2M3ODJlMjIxNGRkODJiMWY2MzU4MzM0NzdhOWU5MjNlYjY5MDA4NjA3ZTdmNyJ9"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-deployment.yaml#L34-L61",
+          "version": "repo-lines-v1:sha256:f13b04338d2d0561864372c42458bb6a8cbb2f006308495403e579a560c312bc:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1MmE1ODdlNGFjNTdhYjE2NmVlMTJjYTFiNTA4ZjQ2NzY0OWQ1Y2M0ZGQ2YWYzNWI4MzhkOTNhNTJmYmEzZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllM2ZlYjViZjAzZmQ0MDNhZjU4ODhkZGQ3ZjAyZWM5MjY4MDU3ZTZiZTVlYmNjMWE1MWRlY2JjYmUwZGJjZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmYTlhZDdjNGY4NmVlYjdmMTgxYTM0YTRmNDMxZDM4YTE0OTIyNDM2MjNkM2E4YTJkNDFhYTIzMjAxMmUwY2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFmMGZlZWRlZWZlYmM3NDE1OTExZWQ2N2YzOWNhMjNiYmZkNjliMjcyYTM0MTZjYWZjMDkxNmRmNjFkYzQ3MzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_df4a47c4ed374e7b82d7fe38e1757d67",
+      "statement": "Interest scoring can be stopped entirely in production by redeploying with MYFEEDER_TYPESAFE_API_KEY unset: deploy.sh defaults it to empty, Helm writes an empty myfeeder-typesafe-api-key secret value, and the app-owned TypeSafeClient bean in TypeSafeConfig backs off so the sweep skips every run while the rest of the app keeps running.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh#L18-L21",
+          "version": "repo-lines-v1:sha256:5cce21b618a41da73eb1257cecb75fd459974c6f13b95c42769c792ec99550e0:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzdlN2Y1OTkzMWVjYWM1NDY2NTM4YzE0ODIxODc0MmI2ZWQzMzE3Njc0YmY5OWQ0ZWUxNzZlZTVkNzRiMWE1MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTY4ZDA5N2I2ZDkzNGI2ZDgwM2VmNWExODZlN2RjNTBmMGNiYzk5ZDVkNjJjMzc1NDM2MDE4NmM2OTVjODU4YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODVjMjVlYzRjYmUyZjgyZDE0YTdkNDA4NGJhZGYzYTM5OTM0MzJmYTI4YTI0YjAyZDg4MzgxMWNhNDVkMjE0NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmM4ZDRlNWE3ZjRmNDU2OWNjMzMzOGYzMmVlMWUxZTRhOWEyMGQ2NjAzOWQ4NjQwNjU2M2M0ZmMyYTY4ZDQ5NCJ9"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-deployment.yaml#L55-L59",
+          "version": "repo-lines-v1:sha256:76ebbe12a7f866f4047c23a889262a3037a786aa355241b5862d56f25261fa16:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTE4MDYxMmFlNjlhZTk1YzNmNWYzNGY0YWVlMWRhZDk5ODU0NDVlODg5MTQ2NTFjMTg0NmY0MzQ2MTA3ZmY2OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDI2ZWRhNzk3YjhjNjFlZjIzYTJhYjYwMWNkNmY0NzY2OTM4Mjg1Y2YzODZmN2VkZjlhNDE5MTk0YTVjODI5MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDBjMjExNzdlYzgyM2FiYzc3YjAzY2ExZDZkMDFlNGY0NGQxNmQwYzljNzZiZjEyMjRmZGVlNmMwNGU4YmQ1OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjAzMzZkMTZjMzYxN2UyYWMxNjBlYmFiM2FkODYzY2Y4ZDc2YzgzNTgyMDVkZWIxNGJkODFkZjdjMzlkOWMxZSJ9"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-secret.yaml#L13-L13",
+          "version": "repo-lines-v1:sha256:5a50f361020c468eb19a1320b320c5d618b6b6f27f61c4d53d2c67726374b348:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWE1MGYzNjEwMjBjNDY4ZWIxOWExMzIwYjMyMGM1ZDYxOGI2YjZmMjdmNjFjNGQ1M2QyYzY3NzI2Mzc0YjM0OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWE1MGYzNjEwMjBjNDY4ZWIxOWExMzIwYjMyMGM1ZDYxOGI2YjZmMjdmNjFjNGQ1M2QyYzY3NzI2Mzc0YjM0OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzMwMTAwYWVjODJkNzdlMzQ4MmIzNTk4ZTU2Zjg5OTA0OTEyNGI2ZjQ5NWZiOWRhMDc2NTRhMzNhZWQ5NWQyNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTEzZjFiOWZmY2RhNzM4MTE4MzdjNDdhYjJhYTllODFiNjU1MWU3YzA5NGVhNjcxNjJmZDE2ODgwZWNhODA5NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b1e3bfaf896f414cb6bc36210e094466",
+      "statement": "config/JevEventLogging logs structured, PII-free INFO/WARN lines for every Jev retry attempt and circuit-breaker state transition, all prefixed 'Jev ', so production monitoring greps them with `kubectl -n myfeeder logs deploy/myfeeder | grep 'Jev '`.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L238-L238",
+          "version": "repo-lines-v1:sha256:34e91f9284ca1295db57091bffb31f0f39733aedb7ac3fce5e2ab3b73ca42ff5:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzRlOTFmOTI4NGNhMTI5NWRiNTcwOTFiZmZiMzFmMGYzOTczM2FlZGI3YWMzZmNlNWUyYWIzYjczY2E0MmZmNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzRlOTFmOTI4NGNhMTI5NWRiNTcwOTFiZmZiMzFmMGYzOTczM2FlZGI3YWMzZmNlNWUyYWIzYjczY2E0MmZmNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGM4ZjgyMGU2Y2U1YjY5YTY4OWRkZWRjNzA3MGQ5YzRlOWMxMzRjMTA4NDFiYzNjZThhM2VjY2YwZjI4ZWFjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjYyYWM5YjQxOWNhZjRlOWVjMmY1Mzg2NWI2YWJlMmUxMzkzOWRmOWJkOTFkYWE5NmM5MjU2MDllNmZhNTcxNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6de30b3c575f46af89e1ba034c5ecae6",
+      "statement": "scripts/interest-calibration-replay.sh accepts one or more PP:HIGH:NEUTRAL[:OPEN:SAVE:CAP] candidates, validates all numeric arguments and rejects any engagement-constant combination that MyfeederProperties.Interest.Blend.Engagement.isValid would also reject at startup, printing 'invalid engagement constants' and exiting before opening any Postgres connection.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/interest-calibration-replay.sh#L36-L68",
+          "version": "repo-lines-v1:sha256:68dd1cdd34782a8751a077f810142a7408e135e5554a8c616faf300540a3bb10:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3YTg1ZDM4NmQxNTg0NzI0YTMyMmU4MzhhYmI2NDc0NDdjNjgyM2M2ZWY3ZGRhNGE3ZDA4MGQwY2RkNDI1ZWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxMTdmYTAwNmJhOTIwODUwMGIyOTMwY2U2OWNiZGU0MzZjNjQ3YWZhOTE3Y2I3Mzk2YTliYzkxMTFhNDZkZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjMWU0ZjkwNDVjZTdjZTQ0N2NiZTY3ZDQ3MWU4MzIzODQyZmZlODE0ODEzNzBhM2I1M2VkOGQ5MTc3YzE2YjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkM2VlMmJjNTFiYjliN2Q4ODQ4M2RmMzI4MWIwZjA5ZWU2ZWFiNDQ4OWY0MTlkMGU0NDA4ZGE4YTNhNGJkYTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4ad4cfe4d74c4bc08ff4e67d7f067d2c",
+      "statement": "scripts/interest-calibration-replay.sh requires MYFEEDER_PG_PASSWORD and LAN access to pg.bartram.org, runs every psql session with default_transaction_read_only=on, and writes one tab-separated replay file per candidate to a temp path that is renamed only after psql succeeds, so a failed run leaves no stale output file.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/interest-calibration-replay.sh#L70-L106",
+          "version": "repo-lines-v1:sha256:df4b111d2f52de1c0a358c90e699f85d3a3fab6a2acef271892fe19ff5133c91:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlMDJiMGVlY2FmYjhhOTI0YzdmNzIxYjFhMDkyMWQwZDg1YjZlZDE1MGQ4MDA5ZTBiODFkMGZlY2E5OTc1YWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMzZWI5ZGUyNmNlOWI3N2JmNTIzYTUwZWQ1MDdjMmJmOWIxNGVkODBhYzBiNmJmZGExNWRmMDczMmI5NzUwYzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhMDkzYjgxODk5MjRjOTAwMDZlZGQ1YmNkYzY5YTAwNzU4ZDQ4YzNlMTU2NGY4NmVlZGQ0OTFiMWVmNjJhZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxMTdmYTAwNmJhOTIwODUwMGIyOTMwY2U2OWNiZGU0MzZjNjQ3YWZhOTE3Y2I3Mzk2YTliYzkxMTFhNDZkZDIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_79677955332b4fa08b94f8d0193f4790",
+      "statement": "Approved interest-scoring calibration values are committed only to main application.yaml, and to the application-dev.yaml test overlay only when they differ from the test yaml's fixed constants (profile-points 100, tiers high 70/neutral 40, engagement open/save/cap 0.25/0.5/8); as of the last calibration only the neutral tier threshold (22 in main vs 40 in the test yaml) differs, so application-dev.yaml carries only that override and no engagement keys. Calibrated values are never applied via Helm --set or a Kubernetes env var override.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L43-L55",
+          "version": "repo-lines-v1:sha256:5c2a5b7164856a455e47c1d870d9cce4c5db3cb8a3c16813229387a3147aed87:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzODM4ZDZjMTBmM2YyNjE5ZDNkYzFjOGM4OGYxZWJiYTY0NTQ2YzdhNjVkMGYzNmM4MjQ5ZTM1MWIwZDhhZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjN2EzMzg2ODZjMTJlNzZiZjc1NTE3M2RkZjIxNzZiNGYxMGViZGI5MWM5ZGU3ZTdhMzIxN2U2MWExM2QwNGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4ZjZjNTYwNzNhM2Y3NDZmODY0ZDhiYjI2MTEzZWZjMzllNTY1Mzg3OTAxNDE1MjNmY2Q5ZjVmNDM1ZGM2ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzMDdjNTM3N2ViNWRiNjc0OGE4MTFlNTA3MTdlMmEyMjE5MWQ2ZGZmNjY4MTJlMTAzYjVmODg4YmM0MzUwMDkifQ"
+        },
+        {
+          "resource": "repo://src/test/resources/application-dev.yaml#L19-L27",
+          "version": "repo-lines-v1:sha256:7597d0b41809c4be77218331438f04f3d62d9ae1d1aca02cfa3c5e9b21826f08:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzM3YTE5MDY2YTNlZWQ4OGVlNGE4MjNhNTY4NjJlODc3OTM1MDQzYTkwNmVkNGZlZjc4ZGZiNDRhMzU1OWEzYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWE1ZTRkZGY3NTY4YzA1MTQ4MjU0YWJhNzU0ZDAyNzU1YWEzNmVhZDAxMDIxZTQ4MzRjNjU1NDE2NWU3NTJjZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTc4MDk4NzUxMzRkMzEwNDYzMWRiMGUwMTdmYzgyZGRjNWEwMTg3ZDcyZGYxMmJkNDg0N2ZjOTZhZDc4ZWY4NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGM3YTMzODY4NmMxMmU3NmJmNzU1MTczZGRmMjE3NmI0ZjEwZWJkYjkxYzlkZTdlN2EzMjE3ZTYxYTEzZDA0YSJ9"
+        },
+        {
+          "resource": "repo://src/test/resources/application.yaml#L42-L54",
+          "version": "repo-lines-v1:sha256:b4f94364a75313f81c4324d994dbf4226d7008dad2a84a78b5a7b70fa70f1906:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzODM4ZDZjMTBmM2YyNjE5ZDNkYzFjOGM4OGYxZWJiYTY0NTQ2YzdhNjVkMGYzNmM4MjQ5ZTM1MWIwZDhhZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0ZTVjNzUxMDAzYWVkYTEzNWU2NDU4MzcyZjRlZTNhYzI4Y2MzN2ZlMTVkYzQxMGNiZmM3ZGFkYjkyZDk5M2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiMTQwZmRiN2M0NjBhMWZkOWU1ZmQxZmRjZGJjNzI3ODdhOTE3ZmZlYTYyNWIzZTI3ZTk3MTZkOTNmYjdkYTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzMDdjNTM3N2ViNWRiNjc0OGE4MTFlNTA3MTdlMmEyMjE5MWQ2ZGZmNjY4MTJlMTAzYjVmODg4YmM0MzUwMDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8bde55c1308849069bab0666cebf3243",
+      "statement": "Calibration outcomes are recorded in a phase calibration note under .planning/ before any yaml change is committed, e.g. .planning/milestones/v0.2.1-phases/07-rollout-calibration/07-CALIBRATION.md for tier thresholds and .planning/phases/12-calibration-release/12-CALIBRATION.md for engagement constants.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L42-L51",
+          "version": "repo-lines-v1:sha256:f0d80057ad596959ad642201d217d626a4b3c145879a773f5abcafdbe721c187:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmNjI1YTFmNjc5OGU3ZmIxZjgyYWExZmY1NzRkMDY0NjE1NGNhOTMwZjgxNTAwNmE4MWFlMDEyZjM4MGY4MTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlODBiOWMzZGZmZWYyNjFlOTAzYjQ4YTlkMmVkYmRiM2M4NWJiZTI0YWM2MmRkY2Q0ODA5MDhmZTFmZDMwZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4MmE3N2NlN2U4MWRkMGQxM2JkMjIzMWNlNjE2YWY2Y2YzYjE5NThjMDdkNTNhMWNjMmI2MjU4NmQ1MTk1MWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4YjJhNWIxMzkyNjI2YzI0ZmMxMzgyMGE2MjlkOTMxNjZlZWI0YWIzZjJlZDhjOTcyODdiZWE0YzFjYzI5YTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1efb2b7071cf4a77b6e5219c56c136e5",
+      "statement": "The OpenWiki regeneration GitHub Actions workflow runs on a weekly schedule (Sundays at 08:00 UTC) via `openwiki code --update --print`, opening a PR on branch openwiki/update; openwiki/INSTRUCTIONS.md is user-authored and excluded from this regeneration.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/openwiki-update.yml#L1-L28",
+          "version": "repo-lines-v1:sha256:7d1ce6928ec0ba438182aa6a10de774e416863693d583fd27293932aa5612446:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2MDI3ODdhZjZkY2MwODM0ZGUxMjFjYmIxY2I5NWY5NDU5YjcyMWVhYjAzNDlmMTA1MDFiOTk2YzFjNzdmZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MWM2MGQ4MzU5N2M3NmNjYTY5NmFhYzc0ZGZiN2FjNWRjMzM2MmZlNjUxZjhjYWI1YTMwNDk5NjMwMTdkNDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhODkyMWI2MWZiMTI1OTE2OTBjYTliZGQwMGNiMTRhMGU0ZGNjN2U5Njc5ZWM2OGFiMzg1ZjU5MmQwOTYxYmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1b021bdf770e43f4ad6cfcedbc363db7",
+      "statement": "A global git-lfs install can leave a pre-push hook in .git/hooks/ that intermittently fails `./gradlew release`'s git push (and any plain git push) with a Git LFS locking-API error even though the repo has no LFS content; the fix is `git config lfs.https://github.com/sbartram/myfeeder.git/info/lfs.locksverify false`, which must be re-applied after a fresh re-clone.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L268-L268",
+          "version": "repo-lines-v1:sha256:21a7fe34f94f0f80f9cc5c346c8be2bd2fd46e40797cb3353843857bbce343e1:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjFhN2ZlMzRmOTRmMGY4MGY5Y2M1YzM0NmM4YmUyYmQyZmQ0NmU0MDc5N2NiMzM1Mzg0Mzg1N2JiY2UzNDNlMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjFhN2ZlMzRmOTRmMGY4MGY5Y2M1YzM0NmM4YmUyYmQyZmQ0NmU0MDc5N2NiMzM1Mzg0Mzg1N2JiY2UzNDNlMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOThkNjUyNjE5NWZkNTY1MTFhMTdmZDU4MThlZmI3MjZlZTVmZTcxYjNkOWMxYjRjNjY5YzFlOTgzZTc3NWVlMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWExYjRkMjA0MTY1N2M3MTViMWE2NDJjMzBmOWNiM2RlMTk5MzZjY2MzZGE5ZDAyY2Y4MmVkMjgxMmI4ZGRkNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e89302efbdb74c8990641befcf11fc83",
+      "statement": "The Helm chart sets JDK_JAVA_OPTIONS=-XX:MaxDirectMemorySize=64M on the myfeeder Deployment container, which is how JVM memory tuning is applied under the current Dockerfile-based (non-buildpack) image.",
+      "evidence": [
+        {
+          "resource": "repo://helm/myfeeder/templates/app-deployment.yaml#L60-L61",
+          "version": "repo-lines-v1:sha256:cc33b2b1d8fd83600233f428893917e33539c3846cda28039a47bf4e1f3b4a2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjVkYWE4MzZlMmU5N2Q3ZDkyNDQxODgyMzY4Y2Y0MjQyOTM3ODExODA2Y2Q3MmQxY2ZkYmRjNDA2ZmUxMTM4YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWUzZmViNWJmMDNmZDQwM2FmNTg4OGRkZDdmMDJlYzkyNjgwNTdlNmJlNWViY2MxYTUxZGVjYmNiZTBkYmNmMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODdjMDU2YTFkMTIxYzgxZjkxMDI3OGE2YzI5YTZhMjJkMGFlM2MxOWU3MGMyZjViNmRmNDY3OTZkNmViY2Q4YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWYwZmVlZGVlZmViYzc0MTU5MTFlZDY3ZjM5Y2EyM2JiZmQ2OWIyNzJhMzQxNmNhZmMwOTE2ZGY2MWRjNDczMSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-25T13:07:33.493Z"
+  }
+}

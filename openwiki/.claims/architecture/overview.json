@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:0af6c8268404464ebf5f7cdfc45707ee7ae073fef299a85bd35d6992ecf42e7f",
+  "claims": [
+    {
+      "id": "claim_5e3e2b3a42754b2a97c93e57a88e062e",
+      "statement": "The org.bartram.myfeeder backend is a layered architecture (controller → service → repository) built on Spring Boot 4, with MyfeederApplication as the entry point annotated @EnableScheduling and @ConfigurationPropertiesScan.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/MyfeederApplication.java",
+          "version": "repo-file-v1:sha256:69fe3b236c5d4d83153b5aaf553a0913a7854163805f1232c90fe207f1a63c5d"
+        }
+      ]
+    },
+    {
+      "id": "claim_d731eefd44044f5887bd86e746647940",
+      "statement": "Persistence uses Spring Data JDBC (not JPA): entities use @Table/@Id from org.springframework.data annotations, there is no lazy loading, and custom queries require @Query since derived query methods are unsupported.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L156-L162",
+          "version": "repo-lines-v1:sha256:0942321f82ca90bff33f7f48b84a811e726e65dafe62c7f45fd8a19df99b6b37:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDZlYjY1MWE5MTcwZGQzN2ZlOTQzOWJiYzM4NmM3YmZlMWQwYmMzM2U5MTI3ZWYwMWIyM2NiM2VhNWU1NTAxNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWY0MmEyN2Y1NTVjZWFkYTQ4OWU3MTVjOTQzOGMzMzM2NTEzZTNjNzQ1MWUwYjFiNzU1NmRlMmUzZWUxZTMzNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWQ5M2Q4ZWI4ZGIwZjMwMGJlYTBlNDM3YTMwNDM4MDM0ZjY2NjI3NjZmNWVkYTAyY2RmZDc1NjIxYjc3NDM4ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDcyYzBhZjFkMjQ5Yjk5NmY3ZDkyN2FkZDZmOTQ3ZmI5ODI1YmIzNTFkYTFkMmY1MDQzZmRmMjdmZTcyZDY4OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ceb048bf883447a4912b795646d28d65",
+      "statement": "The service/ and integration/ packages contain, alongside the original feed pipeline (FeedService, ArticleService, FeedPollingService, FeedFetcher, FolderService, BoardService, RetentionService, OpmlService, OpmlImportService, ArticleExtractionService), a large interest-scoring/Jev subsystem (InterestService, InterestStatusService, InterestPreviewService, InterestRescoreService, ArticleScoringService, ScoringQueue, InterestScoringListener, ArticleFeedbackService, TopicSuggestionService, PriorityService, ScoreBreakdowns) plus a Jev/TypeSafe integration client (JevApiClient/JevApiClientImpl, JevJudgment, JevNotConfiguredException) beside the existing Raindrop integration.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L56-L57",
+          "version": "repo-lines-v1:sha256:0a518ceafadaf2f3f32c93586fb5983f53f7301250523389da06be9a01c5e495:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDdhOTNmYTgyZjcxYzY4MTUwY2Y0ODdlMDQ4YjFkZjM1MzhkYzE0OWE0OTE3YzI4ZGJiOGY1ZjlkODM4YTE3MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDhhMzEyNGE1OTk4MjUxYjFkNGE3MzQ1NDUwOTA4ZWE2NTFlYTRiYWRmZWM2MWVlNWY4YTZlNDUyY2FhZmNiOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGY4NTM5YzAwOWExY2Y1NzAyOTVhNjI5YWRhZWQ1Y2M1OThmYjYzNTZlOWVmMzIzNmViMjQ0YTQ0ODJhYjk5ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTJlNGE2NTkyOGFjNzFmZjc3OTJhYzJlNzk2MzBmMmQxN2ExMjBiZTI1YjRhZTU1ZjI4ZGJmYWRlYTBkZjUxOSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClient.java",
+          "version": "repo-file-v1:sha256:61da540697561bc47f556a67e314979a576a8ea0a6156a7c9c9708358a4ea6e1"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/InterestService.java",
+          "version": "repo-file-v1:sha256:edd40b75a1ff58bb2cf4a9c1d119e771e2ce48bc76767316d7540089c2a7fc77"
+        }
+      ]
+    },
+    {
+      "id": "claim_31cad8ccf10a497ca55945d80e7d1ef3",
+      "statement": "The repository/ package includes, besides the per-model Spring Data JDBC repositories, interest-scoring-specific stores: ArticleScoreStore, ArticleFeedbackStore, ArticleEngagementStore, InterestScoreQueries (blend/learned CTEs for priority sort, badge, breakdown), and TopicSuggestionStore, which is the sole reader and writer of topic_suggestion_dismissal.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L54-L54",
+          "version": "repo-lines-v1:sha256:435312d8cea604d1847d2a6aad89dc584b99738dca8a8c711dca138050115dba:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDM1MzEyZDhjZWE2MDRkMTg0N2QyYTZhYWQ4OWRjNTg0Yjk5NzM4ZGNhOGE4YzcxMWRjYTEzODA1MDExNWRiYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDM1MzEyZDhjZWE2MDRkMTg0N2QyYTZhYWQ4OWRjNTg0Yjk5NzM4ZGNhOGE4YzcxMWRjYTEzODA1MDExNWRiYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDk0NDRmZTY3ZTFiMGM2ODgyOTdiNTUzMTk5MDMyNzIyZGE3OTNhYjllMjUzMTRmOTJmNmQxNjJlOGQyN2Q4YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmM3YWU1OGZiNmVkNjYwNTVlNjJkNjNiNWM3YWE0YjYwZTdmMmJlNTBjOWE1YWZjODNkZWI2NGE0YWI3OWU1NSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/TopicSuggestionStore.java",
+          "version": "repo-file-v1:sha256:0cb327d17017c7ea251b4a83a3ff708e935c2ff86d5b337e645cf15fdb27b13a"
+        }
+      ]
+    },
+    {
+      "id": "claim_002ecd1ceea147c280d35cc81098a815",
+      "statement": "The event/ package includes ArticlesIngestedEvent (carrying new article ids for interest scoring) alongside the original FeedSavedEvent/FeedDeletedEvent after-commit scheduling events.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L58-L58",
+          "version": "repo-lines-v1:sha256:01c850c1c1e63b1a3ff2d326e4a01a2dc0272321e1a095770c8eeb2c9d190996:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFjODUwYzFjMWU2M2IxYTNmZjJkMzI2ZTRhMDFhMmRjMDI3MjMyMWUxYTA5NTc3MGM4ZWViMmM5ZDE5MDk5NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFjODUwYzFjMWU2M2IxYTNmZjJkMzI2ZTRhMDFhMmRjMDI3MjMyMWUxYTA5NTc3MGM4ZWViMmM5ZDE5MDk5NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmM3YWU1OGZiNmVkNjYwNTVlNjJkNjNiNWM3YWE0YjYwZTdmMmJlNTBjOWE1YWZjODNkZWI2NGE0YWI3OWU1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjAwZmNlZmQ2MGUzZTIyMDU1MjE0OTA3MjE4ZGQzMTFhMTVlNjVhZWI1YTVjZjc2OTJkMjdiY2ViYWVmYjRmNSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/event/ArticlesIngestedEvent.java",
+          "version": "repo-file-v1:sha256:b33e2fcc6e69113d5a0244d99093c0f4888f2385b8f246cf85e38221cdfb823f"
+        }
+      ]
+    },
+    {
+      "id": "claim_89463eda17d840c08d59feafac9b246b",
+      "statement": "The controller/ package includes Interest, InterestStatus, InterestPreview, InterestRescore, and TopicSuggestion controllers in addition to the original Feed/Article/Folder/Board/Integration/Opml/Version controllers.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/InterestController.java",
+          "version": "repo-file-v1:sha256:ab48cdb2fea031a8a35d130c00a2af9d0728589e37f2861225a844373252f495"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/InterestPreviewController.java",
+          "version": "repo-file-v1:sha256:ec31ee5fd2bfd228114e0077980efbcfd8b6d98c8a2665568dee874b0e18ac00"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/InterestRescoreController.java",
+          "version": "repo-file-v1:sha256:84b097ea849de71a0ea8d4055b6918b670ae2f324b6cb2e4d96d31c303e67336"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/InterestStatusController.java",
+          "version": "repo-file-v1:sha256:3b33ae4705dc9d7b12dffaf4533e615c6ebc585461c851e740220a8937a9872b"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/TopicSuggestionController.java",
+          "version": "repo-file-v1:sha256:42dc30cb35cd8a134a1566d0b4f08942dbca2f19e011578bdf5ae6f4df736fa1"
+        }
+      ]
+    },
+    {
+      "id": "claim_c96b12680d8c4a6bb7e47a80027f43f9",
+      "statement": "The scheduler/ package includes InterestScoringSweep (periodic jev scoring sweep) alongside FeedPollingScheduler (dynamic per-feed polling with backoff).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/scheduler/FeedPollingScheduler.java",
+          "version": "repo-file-v1:sha256:7b477c600d95b299939f07b8c81f7c622b422cedd0f12d1173b7c23b289f4107"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/scheduler/InterestScoringSweep.java",
+          "version": "repo-file-v1:sha256:edc658400f8bc72eb4b534f45adffe20b1441aefe8fa438dfab6ec25a3debe6f"
+        }
+      ]
+    },
+    {
+      "id": "claim_bf9b12ddc9ae499085b9d1d1acc46bb2",
+      "statement": "The config/ package includes MyfeederProperties (which self-validates its engagement/suggestion constants), RestClientConfig (User-Agent customizer), SpaForwardController, TypeSafeConfig (owns the app's TypeSafeClient bean and jev retry interval), InterestScoringConfig (jev-score executor), and JevEventLogging (jev retry/breaker log lines).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/InterestScoringConfig.java",
+          "version": "repo-file-v1:sha256:b1f6d879b7f1819a44b5ba28707b7b06ebddba5d574118f8ee168a8f1ccd9e87"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/JevEventLogging.java",
+          "version": "repo-file-v1:sha256:cf8c43a0fc96ca88024aabcc0a3adb09f51009c8f2247c844866786887118cf5"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java",
+          "version": "repo-file-v1:sha256:a56d362534dde7bd36d8e5712a113e5976fea7799f105c49d7dcf3e7c36e68ef"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/RestClientConfig.java",
+          "version": "repo-file-v1:sha256:59e251d92d80154e8321de8893781b8485360b3008daaa1aa931a7fb1ede2cb3"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/SpaForwardController.java",
+          "version": "repo-file-v1:sha256:36b3a894c52a9decd513461f7fa7b5528144c5f24b0802ce7127357300315dda"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java",
+          "version": "repo-file-v1:sha256:c5320161214abde982cc75e36aafc93b9c2da7a721cf7f0633f1baf365300c84"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f8522b559f84e7bb5efae44d738d5ae",
+      "statement": "MyfeederProperties implements Spring's Validator interface so Boot's configuration-properties binder self-validates it on startup, refusing startup with fixed text (ENGAGEMENT_INVALID, SUGGESTIONS_INVALID) when the interest-blend engagement constants or the gap-discovery near-miss threshold are out of their valid ranges.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java#L11-L43",
+          "version": "repo-lines-v1:sha256:01b9b69ca1c16b6a6c7535c110f6ff0dd00972af4eb9d601d2ecea5726efedda:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNjFkOTNhZGVmYTk1YjBhMzMwYjU4MDIyZDIxNDk4N2VjYjkwZGQ5OGM2YjNlZmNkNzY3NjE1YTRjNGRkNjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjMjNkNzllNjIxY2JiY2Q5NDlmZTU4OGE1Y2I0ZTQxOWVlOWQ2ZDA5MTc2NTg4MzVkYmJiNzQ3MDRlM2ZlYjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4YjRlMTYwMGE4YTcwNWNhNWI2NTIzMmQyN2Y2NDllZjRlMDg0Y2M0MWNmNjcwN2ZiZWZhOTcxNjk0MDk4YzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dbd485ba6e6041629d2e8114a47c5c6a",
+      "statement": "GlobalExceptionHandler maps JevNotConfiguredException to 503 ('Jev not configured'), Resilience4j's CallNotPermittedException to 503 ('Jev unavailable', when the jev circuit breaker is open), TypeSafeBadRequestException/TypeSafeUnprocessableEntityException to 422 ('Jev rejected the request'), and any other TypeSafeException to 503 ('Jev request failed'); every Jev-related ProblemDetail detail is fixed app text and never echoes the underlying TypeSafe exception's message or body.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L71-L105",
+          "version": "repo-lines-v1:sha256:edf5da9e2c8d1bfa5d6987cddad840f1c110953af343b4a736ff921ea722b28c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmYzk1ODRiNzdlMzI2ZmEzNDNkZjg5NGZiZDA2NzNlZWRlNDUxN2U1MzNhYjI1MDM1YzI1Yzg4NTliODI5YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkMDFkNWI3MDU2NGM3MjA1YWRiNDMwMGI4MGFhNDg1ZDI4ZDM4YTUxZWI5YjU5NzRkOTViNjBiNmIwNzk2MjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_85835b75f1504c39a2039db69f33c7dd",
+      "statement": "The REST API surface now also includes /api/interest (profile, topics, status, preview, rescore, topic suggestions) alongside /api/feeds, /api/articles, /api/integrations, /api/opml, /api/boards, /api/folders.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L94-L94",
+          "version": "repo-lines-v1:sha256:5d89e49d13a7e93b148d30a843691c5d58ebd027a1bc4204a9d92d36de2831ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWQ4OWU0OWQxM2E3ZTkzYjE0OGQzMGE4NDM2OTFjNWQ1OGViZDAyN2ExYmM0MjA0YTlkOTJkMzZkZTI4MzFlZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWQ4OWU0OWQxM2E3ZTkzYjE0OGQzMGE4NDM2OTFjNWQ1OGViZDAyN2ExYmM0MjA0YTlkOTJkMzZkZTI4MzFlZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDYyNzc2ZjJlMDc4MzEzOWNjNTFlMTFlYjY5OWEzOGNhYjY0MzAzMjA4OGMyMGEwYjI1MDFmMThkMDYwMTI2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTVhYTEwY2IzZjY3Y2M2M2RiN2M2OGY3ZGY5OGIzOThlMTc5MjFhYTlmMjk4NDc3OWExOTM1ZmU1NWJhZDFhNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cdc1e9ce1d104aff9f6405855933076a",
+      "statement": "The TypeSafeClient bean used by the Jev integration is built in config/TypeSafeConfig on a clone() of the shared auto-configured RestClient.Builder, with its own Reactor Netty ClientHttpRequestFactory carrying Jev-specific timeouts (5s connect, spring.ai.typesafe.timeout read), so Jev calls get an isolated transport while still inheriting the shared User-Agent customizer and observation instrumentation from the cloned builder.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L43-L61",
+          "version": "repo-lines-v1:sha256:1df96af2ef284f64c92c13fb281d6c728ad25754ab12e714b97c43ebaadd9360:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ZTU5MDY5YzNmMzg3NzE5ZWZlZDI1NmM2YzRiZjIxOWNjYzRmNmU0YjQxYWJmZDQ0NzYxZDQ1NDkyMTRkMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2YWNiZWE3MTNkZjViYWZlZTdkZWExYTg0NzY5YjIxYjBjNmVjMDQzNjhhMTRlODg5MzNkNzAxZmFhMzdmNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyZGZkMmY1ODRlMjNhMzhjOTQwZmZkNzdmZDkwZDU5ZDA5NGVjMmI1YjczNTdhZGY1ZWQyMTUwOWNjNTFkMWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f18be86648674bb0b2ed8cdcc0801d9b",
+      "statement": "config/TypeSafeConfig defines the TypeSafeClient bean itself (rather than relying on the TypeSafe starter's own bean) so that a blank or missing MYFEEDER_TYPESAFE_API_KEY only disables interest scoring via a log message instead of crashing application startup, because the starter's own bean would otherwise assert the API key has text.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L23-L48",
+          "version": "repo-lines-v1:sha256:b46d6e675f7853ae8957f068081841f0385834ae5edb9d4f93bf0fea780734ca:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkNGViYzFjYzMwYzU0ZmI0OWY0M2ZkY2EyNjlkMDZkNDk5YmI5ZGQxN2ZkYmY2OGY0ZjgwM2Y5MDU0NWI4NjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBhMTU3NzMyOGQ3MzA0Mzg4NmZlZTA2MDNhYTBlZWMxY2U0ZjFiODU2ODQ5ODE4Y2ZmMjdjOGFiOWU3NWU1MGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d5c36036b4b349efab8c9ae0d24e00dd",
+      "statement": "The shared auto-configured RestClient.Builder uses a Reactor Netty transport (ReactorClientHttpRequestFactory) pinned by an explicit reactor-netty-http dependency, and carries a myfeeder/<version> User-Agent set by RestClientConfig's RestClientCustomizer bean, which Spring Boot auto-applies to every RestClient.Builder built from that shared instance (e.g. for FeedFetcher and RaindropApiClientImpl).",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L272-L272",
+          "version": "repo-lines-v1:sha256:5f35daa8419caedc2b42ac64af0fb12783a925584e11f98893e421e04a26d980:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWYzNWRhYTg0MTljYWVkYzJiNDJhYzY0YWYwZmIxMjc4M2E5MjU1ODRlMTFmOTg4OTNlNDIxZTA0YTI2ZDk4MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWYzNWRhYTg0MTljYWVkYzJiNDJhYzY0YWYwZmIxMjc4M2E5MjU1ODRlMTFmOTg4OTNlNDIxZTA0YTI2ZDk4MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWExYjRkMjA0MTY1N2M3MTViMWE2NDJjMzBmOWNiM2RlMTk5MzZjY2MzZGE5ZDAyY2Y4MmVkMjgxMmI4ZGRkNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTY2Y2NiMDlmY2RiMGFiZjkwNDg2ZDlhNTAwMzU0MWFjYjdiNGY5ZTEzYmQ2ZWNlOWMxZjY4YWYzNmM0YWZmMSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/RestClientConfig.java",
+          "version": "repo-file-v1:sha256:59e251d92d80154e8321de8893781b8485360b3008daaa1aa931a7fb1ede2cb3"
+        }
+      ]
+    },
+    {
+      "id": "claim_261c35d42c2a4234bdfaef5fa68023e7",
+      "statement": "In Spring Boot 4 with Jackson 3.x, databind types (ObjectMapper, JsonNode, JsonMapper) moved to the tools.jackson.databind package while Jackson annotations remained in com.fasterxml.jackson.annotation; Spring Boot auto-configures a tools.jackson.databind.ObjectMapper bean.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L247-L248",
+          "version": "repo-lines-v1:sha256:d02b8bc4144e5079c291dba7193f5a029ff6ccde35a71cf41f34df279b5708ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTIzNWU3YTYzYWFiMzAwMjlmM2RkM2M0ODc0NWY1ZGZhZTM2ZjU4Y2M4ZjAyMzg0MTI1MzA4MDYzYTQ4MDkxMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWVkY2E1NjZhNDZmODViNWJkMzM1ZjFkMzA0YTQ0YTU5ZDBjNjFiNTkzNTUxM2I0MjJiNjA3ZTA1YWZjOTczNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDM5M2MwNjUxMmI5MjMwMGM3MGQzYmNhOWFlODhiMDIxNTg3OWQzNGU5ZmI1Yzk4ZDU3NTVlNjg4ZWM5MjI3ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmRhZDNlN2RhMTIzODE1M2JhMjk0MWI2NjI4ZWRjZWU0NzkxN2JiMDM3YmRhZGExY2UyODEzY2U3N2JjNDg2MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_75024905fe60493391bf49739fcd9945",
+      "statement": "In Spring Boot 4, RestClientCustomizer moved from org.springframework.boot.web.client to org.springframework.boot.restclient, and Spring Boot auto-applies any RestClientCustomizer bean to the auto-configured RestClient.Builder injected into services.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L251-L251",
+          "version": "repo-lines-v1:sha256:b15a71e51bb4d75e42da98814de063f98e850809933a2a747911a3931bc33ce3:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjE1YTcxZTUxYmI0ZDc1ZTQyZGE5ODgxNGRlMDYzZjk4ZTg1MDgwOTkzM2EyYTc0NzkxMWEzOTMxYmMzM2NlMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjE1YTcxZTUxYmI0ZDc1ZTQyZGE5ODgxNGRlMDYzZjk4ZTg1MDgwOTkzM2EyYTc0NzkxMWEzOTMxYmMzM2NlMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzQ0MTE3ZjRhZTEwODY3NDJjZTM2YmQ5YWEyMzQ3NWU5NGNkYzRlNGQyZGY5YTkyMDFkYmE4ZTRjMTFhMTQ5NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjNhZDMwYzY0N2FjNDNiNjUyNTMzMGZiMTg0MmRmN2M3MWE2ZGI0OWUyNmM0ZWY3YWE0NDlmMDI3YjcwOGZjNyJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/RestClientConfig.java#L1-L17",
+          "version": "repo-lines-v1:sha256:51c6e994e5b18d39220410fd1a45fcaca1c67a0a2bcebe4d2672bda5f851bc25:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4NTAyMmM0MzMxZjQ0NzIzY2FmNWE0OWExMDQ2YjE3ZTdlZDAwZjJkMTFmN2U3Njc4OWI0YTgwMDQyOWY4ZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_db2b1ea5e1684122ad7db6671b6983d3",
+      "statement": "Outbound RestClient timeouts/redirects are configured via the plural spring.http.clients.connect-timeout/read-timeout/redirects keys in Spring Boot 4.0.8; the singular spring.http.client.* keys were deprecated in Boot 4.0.0 and are silently not bound, so configuration using the old singular keys has no effect.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L252-L252",
+          "version": "repo-lines-v1:sha256:4b7dc6b6e68b57aa4b2c96ac3ec6c874b85789a2e22b0a087624c68b350c0ea7:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGI3ZGM2YjZlNjhiNTdhYTRiMmM5NmFjM2VjNmM4NzRiODU3ODlhMmUyMmIwYTA4NzYyNGM2OGIzNTBjMGVhNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGI3ZGM2YjZlNjhiNTdhYTRiMmM5NmFjM2VjNmM4NzRiODU3ODlhMmUyMmIwYTA4NzYyNGM2OGIzNTBjMGVhNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmRhZDNlN2RhMTIzODE1M2JhMjk0MWI2NjI4ZWRjZWU0NzkxN2JiMDM3YmRhZGExY2UyODEzY2U3N2JjNDg2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2M4MDc2YjNlMTM2MTZhMjAwYzg1NzJlYzYxZTc5N2Q5YjE4MTUxMmYwNWIxYzY4ZTMyYWE0ZDljZDE5MTAzMSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-25T13:07:33.493Z"
+  }
+}

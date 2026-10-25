@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:bf6840abf1c925421d8c1bfc049dd19432e4da90ed7df2d8ea655afed377c195",
+  "claims": [
+    {
+      "id": "claim_1d9041e4640141029384e6241042ab8a",
+      "statement": "RaindropServiceTest mocks RaindropApiClient with Mockito, so it verifies RaindropService's business-rule throws (not-configured, disabled, no-collection) without going through the Resilience4j AOP proxy.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/integration/RaindropServiceTest.java#L32-L98",
+          "version": "repo-lines-v1:sha256:93fa690306f1bf3d866e2d5b74fb5dd7f582919dac925fea38a09953d1225164:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2YTgyY2MxMTUyZWE0ZTdjNThiYjQ2ZDhlMTZmYzU0NGQzNWVjMjkxMjAxMjBkNmIxYzJkNzBmMTFmYjA1ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2YzFlNjg1NjE3NTdmNzlhZTI1NDhhYjcxNzFjYmQzNmVkMjFhZGQxZGU3NGViNThlYzk0MmEzMDdkYjc3Y2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVkMWY1MTMzZDY2ZmZiZWMzNmY1MDNiMjkwZDhmMDg4MjRjMjMzNWUwYmE3YzJiYTI4NDQ1OWQ0ZWE2NmJhY2MifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c80c8098510d4964ade30b36227a01fe",
+      "statement": "JevResilienceTest is the canonical test proving Resilience4j @CircuitBreaker/@Retry annotations only take effect through the real Spring AOP proxy: it asserts AopUtils.isAopProxy(ctx.getBean(JevApiClient.class)) is true inside an ApplicationContextRunner wired with AopAutoConfiguration, CircuitBreakerAutoConfiguration and RetryAutoConfiguration, then drives the production jev breaker/retry instances (loaded from main application.yaml) against a JDK HttpServer stub.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/integration/JevResilienceTest.java#L81-L160",
+          "version": "repo-lines-v1:sha256:0cc9ef0d149813259e71e64ad6208690b42a79616a90d61a19cc68037e7db005:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdkYzkyNTM4YmI5OTg3YjNjOWQyMGI5N2Y4ODU5MjkzMGNjMmMzMDU1YTZjZjdkZTYyNmUzNGI5ODhmM2MyMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllZjM0NWM3MDcxN2M1Mjg5OThjYTJiN2ZhY2U1MjQ4NjA1MzliNDZmZmM3ZTI3YmQxMjVjNTUzNzJiODdhODAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_10938f00c68a4598ae8ef9097f74e570",
+      "statement": "RaindropApiClientImplTest tests RaindropApiClientImpl directly via MockRestServiceServer (listCollections/createBookmark HTTP shape and the not-configured guard) and does not exercise the Resilience4j circuit-breaker/retry proxy.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/integration/RaindropApiClientImplTest.java",
+          "version": "repo-file-v1:sha256:3843abed1fbad68542d8779e1c81c3b7c54cfc58fbb25c70ad6ab1bc0083e0e3"
+        }
+      ]
+    },
+    {
+      "id": "claim_89481fccb200426a96417f28f39ccd26",
+      "statement": "VersionControllerTest works around @WebMvcTest's lack of BuildPropertiesAutoConfiguration by @Import-ing a nested TestConfig that defines a BuildProperties bean from a Properties literal.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/VersionControllerTest.java#L18-L31",
+          "version": "repo-lines-v1:sha256:779c12c0ffebb66988dd7111748848b388bf015d85549ec622a5edbbf9d124cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhYTJjMDY4MGNlY2E3M2MyNzA2MDczYzg5YTMyYjE2ODUxMWQ0YTVhZGE3MGY1YzBjZDk2NTY0MjQ5NWFmMWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzYTI2MTFiMDM1YjkyYWFlNzhlZjNlMDZlZDdiZThhN2Y4ZmNlMmY0MjMyMjM1MTMwNDEyZGFkYjc5OTdjOTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExNWE4MWJmYjhhM2MxOWQ5NTQ0YzM1M2EyNTc5ODA2Yjg0NjUzZDkyNzA4MDU4ZTQxOGU0MzViYzk5NWZkZTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_35e093b71fd04fc9b2d96cd6251f1c3c",
+      "statement": "DevProfileConfigTest resolves Spring Boot's ConfigData pipeline directly from disk (no Docker) to prove that src/test/resources/application.yaml plus the dev-profile overlay application-dev.yaml together resolve every key in main's application.yaml to main's value, and that no test itself activates the dev profile.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/DevProfileConfigTest.java#L28-L76",
+          "version": "repo-lines-v1:sha256:cadbace4ea6b2d613ed7f1b5fc8dd71976247045638894f2b549b30c81bd3fc4:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5M2FhZjllYzNhOTUxYWViNzIwZTZkNjZhZjE5MzRmODhkYzc0MTYwNWNiM2UyYWQ5MzQ2YzlmMGMxODljYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2ZGMwOTM5ODdjZDg4Yzg1M2I3NDIzNjI3OGMwNmI5ZDg5ZDE2NGZkMDZkZjg0MWE2NzhhOTg2N2NhYTkzZWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_751175f6ca9944519ffa6d7690b4de42",
+      "statement": "TestMyfeederApplication, the bootTestRun entry point, activates the dev Spring profile so src/test/resources/application-dev.yaml overlays the otherwise-offline test application.yaml (blank TypeSafe key, Jev base-url http://127.0.0.1:9, first sweep PT1H) back to main-equivalent live values.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/TestMyfeederApplication.java",
+          "version": "repo-file-v1:sha256:5f0ed687fa896476ebb7a00d3c515d8e89ef9624e1dcbd5d3960c45a49fa1f1f"
+        },
+        {
+          "resource": "repo://src/test/resources/application-dev.yaml",
+          "version": "repo-file-v1:sha256:086922e8426cf24f874bcb05a3ad14a8792942a849075ac69c95c76cc3adc28f"
+        },
+        {
+          "resource": "repo://src/test/resources/application.yaml#L1-L12",
+          "version": "repo-lines-v1:sha256:4d11cb785e9020188ee57dc50832f0ee8e029a9843f01fa5380819a15d49fbe5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiM2NkZjRmZDRiNmMxZWNlYWYzNDMxNWRkYjkyZDcxMTFiNTBhNTBjYjc3MTRmYjNiNGQ2NjQxNjBiMjBjNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1YTgzNWVjZTU3YzU1MzE0MWQ5NGI4NmM1NzQ2NjEwZGI1MzhhODEwZTAyOTViMTEzZDhhNjE4MDZiYzViYTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3ZWJhZTY1YzZmNWNjOTcxMWZmMmZmNWM1MTU3MjhlYjI3Yjk2ZTc1M2Q4YjVhN2U0YjNiM2QzOGU1ODE3ZDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9a571acb7ad645c283e441b83c63f005",
+      "statement": "V6InterestScoringMigrationTest and V7EngagementMigrationTest use a shape-assertion migration-test pattern distinct from V4StripRaindropApiTokenMigrationTest's replay-the-UPDATE pattern: they assert column sets, constraints and cascades directly against the already-migrated Testcontainers Postgres schema rather than replaying a migration statement against a seeded legacy row.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/V4StripRaindropApiTokenMigrationTest.java",
+          "version": "repo-file-v1:sha256:1b9eac92b5f18bfc04ec1783f3ee2b60353f7d147a76111b2a5b541ea09b2b0b"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/V6InterestScoringMigrationTest.java#L16-L40",
+          "version": "repo-lines-v1:sha256:ac72d103702dd0ff2835c3d87f588ffee34e96b3a7bc1ad8a97f8289b2b3710a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0YzcyZTBkN2MxMzMyMDM3MTgzZmYwNjUwMGI4NTg1OTdjOWE1YjUyYWI4NzA3ZjA2MmIyMWQ4YzcxY2RjZTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg2OGY4ZTJkYmNmZjk3MjJkYTNiMDc3YTNjMjMzNTI0OTZlZDMyMDM1NzAzODY0MzEyZDdlMTNhMzhhNDYwNWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQyN2MzNTFhZTlhZGIyOGMzMmYwY2U5OTY3OTkyNWZkMTY1MzQ2NzAyYWMzMGQ5OTlhODJhODJiZmY0OWJkNTEifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/V7EngagementMigrationTest.java#L24-L60",
+          "version": "repo-lines-v1:sha256:964b912f9de3a23362e08ae13c025380c198c8e91beb5f39cc2c6902cf51bc3e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjZjA5ZWIwYzU3NDRmYjk3MzMxYjk4ZmYzZmJmMDVhNjAyYmEzZjdmNjdlNWRhNWJlOTA5NTAzM2Y2MjU4MjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg2OGY4ZTJkYmNmZjk3MjJkYTNiMDc3YTNjMjMzNTI0OTZlZDMyMDM1NzAzODY0MzEyZDdlMTNhMzhhNDYwNWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIyYzRhYmFhOWQ5NThkMTc3ZTMwNTg1NWY4ZmUxZDlhMjdiYTg4MzcyNzYyM2M4YWFkOTY0YjBhMDhlNGVjZDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cbc55cef013549b286c471d238f76523",
+      "statement": "V7EngagementMigrationTest.rankingSqlReadsEngagementButNotDismissals is a static text guard proving InterestScoreQueries' ranking SQL never references topic_suggestion_dismissal, keeping gap-discovery dismissal state out of the ranking query.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/V7EngagementMigrationTest.java#L210-L210",
+          "version": "repo-lines-v1:sha256:a0e6d6c5e8cee0f19cd0a1edbc1b5636e9435f5fb91e14b99ea8ab3b1b34fb0d:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTBlNmQ2YzVlOGNlZTBmMTljZDBhMWVkYmMxYjU2MzZlOTQzNWY1ZmI5MWUxNGI5OWVhOGFiM2IxYjM0ZmIwZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTBlNmQ2YzVlOGNlZTBmMTljZDBhMWVkYmMxYjU2MzZlOTQzNWY1ZmI5MWUxNGI5OWVhOGFiM2IxYjM0ZmIwZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGIxMzkxYWFiOGRlZGIwOGI2YWYzNDU0NjZkODk0MTRkZDBhZWZhMjE2ZTBiZmEzODM3MTcwZDM3NDI0ZGQ1ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzlkYmQxOGM4MDhjM2ExZGQ1Zjg5M2QyZmY2MjNlODQ0NDQwZTUxZTQwMDE1ZjcwNDIyNmEwMGMxNDJmZDUyMyJ9"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/V7EngagementMigrationTest.java#L33-L37",
+          "version": "repo-lines-v1:sha256:f4480f104c5f12c1edd1cec1da3d1f85ddecdc4eec1e487307b79d90cab8d1af:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcwOGM3MjI5MTMwODZkYTQzOTgxY2E4NzgxNTliMWM5YzQ1YTc2ZThlMjRjOTg1NzVmNjkyZGIwM2MwZTI4NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEwZGU0MWVkYmVmZmVjNGI4ZGQ3NzE1YjdiNDJlYzllMzNiYzU3NDJjYmQ1OWJhZGZkNDhlYTNhMWIxMGZjMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGQ5MjQ2NjA0YWIzYjc3Y2IwZGI4MzBhNzNjMTYxZTA0NWU3YjVlNjViMmU1ZDY4ZmMyZDc4MDMwNTk2M2Y0NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDVlMDU4Y2E0Yjg5YTRhN2VmY2I1NTg0YTc0MWExODQ5YjRiOGRmYzA3NDJlYzBlODM2ZGRlZDE4NThmMzdiYyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e9299e50942c4b63a4c821b2024e401a",
+      "statement": "The InterestScoreQueriesTest family proves the InterestScoreQueries blend/learned SQL from multiple angles: InterestScoreQueriesTest (base CTEs), InterestLearnedGridTest (full thumbs/engagement split grid), InterestScoreQueriesEngagementTest (engagement-learning CTEs), InterestScoreQueriesZeroEngagementTest (cap-0 equals the frozen pre-engagement v0.2.1 blend in src/test/resources/interest/v021-unread-blend.sql), and InterestScoreQueriesLatencyTest (query latency bound).",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/InterestScoreQueriesZeroEngagementTest.java#L28-L62",
+          "version": "repo-lines-v1:sha256:5bf54d58fe2284816d58455b3febf40949e969780d5569975c4cdb5b887713e3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNzMxZTEwM2YzNjMwZmE1MWIwOWE3NzY2NGE3ZDI1MjBkNjAyYTM2OGRmNDM5NTVmNmNkNDlhY2Q2ZDU2OWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEzMzAyYjUxMDViOTMzMmI5NzI1M2U4MmU4YWE3ZjkyNjRmNDlmM2RlYmU2ZmU3MDZjY2YxYzViODFlNjkxODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1ODM2ZmMyODdiMzk3Y2ZkMDUwNmRlZWJlOTU1M2E2ZDBlYjU4NWUxZThkMjQxYmRmZTBlZTI0ZDJjNzBlNjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1c790385b2334d34b96402f8a1239df1",
+      "statement": "TopicSuggestionApiIntegrationTest's aFailedDismissalInsertRollsBackTheTopic proves a topic created from a suggestion and its dismissal write commit or roll back together, and both TopicSuggestionApiIntegrationTest and EngagementApiIntegrationTest carry a neverCallsJev assertion verifying JevApiClient is never invoked by the gap-discovery and engagement-capture endpoints.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/EngagementApiIntegrationTest.java#L63-L63",
+          "version": "repo-lines-v1:sha256:fb3e78273cf363387e12c970b0be527e025cb640ecc35e41a3dc39c6edf128b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmIzZTc4MjczY2YzNjMzODdlMTJjOTcwYjBiZTUyN2UwMjVjYjY0MGVjYzM1ZTQxYTNkYzM5YzZlZGYxMjhiMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmIzZTc4MjczY2YzNjMzODdlMTJjOTcwYjBiZTUyN2UwMjVjYjY0MGVjYzM1ZTQxYTNkYzM5YzZlZGYxMjhiMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzAwYzZlM2I2NzhmOTI1NzA1MTRkMWZkZGU1MTYzMjRkZmM5ZjE1OWExNTlmMGI3MWQzZDcyNTFmMGNlMWY1MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWQyYTQwZWU4NjkxYjI4ZDA0NjAyY2I4Yjc3ZTNlZWUxZTUyYjY2NDYyYmZkZmE2YzE4ZWI0NDQxYzQxMGE2MiJ9"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/TopicSuggestionApiIntegrationTest.java#L284-L284",
+          "version": "repo-lines-v1:sha256:aae8973c969041fecd9dd2fb22a5bd34625b9a46a8cb5be8747ab4650d2722ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWFlODk3M2M5NjkwNDFmZWNkOWRkMmZiMjJhNWJkMzQ2MjViOWE0NmE4Y2I1YmU4NzQ3YWI0NjUwZDI3MjJlZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWFlODk3M2M5NjkwNDFmZWNkOWRkMmZiMjJhNWJkMzQ2MjViOWE0NmE4Y2I1YmU4NzQ3YWI0NjUwZDI3MjJlZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZThlYWYzZTFkYjI4NGY2YTZmZDRlMDY2YWUyZmI2NTRhZTY4ZmRmY2YzZTdlNGRjYTRjMmRkMjE0YTQ5YjlkMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODRmOTIwMGQ5YzAzMzNjNWFjODk0ZTkxODU2NGQ5OGYxMjBhOTRiZGIxODBjZGEwNGVmN2I0OGY5NDMwYzYwYiJ9"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/TopicSuggestionApiIntegrationTest.java#L77-L77",
+          "version": "repo-lines-v1:sha256:fb3e78273cf363387e12c970b0be527e025cb640ecc35e41a3dc39c6edf128b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmIzZTc4MjczY2YzNjMzODdlMTJjOTcwYjBiZTUyN2UwMjVjYjY0MGVjYzM1ZTQxYTNkYzM5YzZlZGYxMjhiMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmIzZTc4MjczY2YzNjMzODdlMTJjOTcwYjBiZTUyN2UwMjVjYjY0MGVjYzM1ZTQxYTNkYzM5YzZlZGYxMjhiMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzAwYzZlM2I2NzhmOTI1NzA1MTRkMWZkZGU1MTYzMjRkZmM5ZjE1OWExNTlmMGI3MWQzZDcyNTFmMGNlMWY1MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWQyYTQwZWU4NjkxYjI4ZDA0NjAyY2I4Yjc3ZTNlZWUxZTUyYjY2NDYyYmZkZmE2YzE4ZWI0NDQxYzQxMGE2MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e818a747e560413aa9b5d54e110ad282",
+      "statement": "PriorityApiIntegrationTest.engagedArticleAgreesEverywhereAfterRefresh proves that after a post-engagement refresh, an article's position on /priority, its badges and its Why-N breakdown all agree.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/PriorityApiIntegrationTest.java#L246-L246",
+          "version": "repo-lines-v1:sha256:658839757469c3b162648ba177d10d8f164d2cbeba5e56f4a854f4d75c8e4c22:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjU4ODM5NzU3NDY5YzNiMTYyNjQ4YmExNzdkMTBkOGYxNjRkMmNiZWJhNWU1NmY0YTg1NGY0ZDc1YzhlNGMyMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjU4ODM5NzU3NDY5YzNiMTYyNjQ4YmExNzdkMTBkOGYxNjRkMmNiZWJhNWU1NmY0YTg1NGY0ZDc1YzhlNGMyMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWI0MTc2NTU0YmYxMzZkM2EwZWQ0ODlhYmJjY2ZjNjdlYjQzOWIwMTNmNjljZDMwYWY1NDdiMmU0NDY4MzlmOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDU2MWZiZTAyMTE3MTMxYjJkYzNhMzA5ODYyOTQyZWE3NmQ2MDliZjljMmMxZWNhZWM5YTEzZGUxMjQyNWYxMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d1f2fabaee274d7d892f28e875ae4b74",
+      "statement": "InterestCalibrationReplaySqlTest is a plain-JUnit, no-Spring, no-Docker drift guard proving the read-only interest-calibration-replay.sh SQL reproduces InterestScoreQueries' blend and badge text byte-for-byte and stays read-only; InterestCalibrationReplayRunTest runs that same replay script end-to-end against a Testcontainers Postgres via a host psql subprocess.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplayRunTest.java#L1-L18",
+          "version": "repo-lines-v1:sha256:cf090a311d2735ee3d11a41070f5f5e89885afd9ee66cdc3bed8a057d04c4e86:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzMjllYmVjZGY5ZjA2Y2NhNWY3M2U5YWJmNWYxMjllMWVmODBhMmM3NTgwNGRiZTc0Y2U0ZDU2OTYwNDg1NmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkZDQ1NjNlNWVmY2IwZjFjYTkxNjI5OTc5ZDliOTg0NjMwMGY5YjgwYjlmYTkyNDkyMzZlZmQyMmUzZmQ4YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1NzcxNDYwZjM2OTM2MGRiMDU4NTBmNzYxOTUzNzI2NDZmMmRjOTBkYjllOTQzMjkyMDhiMGI3YjlmMTExMWIifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/InterestCalibrationReplaySqlTest.java#L26-L31",
+          "version": "repo-lines-v1:sha256:d5350dc41f8858f185454e7ead03dca9c91397a715f35fe20ad8f5ec65d2910e:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcyYTQyOTM4MmIyZTE0NzE4ZTBlMzdiMDU3MGE4YTE3MDI5OTFmY2Q4NDk4Y2Q4NDA2MGE4YmY0ZjA1MDE3YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWNhODgwYzRmYmU0M2ZhZWUwYzA3NTc3Zjc3N2EwYWIwMDdlNmQ5YTExMDUzOGVmNjc0ZDYyZWFlNDgyOWE3ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWU5YjYyZjFmZTg3NWRhZGFjYTYxOTUwMGMyNTQzZjg0NjYxMGMzNDRmNWZmY2VlZWUyMTE5ZTU1YmY5ZTgxNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_352c3434a8684871af87fb284ffc3c18",
+      "statement": "InterestsDialog.test.tsx is the largest frontend test file in src/main/frontend/src, and its 'Suggested topics' describe block covers the gap-discovery UI.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/InterestsDialog.test.tsx#L1291-L1291",
+          "version": "repo-lines-v1:sha256:d8cb1a331e1f14738b810460b8c7107ace1cb493b86493bec49a6cc61fe3b020:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDhjYjFhMzMxZTFmMTQ3MzhiODEwNDYwYjhjNzEwN2FjZTFjYjQ5M2I4NjQ5M2JlYzQ5YTZjYzYxZmUzYjAyMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDhjYjFhMzMxZTFmMTQ3MzhiODEwNDYwYjhjNzEwN2FjZTFjYjQ5M2I4NjQ5M2JlYzQ5YTZjYzYxZmUzYjAyMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDY5MDgwMjExNWZjNjkzZWIzYTg5NDdkMmQwM2Q4ZGQzNDdmMDllMjgxMjhlODVhNmM2ZmE4YzJmMzQ3YzJiMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTlkNmQzZDFlN2M0OTkzYWVhNWFhNDEzMmY2YzlhNGE1MjcxODhjMjJhN2VhMzAyZTY2YzRlMDUzMGI4MmY2ZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_bf7c19f2344747c4a81cd02490f71ca3",
+      "statement": "useKeyboardShortcuts.test.ts covers chord handling, Priority-page behavior, the score-breakdown (i) shortcut, and the thumbs/narrow (u/d/Shift+D) shortcuts, organized into nested describe blocks.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useKeyboardShortcuts.test.ts#L104-L104",
+          "version": "repo-lines-v1:sha256:4a3f757280c57b5f83f98610cd24d454bdbbc6181a7192a471c987003fd30d6e:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGEzZjc1NzI4MGM1N2I1ZjgzZjk4NjEwY2QyNGQ0NTRiZGJiYzYxODFhNzE5MmE0NzFjOTg3MDAzZmQzMGQ2ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGEzZjc1NzI4MGM1N2I1ZjgzZjk4NjEwY2QyNGQ0NTRiZGJiYzYxODFhNzE5MmE0NzFjOTg3MDAzZmQzMGQ2ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDFhOWI1M2FmNTFhNzZhNGIxNmZmYThjYzgyNWE1OGQwMGE1N2UzZmZkZDI1NzdlMzc5ZGRiZDBlMDBjZDE4NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzU4NmQ5MWE1NmNhNmM1NjNmM2VhYTQxMGJiYTc0NmEwM2RkZjU4OGU3NjE5N2VkY2MzMDk0ZjZjY2VkYmQ3MCJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useKeyboardShortcuts.test.ts#L329-L329",
+          "version": "repo-lines-v1:sha256:adff53643771c9fa79c69fb20de88c4280f3d6b985a2ed42d1092a2a48f88a7d:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWRmZjUzNjQzNzcxYzlmYTc5YzY5ZmIyMGRlODhjNDI4MGYzZDZiOTg1YTJlZDQyZDEwOTJhMmE0OGY4OGE3ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWRmZjUzNjQzNzcxYzlmYTc5YzY5ZmIyMGRlODhjNDI4MGYzZDZiOTg1YTJlZDQyZDEwOTJhMmE0OGY4OGE3ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTRmMWZjZGRiMGRhNWZlYzE5NThlMzE0ZjNjNjdlN2E1ZTE4MTIxZWFiOWRjYWY2ZGU1YjU5Y2NiNmYxY2E5NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2M0MjFjMDk0MDFkOWFiMTM4Mjg2NGExOWYyN2JmOWNmM2U5NzIxMzIwMGM4MzYyZjA1NjBjNzZiMTFmNjc1ZiJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useKeyboardShortcuts.test.ts#L455-L455",
+          "version": "repo-lines-v1:sha256:c89c51074b17cdee72698800ad395afbb5f20731a17cd4b707861351ebb39d90:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzg5YzUxMDc0YjE3Y2RlZTcyNjk4ODAwYWQzOTVhZmJiNWYyMDczMWExN2NkNGI3MDc4NjEzNTFlYmIzOWQ5MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzg5YzUxMDc0YjE3Y2RlZTcyNjk4ODAwYWQzOTVhZmJiNWYyMDczMWExN2NkNGI3MDc4NjEzNTFlYmIzOWQ5MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmQwZWM5YjdhZDdhMWFkOTcyNWY0MzRiYzdmMWViYzc2YjAyNTcxZWMyODI5NTYyZTFjN2M2NzVkOGNiYzQyMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjFlZWIwNTk4YWYxM2QxMjFjZGM1OWRmM2VmNWM2MWUwNDdiMzg2NjFmZWQ5NWU3M2U5MTVhMDc2NTdmMjk2ZiJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useKeyboardShortcuts.test.ts#L500-L500",
+          "version": "repo-lines-v1:sha256:7a9c6b8e9ca9e4be5454e5886de11712fc2d554755fb837c98b33e7633e5fd47:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2E5YzZiOGU5Y2E5ZTRiZTU0NTRlNTg4NmRlMTE3MTJmYzJkNTU0NzU1ZmI4MzdjOThiMzNlNzYzM2U1ZmQ0NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2E5YzZiOGU5Y2E5ZTRiZTU0NTRlNTg4NmRlMTE3MTJmYzJkNTU0NzU1ZmI4MzdjOThiMzNlNzYzM2U1ZmQ0NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjU4ZWU3MWNjOWMyM2MxMjNiNDI3OWExYWE1MGUzM2VjZWViMzViMjdjYzMyNmQxY2E1ZjU5MmE1YWE5MTdiOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTFiY2I5ZTcwZGU2NzljZjVjMjEzNTAxMTU4ZWVlN2E3NTIzODRlYWMxNGFkZTcxZDQwOGNkZDQyMDMzYzVjOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cddaff90825d4e399c22f33e9cf0c140",
+      "statement": "SettingsDialog.test.tsx, FeedPanel.test.tsx and ReadingPane.test.tsx all vi.mock the entire preferencesStore module as a full-replacement literal object, so a new preferencesStore export requires updating every such mock.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/FeedPanel.test.tsx#L56-L56",
+          "version": "repo-lines-v1:sha256:f00d082a2f752167b57c767e0633610ce0eb6139b05b4af9b8ec023fa35d31eb:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjAwZDA4MmEyZjc1MjE2N2I1N2M3NjdlMDYzMzYxMGNlMGViNjEzOWIwNWI0YWY5YjhlYzAyM2ZhMzVkMzFlYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjAwZDA4MmEyZjc1MjE2N2I1N2M3NjdlMDYzMzYxMGNlMGViNjEzOWIwNWI0YWY5YjhlYzAyM2ZhMzVkMzFlYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDE3ZGY1OTJhMDU2NTA5NWJkMWYwMGY4NDlkZjVmZTE4NzBmYWYzMmM3Y2ViNGMwMmJlMGU0MjljNzk4ZDMxZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGMyY2RiY2Y3OWY4M2U0OWQwYjQ0ZWNjZTg4OTgxODg3Y2E0MWM2NjY1NGY3MzhiMTFhMmIzNTU1NTI5NmUwOCJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/components/ReadingPane.test.tsx#L48-L48",
+          "version": "repo-lines-v1:sha256:f00d082a2f752167b57c767e0633610ce0eb6139b05b4af9b8ec023fa35d31eb:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjAwZDA4MmEyZjc1MjE2N2I1N2M3NjdlMDYzMzYxMGNlMGViNjEzOWIwNWI0YWY5YjhlYzAyM2ZhMzVkMzFlYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjAwZDA4MmEyZjc1MjE2N2I1N2M3NjdlMDYzMzYxMGNlMGViNjEzOWIwNWI0YWY5YjhlYzAyM2ZhMzVkMzFlYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDQzZjdkYTFlM2ViYjVjYzc3MmIwNTRlMDYzYTNmZmIwODU2NTQzMGExOTZjZjg1NWJmMWE3OGIyODgxMzY5NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWM2ZWY5ZjA1NzlkMzJjZTI3ODVlZjcyNzg0MmY2ZDg1ZDI1N2VjNTcwZjZlZmYzNjRjMTBjNTM4MTQxYmU2YiJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/components/SettingsDialog.test.tsx#L17-L35",
+          "version": "repo-lines-v1:sha256:ab466cb94601740918e267359a9c3fd1243b6031b44fbd2da9586cfe96c03c95:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwMGQwODJhMmY3NTIxNjdiNTdjNzY3ZTA2MzM2MTBjZTBlYjYxMzliMDViNGFmOWI4ZWMwMjNmYTM1ZDMxZWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjMmQ3YjBlNmZjNGYwYzI5YjhkZjgzMmIzM2Y1NjJmZmEwMzg1MzQ4ODYzNWEzNDNhZTNhMjQ2NDcxNzRhMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAxN2RmNTkyYTA1NjUwOTViZDFmMDBmODQ5ZGY1ZmUxODcwZmFmMzJjN2NlYjRjMDJiZTBlNDI5Yzc5OGQzMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ4MjAzZDQzMDI1OTkyNjAwYWZmZWExZGVjNjhlODU1ODVmNTRlODQxYTU2MmUxYThjNDI1ZjdhNjA2MDY0ZDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_72acd2accc1843a58c2a99e4947af10d",
+      "statement": "The frontend root tsconfig.json has files: [] and delegates to project references (tsconfig.app.json, tsconfig.node.json), so plain tsc --noEmit reports success even with real type errors; npx tsc -b must be used instead.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/tsconfig.json",
+          "version": "repo-file-v1:sha256:770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-25T13:07:33.493Z"
+  }
+}
