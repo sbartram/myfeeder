@@ -67,7 +67,9 @@ pub.sh
 .claude/gsd-migration-journal/
 .claude/hooks/
 .claude/scripts/
-.claude/skills/
+.claude/skills/*
+!.claude/skills/release/
+!.claude/skills/interest-calibration/
 .gsd/
 .planning/state.json
 .planning/milestone.lock
