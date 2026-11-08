@@ -1,0 +1,266 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:d5125b22881671c54694f155c0e7b611275300aab8fb2d848f6b9648e8cee20e",
+  "claims": [
+    {
+      "id": "claim_b909e48b7c4f48ecb948937c20fea4c6",
+      "statement": "EngagementKind is a closed enum (OPEN_ORIGINAL, STAR, BOARD, RAINDROP) whose declaration order is used as both the API response order and the display order in the UI.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/model/EngagementKind.java",
+          "version": "repo-file-v1:sha256:d70aa5caec8ea5b108e82fed0fb4eb149eaeaafe822d383beef919c3da713e5b"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java#L47-L55",
+          "version": "repo-lines-v1:sha256:ac0c15106a9f509f923527bb8dd656561fa7a2b6ae3f15d3a7638e38d4886439:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWY2MjQ5OGE3ZjE0YmU1YjRkMjYwZmM4MmE2MjFmODAwNjU3YTIwMWQyNDAyZjBjMDNhY2ZmYjA5ZDI0OGU4OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTgyOTg2MTNiOTcxZmViODA5YjY4NmFlODU2NDk3M2M3OWY0Mzc0NTNjYTA5NTFlZmIwYTQ1OGQ5NzA2ZDUzZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTk5YmRlZmVlYWNhNjM0MGUwMjkwZGM4NmU4ODljODlkNWUxODlhYTViYTQ0YjU4NWIzYjcwNzM0ZjRhNjJkOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWVhOGFkN2VkNDJiMThlMDVlM2ExOWE4NGIwMDY1ZGU0MTUxMDcwYjBmMTUxY2RjMGFkMWZmZjZhZjFjMDllMiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9f8f359e77064418bbe908229ad3968c",
+      "statement": "OPEN_ORIGINAL engagement is recorded via useOpenOriginal, which opens the article URL synchronously to preserve user activation and then fires a fire-and-forget PUT /api/articles/{id}/engagement/open, swallowing any error with no toast and no client-side dedupe.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/api/articles.ts#L39-L40",
+          "version": "repo-lines-v1:sha256:1fc319c33409380a2c98832aa251ae5f75960a01441ccea6d7b5c3cccf58bda0:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzczZDlkNWRiMmVmODc2NDk5MzBhYjJhYTU4NjUzNDhjNDM2YWZlNDg2MWQ2ODdkYjk2OTRiMzAwNWE0ZjVlZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWM4ZGU5ODVjNDNjZTUzN2UwOGYwNzdlODY5ZTI5MDNiZjU1NWI0NDJkMzQzM2Y3ODA5ZTE3YjdiNjYyN2FkMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTA3MWIyYjkzYTg1YjJkNjNjNzg4ZGU4ZDI2ODdlYzNlOWM4YjQxZmIyNzQ0ZmQ0NmI2ZDVmNzQ0NmFiYjBhMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjY0MjZjYjQzNzQ3ODgzOTU2NzZjY2QxNzFiNzY5NmNhZjRiZjUwYzQ1YzYwMzA3ZGJjMjhjODBkMDJmZjAwNCJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useEngagement.ts#L1-L33",
+          "version": "repo-lines-v1:sha256:bddd05a4fb4b369cf8b82231c7850408e6d5c6a2b1c5a5571f01e8dceef74843:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjYmUzMzQ1ODFhNDk4OTdmNTY4MGJkMTMyZWQ5NWMyOGUwOTY3YWE3NGZmNTdhYmI5NDgxOTE3ZjdmZGVlNzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0YjIwY2U5MmRkMTdkNTcwZDBiMjljZWMxNjllZDdkNDg4ZDYzMjJiZTRiOTE5NWU0YWIyNGE4OTNhYjgzOTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3YjI1ZmU5MjNlZjlhNzhjYTFjOWMzNDk2OWQ5ZTRlNzBjYmI3Njg1MzU2ZmQ1NDUzYTljNDllZTM4ZDE2NzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d58d53dd9bbf4d7db9616e126711dc45",
+      "statement": "ArticleService.recordOpen 404s on a missing article and otherwise calls ArticleEngagementStore.record (an idempotent INSERT ... ON CONFLICT DO NOTHING), letting a database failure propagate as a 5xx since this record call is the primary purpose of the request rather than a side effect of another write.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java#L26-L33",
+          "version": "repo-lines-v1:sha256:e52de065da171e5ce6a20ead8c021e87dd1af56e1594436c3fe2b08547fc705e:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWMyNDlhYjBmMGYxNWYxNDFlYWFiMzQ2NjExNjA0NzViOGRlMWY0ZDg1ZjlhNmQ0MGZjYTQxMjQyZDU0NGJjOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmVlYjYzNmM2MDY0MzQyNzgzYTAwODYxMTE5M2VkMzJmMzcyMzYyYTkwZWQyMzJmOWE0YTEyMjViZjg5M2I3NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDhmNDk2ODQzZjFhNTdlMzJhOGRkOTQwNjE3YjI4OTJkNzk1Y2QyYmFhYWQ2YjA3N2ZlMDYwNjYxM2MzMjU4OCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L52-L59",
+          "version": "repo-lines-v1:sha256:2c6fe2e2a3e7256bf2f44d8d153d3b58f882738e15c0a6b92b94e5625c8334eb:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2E1NThlMGQzNGU4ZWIzODBiNDcyMzRlYTU2YWY1YWQ4ODJkY2Y2NDYzNzVlYzFkYmQwZGRjOTAwNWFkYzJhYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjlhNGM2NjMxNTViY2Y3MzllNjMwYzZjZGY2ZTEwODM2ZjVlZDY5NWVhYzc5ZjIzMjc1MmQ1ODQyY2I3YTJmMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2I0M2MzNTU1Y2JmNjNlNTYzZWFiZjg4MTQwMzUyNDdhYmI0N2EwNzY2YmY3NDkxNzhhZjkzMDZkNDJjMmU0NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d499192b4b884b999ed144b35adde10f",
+      "statement": "STAR engagement is recorded only on an unstarred-to-starred transition in ArticleService.updateState, after the article's save already succeeded, via the best-effort recordQuietly call; unstarring never removes or records anything.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L77-L90",
+          "version": "repo-lines-v1:sha256:c72bfba9e62fd2741c32cd9cc111f4a292614ca2097455f9af20da73ff44f9be:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlkNTliZmY4OWFjNDBlOWI1NWNjNTdiZGU5MDJmZDFhMDdjYmZhMjU3Njk3YThjNjM3OTBjNGQwZDYzMjU0YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjOTU3NjY3YTg1NTYyOGUzMDY5ZDk5ZDU2OWFhZjQyZTczOTI4NmQ4NzlkNmYyYTAwMzM3NGFmMzBkODdkYjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_850a8ccc23884d86aa49b81cccf1868d",
+      "statement": "BOARD engagement is recorded unconditionally by BoardService.addArticle after the existsByBoardIdAndArticleId/save branch, so a re-add of an article already on the board still credits the engagement even though no new membership row is created.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/BoardService.java#L65-L77",
+          "version": "repo-lines-v1:sha256:cd685191873e09b866e015caf612d988a00b06dbbe5975d0dbafe06e0582ca41:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiNzk0Y2IxNmNmMTc0NzI3OTVhNDg0NWY2NGUyZDQwZjU3MjRlOTI1MzVjNTQwNzBkNjM1M2ViZjI1YWYzNTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4ZDBkNmZkZmI4MDQ4YjY4MjIzZDg4NzJkNjgwY2JlMmU4MDI1ZWQxYWQzMzY3OGM4YThmZmY5OWY1NWNlYTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_09ebe80d9e1e40cfb94e6dcd82c5f7f3",
+      "statement": "RAINDROP engagement is recorded by RaindropService.saveToRaindrop immediately after raindropApiClient.createBookmark returns normally, inside RaindropService itself rather than inside the @CircuitBreaker/@Retry-annotated RaindropApiClientImpl bean, so a failed, blocked, or breaker-short-circuited bookmark call records nothing.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L27-L52",
+          "version": "repo-lines-v1:sha256:18b8457bdce8762a2db8ef8e08035fe1f8da836ce447cf688229bc7ee5dd6b25:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3Y2I2MTZlNzYxOGZmYTQ4YzMwMzlhNTEwNDZlODk2MDY0MzM3NzYzMzcxMjNhNzI4YzVlNWNkZjcyMTBhMjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2MzlmM2VlMDc1NTc3MDRkZGU4YWNlYjY3MWJjOGZjNmE2ZTkzNjg4YjBmMzI1MzI2MTQ1ODM4MGVlYmMxODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmYTYxOGM3NGU1MzhmZmI3Njg3ZDI0OGQwNjdiN2ZmM2E5NTM2MGQzN2Q3ZTk2ZjIxYTE5ZWM2NmRkNjljYTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ac8d0e837f30416da3a55a2873b3f857",
+      "statement": "ArticleEngagementStore.recordQuietly wraps the idempotent insert in a catch(DataAccessException) that logs at WARN (kind, article id, exception simple class name only, never message or cause) and never rethrows or returns a success/failure signal to the caller.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java#L17-L44",
+          "version": "repo-lines-v1:sha256:6d59fea3b4d5078778b574f2ea149a7371c17c2607703ab03b68f82a337e34e9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1OTZlMmQ1M2NiNmQyZTRlZjE1ZGQ2NTBiZjg5MGM3ZGQ0NGViZjNkOTY4M2JmNWE5NzM0YmU0MDMwODVkMDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcxYjQwOWM0ZDJlOGRjZTJhZWRhNjk5Y2QyZjk2YzkwOTI4NGE5MjJlMmNkNWRlNTFiM2QzODk1YmRhZDhjNGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFmN2UzZGNkZjExNWViOTU5M2I5OGJlMGI4YzZjZTVhOWVkZjYwNWE1YTYyYTNjZjRiYTNmNjc3YjFkOTc4ZTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0fe3b3f9075a43e8ade80d98d990662a",
+      "statement": "ArticleService.updateState, BoardService.addArticle, RaindropService.saveToRaindrop, and ArticleEngagementStore itself all record engagement outside any transaction boundary, so a failed or slow engagement insert can never abort or roll back the user's star, board-add, or Raindrop save that triggered it.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java#L11-L16",
+          "version": "repo-lines-v1:sha256:2a970ae9b87af27c96400168303340c71e8bf212808c9a28fd0239f7a6bb7669:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTU0NTM3MTRjOWZjNDUwZmFmNTY5MTk4YTU1OTA5NGZmODkyZDFlODRhMTAyZGViNzBlMDg4ZWY3ODk0MzJhYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGU4MDUzMDU0ZDRlNDNlYjViNGY4YzI5YWFmNzA1NjZhNWI5NGU5OTU1ODdiZjVmZGJkYzMwZTg1ZTkzYWU5YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTg0ODQyNmQxYjE4OWQwZDhiMmJhYzQ4ZDcwMmY4NDZmMmNiN2MyNGIwMmUxZDcyMGIxMzY2OWRiZWIxZWRmNiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L85-L90",
+          "version": "repo-lines-v1:sha256:37401088e904749e4eaaa2cddca98f8c3f64a6b41f7e075fc392fc6791ea2226:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmY1YjRiZDExOWU0NjNkMWY3NjIxZmNhOGE4Zjk0MTE5Yzk4ZDIwZWYxNjhmNWRlYzViOGNmMDI0MGYyZTVmZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTRmZjIwY2RmZWRkMzBlMDQ2MGMyN2U0NWI3NmIzYTc2ZTk4YTM5MGU1NDNmNDE5NzY3MDkyNzg1YjljNzA1ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmM5NTc2NjdhODU1NjI4ZTMwNjlkOTlkNTY5YWFmNDJlNzM5Mjg2ZDg3OWQ2ZjJhMDAzMzc0YWYzMGQ4N2RiNiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/BoardService.java#L70-L77",
+          "version": "repo-lines-v1:sha256:4d9384297e6377fc6949c28cf207b7259b0b3c3cf4c1775a3f414f7b645985c0:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTg3ZjY2MmVkZWJmN2Q3NTkyMDc5M2M3NGEyOTAxNWM2NGMyMGQ4MzE2YTIxMTlmMzMxOTExZGYxMzA0NTQ0OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZiMDQ0OTE0Njk3MjJlODM2M2E5NGU0MDQ0NTM4ZTAxM2EyYTIxN2UzNmIxZTU2OGJhNjBhY2I3YjRjOGYyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzRmYjE3Mjg1MzUwZWU4MDQ2MGY3ODlhMWIxM2QyMDc3YzljMDM5ODNkNmRlNjI0NmUwNzZkYmY5NzFhN2UyZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZThkMGQ2ZmRmYjgwNDhiNjgyMjNkODg3MmQ2ODBjYmUyZTgwMjVlZDFhZDMzNjc4YzhhOGZmZjk5ZjU1Y2VhNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_289aa356fe024d9ea974568c7277b375",
+      "statement": "article_engagement (added by V7__engagement.sql, no backfill) stores one sticky row per (article_id, kind) with an ON DELETE CASCADE foreign key to article, so deleting an article or a feed whose articles cascade-delete removes its engagement rows automatically.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/db/migration/V7__engagement.sql#L1-L8",
+          "version": "repo-lines-v1:sha256:cfc490468b7ec8f559b468e11e5b262ab7848aa0fb19f818e54df4327e66ff00:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTAwZjE3MjliZWNjMWExZjM4ODRkMTA4OTJkNWRlNTA1NTRkY2NmOTZiOTcxNjY5YzJmZjhlODEyMTc1ZTVkMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzlhMGIzOGIxMmY4OTBlNzFiZGY4NmNiOTljZjk5ZjgxYzA1MjE2ZTM4ZmI1ZDQzZDY3OGNmMTk4YTBjZmI4NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzRjYzJlOThhOThkZTk3N2U4OWI4MjM5MGViNzY2OGQ1NTg5MDYxNWQyMTliNzhjMmE1ODYwMDVhNDAwZGFhZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c0eba10f3abb41648774aa2118932990",
+      "statement": "Engagement is sticky and survives actions that look like its opposite: unstarring, removing an article from a board, and deleting a board all leave existing article_engagement rows untouched; ArticleService.forgetEngagement is explicitly not an undo of the save, so stars, board memberships, and the thumbs vote are unaffected by it.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L61-L68",
+          "version": "repo-lines-v1:sha256:3197f3a2a13d40c0207f9de3c40c06e665bdf56fc1957cac10c19d5b729c6841:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTI5YTE2MmVlZDQ2ZDM0MzkxMjkwYmYyYzQ2ZTZlZjI5NTNiZjEzYjdlODE1NTQ4MjcyMmI3MTMwMDdjMjFiNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTdjYWU4N2ZkOTE0M2ZkNWI0NDIxNzgxOWU4ZmJiOGFjNWNkMGFkMzJjNGUyOTc1NmVjYjI0MTAxZjFmYjEyNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzgwYTJjODFlYzUxOGVhNDFlYzNiODQzNDk4Y2FkNDNiOTkyNDE0MzAyYzdmM2Y4ODIwYzJlYWVhNGZiNmVlNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2I3ZmI0YTEwNTk5NjgwZDNiYjM4ODMzYTdiOWM5MmUwYjdkMzZjMmE0OGZjY2M0YTI1N2NmNTU0MTNjNzExMSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/BoardService.java#L79-L82",
+          "version": "repo-lines-v1:sha256:d51779537730e186081c75d9edff5c881526ae7efee08ee232840cb81d01b14a:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDlhYzk2NDFkZDRiYmQyZDJhOTNjOThlZjU0ZGNhMGUyYTE5MjZiZTE1Yzg4Y2E3ZmRjYjkzY2NhNjU1ZmUzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjY4MDVlY2UxNDRiYzQ0NmU3NDJiNGIxNzllNDkyMGY0NDhkZDNlYjc4YmYwYzJkYTU1NmRhYzc2M2RmZmYyYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjIsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzc5NGQwMmE4MTIxOTQ0ZDE3NmQyNjVlOWJiOWNjNTlmNmFiODkwYmNhZGY4YWVmZGViZGJiYjRmMmVhODQ0NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4fdf81319c9a426f9d3cfa15b2a1b1fe",
+      "statement": "DELETE /api/articles/{id}/engagement (ArticleService.forgetEngagement -> ArticleEngagementStore.deleteAll) is the only deliberate removal path for engagement: it deletes every recorded kind for the article at once, with no per-kind forget, no tombstone, so a later action simply records again from scratch; the UI entry point is the Forget button in ScoreRow's Engaged line.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/ScoreRow.tsx#L59-L78",
+          "version": "repo-lines-v1:sha256:9b50ca8a2795e9bf097035e53525e65261546eb5e94c2c474e551156f12efddc:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5ZGU2YmNkNjUyNjFmZGEyZTBiNTA3OWNhODE1NGE1MWNlNmUyY2JiNjY2ZDZhMDk1ZjQ2NzQ3NzlkNGQ4OTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhNTI4YWUxMWRhODQ5NzMyOWNkYWYwZTlkNDQzNTRhZTA2M2M0NWYxMTVkNWNhMzA5MmVjODBiOWJlODQxYjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNjMjEyNDU2NGI2MTRmYmRkMGZkMzhmZDgyNWFkMDUyYTQyNWM1YmUxY2FiZDQxZjg5Mzg4OTVjOTdkYTgwOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxYTY0ZjBkMjE2MDVkZTYzY2YwZTdmMmE1ZWVlNjAxZjBjNjI5MmFkOTdjZjVlOWY0YzMzZTNiNTMxMjgzMDUifQ"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useEngagement.ts#L35-L52",
+          "version": "repo-lines-v1:sha256:8d5f4a21ea9624f530e59a87786b043a723d5ae1254d0594a44802e80a740bb1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0MWNkNjBhMmZmMmY1MTc4YTBhNGQ2MGZjMTViZDM3NDA1Njg5YzcyYTA0ZjllMjhhYTA1MDczNTljNDA0NTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3ZjZiNDIzNDkzNWNkY2Y3M2YzM2MxODQ2NDIxMzVjNTg2ODc3ZGMwMTBlMDhlYmI0NGMyZWM2MTcxODRlNTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmZjYwMzI5Nzg4ZWViZTdlM2UwNjQyNDgwZDRkNmIwNmRmODlmNjc2ZGI3YTg4OTczM2EzMzk0ODhlOTQwYTQifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java#L57-L63",
+          "version": "repo-lines-v1:sha256:0bdaf5a762a606a9a3918decdc5d3422b3386b5ae5d15ed01ee0ca1a7102fa1d:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTllOTYyMDU1YTM1YWIxYmY0MDQxYzlkYzdmOGQ4NzExNmI4OWQwZWMxYTgxMmIyZWM2ZjExNzRkYTkwZmNiYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L61-L68",
+          "version": "repo-lines-v1:sha256:3197f3a2a13d40c0207f9de3c40c06e665bdf56fc1957cac10c19d5b729c6841:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTI5YTE2MmVlZDQ2ZDM0MzkxMjkwYmYyYzQ2ZTZlZjI5NTNiZjEzYjdlODE1NTQ4MjcyMmI3MTMwMDdjMjFiNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTdjYWU4N2ZkOTE0M2ZkNWI0NDIxNzgxOWU4ZmJiOGFjNWNkMGFkMzJjNGUyOTc1NmVjYjI0MTAxZjFmYjEyNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzgwYTJjODFlYzUxOGVhNDFlYzNiODQzNDk4Y2FkNDNiOTkyNDE0MzAyYzdmM2Y4ODIwYzJlYWVhNGZiNmVlNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2I3ZmI0YTEwNTk5NjgwZDNiYjM4ODMzYTdiOWM5MmUwYjdkMzZjMmE0OGZjY2M0YTI1N2NmNTU0MTNjNzExMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_afb2550f27a94d7fbf468fb85c834172",
+      "statement": "findByIdWithBreakdown (backing GET /api/articles/{id} and feedback responses) attaches engagement kinds via ArticleEngagementStore.kinds sorted into enum declaration order, while list endpoints never carry engagement, mirroring how lists never carry the thumbs vote.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java#L47-L55",
+          "version": "repo-lines-v1:sha256:ac0c15106a9f509f923527bb8dd656561fa7a2b6ae3f15d3a7638e38d4886439:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWY2MjQ5OGE3ZjE0YmU1YjRkMjYwZmM4MmE2MjFmODAwNjU3YTIwMWQyNDAyZjBjMDNhY2ZmYjA5ZDI0OGU4OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTgyOTg2MTNiOTcxZmViODA5YjY4NmFlODU2NDk3M2M3OWY0Mzc0NTNjYTA5NTFlZmIwYTQ1OGQ5NzA2ZDUzZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTk5YmRlZmVlYWNhNjM0MGUwMjkwZGM4NmU4ODljODlkNWUxODlhYTViYTQ0YjU4NWIzYjcwNzM0ZjRhNjJkOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWVhOGFkN2VkNDJiMThlMDVlM2ExOWE4NGIwMDY1ZGU0MTUxMDcwYjBmMTUxY2RjMGFkMWZmZjZhZjFjMDllMiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L31-L47",
+          "version": "repo-lines-v1:sha256:d0d24398beac6cf90500d67424f25564fe79755b78ace0c836b1349687f0d0af:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlNDYyYmQ4NWVhMzUyMjgyMmE5YWQzZWIyNDA5OWIwMzJhMWI2MjdiZWNmZDdjNTgzMWU5OTI3ZDRiYWM0MGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1ZDVlYjk4MmNjNjAwNDAzY2FkNmQ2YTQ3MDU4MDIyZGUwZjUyMTRkODBkNzNjNzJjM2VmYWFkYzI2NGNhMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3NDI4ZTYyZTkxNmYxOTk1ZTgzY2VhMmYwNTBmNDUzOGY0NmRkZDJkYmFhOWJkZjE1YzZhOTkzYmNkMDVhMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_baa46b76799c4c7c84f8e6d973f4d8c5",
+      "statement": "afterEngagement(qc, id, onPriority) in hooks/engagementReaction.ts is the shared post-engagement reaction, called by every engagement action (open, star, board add, Raindrop save, Forget) and shares its refresh set, invalidateAfterLearnedChange, with the thumbs-vote hook useVoteFeedback.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/engagementReaction.ts#L1-L26",
+          "version": "repo-lines-v1:sha256:d90d01a9f0a8b8427accd35408db3c67fdb738ff56d447a3b38dcce00a7fe83c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkNjNkOWU1NzU2NjEyNDVjYjUzYjk1ZWJkMjNmYzBiMTFmZmFlYTMxNjgxNmYwY2Y2NjUyMDhiNTBhNWI4NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTI5ZTkxZTBmOTljM2U4MjVkZTY5YjQzNWZiNjQ4NGQxYjBhMWRmMmY0NjU2MWFiZjFhMjlmMDQxODhiODgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_edd01ccd8d3f4549bec382ec0ed0e9c7",
+      "statement": "invalidateAfterLearnedChange invalidates ['interest','learned'], ['interest','suggestions'] and ['articles'] unconditionally, and when the acted-on article is not open on the Priority view also invalidates every other loaded ['article', otherId] query; it never invalidates ['priority'] itself.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/engagementReaction.ts#L17-L25",
+          "version": "repo-lines-v1:sha256:bddbe71384221335cdd75498a0ebbd9dfb779f001dac0e9bf1de7d85f0424834:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcyYTQyOTM4MmIyZTE0NzE4ZTBlMzdiMDU3MGE4YTE3MDI5OTFmY2Q4NDk4Y2Q4NDA2MGE4YmY0ZjA1MDE3YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjQ3NWU5NGE5MDRhYzQ5YjMxNTRkNDY3MmE2NmU4NjI5Yjg2ZGFjNzRlM2UyOTM3YmU2OTI3YWUzZGExMWM1MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODBkYjMzMWRkYTNhN2M2M2ZlMDEzMjg4NGFjNTRiOTBmMzMwZTAyZTk4N2Q2NjBlNGE2ZDkxYmI0ZTg2MmU4ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmI1ODBlOTY0ZjgzYTQ3M2Y0M2Q0NDM4NDYyOTQ5ZDY4YjU2MDBmZGE3ODdmMTYzNzQ1ZDAwZGU4OWNiZjM2YSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b6bae06eaa704118b9a9ed2824e39281",
+      "statement": "afterEngagement refetches the engaged article by id with staleTime 0 and retry false (one GET per action) because the client's default staleness would otherwise return the pre-engagement article, and this refetch is what updates the reading pane's badge, Why N breakdown, and ScoreRow's Engaged line.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/engagementReaction.ts#L59-L66",
+          "version": "repo-lines-v1:sha256:b69cbd944d4e5fd12d27f48642b9fa860fb02bff2b65a1504e1bc66b98a89eff:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcyYTQyOTM4MmIyZTE0NzE4ZTBlMzdiMDU3MGE4YTE3MDI5OTFmY2Q4NDk4Y2Q4NDA2MGE4YmY0ZjA1MDE3YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTYzMTdkNGFmZDk5NGJkY2I3YzQ5NmE0MmI1OTI1YmNmMjk3NGIwOGRlYjZmOGU0NzliYjVkNzJmMDVmNmFlNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWQzYTk3ZWNjNWI0ZDE4MTdjN2M0M2M5NTM5NDllYTU5MzllNzY1OGQ1OTJkNjRlNTE2MWNhYzg4NDAxMGFhZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDMwNDk1NTU5ZWZmM2ExMjcxZTRkMzhiZmJhNzNjZDIzMGMwNzYyYTE1NGI2NDkyM2FiNGQ1MzM5MDc1YTAyMiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_604b8f41bb8c442c8399975950ed24df",
+      "statement": "On the Priority view, afterEngagement skips its score comparison while a vote mutation on the same article is pending (the vote's own response patches the row instead); otherwise it compares the refetched interestScore to the loaded Priority row's score and, if different, patches the row in place via patchPriorityArticle and sets rankingChanged to light the Ranking changed hint, never invalidating or refetching the Priority list query itself.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/engagementReaction.ts#L67-L82",
+          "version": "repo-lines-v1:sha256:635d4c24c8d206c3847811ad8f39477702f13fa31a994848a597284457f6b916:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxYjBkMzdiNGYyYWUzOTEyNjk2NDI4OTQ2ODM4ODFiZTZkODI1ZjA1MDFjYThkNjVjM2JkYzRiODY3NGI4MWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjMDRhOWZlNDFjYmJmNjQxNzBlY2U4MzVjMzAxZTY4MjBkODQwMDI4OGY2ZDJmN2RiNzg4NGE2ZjkzYjllZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNmQ3Y2Q2NjM1Y2NlNzIwMzQyODY2ZDM3NGVjMWFlNmM4Mjg1NGIwOTZkNGJlMzY2Zjk5NWZlMTkzMmMxYTEifQ"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/hooks/usePriorityArticles.ts#L93-L111",
+          "version": "repo-lines-v1:sha256:a4122f1e54809e34da2f0fe4e63d667d2497438bd6db88bb3a5dbdb7091337ce:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4NTA4ZmYxMWMyYjY0OGU5NTAzNzFkZDgyMTExYTVjNzU2YjIyODIxNTRkM2RjZmJjODllYTFlNWQ3ZWNjMjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMzUyNTg5YzM0ZDNjNjA2ODU5MzFiNmVjYzRkNTA5OTFhN2M1NmM4ZmJhMjg5NDExNDY1NzY5MDI3MmNhYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc0MjBlMDc4OTc5NDdjMTExMWUxY2MwNjk3ZTM5ZDA0Yjg1ZDA3NTEwZmFjZDc2MGQwM2RmOTc4Zjg1ZTk2M2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f294dbad249a49589e3721676a272fdb",
+      "statement": "afterEngagement never rejects: it swallows any error from the article refetch silently with no toast, since the triggering action already succeeded and callers void the call rather than returning it from onSuccess, to avoid keeping a mutation pending until the background refetch finishes.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/engagementReaction.ts#L59-L85",
+          "version": "repo-lines-v1:sha256:c0b00c11feb0a2d5a297937160474f091220cf1765115cb614965871099b7422:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkM2E5N2VjYzViNGQxODE3YzdjNDNjOTUzOTQ5ZWE1OTM5ZTc2NThkNTkyZDY0ZTUxNjFjYWM4ODQwMTBhYWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useEngagement.ts#L44-L57",
+          "version": "repo-lines-v1:sha256:5169241463b5dbee4948b9d764fc3efec362c9f3c33baabd654f2f192fa574f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmZGJkY2JmMzAzZGM3NzYyYjExYzdhYWZmYTI5MDlmYTliNjhiNmVkNTI5MGM1NjY2MTdmMDdkNGRkMzRiYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMzUyNTg5YzM0ZDNjNjA2ODU5MzFiNmVjYzRkNTA5OTFhN2M1NmM4ZmJhMjg5NDExNDY1NzY5MDI3MmNhYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3YzBjYTY0MThmOGE5YzZmZjI3OWIzYWVjODI2ZTI1MzVjNDVjNjJlMWI3OGIwNzI2MDRiOGFjNjJiNzliMmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_22d1f086b97441de9f9d0c08ea8d2e40",
+      "statement": "afterEngagement is never triggered for unstarring, board removal, or read/unread toggles; those actions patch the Priority row directly without going through the shared engagement reaction, consistent with none of them being recorded as engagement on the backend.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useEngagement.ts#L1-L58",
+          "version": "repo-lines-v1:sha256:992a2be6ead0d01ecb53fd35af59acbbd4895fe188549ac2de50fee332a4f05d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjYmUzMzQ1ODFhNDk4OTdmNTY4MGJkMTMyZWQ5NWMyOGUwOTY3YWE3NGZmNTdhYmI5NDgxOTE3ZjdmZGVlNzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/BoardService.java#L79-L82",
+          "version": "repo-lines-v1:sha256:d51779537730e186081c75d9edff5c881526ae7efee08ee232840cb81d01b14a:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDlhYzk2NDFkZDRiYmQyZDJhOTNjOThlZjU0ZGNhMGUyYTE5MjZiZTE1Yzg4Y2E3ZmRjYjkzY2NhNjU1ZmUzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjY4MDVlY2UxNDRiYzQ0NmU3NDJiNGIxNzllNDkyMGY0NDhkZDNlYjc4YmYwYzJkYTU1NmRhYzc2M2RmZmYyYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjIsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzc5NGQwMmE4MTIxOTQ0ZDE3NmQyNjVlOWJiOWNjNTlmNmFiODkwYmNhZGY4YWVmZGViZGJiYjRmMmVhODQ0NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_609251059129482dbac186b3cb453c30",
+      "statement": "In-body links, Copy Link, text selection, reader view, auto-mark-read, bulk mark-read, OPML import, and feed polling are deliberately not captured as engagement; only the four explicit actions (open original via its dedicated entry points, star, board add, Raindrop save) ever reach ArticleEngagementStore.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useEngagement.ts#L8-L10",
+          "version": "repo-lines-v1:sha256:de6d24b244a40c7419cdd30a293ee099e66abd58b11f07de78d9cd011ac68658:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDQyMDE5NWMxMDE0NzgxZDIxNzNmZDkxNDc0OTdiY2Y0NWJiNzRhOTkyNTU3ZWI0NjE2YjljNmZiZDQyNmVmZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYThkNzk0MTEzM2I0NTZlYTc5MWZlNGVkNWY5MjM1OWM1MGM1ZWYyMDFmNzlhZGM3MTVjZGFjM2I5OWMwMjY3MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzNmYzllYWJlNGI2YjNlNDlkMDAwMDA1OTBiZDMwZmY3NjA5OGRlNGQ5YmJjZjQzNmYxNDJlYWM5YjZlMjYyMCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L91-L100",
+          "version": "repo-lines-v1:sha256:b19eb4d9dd23c5dd8ab51e34fecdba7eb3e47dc9e387ce5196e6e6ebdd03b196:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMGI5YzEwNGVmNmI1MmQyYjA4ZjVjZTFlNmE2ZjdjMjViOTZhNzU0MjMyZmFjY2YxZmQ4ZDQzNjU2MWM3YzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlOWQ3ZTc0NzkyY2QxZDEzNWM5OWEyMzdhZmJhODFjMzk4MjI1YWM2NmU0YjdlNzMxOGFkYTg5ZmNiMDBiY2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3YmEzMGVmZjk2ODNlMGNlNGMxOTIxMmRkNTNkYjZiY2JkY2VlZTkwODVmMmE0NDBjNGExN2Y1YzBlMWUxMGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhMzE5ZTQwNmEwYjRjNzI4YjkwNzNhOTQ3NmRkYjYyZGI2ZjFiMzYwZmYwMmVmYTFlMjhhODhmNWI1ZTIzNDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_921175c9a1f64fc5969806ed87ba2eb7",
+      "statement": "InterestScoreQueries' learned-weight CTE reads article_engagement as a capped, thumbs-overridable signal: it collapses each article to one MAX strength (a save outweighs an open), excludes any article that has a thumbs vote entirely, and caps the aggregated per-topic contribution before blending it into the effective topic weight.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java#L96-L128",
+          "version": "repo-lines-v1:sha256:0cd04da275cf352bc9c72b0630d04e2d3bc3a9284b37eb0cb3bfec443259e00b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzOGQ2NzExOWE3ZDZhOWQ5MDk1ZGVlMDNiNDRlZjA1NTI5YTA2OGQ4NmVmNWU0ODUzMDFmNTFlYjk1ZmNhN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3N2RjOTAxMWViZDg1M2UxNDU2NjkyNTI1NmVlYTMwYjM2NzA1OWNhY2Q4ZDUyZTk5NzRjZTljZjk2M2Q2NzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5NTc5NzAzN2FlYzhjNDFjMTMwN2Y2N2MzMjMxNzVhZGRmNDczMzA4ODIxZDE0MTQyYzI5OTdlMGYwYzVjZGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2MGI2ZjZlMzViMWViY2M3NTM4OGJkYzZhZmFhYzNhMWE2MmJjZTQ3OWM5NGRkNmFiM2Y2YmQ5M2M0MjVjNzMifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-08T14:57:22.664Z"
+  }
+}

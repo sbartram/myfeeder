@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c1667b7af00333aee6e14f616b4b27b6be869cb895f27022af8a208a9cdbaca3",
+  "claims": [
+    {
+      "id": "claim_fb2fad83e59449e5973fa247ab8cb864",
+      "statement": "JevApiClientImpl.judge() applies @CircuitBreaker(name=\"jev\") and @Retry(name=\"jev\") with no fallbackMethod, so typed TypeSafe SDK exceptions and Resilience4j's CallNotPermittedException propagate out of judge() unchanged instead of being wrapped or swallowed.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L45-L49",
+          "version": "repo-lines-v1:sha256:4e099fa71de1155497a1c6fd7eaf2e0788d0ea1df8129bf7e0e7053c4e48a284:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWRjMmIzMTFhYmU4NzU3MmU4YTdjYzBkOTk2YTY1ODQ0MDc2ZTUyMzJkMjFiN2E4NTQ3NWY5YjQwNTViNzQ5MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTc3NDA0M2ZmZDQ0MDMzMTJhMGQ4N2RlOTVhZjRkM2ZkOTZlYmYwN2FiNDVjNzkwMDYyNWZhNmIwNzZhNDFhZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWRlZmY5M2ZiZmZlOGMyNjc4ZWEyOTZlY2U1N2MxMTkwN2ZlYzg4MzA1NDEyNzcyOWQ3OTI2N2RmNjI2ZjdiOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ce3a357118344fa1a7f0a7b8a0394c51",
+      "statement": "JevApiClientImpl.isConfigured() carries no resilience annotations, so a configuration check never consumes a jev circuit breaker call slot or affects its metrics; requireConfigured() throws JevNotConfiguredException before the annotated judge() call is entered.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L33-L41",
+          "version": "repo-lines-v1:sha256:f3fcbca0dd543e97ff0d72dea7a0223a3d604c0620f4fb5b9b78c0e8a1cfffbd:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWYzY2Q0OTg3NDAyYmFmMzUxNTk4OTJjY2NiMTZiZDU3MjNhMjhjZDllOTFmNTU0NGI1MjAzMDk3NDIwZGQ5OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGNjNzA3MDg2N2U5YTc2YWQ0MTBmMWU4OTFjOTgyNDhlNjI3MTcyYWFlY2JiOGExZGUwZTQyZWI1ZDZjNjFiNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTc3NDA0M2ZmZDQ0MDMzMTJhMGQ4N2RlOTVhZjRkM2ZkOTZlYmYwN2FiNDVjNzkwMDYyNWZhNmIwNzZhNDFhZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6e073e100a5a41cc9180594b59f83f69",
+      "statement": "judge() asserts every requested question is a Noul or Score (never Choice) before calling client.systemOne, so an unsupported question type fails before the billed HTTP call; the resulting IllegalArgumentException is listed in the jev circuit breaker's ignore-exceptions so it never counts as a breaker failure.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L54-L57",
+          "version": "repo-lines-v1:sha256:9ca0d1e0a0a7836aab10fb7a9fb7845305637b029371bea0e6e071437bf8769f:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTBjMzI5MGEyZjZkNjZlNmRiMmQwNTdiYTliZmMzNzMxYThhMGZkOTgzM2ZiNjAzMGJmNGQwYTM5MjBkNGNkZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWMzYjU4ZmJkMThhNGVlN2QwMTE1ZGU4MGY5N2Q1NTQ0OTQyYmQ3Mjk0ODk4MDZlMTU0NDdjYzZjZjRiNjMzNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTJjNjAyYjE0ZTRhYzlmZTdiMmE4MjhkNjY5MWEyYWVkMjA1OTM5OGU0YjljYTRjNDNkNGEzMDNlYjY2MjI0ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzlmNGRlMTIyNzhkZjQxN2JjY2VjMWY0MGMwY2UzZWE3NTEzZDBlNjVhODY5NTAyNTNjOTQwYzMwZTMxMzNmNyJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L84-L91",
+          "version": "repo-lines-v1:sha256:5cecffed15e6d9f08ced5a6f1b5caeedd237cc51b09e34ab62f2370637ebfc8b:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWVmOTAwZjJhZmE2OTU4MTgyNTZiY2U5ZjcwY2Y1YmVhMDIyNTBhOGY3ZjhhYzcwZGE0Y2VjODc3YmI2NmMwOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDhhMDVkM2Q0ODNiZWZkZTE1ZTE2MDMzMmY1YmNiMDA5YzQ2ZTBiYjhhNDNiMzhiOWIwY2JhNWFhOWI4OThiMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOThiMmUzOGU5NDFiMjdjMmVmNzY5NjljOWM5OTQwMTI4NDYyMzViMDk0MThjYjc4ZTZmMGQwNjAxNjE0OTRjZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2I5NTg0Y2M2MmE1NjVhODA3MjdhMmIxMTE3MjY3YzYyNTJhNGYyY2JkMmVhZTBhYTc3ODA1YzE2ZjhkODBjOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_0a784fdcaf584b2d94ba842fe79cc500",
+      "statement": "judge() catches TypeSafeAuthenticationException and TypeSafePermissionDeniedException, logs only the HTTP status and requestId (never the exception message or response body, which can echo request content), and rethrows the exception unchanged.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L65-L70",
+          "version": "repo-lines-v1:sha256:782148c4232139378de0780b91c54f6c4e5b5ec3e98b11ffe7e2961753bf5aed:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmYwOTA5NmQ4OTM5Y2ViOTYwMTg4NGEyNjYyYjFkMGQ2ODRjY2MyYzRiMzcxNTEyODhmYWIxZGE0OTA1ZGE2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZiMDQ0OTE0Njk3MjJlODM2M2E5NGU0MDQ0NTM4ZTAxM2EyYTIxN2UzNmIxZTU2OGJhNjBhY2I3YjRjOGYyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODg2ZWJmMGJlMGYxNzNhYWI4ODc5YjJjNDBkODRlOGE3MTk4YWMwMTZlYTVkMjIxZDk4YjMwZTU5NWEwYTJlZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDAwMzJkYjQwNGFlNzE4M2ZiM2EzMThhZDgwZWU3MDgyMDhkM2UzNjc0NDc2YTUxZmRhZDIxZjNlN2M4NmJhNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_14a842c438224311848e339998a15a3c",
+      "statement": "judge() defensively copies the caller's state map into a new LinkedHashMap preserving order and strips null values before sending it to Jev, never mutating the caller's original map.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L59-L60",
+          "version": "repo-lines-v1:sha256:750179bac0574e37ad4ad5dde50a70e08a81f4c5f8d4944ddfb3d2446272fa35:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDdiNzBhZTA5NzM1NWFmZDc1ZGQwZDFhZDFhZmZjOTQzNGM1ZWUzMDFiY2FmNzk3NTgwODdjYTRjYjhhMmZjMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2YyNTgyNWM0Yzc2YWQ0NDVmYzk4ODEwNWQxYjlkMTQ2MWRiZjU4MDQxOWVlOGQyMzcyZjAzODkxNWVlMzQxNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjRkNThhZDYwOWFkMGMwYmY3NTBlNjcyNTZkNTMxZWE0ODdlMTJlMDIwNzA0MGJiYTY3MzJmODUwNjJiMjJkMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzI4NzY3NWRlMDgwNTQwOGIyMDhiNGM0ZTFmOGI4Mzc2ZTUxMWRhMjQ2NWU2NmM2NDFmMDYzMTgzOTk3Mzc2OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_433c59217dab4e29be0aa99930e1d45e",
+      "statement": "TypeSafeConfig defines the TypeSafeClient bean itself so Spring's @ConditionalOnMissingBean causes the spring-ai-typesafe starter's own TypeSafeClient bean (which asserts a non-blank api-key and would crash startup) to back off; a missing/blank MYFEEDER_TYPESAFE_API_KEY only disables Jev calls, never the app.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L21-L36",
+          "version": "repo-lines-v1:sha256:904fbac4529801274469f15415d933d6c878c77f23e23e06497b99841ba9391a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhYzAyMGQ0ZTY0NDMzZDkwZDAwYjJkNDhiYzAzNzIxNzI2ZDMyZTc2MWQ2OWU2MTBkZTczODhkOWMxN2Y4NDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5YjkyNWM5NDJmMDJkMzI5ZTljYWQwOTQyYzNiNzg3ZDkwNDA2YjgzZDNlOWU2MWU2ZGIyNTExNWNhNzRmNDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4NWE1Yzk2ZmZmMTc3Nzg5NWM2MWE5ZjRkNWE2NmM4NTc2YzAzYmFhNjZhY2JjM2M2OGY2YzU2MTk2ZTFjNmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIyMDNkOTAwODFhY2ZmMGM5OGNhMGM1MWIzMjhiYjExZjM0OTE1NmEzNjc5MmM5Y2Y5YzYxYjkyZDNmOGVkOTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a7d60b4f357440b1a286ee3a0b83d12e",
+      "statement": "TypeSafeConfig.typeSafeClient logs a fixed non-sensitive line when the api-key is blank and still builds a usable client; the key is supplied only via a Supplier overload (never the String overload, which asserts non-blank text) and the key value is never logged.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L41-L51",
+          "version": "repo-lines-v1:sha256:7408d3b557a422539c450681c1c2e2e98f5e9018f459725d7b5ab8030c382fec:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhZmIyNmUyMjhmMDA5NjM5NGNhZGEwZmFmMjQ2NDQ4NTljOWE3Njk4ZWI5ZGJlOWVlYTQwY2U3ZDNjYzBkYTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViNzUwYzdkYzg1MGViNjI1NGRiYjI4ODBlYzE4NzJjYTEzYWY0MTQwMjIwMTM1NjhlNzQxYmM1YTRmZTY2YjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQyMWE0ZmY5OGE3MTNmZjQ3MDM5ZTUwZGJhMTM3OWM5ZGFmYWNkZGM1YzgwZDM2OWYxOTRhMjQ3NTUxMGNmMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk2NWUyZTUxYjk4ZTdhNjgwZTg5ZTExNGYxOGFhYjIxNmY4YjQxM2JjYzcwOGFmMWJmZGZjMDRlYzk5NzcxYTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3446a3fc6d0f4676abdf36873f1bb285",
+      "statement": "TypeSafeConfig sets baseUrl explicitly from spring.ai.typesafe configuration so the TypeSafe SDK never falls back to its own TYPESAFE_* environment variables.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L48-L53",
+          "version": "repo-lines-v1:sha256:ccfb32559c4e88dd741512302a886db678aa359542cdd188cb4b679705e53a18:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZiMDQ0OTE0Njk3MjJlODM2M2E5NGU0MDQ0NTM4ZTAxM2EyYTIxN2UzNmIxZTU2OGJhNjBhY2I3YjRjOGYyZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTgyYmM1OWM5YzdkNjNjMTFmNDQwMTRjYjJkNTIxNTdmYmUwOGVkYmZhOTdmMmNlYjc3OGIyODE4MjdmZTYzNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTQ3ZDViNjY2NTQ0MTQ5ZWYzYzkyMGFiZmVjMzc3YzlhNDIzMzExOGUyZDRjOWM4ZmEzMWM0NGQ0MmQ2MzUxNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDhjNmFkZWRkOWM3NTJmZGRiZDA0YjJkYWVlNjEzZmI4ZmExZGM2MjE3YWQ2NTQ2YjYxY2I1OTI2NDYxZGE3MyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_71d861454ac94ad1ababd76584bacff2",
+      "statement": "TypeSafeConfig builds a Jev-only ReactorClientHttpRequestFactory with connect timeout 5s (JEV_CONNECT_TIMEOUT) and read timeout spring.ai.typesafe.timeout (30s), installed on a clone() of the auto-configured RestClient.Builder so the User-Agent customizer is preserved but the transport/timeouts are never reused for feed fetches or any other outbound call.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L37-L53",
+          "version": "repo-lines-v1:sha256:2494a7beadbc6913226d3f0ff7285d93ed6b97039579d47bc422a2225c974760:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViMzI1Yjk2OWE5NmQ5NmExYjBmMjU0NTRjM2QwNWUxODY3MjJhMGQ5ZGEwYjlkNGQ0M2U2MWI3ZmMyNTgwMzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4MmJjNTljOWM3ZDYzYzExZjQ0MDE0Y2IyZDUyMTU3ZmJlMDhlZGJmYTk3ZjJjZWI3NzhiMjgxODI3ZmU2MzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVjNmQ2NDIwYWYxNWE3OTg1Njk0M2I0ZWFhY2U1NzkxZDM3OTZhYzRmYWMyOTE0OGE4NmZiZjFmNjY1YjBmZWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4YzZhZGVkZDljNzUyZmRkYmQwNGIyZGFlZTYxM2ZiOGZhMWRjNjIxN2FkNjU0NmI2MWNiNTkyNjQ2MWRhNzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_89f536d351384115b61326d6e470d377",
+      "statement": "The jevRetryInterval RetryConfigCustomizer reads the base wait-duration via Binder (not @Value Duration) and installs an IntervalBiFunction: a TypeSafeRateLimitException with a non-null retryAfterMs waits that value clamped to [0, 10000ms] (MAX_RETRY_AFTER_MS); otherwise it backs off exponentially from the base wait-duration (1s, then 2s).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java#L58-L80",
+          "version": "repo-lines-v1:sha256:87e53e3b6760d0b42f133b5a1566a0a2ec5f0c1b9c60dfa36f8eee7e9351398a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2MTQwNmM5Yzc1ZTkyNDI2YTIyMjFmYjI0NGMyN2I5YmU5NzdhMDZlN2RlMmQ5ZmNhNTVhMzE2M2Q5NTA5MDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFkZTk5OTgyNGRlYmQ1NmM2MzdiZTVhZjVmNjJjOTVjOThkNDIyOWI1MGRhZDkxZTVlOTY1NGZhYWY0NjdiMTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI2ZWJkNzgyZGRkZGI1MmM4MTk1OTZkNTI0ZmE0NmM5MmMzMTk4YWExNjlkOTEwMWNhYmYzYTZiMjViMGVmOTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ee4b80327c64174945d39a459086c88",
+      "statement": "spring.ai.typesafe.retry.max-retries is set to 0 to disable the TypeSafe SDK's own built-in retry, making the Resilience4j 'jev' Retry instance the single retry layer for Jev calls.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L9-L19",
+          "version": "repo-lines-v1:sha256:33179c72292e35e03ca3c560040d8e4bfb3f5006870cbed17db0e74ef67a7674:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViZTJmOWE0MTQ0NGNlYjMwZmQ2ODM1NzA0NzJhMDdlNmVmZTY2ZTIwY2Q1NGY2M2ZmZTMyOWYwM2I3ODUxNDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0MjcxZjg4OWZhOTNkNDlmNGQzYzkzYzllNzhmOGVlZGJhOWJkMDU3MzQ5MTE4ZjU1MDI5ZDIxZDU4YWJlOGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhZDZlNTliMDgzYWQ3ZDNkZGM1NzA0MmNiMDBiMjA4NjFmYWM0ZWZjODY1MGY2YmZjZDM4NWQ1Zjk1MjY0MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4NTI3NTI4Njk2ZjYxMDc5ZWFjZWU4ZTc2Yzk0YWM4YTMzMWU4OGVmZGEzM2RlOTlhOGUzZmQ5YTU0NDljMDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7907faa932dc4f02b24ffb8688c823e3",
+      "statement": "The Resilience4j 'jev' retry instance uses max-attempts 3 and retries only TypeSafeRateLimitException (429), TypeSafeInternalServerException (5xx, including its TypeSafeOverloadedException subclass for 529), and TypeSafeApiConnectionException (including its TypeSafeApiTimeoutException subclass); it never retries 400, 422, 401, or 403 TypeSafe exceptions, and ignores JevNotConfiguredException.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L102-L112",
+          "version": "repo-lines-v1:sha256:fe7d38b7ab411f5f9b7d551259544441244585c7c749fe0c97d1ec3c453ca624:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwZGJlYzkzOWZjNDk3ZTUwNmU2NzU3N2YxNDU2NDNlMDQ0MGZjM2FlNjkyOWM1MDgxMDM4MjVkNzU5MWQ1OGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwYjQ3NTI5MzI4ZDllYThlZTdkNGUwYWU2ZWQyMzM4OTQ4ODJjYTVjZjJkZDUwMjQwOWMwNTZhNjlmYTQ0ODciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzODE0NTg1NWRhNmQ4MzAwOWZiOThmNjliOTZmNDc3M2NmNTIwMjMxNWRjYWQ3Njc5NjJkM2U4YjhkNTgyMzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9c958330da014f01a29bcd0655378773",
+      "statement": "The 'jev' circuit breaker uses a COUNT_BASED sliding window of 20 calls with a minimum of 10 calls, a 50% failure-rate and 50% slow-call-rate threshold with a 15s slow-call duration threshold, opens for 60s, and automatically transitions from OPEN to HALF_OPEN after that wait without needing an inbound call, so a paused scoring sweep resumes probing Jev on its own.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L74-L84",
+          "version": "repo-lines-v1:sha256:7a73ecba7fe6c91abcda6fa567f926507d965402bf374ee1c51256919a1003f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwZGJlYzkzOWZjNDk3ZTUwNmU2NzU3N2YxNDU2NDNlMDQ0MGZjM2FlNjkyOWM1MDgxMDM4MjVkNzU5MWQ1OGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlZjkwMGYyYWZhNjk1ODE4MjU2YmNlOWY3MGNmNWJlYTAyMjUwYThmN2Y4YWM3MGRhNGNlYzg3N2JiNjZjMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhMmM1NmU4M2QzMjFhMWM3MzIxMjk3OGYwYzBlMGEzMzZmNjBkZDVjZjY4NzZkODFlZmMyOWRkN2Y2ZDJhMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1OWI2NWU3Nzg1MzU4YTU0Yzc4MWQ1MDE3NTc3YmZjYjA0ZGEzYjMyMjI3ZDE5MmU3OWE0ZWQ4N2NjMTRiMTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a59c3bebcb104b8b8b481c4912d62fc1",
+      "statement": "The 'jev' circuit breaker's ignore-exceptions list covers JevNotConfiguredException, TypeSafeBadRequestException, TypeSafeUnprocessableEntityException, TypeSafeMissingAnswerException, TypeSafeAnswerTypeException, and IllegalArgumentException, but deliberately omits TypeSafeAuthenticationException (401) and TypeSafePermissionDeniedException (403), so a bad or revoked API key is recorded as a breaker failure and can open the breaker like a real outage.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L84-L91",
+          "version": "repo-lines-v1:sha256:5cecffed15e6d9f08ced5a6f1b5caeedd237cc51b09e34ab62f2370637ebfc8b:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWVmOTAwZjJhZmE2OTU4MTgyNTZiY2U5ZjcwY2Y1YmVhMDIyNTBhOGY3ZjhhYzcwZGE0Y2VjODc3YmI2NmMwOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDhhMDVkM2Q0ODNiZWZkZTE1ZTE2MDMzMmY1YmNiMDA5YzQ2ZTBiYjhhNDNiMzhiOWIwY2JhNWFhOWI4OThiMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOThiMmUzOGU5NDFiMjdjMmVmNzY5NjljOWM5OTQwMTI4NDYyMzViMDk0MThjYjc4ZTZmMGQwNjAxNjE0OTRjZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2I5NTg0Y2M2MmE1NjVhODA3MjdhMmIxMTE3MjY3YzYyNTJhNGYyY2JkMmVhZTBhYTc3ODA1YzE2ZjhkODBjOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_edf910580d5e4ad49e68aacf56bb199f",
+      "statement": "JevEventLogging subscribes to the same named 'jev' CircuitBreaker and Retry instances used by the @CircuitBreaker/@Retry annotations (get-or-create by name) and logs fixed-text lines for retry attempts, retries-exhausted, and breaker state transitions, carrying only the exception's simple class name and numeric counters, never a message, response body, or API key.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/JevEventLogging.java#L26-L46",
+          "version": "repo-lines-v1:sha256:b3312e4d0e4eb95f2eaff3bfec236267dbbd954a2861ad3a400dd80675984bc8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5YjkyNWM5NDJmMDJkMzI5ZTljYWQwOTQyYzNiNzg3ZDkwNDA2YjgzZDNlOWU2MWU2ZGIyNTExNWNhNzRmNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2Nzg2N2JlNmZkMTc3MGFlYjU4NTU1MDhmOTg1OWMzZDEzMTVlMDgwZGE5MjE3YTk0NTdkYzhkZDlkMGFmNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwMDdjZDg1OWRlMDdiOTMzZGExMWM0Y2Y1NzNhMGE0MWQ4NDUxOTMwNjQ0MzZmZTNjN2IxZGM1ZWM3YjVjZGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d28c95169af5479eb65a45420e951af3",
+      "statement": "The Jev event log lines are all greppable in production with the command kubectl -n myfeeder logs deploy/myfeeder | grep 'Jev ', which is the rollout evidence channel proving the breaker stayed CLOSED and that transient errors were absorbed by the retry layer.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/JevEventLogging.java#L10-L14",
+          "version": "repo-lines-v1:sha256:f9df8a9229be034e58fc7a9cb53157680a19563506c81ecd9f037f0ee126a5f9:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjIzY2I0YzEzZDY3NzU5ZDU0Zjc2NzFkNDQwMzQ5NzJkMDkwM2EzOWQwOGFmYWU3M2JiOTgxZWI5YWIwZGNmMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDY3N2U0ZTY3NjdmYTFlMTQ4OTViMTgyMDRiYTMzYzA4ZDBkNDU5NGI4OTY5OTNhNzA4ZWMwNGY5NGNkNzY0OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmE1ZTFlOTc1MTg2M2I0NDdiYjhhMzNmOTYwN2ZkNjYzMmQ5NGYxMjc3ZmJmZjM4OWJhYTA1YTQyNDBmNmFlZCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/JevEventLogging.java#L33-L42",
+          "version": "repo-lines-v1:sha256:1424c85af9d48fa77030a8e456d831e0bbea01ce7e3e6a7918648a0f481e93e9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5OTg4ZjZlNzU0NTdkYzVlZTYxYjMyNTZkNDgzNDk3MGQ0YmNjZjYyOTEwMDE4Nzk2YWU0NTlmOGQxMjNiMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MTdjMzQ2MTQwYTRhNTI5OWEyM2FkOTM3NWFhMWNlODEzNzE2MTk5ODEzOGVkY2FlZDg2ODU5M2Q2ODczNjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3ZGI3YWZhM2I1MGI4YmIzNjNiZDdlOGEzMGVlMzE2MzE1NjI5NDgxZWE1MDVjMjIxOWExNWI4NGJkMWM4NDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1MDJhZTZhOTE0NjIzNzQyNmE5MDI0Yjc0OGQwYjAyOWFhMjk0MmVkMDJjZmE1NTliNDFmZTdhZmYxMWM2MDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b91bce2a15d2470595612b4a064e6bc5",
+      "statement": "GlobalExceptionHandler maps JevNotConfiguredException to 503 with its own fixed message, CallNotPermittedException to 503 with fixed text 'Jev is temporarily unavailable', TypeSafeBadRequestException/TypeSafeUnprocessableEntityException to 422 with a status-only interpolated message, and any other TypeSafeException to a 503 catch-all with fixed text 'The Jev request failed. Try again later.' — never echoing the underlying TypeSafe exception message or response body.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/GlobalExceptionHandler.java#L68-L105",
+          "version": "repo-lines-v1:sha256:ed93848a9fe1933d218c063ae070ae776e658f0f3da20f2dd8a2fae3452d4d5d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwMjdiMjdjOTUwOGYyMjI4MzUzM2NiMmVmNDQ2NzA1N2Y0OTlhYTUzNjIwMGE3Y2UwNmE3NzdiYjJjNzJmMzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY0NzFlZGQ1ZTMwYzBlNTQ4YzIwMWU4ZGU2Zjc4NWFkMTQyMzlmYTAwMDEzNmY0NzQ0YTQwNjk3NmNkOWNkMGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-08T14:57:22.664Z"
+  }
+}

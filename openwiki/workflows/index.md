@@ -1,9 +1,5 @@
----
-type: Documentation Index
-title: "Workflows"
-description: "Files and subdirectories in Workflows."
----
-
 # Files
 
-- [Feed Lifecycle Workflow (Subscribe, Poll, Backoff, Retention)](feed-lifecycle.md) - Walks through how a feed is subscribed, scheduled, polled on a recurring basis with error backoff, kept in sync via application events on save/delete, and eventually has old article content cleared by the retention job. Key file for anyone changing polling, scheduling, or article ingestion behavior.
+- [Engagement Capture & Post-Engagement Reactions](engagement-capture.md) - Documents how myfeeder (v0.3.0) records user engagement with an article — open-original, star, board-add and Raindrop-save — as sticky, best-effort rows that never risk the triggering write, plus the shared frontend reaction contract that refreshes badges and the learned weights after each one.
+- [Feed Lifecycle Workflow (Subscribe, Poll, Backoff, Retention, Extraction)](feed-lifecycle.md) - Walks through how a feed is subscribed, scheduled, polled on a recurring basis with error backoff, kept in sync via application events on save/delete, eventually has old article content cleared by the retention job, and how the reader-view extraction path fetches and caches readable content on demand. Key page for anyone changing polling, scheduling, or ingestion behavior.
+- [Interest Scoring, Ranking & Gap Discovery](interest-scoring.md) - End-to-end documentation of the Jev-powered interest-scoring pipeline — eligibility, the dedicated scoring executor and sweep, score write rules, the learned-weight (thumbs + engagement) blend, Priority view ranking/cursor, and gap-discovery topic suggestions.

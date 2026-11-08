@@ -1,9 +1,28 @@
 ---
 type: Runbook
 title: myfeeder Operations Runbook
-description: Practical build, run, release, and deployment guidance for myfeeder — local dev commands, the Docker/Helm/k3s deployment pipeline, required secrets/env vars, and known infrastructure gotchas (Docker image-store bug, split-horizon DNS, buildpack memory caps) that have caused real incidents.
+description: Practical build, run, release, and deployment guidance for myfeeder — local dev commands, the Docker/Helm/k3s deployment pipeline, required secrets/env vars, the interest-scoring operational levers (throttling, calibration, emergency stop), and known infrastructure gotchas that have caused real incidents.
 resource: build.gradle.kts
-tags: [operations, deployment, docker, helm, kubernetes, runbook]
+tags: [operations, deployment, docker, helm, kubernetes, runbook, interest-scoring]
+verified:
+  - by: openwiki/0.9.0
+    at: 2026-11-08T14:57:22.664Z
+sources:
+  - id: openwiki-source-ef7629065e06131773b2ed05
+    resource: repo://.claude/skills/interest-calibration/SKILL.md
+  - id: openwiki-source-cea976cdcc9e10d604735b48
+    resource: repo://.planning/milestones/v0.3.0-phases/12-calibration-release/12-CALIBRATION.md
+  - id: openwiki-source-a2371d6362e5db4bc834ad03
+    resource: repo://CLAUDE.md
+  - id: openwiki-source-828d24ee9ccc8738afe410fb
+    resource: repo://deploy.sh
+  - id: openwiki-source-e5dcb45322e31f835560b357
+    resource: repo://helm/myfeeder/templates/app-deployment.yaml
+  - id: openwiki-source-61633941f0ae598bce52a4cb
+    resource: repo://helm/myfeeder/templates/app-secret.yaml
+  - id: openwiki-source-e543b55a9b54e13df8badad4
+    resource: repo://src/main/resources/application.yaml
+generated: { by: "openwiki/0.9.0", at: "2026-11-08T14:57:22.664Z" }
 ---
 
 # Operations Runbook
@@ -32,7 +51,7 @@ Docker must be running for both `./gradlew test` and `./gradlew bootRun`. `compo
 VERSION=$(./gradlew currentVersion -q | grep 'Project version' | awk '{print $NF}')
 docker build --provenance=false -t registry.bartram.org/bartram/myfeeder:$VERSION .
 docker push registry.bartram.org/bartram/myfeeder:$VERSION
-./deploy.sh $VERSION                    # needs MYFEEDER_PG_PASSWORD + MYFEEDER_ANTHROPIC_API_KEY (MYFEEDER_RAINDROP_API_TOKEN optional)
+./deploy.sh $VERSION                    # needs MYFEEDER_PG_PASSWORD + MYFEEDER_ANTHROPIC_API_KEY (MYFEEDER_RAINDROP_API_TOKEN, MYFEEDER_TYPESAFE_API_KEY optional)
 kubectl -n myfeeder rollout status deploy/myfeeder
 kubectl -n myfeeder logs deploy/myfeeder --tail=20
 ```
@@ -43,7 +62,47 @@ Ordering matters: `release` **before** `bootJar`, or the jar gets stamped `-SNAP
 - **Cluster**: k3s (`k3s-ansible` context), namespace `myfeeder`
 - **Helm chart**: `helm/myfeeder/` — deploys the app + Redis; Postgres is external at `pg.bartram.org`
 - **Image build**: Dockerfile-based (`eclipse-temurin:25-jre` runtime), not Paketo buildpacks — see the Docker 29 gotcha below for why. `docker build` only packages `build/libs/*.jar`; the jar must already contain the embedded frontend (built via `./gradlew clean bootJar`, which chains `npmBuild` → `processResources`).
-- **Secrets required for deploy**: `MYFEEDER_PG_PASSWORD`, `MYFEEDER_ANTHROPIC_API_KEY` (both required by `deploy.sh`), `MYFEEDER_RAINDROP_API_TOKEN` (optional — see [Raindrop Integration](../integrations/raindrop.md); if unset, `deploy.sh` prints a warning and Raindrop stays disabled).
+- **Secrets required for deploy** (`deploy.sh`, surfaced to the pod via the Helm `*-secret` Secret and consumed as env vars in `app-deployment.yaml`):
+  - `MYFEEDER_PG_PASSWORD` and `MYFEEDER_ANTHROPIC_API_KEY` are **required** — `deploy.sh` runs under `set -euo pipefail` and passes them straight through to `--set secrets.postgresPassword=...`/`--set secrets.anthropicApiKey=...` with no fallback, so an unset value aborts the script.
+  - `MYFEEDER_RAINDROP_API_TOKEN` is optional — see [Raindrop Integration](../integrations/raindrop.md); if unset, `deploy.sh` prints a warning, defaults it to an empty string, and Raindrop stays disabled in that deployment.
+  - `MYFEEDER_TYPESAFE_API_KEY` (the Jev API key) is also optional — if unset, `deploy.sh` prints a warning and defaults it to an empty string. Unlike the two required secrets, a blank/unset key is never fatal anywhere in the stack: `config/TypeSafeConfig` only logs `TypeSafe Jev not configured; interest scoring disabled` and the app starts normally with interest scoring disabled (see [Interest Scoring Workflow](../workflows/interest-scoring.md)).
+
+## Interest-scoring operational levers
+
+The interest-scoring subsystem (Jev-backed article scoring, blend/engagement weighting, badge tiers) has three distinct operational levers: calibration (how the scoring math is tuned), throttling (how load on the upstream Jev API is controlled), and emergency stop (how scoring is disabled outright). All three are deploy-time or config-time levers, not runtime API toggles.
+
+### Calibration: application.yaml only, never Helm/env
+
+The calibrated blend and tier constants — engagement `open-weight`/`save-weight`/`cap`, the gap-discovery `near-miss` threshold, and the badge `tiers.high`/`tiers.neutral` thresholds (plus `profile-points`/`learn-rate`/`learned-cap`) under `myfeeder.interest.blend.*` and `myfeeder.interest.suggestions.*` in `src/main/resources/application.yaml` — are changed **only** by editing `application.yaml` (and `src/test/resources/application-dev.yaml` when a calibrated value differs from the test yaml's fixed fixtures), using the `interest-calibration` skill (`.claude/skills/interest-calibration/SKILL.md`). This is decision D-14: never set these through Helm `--set` or ad hoc env var overrides, because that would silently diverge the running config from the yaml that `InterestScoreQueriesTest` and friends assume, and from what the next `helm upgrade` would otherwise converge to.
+
+The skill drives `scripts/interest-calibration-replay.sh`, a read-only psql replay of the verbatim `InterestScoreQueries` blend (needs `MYFEEDER_PG_PASSWORD` and LAN access), and records the outcome in a phase calibration note. The Phase 12 engagement-constant calibration decision history (data floor D-02, nudge rule D-04, dormant-engagement rule D-09, backfill-simulation rule D-10, and the final outcome) lives in `.planning/milestones/v0.3.0-phases/12-calibration-release/12-CALIBRATION.md`: on 2026-10-02 the D-03 fallback kept the engagement defaults (open-weight 0.25, save-weight 0.5, cap 8) because prod data was too thin to clear the D-02 floor (13 of the 30 engaged-SCORED-unvoted articles required, 0 of the 3 non-negative topics with engagement needed), and the constants were marked revisit rather than changed.
+
+### Throttling: sweep pacing for sustained 429s/breaker trips
+
+If the sweep causes sustained 429s or repeated `jev` circuit-breaker trips, the sanctioned fix is to lower `myfeeder.interest.sweep-batch-size` (default 50) and/or lengthen `myfeeder.interest.sweep-delay` (default `PT2M`) in `application.yaml`, then redeploy normally. This reduces how many eligible articles `InterestScoringSweep` enqueues per run and how often it runs, without touching the single-threaded `concurrency: 1` scoring executor or re-introducing a second (SDK-level) retry layer.
+
+For an incident that needs relief before a release can go out, there is an out-of-band emergency lever that bypasses Helm:
+
+```bash
+kubectl -n myfeeder set env deploy/myfeeder MYFEEDER_INTEREST_SWEEPBATCHSIZE=20
+```
+
+This restarts the pod with a lower batch size immediately. **This is a Helm three-way-merge gotcha**: once the equivalent value has been committed to `application.yaml` and deployed, the out-of-band env var must be explicitly removed, or a later `helm upgrade` can leave it in place (Helm's three-way merge only reconciles values it manages, not env vars added directly via `kubectl set env`):
+
+```bash
+kubectl -n myfeeder set env deploy/myfeeder MYFEEDER_INTEREST_SWEEPBATCHSIZE-
+```
+
+### Emergency stop: disable scoring entirely
+
+To stop interest scoring outright (e.g. a key compromise or a runaway cost/incident), unset `MYFEEDER_TYPESAFE_API_KEY` and redeploy:
+
+```bash
+unset MYFEEDER_TYPESAFE_API_KEY
+./deploy.sh $VERSION
+```
+
+Because the key is read through a `Supplier` and a blank key only disables the `TypeSafeClient` bean (logged, never fatal — see above), this is a safe, instant way to fully disable Jev calls (sweep, ingest-time scoring, and the preview endpoint all become unconfigured/503) without touching any other secret or rolling back the app version.
 
 ## OpenWiki maintenance
 
@@ -60,4 +119,4 @@ This repository's `openwiki/` docs are regenerated by a scheduled GitHub Actions
 - **`./gradlew release` pushes via git CLI, not jgit** — axion-release's bundled jgit can't read OpenSSH-format keys, so `build.gradle.kts` clears the default push action and finalizes via a `gitPushRelease` Exec task calling `git push --follow-tags`. Don't replace this with raw axion auth config.
 - **Clipboard API requires HTTPS**: the app is served over plain HTTP on the LAN, so `navigator.clipboard` is unavailable — clipboard actions fall back to `document.execCommand('copy')`.
 
-See [Architecture Overview](../architecture/overview.md) for how the frontend build embeds into the backend jar, and [Raindrop Integration](../integrations/raindrop.md) for how the Raindrop token flows through `deploy.sh` into the Helm secret.
+See [Architecture Overview](../architecture/overview.md) for how the frontend build embeds into the backend jar, [Raindrop Integration](../integrations/raindrop.md) for how the Raindrop token flows through `deploy.sh` into the Helm secret, [Jev Integration](../integrations/jev.md) for the Jev client/resilience design these levers operate on, and [Interest Scoring Workflow](../workflows/interest-scoring.md) for the sweep/eligibility/blend mechanics being tuned or throttled here.

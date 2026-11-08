@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:d0a5031723194ad5be3d4d630b01c602f95f9ca6196fd6465a78377a1161adb3",
+  "claims": [
+    {
+      "id": "claim_7e2c39056f8b46e18a295b1e27aa9496",
+      "statement": "InterestScoringConfig registers a single-threaded (core=max=myfeeder.interest.concurrency), bounded-queue (myfeeder.interest.queue-capacity) ThreadPoolTaskExecutor named 'interestScoringExecutor', with defaultCandidate=false so it never satisfies Boot's @ConditionalOnMissingBean(Executor.class) and replace the default applicationTaskExecutor; consumers inject it via @Qualifier(InterestScoringConfig.EXECUTOR).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/InterestScoringConfig.java",
+          "version": "repo-file-v1:sha256:b1f6d879b7f1819a44b5ba28707b7b06ebddba5d574118f8ee168a8f1ccd9e87"
+        }
+      ]
+    },
+    {
+      "id": "claim_47c313ba15a7482f8c1d0550b022d76f",
+      "statement": "ScoringQueue tracks in-flight article ids in a ConcurrentHashMap set, submits each id at most once to the interestScoringExecutor, and relies on the executor's default abort rejection policy: when the queue is full, execute() throws TaskRejectedException, which ScoringQueue catches to remove the id from in-flight tracking so the periodic sweep can retry it (a discarding policy would leave ids stuck in-flight forever).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ScoringQueue.java",
+          "version": "repo-file-v1:sha256:4b9183c5c46b67f409ce2f7c1233d4b82ac25e8b0bcb777e3dac9e6c05a83393"
+        }
+      ]
+    },
+    {
+      "id": "claim_10eb02203ec247908f255ebf25042657",
+      "statement": "No @Async annotation is used for interest scoring; InterestScoringListener (a @TransactionalEventListener on ArticlesIngestedEvent, AFTER_COMMIT) and the periodic sweep hand article ids to ScoringQueue explicitly, which executes scoring work on the dedicated interestScoringExecutor rather than the polling thread.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/InterestScoringListener.java",
+          "version": "repo-file-v1:sha256:629db8c5fc988892fff592a9d91f3419ccbd1582a39552b1ba0ddb4e0f1651b5"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ScoringQueue.java",
+          "version": "repo-file-v1:sha256:4b9183c5c46b67f409ce2f7c1233d4b82ac25e8b0bcb777e3dac9e6c05a83393"
+        }
+      ]
+    },
+    {
+      "id": "claim_b6e8068cb44c4fe4ad521673f7e13eb6",
+      "statement": "RaindropApiClientImpl and JevApiClientImpl both place @CircuitBreaker and @Retry annotations on their own client methods rather than on the services that call them (RaindropService, ArticleScoringService), following a convention that avoids Spring AOP self-invocation bypassing the proxy.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java#L46-L48",
+          "version": "repo-lines-v1:sha256:66d9ed2f1c390fa9a62ac434a10c68df05e5af0f5a46ecfe48b08136fb8601de:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTY2NjEzNGZkZTk5NWQ4Yzc0YjdiYzM2NjM0YTNmM2YwYjgyYzU5YjY4YTVkNDQ1NjcyM2JjYmNmYWFlNTA2MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGJmOTQxYTY4NTgzZjM0YmU2YTEyODhhMTYyMWZlNWQ4MDRlNzYyODYzNjk4ZDlhNmNhZGY4M2UyZDg5NDBiYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTk5YmRlZmVlYWNhNjM0MGUwMjkwZGM4NmU4ODljODlkNWUxODlhYTViYTQ0YjU4NWIzYjcwNzM0ZjRhNjJkOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDA1OTg1OTAyNTk5NGM0NDFhNjY3YjU2YmJiZjczZTdmMmQ4ZjY0Nzk5NmE4Y2MxYzhhYTcyYTg0NWM3ZTRiOCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java#L30-L33",
+          "version": "repo-lines-v1:sha256:afe485fdae7c349aa3cb1048d5da7df6c3d334d7b115617790b0eb852efe1832:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODQzYzM4MjAyZDEzNTk2NDJmZjE2OTczNWNlNDcxZmQ5MWRlODBlNDM5NTliYWQ5YWIxZjkzNDcxYzM3YTM1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTY5MWFkNTdiMzM5Y2I0Mjc0ZTA5MjkyZWI1YzJmZGNlYzMwYTU0ODY0NjU4MWU0YzMyNWY4ODcxZWNlNTBmNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2MyNTEwNTI3ZjNmMjc3YzUyMWJmNWI3YTQxMWE1YWQ0NWQ3Y2NlMWI4MWVkODdhNzdiY2FlYjI1ZDU2NWU0YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8cba8c70f91c4d01a9b8489fb46bfc14",
+      "statement": "application.yaml fixes resilience4j.circuitbreaker.circuit-breaker-aspect-order=1 and resilience4j.retry.retry-aspect-order=2 project-wide, making the circuit breaker the outer aspect around retry so it records one outcome per logical call rather than per retry attempt; this ordering applies to both the 'raindrop' and 'jev' Resilience4j instances.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/application.yaml#L59-L63",
+          "version": "repo-lines-v1:sha256:5116d403efba283f993ffd6ac0c37a35b27b22b96ca2812b3ecd430a908be41a:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjRiODhhM2NkNWRiYjhiOWJlOWI4ZWMwMzBiODFjMTdmMWM0ZmU3YTZkY2ZiMzkxNTg5NjQxMDM5MGRiOTQ4ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTMwN2M1Mzc3ZWI1ZGI2NzQ4YTgxMWU1MDcxN2UyYTIyMTkxZDZkZmY2NjgxMmUxMDNiNWY4ODhiYzQzNTAwOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzViOTg3NjBhYzgwYTcxNjc3ZDI2MzY0NGNhMWEzMDg2MmJlMTg0MjI0ZDQwZDdiMDUwNjM2MGYyMmJkZTBkMiJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L93-L94",
+          "version": "repo-lines-v1:sha256:2a5ae41dc46c85c41d184d2ea1a2cb93d0a6663706c786ad86b949c72906b73c:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzUxOWFkZmExYWRkNTNhZjQyMTI0ZjkxNjY4YzRhM2Q1YWE4YzNmYjAwZTczZmQ4YTc5YzkwOWQ2YWJhNGQyNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTgwNDk2MDVkMDQ5ZTYyYTdlZDE5YmIwMGQ5ZmQzYTA3N2Q2OWQzZmJkODM5OTUzZjM3YmRiYTE5YWU5M2M2MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzY2NDc0NTA3MzdjOWZlYjI2NzgxMjYxY2Y2NjlkNWEyZjgzNDU0YmRhMjViMTg2OTNlODIxYjBkNTEwM2I1ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODdkYTczYmYzNmRmNGJmYjBiYjU5NTcwMjlmZTUwZTdhOTlhYWFkY2E0MjI0MTlmYTU0NmRkOGQ4MzMyNjYzYyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ed40b8e6f42143fb99c15f17a36bde94",
+      "statement": "JevEventLogging subscribes to the 'jev' named CircuitBreakerRegistry/RetryRegistry event publishers to log state transitions and exhausted retries using fixed text (exception class names only, never messages, response bodies, or API keys), without reconfiguring the aspects.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/JevEventLogging.java",
+          "version": "repo-file-v1:sha256:cf8c43a0fc96ca88024aabcc0a3adb09f51009c8f2247c844866786887118cf5"
+        }
+      ]
+    },
+    {
+      "id": "claim_fe9970829cbe4a86910d6a0a381afddb",
+      "statement": "TypeSafeConfig defines the TypeSafeClient bean itself (bypassing the TypeSafe starter's auto-configuration, which would crash on a blank api-key) so a blank MYFEEDER_TYPESAFE_API_KEY only disables Jev-backed interest scoring, and gives the client a dedicated Reactor Netty transport/timeouts cloned from the shared RestClient.Builder.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/TypeSafeConfig.java",
+          "version": "repo-file-v1:sha256:c5320161214abde982cc75e36aafc93b9c2da7a721cf7f0633f1baf365300c84"
+        }
+      ]
+    },
+    {
+      "id": "claim_1fe21bbcb12142529102ba1079dff12d",
+      "statement": "myfeeder.interest.* configuration (window-days, concurrency, queue-capacity, sweep-batch-size/delay/initial-delay, blend.* including engagement.*, blend.tiers.*, suggestions.near-miss) is bound by MyfeederProperties.Interest and validated at startup via MyfeederProperties implementing Validator, rejecting invalid engagement weight/cap or suggestions.near-miss configuration before the app starts.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java#L100-L139",
+          "version": "repo-lines-v1:sha256:540696822f503ecea71ba8fb978c2271078779b943a56d907047198a19469f90:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmNjU0N2E2M2ZmMWJmNmJiMDQ3MTc0YzViNzI2YzExZTA0NGQ1ZTM4MWMxZmZmZDZiMmQyMWUxNGIwMDRmNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwMzE4Y2VlMzhmZWJhMWM2ZDQ0OTFjNGI5MzRhNzRkZjQ2MjUzY2ZmNzliZjllNmRhNjJjMDliYjUzZTkyMjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java#L17-L41",
+          "version": "repo-lines-v1:sha256:007d3bbac9f08be33f0ec0be78b100a8a2789afc281f66e3bfa7e9e3d4824d0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlYjJiMmE1ZDkzMzA1YzljMjJhZWM4YjFlZDVjMWNjNGM1OTgyMWNmNjgyZmE5OGMxYWI0NDI5YWZjNDNlODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyMjE2MjQ3NmRkYjA3ZDk3MTJhMTgxNjc5Y2JkNzQwOTE3OGMzODBhOGQzOGNiZmVmNzFkZTViOTMxOWIzOTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxMWViYjU5MGFjYWMyMDM5ODBiYTk0NGFiMzIxZmIyZmFlMTEzNjBjMjI5Y2Q0NDg1NmZmZDFiZTg4NzAxN2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgifQ"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L21-L58",
+          "version": "repo-lines-v1:sha256:5d56d35bff745c5ff9ee381cfd297313aec5030d78dd3c91a18d26195e2d3b5a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkYjYxNGFiOGJlOTE0NjIyM2NiZWQ1NjNkMDAwMGQwZGQxNGI1NGEyMGY0ZTRmOGIyOGE0YjY4YzQyYTE2ZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1ZTFiZmQ3ODFjOTZhM2VmM2Y3Yzc2Y2FkYzFjZDJkNWQ5YzgyZTdlZWM5OWFkZDFiNGFmY2FiMmYyNjRmMGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg0MDZhMmIwMmIwNGZmZjUxMTU5ZmFlYjg5ZTQwNWEwZjg4YTZhNDM0M2JkNjZiZDc3YWNhNzVlYzhiNjQ1MDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c9a80c7dc1cd4a2cae5b8033552ca248",
+      "statement": "The Priority list endpoint (GET /api/articles/priority) uses a PriorityPage record distinct from the generic PaginatedResponse, whose nextCursor is a base64url-encoded (score, date, id) tuple representing the exact sort key last served, so pagination compares against the values the client saw rather than the cursor article's live (possibly-changed) score.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L53-L59",
+          "version": "repo-lines-v1:sha256:57cba9905a64cd3955f12b5dba076b02bad0da753d6dcc787fdad5df84cf54b6:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDFiM2FlMWIyZTk5YjY5YmFiYmJiNjI2M2NmYWVmMjM0ZTMxMThlZDdkZmU2OGI3ZmNhMTZlNmZlYjA5YWIyZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGIxMDgwOTM1MjM2NWQwMjBlMzFhNmI2OTRiYTdjYjVlMWIwMGU1MjEyZDIxYzlmZTUxYmQ0MjkyODBlNjljNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDk3Nzk3M2Y4OWY4YWMxNGE5YzllNjM3MTc0OWZiYTAzZmMwMTZmYTIyMWU1NzdkMDY4NTRjYjQwOGU3ZTM5MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjcxYTc4MzRkYTJjMTdmNTk4OGE3NWYwNzM1ZWFhZWU2ZTY0NDY4NDA3ZGNlMjVmOTRhOWQzNDEwNWQ4NDVkZCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/PriorityPage.java",
+          "version": "repo-file-v1:sha256:8c5e632c23ee092a196080afe60dbcdd4dd8a14f82dfeef182b3a15b07520d96"
+        }
+      ]
+    },
+    {
+      "id": "claim_a31f292c77864244829ac82d4072b5d4",
+      "statement": "TierContext is a React context (src/utils/interest.ts) carrying badge-tier thresholds served by /api/interest/status via useInterestTiers; App.tsx's MainLayout provides the live value to the component tree, and components rendered without a provider (e.g. isolated tests) fall back to DEFAULT_TIERS ({high: 70, neutral: 40}).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/App.tsx#L1-L23",
+          "version": "repo-lines-v1:sha256:dfdbffd112589f96e6144543c7e0e95b631d4a3c12391bb7999c02994f43c861:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MGVmYTFlN2Q1ZGI5YjUyMjliNjVkZmZjNzc2YmMzYmQwZjBmOWM0YjQ5YTFmYzBhNmM3YjA4ZGZkNzc0NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2NmRmNjQ4MzFjYWY3MjU1MDI3ZDMwZDBiZjhkZmYwYTg1MGE2MWQ0NGNkMDg3NDhjMDNhODNhYTI0NWRmNWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE5NGYyNTk1NTYzZTU1YjA1ZmJjZjBlMWM0NDc2MjRmNmNlMzkxMjE4MmI2OTU0ZTU0N2E2MjE3NTg0MzVjOWIifQ"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/App.tsx#L113-L116",
+          "version": "repo-lines-v1:sha256:118134855152c7abf5f434d87b2f7e1422caa6a7edb6618a617277175dd53a0e:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzllMWVmM2Y5OGY0MTBjZTllMWZkYmFiYzZlNDNkNWI3NTMzZGVkZGEwYjQxMzkwMmI0YzE4MzRiMmIwOGQ1NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGIyNTNiNzBhM2RkNjY3MTM3NTA1YTJkNWFiYzZlZDYyNDViMDhhMjQ4ODU1ODA5MTViNjAxOWQ2NzM3MzZhNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjhhM2VlYWRhOWZkYmEyNGY2MmYyOTE0ZjJkYmU4ODZkYzZhMDA4NzA5NjdiMDBmYjA3MmY4OWY5MjAzNDY0YyJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/utils/interest.ts#L28-L35",
+          "version": "repo-lines-v1:sha256:22f8756985c341b27c46a1c4b6975b3c5df79df2645218c78fa38d04ed5f143d:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2EzZTg3ODFhZTg3OTk2NTM0NDc3NWQ0NTZiZmZiZDljMTlmNDRmZmQ3Zjc5MWU3MDYyMmU0NWJlYWE2ZDJlNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGRjN2FjOTVjNWRmNmUzODI0NmI0Y2NiMzA2YjRlOTU3ZWUyMjUxN2E4YmNjMDcwYmQxNjYxMDI1MjQ1MDFiYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGRhYWI3YjFkN2I1ZjAxMDcyMzgxYzVkMDE0MjNhODBhYTU5MTUxY2EzNjA3ODYzNDg0MTA0YjY2MDY3MzlhOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e0268e35bb54494aaa9dbdc0b43bf479",
+      "statement": "usePriorityArticles implements the Priority list as a TanStack useInfiniteQuery with staleTime Infinity and refetchOnWindowFocus/refetchOnReconnect disabled, so only an explicit refresh (refreshPriority) re-ranks the list; ordinary reads/votes patch individual rows in place via patchPriorityArticle instead of invalidating the query, preventing silent re-ranking.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/usePriorityArticles.ts#L31-L48",
+          "version": "repo-lines-v1:sha256:6f858b2e4afdee044ce31e2a083151af3612733c713fcbecd7ca6bb32a55bbec:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YmFlZGI5OGE0OWVhNjE2ODBlNzQ5YjUzYmMyOTcwOGZhYzNiNTZkMTBlMzcyMTc5NzE4NGI0Mzg0YTQ2NWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjNjU0YTYwNGYwNjNlMzA4NWQ3NzM3M2M4NDI0YjNjZjkyZGU4MDA4NGE4OWI5YmZmZmJiNjE1NWM1MzZiZTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM4NTE5ZjZiNjY2ZTQ0NGQ5ODQzZWQ0MmNhNGE2MmRiYWM0NDNhYzViMGYwMGJlMzUwNzdiOTgzM2NlODk1NzcifQ"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/hooks/usePriorityArticles.ts#L70-L80",
+          "version": "repo-lines-v1:sha256:003289dd36cfa94dd25f49fa44711f612495b55eb46003eb97d9088e8d8e685c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4ZGFiYjMxZGRiNTFiNDE5NWQ5OWE4MjAzYTcyMGNjOTFmOTZjYmNjODc3NTg4OTIwOTVlZjBlMWVmMjcyMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiNWNlZDU4NDIyMzY3ZGZlMDU0MWQ2NGY5YWE1OWNiM2E5NTMyMzUzNWYzYzdkNjhmYTE4ZmM3Yjk1NDA3MzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkOGM0YTY2NDNkMmM3ZWU5Y2UwZjQyNDY0YjdjNzNhZGI4ZmNmYTg1ZWEyY2QyNTIyYzA5YTY2OGM3OWQxNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxYjllZTdhNGQ4NzU4YjA4ZmFiZjY2Y2Q2ODJjZTg2NTA3YTk4N2RkNzk0NjNhNjFmMjE2ZDQzZjIxNGFkYTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_278f3db6fd284b2a8daee13f17b243da",
+      "statement": "PriorityBanner renders at most one status line (not configured, cold start, scoring paused, or N articles waiting) above the Priority list, sourced from useInterestStatus which polls every 15 seconds only while the server reports configured, not cold-start, and a positive eligibleUnscored count.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/components/PriorityBanner.tsx",
+          "version": "repo-file-v1:sha256:4b667eebb99ec4f0dbac2bb41861d4ce33fc113b1e1390085b3bcaed910065a8"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/hooks/useInterest.ts#L17-L30",
+          "version": "repo-lines-v1:sha256:4a1948ca1ab508fc834ae13125542af6ab49c8989d7588fbc3400f7c235a268a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0MTFjNGEwMDdlYzMzNmY5ZGM4ZTJmZGFiMzAxMjU1ZDYwY2QwYjg2NjZlZTk3YzIyMzZmMDBhNTRjMDM0YzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMzUyNTg5YzM0ZDNjNjA2ODU5MzFiNmVjYzRkNTA5OTFhN2M1NmM4ZmJhMjg5NDExNDY1NzY5MDI3MmNhYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMyNDM1ODgxY2ViODkwMzM3ZTMyYWUzZDY2MDJiZTk0MTAzNmU3NDE2YmMzOWM4MTE3MzNkNGI5YmVhODY0ZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTI5ZTkxZTBmOTljM2U4MjVkZTY5YjQzNWZiNjQ4NGQxYjBhMWRmMmY0NjU2MWFiZjFhMjlmMDQxODhiODgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_571e1240a03042fba51314a6cc049d14",
+      "statement": "InterestsDialog composes TopicRow, ScoreRow, WhyBreakdown, FeedbackBar (with NarrowPicker), and InterestBadge to provide profile/topic editing, per-article score breakdowns, and thumbs-vote feedback in one modal, reachable from Settings, the Priority banner's 'Set up interests' action, or a one-shot create-topic-from-article draft passed from the reading pane.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/App.tsx#L148-L158",
+          "version": "repo-lines-v1:sha256:9f08b7c37f6f1e7a909ed02a6c91e8901499a40642e9ce5fe7bf1cc4dbdb2588:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiMTA2M2M0ZGVhNjhhMzgxNjYxMTBiYWQyZDMzOGI0ZDcyZTAyZDM3YmUwODE1YTc4NDUxZTk5MzMyZDZkZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiYjE0OTc0ZGYzZDhhZDUxZmMxYjQwODYxYjg0NDVhYWU3NzQwNDU2MTkyNmFlODFjODJhYjIzZmQ3NzdlNDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBkNzBhYTdkYzY2MjczMjcxYmM2ODVkMTNlZWM2YmM4NmFhYThhZDk2M2E3MWYxNmIzZmNhMzAxYzA2ZTNiNGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjOTlhNzEyNGJiZTdjMzNiOWFjODYzYzAxNmQzMGExMDlmMDU5NWZiM2EyNjQwNTAwNDNjMDhlY2RiZmM0NzAifQ"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/App.tsx#L78-L82",
+          "version": "repo-lines-v1:sha256:ba46222c1157b850701a69c9be9847faabd55f260404ca99044162b0c88cfd05:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTU1MjQzZTRkMjZjNDMzNDJiMzhiNzY1ZTFkMmJkMWVkNWQzMTdkZjY0NWYyYjIyZTY4ZTk3NDA2NTE4ZDg3NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGMzNGUxODA5YzYzY2I0MmNmMWM4YjgxNWJiYjA0ZmY5MzQ1ODc3Yzc4OTFlYTQ0ZWI3MGU5NWIyMzE2OGZjMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmIxZDY5ZGI4ODJmMmFhZDMxMWVlZTAwMjE3ZDQ3NmI0MzY3NDkzNWE3ZDM2Y2Q2NzBhNjY4ZWM2MGE3MjE2ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjBjZTYyY2I0YTQ5ODk3MGExMGI2MzllNDFiNGUyMmJkMmFkNTIwMzhjZDJlYTE2ODJkOGJlMjFkNmM5ZTZmZCJ9"
+        },
+        {
+          "resource": "repo://src/main/frontend/src/components/InterestsDialog.tsx#L1-L18",
+          "version": "repo-lines-v1:sha256:498a0ab5299bfeaa8016a9675a271fd93b451a51101e85ed76b9f6917c083706:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YzA3MDRlZjFiZDljMjM3MmJmNDk2NDkzMzM1NWE3ZTMxNGRiZGQ4YTdkM2EzOWY2ZDFlNjRiMTE3OGI1MGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1ZDI5ZGI0NTQ2OWZlZDQwZDBiYzhiZTFlZWExZDM4YzM1YTRmMDEwMzkxM2M1ZmZiZDgyY2FhOTE5MmE2ODciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiYjExM2U3OWUzYzRjN2QxYzUxMzc0NWJkZmVmZmExNGFmNDIzMGU1ZmFjZmFiYTlhNGFiNTE4NzUwMmUxMTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6f1908cc6a0a4b55bce169b3b27fdc8c",
+      "statement": "engagementReaction.ts centralizes post-vote/post-engagement cache invalidation (invalidateAfterLearnedChange, afterEngagement): it refreshes learned-topic weights, suggestions, and article lists, and patches (never invalidates/refetches) the Priority row in place so background engagement actions never silently reshuffle the ranked Priority list.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/frontend/src/hooks/engagementReaction.ts#L1-L40",
+          "version": "repo-lines-v1:sha256:17b8a347726647124c3de01ba019e3c563bb38002c967942a2d4cbff737191cf:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkNjNkOWU1NzU2NjEyNDVjYjUzYjk1ZWJkMjNmYzBiMTFmZmFlYTMxNjgxNmYwY2Y2NjUyMDhiNTBhNWI4NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhMmFjZTBmMDkzOTRjNGU0NzVjNjAyZmM1NDdhZjM1OGIxNmFkOTI0OWYyNmEwMWI3OGQ0YjFjMGMyYmZlODgifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-08T14:57:22.664Z"
+  }
+}

@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:d5202421880d7612ca6fbbf03c5f833a417f1dd5309d2b6f20d5e683784c58b2",
+  "claims": [
+    {
+      "id": "claim_a85ce18696254676b6c0e0f52e6bfc0d",
+      "statement": "V5__article_extracted_content.sql adds article.extracted_content (TEXT) as a reader-view cache of extracted page content, which InterestScoreQueries explicitly excludes from its ARTICLE_COLUMNS list-page projection so it never ships in a list payload.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java#L52-L55",
+          "version": "repo-lines-v1:sha256:1ac6e243dec455fdb1e9023b3af7da0eb316b111b96e6f50d2e4951b9a68dc46:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDVhYzFkZTQ1YmZiMjA4NTIwYzhhOGZlNWJiNzU0NzY2YmJmYTZlMjMzNDgxM2YyNjRjYTY2ODQ2NzIxZWMyNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmRlNDE2Mjg3MTcwYzZiMjU1YzE2YjdjMWMzNmUwNzZkYjQ0ZmQwMTIwYjA0ZWVmOThkMDJhNGExZTY4MWZiZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGFjOTIyZTM4ZTQwMmVkNmVlZTk4NGUzNTJkNjE2Yzk2NzZlYjk2ODk1NWQ1YTlhMDFjMjE0ZjM4ZGZhMmM2OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2VkMDFjNzIyMTEyZjZkYzU5ZGU4MGEyOTRlMGYzMzU2MjVmZGEyODgzYjQwYjhjN2VlNTUyY2VjNmU0NzliYiJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V5__article_extracted_content.sql",
+          "version": "repo-file-v1:sha256:40144184eb66db1770bd31199ab5e043f157d4218386b7cc428363058171a6a5"
+        }
+      ]
+    },
+    {
+      "id": "claim_56295ffbe8414f50b84c90257fdbb6e9",
+      "statement": "V6__interest_scoring.sql creates the full interest-scoring schema in one migration: a seeded singleton interest_profile (id=1, CHECK id=1), interest_topic (weight -50..50, default 20), article_score (status SCORED/FAILED/SKIPPED, PK article_id cascading from article), article_topic_score (child of article_score, cascades on its delete), article_feedback (one vote per article, topics_narrowed flag) and article_feedback_topic; no later migration adds to these tables.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/db/migration/V6__interest_scoring.sql",
+          "version": "repo-file-v1:sha256:d30123e21133a3c127d7e4c5b4222e85de21cea87090447fb0f2ceb0ac699adc"
+        }
+      ]
+    },
+    {
+      "id": "claim_aba2298c500f4f94969808b8689c755e",
+      "statement": "V7__engagement.sql adds article_engagement (PRIMARY KEY (article_id, kind), kind in OPEN_ORIGINAL/STAR/BOARD/RAINDROP, article_id cascades from article) and topic_suggestion_dismissal (PRIMARY KEY article_id, reason DISMISSED/TOPIC_CREATED, cascades from article, no reference to interest_topic), with no backfill for either table.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/resources/db/migration/V7__engagement.sql",
+          "version": "repo-file-v1:sha256:23c8aa1ef98430548e9ccc56722b6e4da2b4add3836a939f45d75c8fb452f2e7"
+        }
+      ]
+    },
+    {
+      "id": "claim_cb0324fefb934c10bf93476954e210d0",
+      "statement": "ArticleEngagementStore.record performs an idempotent INSERT ... ON CONFLICT (article_id, kind) DO NOTHING, so each engagement kind keeps its first created_at; recordQuietly wraps record and swallows DataAccessException, logging only the kind, article id and exception class name at WARN so an engagement-write failure never fails the triggering user action; deleteAll removes every engagement row for an article (the 'forget' action) without touching star, board membership or thumbs vote.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java",
+          "version": "repo-file-v1:sha256:fcc55f9ed903ce87f996034f11dddad1606f4b5dfbfc309d3574515f94f6b4f7"
+        }
+      ]
+    },
+    {
+      "id": "claim_60989fddddcf4f34bbd0c1d04e91830c",
+      "statement": "Engagement capture is sticky across state reversal: ArticleService.updateState records a STAR engagement only on an unstarred-to-starred transition and never deletes it on unstar, and BoardService.removeArticle removes a board membership without deleting the article's BOARD engagement row; ArticleService.forgetEngagement is the only path that deletes engagement rows, and it is explicitly not an undo of star/board/vote state.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L52-L93",
+          "version": "repo-lines-v1:sha256:ee4b2118804d34b76551b4db9674420167790d3ff07caec22e152960d5ac60bf:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzOTNjODdkYzU0OGRiNGI3MWY2MDE1MGFmNzFkMWVjMWQzYTdjYTEwMDA3MTBhYTZjN2RiNGJkNzc5ZDBlMDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5YTRjNjYzMTU1YmNmNzM5ZTYzMGM2Y2RmNmUxMDgzNmY1ZWQ2OTVlYWM3OWYyMzI3NTJkNTg0MmNiN2EyZjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkMzZkNmQ0YjRlNjc4MzBkMmU5NmU5YjU5NjgwNjA3MTJjMzk0YTRkZDk2ZjUyNTZlMDcwYTM0NzVkYTlmYmUifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/BoardService.java#L63-L83",
+          "version": "repo-lines-v1:sha256:712cf25edef271128d4a171260a71a64a6fd11b4fb72b12535def46bf2eaa1f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3ZTk3YzM4OGNjMzE5ZGZiODU4ZWYyZTNiNThkODQzZGYzY2Q5NGNlNzJhYzNiMzBjZTBhMTVmYTRjNTU4YTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e2d8e065e0d44fe999864455c3ca8aad",
+      "statement": "Engagement is captured at four call sites: ArticleController.recordOpen -> ArticleService.recordOpen (OPEN_ORIGINAL, 404s on a missing article, non-quiet), ArticleService.updateState (STAR, recordQuietly), BoardService.addArticle (BOARD, recordQuietly, after the add-or-already-present branch), and RaindropService.saveToRaindrop (RAINDROP, recordQuietly).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/ArticleController.java#L103-L110",
+          "version": "repo-lines-v1:sha256:603680ee9be24b68b5002c50aaa67632d2e9d2b07d2aaad47bf16c356a404763:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzljYmJjNjU0NjlkYjFjYTI4NDJlZmQ5N2RmN2VlMmNlNmNjMTU3MTQ4MmQwMWExOGI3OTBhMTBjN2M1MTBmMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDM4YTY5OWI5NGE2NmM4YmM4NDNiNDg3ZWE0MTgzZmM4MWZiNjU3MjZjODgyODU1MWM5NTJmZGEyMzgwNDYyMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWNmZTdmNDJhOTMzMWVmZDM2MzU5YzgyNzg0MjRiZGJlNDRhMDE0NTBmOTQwZGViYWEzMGMzMjgwMjUwZTdlYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGY2ZTBkNDZhYTg5OWYxODc2MTA4ZTMzMWZhOTE4NTIxMWI5MjNlYzRmZjE5YThkNmI4OTIyMDE0Yzc0OTUwZiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java#L52-L52",
+          "version": "repo-lines-v1:sha256:77cb616e7618ffa48c3039a51046e89606433776337123a728c5e5cdf7210a23:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzdjYjYxNmU3NjE4ZmZhNDhjMzAzOWE1MTA0NmU4OTYwNjQzMzc3NjMzNzEyM2E3MjhjNWU1Y2RmNzIxMGEyMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzdjYjYxNmU3NjE4ZmZhNDhjMzAzOWE1MTA0NmU4OTYwNjQzMzc3NjMzNzEyM2E3MjhjNWU1Y2RmNzIxMGEyMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjFhODdjNDk0Nzk1ZmUyNTc0ODY2MjFjNjYwODE5YjE5OTg2MWY3ZTJiNGU4NjNjMjgwYmQ0MzUwNTBhZjQyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmZhNjE4Yzc0ZTUzOGZmYjc2ODdkMjQ4ZDA2N2I3ZmYzYTk1MzYwZDM3ZDdlOTZmMjFhMTllYzY2ZGQ2OWNhMyJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleService.java#L53-L93",
+          "version": "repo-lines-v1:sha256:dabbfe8063a342b0c83b29521d1d690fe27d127399e4f2ed945299b1d2008249:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzOTNjODdkYzU0OGRiNGI3MWY2MDE1MGFmNzFkMWVjMWQzYTdjYTEwMDA3MTBhYTZjN2RiNGJkNzc5ZDBlMDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmYjYxYTJiNDQyYjFjNGUxYmQyMDVhMDc2ZWYyYjBhZmJjMzAwN2NjM2M5NGM3NzQyZmYxNjNjOGJjY2Q4ZTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkMzZkNmQ0YjRlNjc4MzBkMmU5NmU5YjU5NjgwNjA3MTJjMzk0YTRkZDk2ZjUyNTZlMDcwYTM0NzVkYTlmYmUifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/BoardService.java#L63-L83",
+          "version": "repo-lines-v1:sha256:712cf25edef271128d4a171260a71a64a6fd11b4fb72b12535def46bf2eaa1f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3ZTk3YzM4OGNjMzE5ZGZiODU4ZWYyZTNiNThkODQzZGYzY2Q5NGNlNzJhYzNiMzBjZTBhMTVmYTRjNTU4YTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b9fa94cfb0a54cae8fb72751e4ab3ea6",
+      "statement": "TopicSuggestionStore.candidates implements the gap-discovery predicate: engaged articles whose latest engagement created_at is strictly after a caller-supplied cutoff, that have a SCORED article_score row, no stored article_feedback vote, no topic_suggestion_dismissal row, and a best article_topic_score.noul (max across topics regardless of topic weight sign, 0 if none) below a caller-supplied near-miss threshold; it is the only class that reads topic_suggestion_dismissal, and this boundary is guarded by a dedicated migration test.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/TopicSuggestionStore.java#L26-L52",
+          "version": "repo-lines-v1:sha256:821dd7998eb15a2bf6f0c62b6156db4327c28649a80ea8d16477d3f56cd482ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2ZmZhOWUwODIwOTQ3YzVjODNmMTFmYWE4MjFiOWNlYzYyNWRmOWIxMDlmNGY3NmNmODdlM2MyNjFjYmU2OTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1M2Q3NDYwZGVlMGEzZGRjMTQwMjY3NmQ4OTA0ZDk2OGFhZmQ1OWRkNjg2MDk2MzgzOTdlZGJhOGRlOTkwYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ1ODNkMjRjZmEzOTA2Yjk5YjNiZWY1NTY4YzY1NzE2YTc0MjRkZmQ0NzZlYWQwNzJmYjZhMjk5MGMyYjg1ZGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdhNzM1OTRlN2Q0Y2Y4NTZiNDRlMTIwYmM0NmRiNDljNTVkN2Q1NjVhZTI4YjllOThjYTVmZTQzZTllYTlkZWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a83fef7e2f7a40ae899af9931488920a",
+      "statement": "TopicSuggestionService fixes the gap-discovery window at 30 days (WINDOW_DAYS) and caps the listed suggestions at 10 (MAX_SUGGESTIONS), using myfeeder.interest.suggestions.near-miss (default 0.35, validated to 0 < near-miss <= 0.5) as the near-miss threshold passed to TopicSuggestionStore.candidates; results are ranked badge-ascending, then latest engagement descending, then article id descending.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java#L122-L136",
+          "version": "repo-lines-v1:sha256:38e61426607a14f9b85ec565c8661552d66fae73ee1afad4bb05a806a84241b1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNzQ1Zjk2M2ZiZWQ4MTU2OTY1NjBlODM0ZmQ3YTUzYTRjOWY1NTA2M2JkYzEyNDRlMzI4Njc0MDBmOWM3ZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWY4NmQyOGU3ODRmOWZkMzFmYjcyZDE1ZjYwY2JjZWFhZmRkNjY5Y2JkNWI2ZGE3ODg4YTAyMzMyMWViYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/TopicSuggestionService.java",
+          "version": "repo-file-v1:sha256:f59acfeebaab1723278e0b57d5b4f0e7a31335af8099ec8f10830be8ec1f386f"
+        }
+      ]
+    },
+    {
+      "id": "claim_772639471e63494ab694e61dfe184fd8",
+      "statement": "TopicSuggestionService.dismiss and InterestService.createTopic (via TopicSuggestionStore.handle) are the two writers of topic_suggestion_dismissal, recording reasons DISMISSED and TOPIC_CREATED respectively; handle is idempotent (ON CONFLICT (article_id) DO NOTHING, keeping the first reason) and a handled suggestion never becomes unhandled, even if a topic created from it is later deleted, since the table has no reference to interest_topic.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/TopicSuggestionStore.java#L59-L72",
+          "version": "repo-lines-v1:sha256:ec13ea819677c5193cff008146c6e33cb4f175d8ace2a39d0c25ab8351efa954:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkYzJhYjVhMzAxNDkxODY3MGQ0MjdmNjkxY2VjNDNmZTVlM2U2ZDZmMGRkMWNmNzQwZTM1ZThlYjA3OGNiNTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/InterestService.java#L70-L91",
+          "version": "repo-lines-v1:sha256:f14a421521a8cc704dcc07642c370f67b1d3bbd174ce2f37ed6b924071fe7e83:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0NWEwM2JlMWY2YzlmNmZlYWJiM2UzNWNkY2RhNjY4YjFiYzAyNWJjNTIxZWYxMWMwYmZiNDdlNWUxODQ4MTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4MjZlYjk4YWJjOTg4MWY4Y2JkYjAxZTgxYzM3MzUwOWE3N2ZiMjc4MWQ2YTkwM2ZkODJiMmQ3N2MzM2JmNzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg5NmU3ODM5NDBhZTY1YjYzMTkzZTIxNjk4MzI2NWQ3OTRhNjg4NTkxNmU2ZWYyNjQzZmZjNDJiMDA5Zjg0MzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRhNDQ4YTM0ZWRkYTZjODBjNWMyZTMxMDFkODZkMDk1NWNjNjVmZDk5OTVkYmI5Zjg2MTc3MzE4ZmJlNTZmNzIifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/TopicSuggestionService.java#L59-L68",
+          "version": "repo-lines-v1:sha256:b87162b4f5ddf5d13e5af7cc18978c319b38553fb268b1a55547d1c75ecc1325:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIyZTEyMzIzYjI3ZDA0ZTgwYjliZDY4YjlmOTdhOGFhODA5ZDkwYjJhZTY5OTI3MGQyY2RiZGRkYTJlZDI4YzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_202f65a75ba84260a245ebd30c900e46",
+      "statement": "InterestService owns every interest-profile and interest-topic business limit (MAX_PROFILE_CHARS=2000 UTF-16 chars, MAX_TOPICS=25, weight range -50..50, MAX_NAME_CHARS=40, MAX_DESCRIPTION_CHARS=500), enforces them server-side with fixed-text errors that never echo submitted values, bumps interest_profile.version only when profileText changes and interest_topic.version only when the trimmed description changes (never on name/weight-only edits), and deleteTopic relies on V6 foreign-key cascades to remove the topic's scores and feedback picks.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/InterestService.java",
+          "version": "repo-file-v1:sha256:edd40b75a1ff58bb2cf4a9c1d119e771e2ce48bc76767316d7540089c2a7fc77"
+        }
+      ]
+    },
+    {
+      "id": "claim_0f6b82cef80d4f8699619adac9025947",
+      "statement": "InterestService.isColdStart() is the single cold-start predicate (true only when the profile text is blank after trim and there are zero topics), and is called by both the /api/interest/status endpoint (via InterestStatusService) and ArticleScoringService's SCOR-06 scoring gate, neither of which reimplements the check.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleScoringService.java#L45-L47",
+          "version": "repo-lines-v1:sha256:051ed5a9cc252c114c304f6493f38400fb7644d41fc4fcad416bba383f4ccd4d:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTMwMTk5ZjA2NGFjMWIzMTBlMmVjZjNmMThmNzY0ZWJlZGJjMWJmZjE4OTdmYzQ4MTkyZDg2NjVjZjEwNDg0MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGU2MWE1MDc5NzFmY2ZkN2VkOGJlMjIxYjA4OTgyNTJkYmUxMDBhYTdkNDZhOGRlOGE1NmYzNDgxMGRkNzgyZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2VjNWI1MjI4MGY1YjdhOTRlMDc2MjA4ZTM4OTcyZTBmYmZlYTM5YjExMWQwN2NkMTlkMmU5OTI0M2RhMTBmYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWQ0YTI0Y2MwMDYzOTg0MzE2MzFkY2JmMjJlNWQ3M2ZmY2NhZjMwY2E1NjIwNjhlODJmYWNmN2RiNjc5ZjZhNyJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/InterestService.java#L133-L142",
+          "version": "repo-lines-v1:sha256:84f88a9ea065be79f9889f2ffc31d4f905664c1ed04d985bc504f579a1f46b88:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxZTJkZTA3MmY2MmY4YTAwNmUyNzk4NmM1MzU5YWRhZjE4MDgxNTAxNjA4NjZmMmU2MTg2YmMyODUxNDk0YzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3OTgxNDNhYTc4MmFjNDZjZmFhNjk0ZWIzNThkOWVlZDE0Mzc3ZjJlMTdiMzM3NTBjMWM1ZDYyZGE5NzJiNGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkNTk0NGEyNmZlMGE4ZWZiZDA5MTE4MDRjNzVkZGI4NDc1ZWM4NDc4Yjk1MDlkNjA3ODI0NGViYTc5OWQ4OTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlNThiNTU4MzI3NDJlNTBjYmI3MmVmYWEyYTY2ZjU3YzUyNDY5ZjkwMDNkOGViNzU5NDJjOGYwYmJjNWY5NjEifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/InterestStatusService.java",
+          "version": "repo-file-v1:sha256:68e5c32bdfe3200848221bf274692396017573fa7e7df13a5ade54b198113883"
+        }
+      ]
+    },
+    {
+      "id": "claim_cf11c6c49adc473f9fdcd0381f953a88",
+      "statement": "InterestQuestions and ArticleStateBuilder are pure, Spring-free, I/O-free static utility classes shared verbatim by InterestPreviewService (topic preview) and ArticleScoringService (production scorer), so the preview always judges exactly what scoring would send; ArticleStateBuilder caps raw HTML at 50,000 characters before jsoup parsing and truncates extracted summaries to 1,500 characters at a word boundary, and hasJudgeableText gates both callers from sending an article with no title or summary.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleScoringService.java#L59-L65",
+          "version": "repo-lines-v1:sha256:a596682e1f75cc67d2c0ea9b0b6700ee517683edc016d9026db81828568d9caf:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZiMDQ0OTE0Njk3MjJlODM2M2E5NGU0MDQ0NTM4ZTAxM2EyYTIxN2UzNmIxZTU2OGJhNjBhY2I3YjRjOGYyZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTRiMjg4MDgwNDQxYTQ2OGExZjU0YzUxMmMzM2Q3NzE4N2Q1ZThiYWFkOWM0OTY4MzRmMDA1Nzg4Y2Y3ODZhYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTg2OTY3MzE2ZGU4ZDYzZGY5NjNkYjM3MTA0ZjU2OThjNzAyYjVlYTRmNTI4MzQzMzhkZGZlZDUzYTlmNWJmZiJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleStateBuilder.java",
+          "version": "repo-file-v1:sha256:d26d8c285b97be3cbb5e3bb4b95a4149867dc461a7929fcd239fbcb7e36851a6"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/InterestPreviewService.java#L52-L62",
+          "version": "repo-lines-v1:sha256:d62e47d8d4659da50d0d37fc66ab8c40bd8cdba44ccea68e680e4c797d83a214:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5YWIzNWI4MjFhY2NkYWI3NDYwMWUwZTk2MjNmMDdkZDQwNTA3MmRkNjFlMzZjZDUyM2U4ZDZiYWNlZTgxNDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3MGZjNTkyMGEyMWEyYzMxOWIyMTA4YTkzMDUzYmJmY2FiNThkYTRmNDMzYjIzMGE0MDdmNmU1NTM2YjA1NDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzOWI1MDRjZThjY2EyNDRiYTgyZmM5Nzk0NmNiNzZiNWIzYjJlZTY3OTZjODhlMjM5N2U0Yjc1YjQ3MmQ0OGQifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/InterestQuestions.java#L1-L25",
+          "version": "repo-lines-v1:sha256:939270717d63d0d58a2003edac93a35c2674c1b7926580f28ca4a9cf70048fa3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmZmJjNTFiZDJjZWM3NDBkYzQxM2NhYjBiODI2YjU3NmM3MDY2YjczOWQxNzRhNGZkMDk4ZDdiMDcwNGE0NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhMzExOGM0MmI4YzY4ZGU5NTE5YmVjYTA0NTQ5NjhmNjM2YTE5YWE3MjEwOWRiZjQzYjhjOWM4MDJiMzk2OGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI2MGUxYjI0MzVmMTEwNWM2YTU5ZWM3ZjA2ODI0YmEyNzk4ZGE3NDFmMWE0YTQwMmI5MDk5MDU1ZGQ3ZmRmZDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3970c05502a2491d8a803551117ce38f",
+      "statement": "PriorityPage encodes its cursor as base64url(score|epochMicros|id) built from the literal sort tuple served to the client, and PriorityService/InterestScoreQueries.priorityPageAfter compares the next page against that served tuple rather than re-reading the cursor article's live score, so a later score change on the cursor row cannot cause rows to be skipped; this differs from the Long-cursor PaginatedResponse scheme used by every other list endpoint, which is keyed on the cursor row's live numeric id/date because those sort columns are stable.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/PriorityPage.java#L14-L46",
+          "version": "repo-lines-v1:sha256:9acf8f9ae96560e5a95af7f99bf7705446b816930419f4c2d7c6b39d2c6bcc11:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwZGQ1OTdiOGJiMTRhMDI2MzQ4YTg3YTkyMzM2YWJkZTRkN2JmZTc4MTAwZDU1ODIxYWYzOWE4OGU4ZmVmZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkNzU3MTFhMTZlNmIwM2JlMmFlOWQ0NzU3YTQ5ZmQwMjRlZjIxYmZlYzA2OTIwNzlmMzAwYzRiZTYwN2FlMTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkNDRlMjcxZTY2ZDU1NTE2NDliYTdiYWYxZmUxYzYzMTQwZjdmZGVjZDU4ZGJiMWZjYmNhNWUwNDk2OTFjOGEifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java#L187-L206",
+          "version": "repo-lines-v1:sha256:f1d6bc67232fbbcb2f54c405cad1b803c03d88285e1fb00924e09245d784735a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNTY4YmQ5MWI1ZGNiOGEwODEyNDBjZmU1YzhhZjIxY2UyMDc2ZDc1YmVjMjg4YTc2YTljZWUwYTZhM2JlYzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVlNjk0ZWE4YTMyZDkyZjZiNTBmODFmN2QzMTgyMzU1NWZjNGZiNDg1ZGJlNWQ3YWFhNDFhZWZkOTc5MjJmODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1YjA5NWUxNGMzYjkxOTE1NGFmMmZjZDNkNmUwM2U0M2E3Yjk3MzVkNDlmZTA3YjkwMjhmOWRlYzVkNWQxM2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5ea87f0329c2408ba9a256bdc12bd67f",
+      "statement": "PriorityPage.decodeCursor throws a 404 NotFoundException with a fixed, non-echoing message whenever the cursor cannot be parsed, has the wrong shape, parses to a NaN score, or decodes to a date outside 0001-01-01T00:00:00Z..9999-12-31T23:59:59.999999Z (chosen because that range is representable in Postgres timestamptz without silently clamping to -infinity/infinity); 404 rather than 400 is used deliberately so an old client sending a stale numeric cursor and a client sending a malformed opaque cursor both trigger the same 'restart from page 1' handling in PriorityList.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/controller/PriorityPage.java#L50-L86",
+          "version": "repo-lines-v1:sha256:b9f4c3a01be8b67afb69024975c0202bb1b7df8a4ddbc238b6c3f99e9bacce9e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5Y2JiYzY1NDY5ZGIxY2EyODQyZWZkOTdkZjdlZTJjZTZjYzE1NzE0ODJkMDFhMThiNzkwYTEwYzdjNTEwZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBkNDRlMjcxZTY2ZDU1NTE2NDliYTdiYWYxZmUxYzYzMTQwZjdmZGVjZDU4ZGJiMWZjYmNhNWUwNDk2OTFjOGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f8ae8bceb7e74d71bcf5e7dfd16cb414",
+      "statement": "PriorityService.page throws a 404 NotFoundException when a non-null cursor's article id no longer exists, checked explicitly before querying InterestScoreQueries.priorityPageAfter, since that query itself never re-reads the cursor article and so would otherwise silently continue past a deleted cursor.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/PriorityService.java",
+          "version": "repo-file-v1:sha256:3bf57ae2acd838b06d2abc7baefc0d171d91731bff6af9b6716aaf32df1e1f9c"
+        }
+      ]
+    },
+    {
+      "id": "claim_2b0f7c4927ed4def9070ce1ac38ef7c1",
+      "statement": "InterestScoreQueries.LEARNED_CTE computes w_thumbs as the base weight plus a learnRate-scaled, +/-learnedCap-clamped sum of vote*hinge over article_feedback votes on SCORED articles, then applies a sign clamp (a positive-base topic's effective weight floors at 0, a negative-base topic's ceilings at 0, a zero-base topic can move either way) within -50..50; this w_thumbs is the thumbs-only effective weight used nowhere in storage, only computed at query time.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java#L111-L138",
+          "version": "repo-lines-v1:sha256:94c625f1322828d7356e09fc9350721431e913a89faf2db07b6f9327a69a5753:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4NTlkZGFlMjMzODU1NzRmMTRlNGUzZDZlZTc1NWU1Y2U2MTQxMTA0NGE2M2RmYzA4MmJhOGE2MTZlMzA3ZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjNjIzYWI2N2FkYjlmZjk3YTc3M2Y0M2UxZTRhMDhhZjgyZDJlMzE4ZjQxMTFmYjJiYjFhYWNhY2EzZGRhMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1YWI0YWUxMGE2NTA2ZTI0YzllYjY1ZTA1YjVhNDIxNWZjOGMwYTlkMzBjZGM3YTBkNDk1ZjczZmJmMTU3ODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjZThkN2RkNmNmMDdhMWY1YzhiODJiMDhmMjgyYjg4MzU5MDA2MTM4Njk4OGU5N2JhZDczZWIyYzQ5OWY3NmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7f866a30cb7c4638a0635834d9863607",
+      "statement": "Engagement is folded into the blend as a second, independently capped additive term computed only at query time: the engaged CTE takes the MAX configured strength per article across its engagement kinds and drops any article that has a stored thumbs vote (vote always overrides engagement for that article); eng_learned sums strength*hinge per topic over SCORED articles with no age or read-state window; eff caps the learnRate-scaled sum at engagementCap with a zero floor and forces a negative-base topic's engagement contribution to zero in SQL; eff2's column w applies the same sign-clamp as w_thumbs but to base+learned+eng, and that w is the effective weight used in the Priority score and badge.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/InterestScoreQueries.java#L111-L138",
+          "version": "repo-lines-v1:sha256:94c625f1322828d7356e09fc9350721431e913a89faf2db07b6f9327a69a5753:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4NTlkZGFlMjMzODU1NzRmMTRlNGUzZDZlZTc1NWU1Y2U2MTQxMTA0NGE2M2RmYzA4MmJhOGE2MTZlMzA3ZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjNjIzYWI2N2FkYjlmZjk3YTc3M2Y0M2UxZTRhMDhhZjgyZDJlMzE4ZjQxMTFmYjJiYjFhYWNhY2EzZGRhMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1YWI0YWUxMGE2NTA2ZTI0YzllYjY1ZTA1YjVhNDIxNWZjOGMwYTlkMzBjZGM3YTBkNDk1ZjczZmJmMTU3ODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjZThkN2RkNmNmMDdhMWY1YzhiODJiMDhmMjgyYjg4MzU5MDA2MTM4Njk4OGU5N2JhZDczZWIyYzQ5OWY3NmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c2829dd068234f21b725cc4a9ab307d0",
+      "statement": "MyfeederProperties.Interest.Blend.Engagement.isValid enforces at startup that engagementCap=0 disables engagement learning unconditionally, otherwise requires 0 <= openWeight < saveWeight < 1 and 0 < engagementCap < learnedCap, refusing startup with a fixed message that never echoes the configured values.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java#L102-L110",
+          "version": "repo-lines-v1:sha256:3bfa2946692f2d1ab673a8c1cfee98e54c954c19b4d94030f2ba9a74ad653c75:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGM2NDc5Y2MyMzA0NDBmZDQxZTgyMjQyMTg2Nzk2OTg1NTlkMjg5M2JkNjdiNDM4MGFmYWI4MTFiMzhhNTVhYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzY1MDBkMjkxODZlZGZkYTMyZjE1Y2UyMmZlMWI4MmQwYjhhMDQ1MGEyZDhiMGY0Njg2ZjliMmM5ZGZmMGY5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2NlMTEwYTQ2NWZmNjE5ODRlOTQyMzEwYzUwNzk2OWM1YWYyNjdhYWE0MDdkNDI0N2NhMzAzYmRlZTE1M2E2ZCJ9"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/config/MyfeederProperties.java#L15-L19",
+          "version": "repo-lines-v1:sha256:d43fc27fff9e7f0dea213ba3c0db54124ab5c45a7c366cbb0cc8ef276992222f:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTljNTFlODlkNDE1MWJmYTc2MDY5YTcwMzg1NTFhZTgxMmYxNGE5MzlkMDY4NzhjYjhiNDNlOTgzYmM1MjAxNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGY1MzVlMWQ0YmJjNzk1YmU1ZmE2MGFkMTMyMDFhOGMxZjIzMjZkNTk5Yzg1MTY4YWIxYzhiZjhjNzVhNzg3NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2RmZjYyZDZlM2Q2ZTMzOWIxNjdmODUzYjg3MGU1YzZhNTQzNzAxN2JhYTBmODg1NWMzYjhjMTQwMmE0ODQ2NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2VhZjIzY2IzODIyNzRhNjc3OTRlN2Y1YTk4MjI2ZTdkYmIwZWExOGM3MTAzNDM2NzJjYzc1MWE1NjAzYjk3MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7b719c0f048d493b8da94b8872785cd9",
+      "statement": "LearnedLimit.of judges which bound held back a topic's learned adjustment in precedence order LEARNED_CAP (uncapped thumbs points reach learnedCap) > SIGN_CLAMP (base+learned, i.e. thumbs plus engagement combined, would cross zero) > WEIGHT_RANGE (|base+learned| exceeds 50) > ENGAGEMENT_CAP (uncapped engagement points reach engagementCap, via the shared engagementAtCap predicate, only checked when no earlier bound applied) > NONE; engagementAtCap is also reported independently by the learned-topics API regardless of which limit LearnedLimit.of ultimately returns.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleFeedbackService.java#L73-L83",
+          "version": "repo-lines-v1:sha256:144c0dc96034369bed5567a0a1f364286e09c31da43fffde680ff1a25a2279a6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzYTA0NDc1YmRkZjc0YzEwOGU3MGNhYmRiY2MwZGFkOGRmZTNjNTdhYWMyODQwMTg1NTViYmFhZThhNzg3ZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyZWUwMDRiYzVlMzNjNTUzOTFhNjI0NmE3YTUzYTg2ZWQzMjdhZjExM2RlYTYwMmEzNWYxYzhkMzRiODMyMWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlMmI5ZTIxZmRjODZmYzJjMmVlNDQ3MjE4NWQ2NzY0NjdiZGQxY2JmMmUyNGI0ZGM2NDRhYjFhYmIzMzI1NDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyNTVmNGQwZWNhNDg2MDg3ZDhjZjdjYWI2OWU5MGU3MzNkYTlmOTM2MzU0OTEwNjcyYzBjMDNjY2I5Y2QwNTIifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/LearnedLimit.java",
+          "version": "repo-file-v1:sha256:52430401d9bd52088f56a9de65b102f06ba339b90e329eef205fb9384cfd4c72"
+        }
+      ]
+    },
+    {
+      "id": "claim_95bfb96f2a9547009e0f586504f83319",
+      "statement": "ArticleScoringService.score snapshots the profile and topic list/versions before calling the judge model, then after the call compares them via sameRubric (same profile version and same topic id-to-version map); if the rubric changed during the call, the service writes no article_score row and records no failed attempt, leaving the article for the next sweep pass to re-score against the current rubric.",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleScoringService.java#L138-L149",
+          "version": "repo-lines-v1:sha256:d4ed5956cc94ddc2dd497ddc0eee7717a685df6ec2bbdf759af7eee402412dce:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkZmExNWExY2RiNmQ5MTE5ZGRlMjNlNzQzOTZhMWJiMjdiNWY5MGJlZTVkMjc0MjU4MTQ2MzA0MTc4MDcyNTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZmZWIyYzExODlmODI1YTExYzA3ZjY4NGU1NTY0MjBlZTkzNmEzNzJhNWI4OTQ1ODdlMWE1ZjJiZmEzN2I3MjIifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/service/ArticleScoringService.java#L92-L100",
+          "version": "repo-lines-v1:sha256:6030366357f64249e81a0af8b8473239fedd67473a7ab5cfc4b742b9240420db:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzE2YmE4Y2M1YTA0OTRjZjNkMjY4YThkOTkxMjg0NzVkYWFhYzFmNDZmOTA0ODQzMTExMjNjZGZiNTUzMGI4MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjM4N2NmMzYwYmFhMzA1NTk0MTdlZWJjZjkwNjk5MDBlZTg4ZTQ3N2MxMmYzOGY1MTg2YzExMGI0M2I3MTNmMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2Q3MWY5MjgxZmQ3ZTJiNjEyMjVmNGUzZjU3Yzc4N2I2N2E2MmI4ODRmMTM5N2IwODZiZjQ4NTk3MDAwMTA2OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjMzOGZkMjgxZjEwNjQ3MjE4NDNkMzRmMDc4Y2NjMmM0Y2M2OTgzZTVjODJiZDgyYmVmOTkyNjFlZDA2Y2YyMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b55e91f3a24e49a281d9302b77e3d5f0",
+      "statement": "article_score.status SCORED is write-once at the SQL level (its UPDATE branch only fires WHERE article_score.status = 'FAILED'), so a SCORED row can only be overwritten by first deleting it (e.g. a Re-score reset); FAILED increments an attempts counter capped at ArticleScoreStore.MAX_ATTEMPTS=3 retries; SKIPPED is terminal via ON CONFLICT DO NOTHING (first writer wins, no further attempts recorded).",
+      "evidence": [
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleScoreStore.java#L112-L146",
+          "version": "repo-lines-v1:sha256:7f4be27a4c033ecd02123940ea41f18d34a5ce8b708fa123a6cc3f8ee50fa96e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1MjYzMzA5MjNkNGUwYjVlZWYyNTkyMTEzMTJhY2U0ZWIxYjk5MDE3OGIyNjFhODVlOWViZDRhMWFlYjA5NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4OTAwMDY2ZTZhMzI2YjE5ZTE5NGZkNWJjMmVhZTQ4ZTcwMjNmNTY3MWQ4M2M1NzA1YzA1YjRlZWU1OTdlN2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMDVhZDExMmJlYjRkZjJiYzQ1NzZmZDM2OTMyZTJmNTFiNzlkMmIwMDE5NzFjMTIwYjdlOGYwMDQwM2QxMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlMmI5ZTIxZmRjODZmYzJjMmVlNDQ3MjE4NWQ2NzY0NjdiZGQxY2JmMmUyNGI0ZGM2NDRhYjFhYmIzMzI1NDcifQ"
+        },
+        {
+          "resource": "repo://src/main/java/org/bartram/myfeeder/repository/ArticleScoreStore.java#L166-L176",
+          "version": "repo-lines-v1:sha256:c34c9b79781768f60c9771214063807bc5a86f62df2f72df3c352003d7977629:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkZWRkZGVkNWY2ZTZiMDM5NTdlYjQ5ODJiM2NmMDQ0ZTM3NzJmMjRjNTUwODRlNTM2MTVkNTQyOTMyYTQ2YWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkOWIyNTgxMjBhNDFhYmU4MmEwNmVkOGU0OTNiMWY2ZTZjYmJhMjg4MDA1YmQzYTY2YmQwZTFiNmZmYTljYzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5NTBlNjQ5ZjJmYzViYzFmYzVkYjU2YThlOTUwN2ZkYThhOWVlYTFlNzlmMzZkNjdiNTEwZGFlNjZlMDg3NDEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-08T14:57:22.664Z"
+  }
+}

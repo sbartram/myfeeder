@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:58172e0d88d1fde098a8cf5b8e36b525fa450ea992c063fd742b24d6549976ad",
+  "claims": [
+    {
+      "id": "claim_66bbeace04864db9bffe26d5656ea8d8",
+      "statement": "V4StripRaindropApiTokenMigrationTest and V7EngagementMigrationTest both use the same migration-test pattern: insert a legacy/pre-migration-shaped row via JdbcTemplate, manually re-run the migration's own SQL statement against it, then assert the post-migration shape, because Flyway has already applied all migrations by the time a @DataJdbcTest context starts so a fresh database cannot naturally replay an old migration.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/V4StripRaindropApiTokenMigrationTest.java#L17-L41",
+          "version": "repo-lines-v1:sha256:e9a8fc7e71800ce5f54cf1b30c7f438e43cf93ec4edda4b3c707f3a95a16239b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjZjQ2NWFjODNlYjU0ODNmN2FlYmY1NDE1MDlkY2YyOTQ3NjQyOTg4Nzk1MDliOWVkNmVlZGNhNWU1NzY0MDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/V7EngagementMigrationTest.java#L1-L49",
+          "version": "repo-lines-v1:sha256:5c1f90f63ef749145bd1b0e8efd3390d7103c8b31662a78a364366c1c9aa3f60:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzMjllYmVjZGY5ZjA2Y2NhNWY3M2U5YWJmNWYxMjllMWVmODBhMmM3NTgwNGRiZTc0Y2U0ZDU2OTYwNDg1NmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlNzY1ZWFlYTQxODljYjBmYTcyMDYxMWE5NmIwNzg5Zjc1MjMwN2Y5MTkyNDBkOGIwOWU5ZWEwZmM3ZGNkZTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_df33501f5e91443ab173273614525775",
+      "statement": "V7EngagementMigrationTest statically guards (via a regex grep over the migration file and the ranking SQL text) that the Priority ranking SQL never reads the topic_suggestion_dismissal table, keeping dismissals scoped to gating the suggestions feed rather than scoring or ranking.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/V7EngagementMigrationTest.java#L1-L41",
+          "version": "repo-lines-v1:sha256:90ee61ad287c7230814701f7b657ecc4d750dbe6742d51968dbe60f89286f4b5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzMjllYmVjZGY5ZjA2Y2NhNWY3M2U5YWJmNWYxMjllMWVmODBhMmM3NTgwNGRiZTc0Y2U0ZDU2OTYwNDg1NmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczYWJlMWM2ZDgwMDc3ZjdjYzE5OTc2NGM5NTU0MThiNmIzNWI2NDc1ZDk4YTI1MDc2NWMwMGY2OGZlYTE5OWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMzA4MTMyMzM3OGUzMmJjM2JmNzUyNzg1ZmZmZDA3ODVjYmE3NWNjNjFhYTkxODAxYzA3NTQ2NjZjYTZkNzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2ab231bd946d40b79d6c57b9489aa6f9",
+      "statement": "InterestLearnedGridTest proves the thumbs/engagement split of the learned interest-scoring model exactly against real Postgres across a grid of 14 bases x 13 thumbs values x 8 engagement values, using constants chosen so every clamp boundary is reachable without floating-point rounding noise, letting a BigDecimal oracle be compared with compareTo == 0 per cell.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/InterestLearnedGridTest.java#L1-L47",
+          "version": "repo-lines-v1:sha256:68c3488206a3ccd8104ee494bdfc96556e999fa24062c0053e159e587b419031:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzMjllYmVjZGY5ZjA2Y2NhNWY3M2U5YWJmNWYxMjllMWVmODBhMmM3NTgwNGRiZTc0Y2U0ZDU2OTYwNDg1NmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5MjRkYzEyNjBlZTQ2NjgxYzg0YzNmMDk2NWUyMmFmZDNjMzhhOGNhOTY4ZGU4NTgyZmE1ZDUyNDI1YmJjMDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5ZmNhNjE3NDEwNGI3MTZlOTk5YTQ3YzMxOTMxZDYzYTJkM2JhNzI2MGI3NDQ1NGRiNjA4ZWE5NDgxNmQ2NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cac09f399afc47a0a056be5afef1607b",
+      "statement": "InterestScoreQueriesZeroEngagementTest proves that with the engagement cap at zero (or no engagement rows), every raw score, badge, effective weight and Priority order produced by the current ranking SQL equals a frozen copy of the pre-engagement v0.2.1 ranking SQL (src/test/resources/interest/v021-unread-blend.sql) exactly, independently pinning backward compatibility at the no-engagement boundary.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/InterestScoreQueriesZeroEngagementTest.java#L1-L46",
+          "version": "repo-lines-v1:sha256:b88bb0a978d8474f77b68dc0354e813a6125080c69e6eb709ecaaee2941edbf0:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzMjllYmVjZGY5ZjA2Y2NhNWY3M2U5YWJmNWYxMjllMWVmODBhMmM3NTgwNGRiZTc0Y2U0ZDU2OTYwNDg1NmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5ZTFjZTQxODk4ODg1MzRiY2ZiNzQzNDIwOTYzMjRmMDI0NWRkMTc3N2Q1ZDRkOGFlMThiNzU4MTAxYjI5NGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwMTFkMTJkYjQyN2M4ZjM0MTJlMjYzYjBlNWFmN2VmZGUyMzk2MjZlOWEwNDAyMjJmNGExODVmZjZkYTdkZWUifQ"
+        },
+        {
+          "resource": "repo://src/test/resources/interest/v021-unread-blend.sql#L1-L1",
+          "version": "repo-lines-v1:sha256:825833653f4c86e5d79edf4b1394d602a249a896f53e80c3b4708c10cefc9195:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODI1ODMzNjUzZjRjODZlNWQ3OWVkZjRiMTM5NGQ2MDJhMjQ5YTg5NmY1M2U4MGMzYjQ3MDhjMTBjZWZjOTE5NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODI1ODMzNjUzZjRjODZlNWQ3OWVkZjRiMTM5NGQ2MDJhMjQ5YTg5NmY1M2U4MGMzYjQ3MDhjMTBjZWZjOTE5NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e1aca9ac0a2b4952ab89fdd8ba97e230",
+      "statement": "InterestScoreQueriesLatencyTest seeds roughly 30,000 articles (including ~20,000 article_engagement rows over ~13,000 articles) and asserts the median time of key interest-scoring queries with engagement data stays within 10x the no-engagement baseline plus a 250ms fixed budget, as a catastrophic-query-plan regression guard rather than a precise performance assertion.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/repository/InterestScoreQueriesLatencyTest.java#L1-L55",
+          "version": "repo-lines-v1:sha256:391b4bdc40557ff740b097f7ea83889da12f1a2383b8a250610aeb0331aff07a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzMjllYmVjZGY5ZjA2Y2NhNWY3M2U5YWJmNWYxMjllMWVmODBhMmM3NTgwNGRiZTc0Y2U0ZDU2OTYwNDg1NmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwZjA2ZTIzZjVmOTFmYTdlMzczZTFkZTZlOGM0ODZlYzhmZTNlNGFlNDM5NjY4ZTc1OGUwYWY4OGJhZjdhNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI0Mzc4MjZkMDExNjEzZTdjNjQ3Y2I5OGM5ZWUxOGM5YjVjY2JlNWMwNWU3MjY2NDEyZmI3Y2E4YzYyYzA4ODAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e5340aa614dd42279097872b1df3cd06",
+      "statement": "TopicSuggestionApiIntegrationTest asserts in every test's @AfterEach that JevApiClient.judge is never called, proving the topic-suggestions (gap discovery) feature is servable end to end without any Jev dependency, and proves the topic-create-plus-dismissal write pair is atomic by forcing the dismissal insert to throw via a MockitoSpyBean on TopicSuggestionStore and asserting the topic insert rolls back too.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/TopicSuggestionApiIntegrationTest.java#L281-L295",
+          "version": "repo-lines-v1:sha256:51d5d3da98ce11a81f7c09537fe1e89e4929f4ce165341bc2d636309cfe157d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlYmNlYTY2MmI5YWUxNTIxNTg5ODBiN2UyMWQzN2U5MjliM2E5OTFjMTM0YmI3ODEyZGI0YmM3YjA2OGZmM2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5NmY3NTg1OGVmODQzMzRkZWI3ZTNjNjIwYWVkY2U3MWQ4MTI1YTliZDA1MDkxYWIzNDJhMmVkY2E3OWViNDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4ZWFmM2UxZGIyODRmNmE2ZmQ0ZTA2NmFlMmZiNjU0YWU2OGZkZmNmM2U3ZTRkY2E0YzJkZDIxNGE0OWI5ZDAifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/TopicSuggestionApiIntegrationTest.java#L41-L76",
+          "version": "repo-lines-v1:sha256:c23e53416330fa31d65753005a94ef50154536d1974d7af201f3ee365602eb54:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwZGU2YWNkYjk0MWI3YzQ3MjY3YzI2MTkxNDE4OGI4ODBjMmFhM2NiNTQyNjAzMzA2MzVkNzQ5NWU5ZDg3YjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkNDk5ZmRiMzE1OTUxMjdlOTIyOTQwYzFlYTEyNTlkOTI3OTMwNjI0ZDljNzA1NTEwY2M5YmEwZTdkYjQwN2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhMWIzMGFkMzUwMGEzZDJiMjk2ZDhjMmFkMzAyYmYzYTI1ZGIxMDkwMTVkZTI4M2UyZGU1Yzk3YzkxODM5YWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmNTQ3YWVmZTNjOThjM2ViMjVmYjg2MzNiYTJkNmI4MmZkNTk4ZTljMjJiNWE2ZjViY2NkMWQ0NjljMDk2NzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8c3fab738f384a88b29010ac6d406330",
+      "statement": "PriorityApiIntegrationTest's engagedArticleAgreesEverywhereAfterRefresh test verifies that after an engagement event (and again after it is undone), an article's interestScore is consistent across its by-id GET response, its Why-N breakdown display value and summed row points, the feed list badge, and a fresh Priority ranked-walk, with its Priority position following its score.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/PriorityApiIntegrationTest.java#L239-L302",
+          "version": "repo-lines-v1:sha256:2c674bd311ad3bf2dd0c51eb4c1ad72ac9cc63acfd0731799d819e518695f6c9:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMTBhYWJjMDNlYjE5N2RlNjg2YjUzMTBhODczMzM1YmNjOTkxMWE3YjA4Y2I0NWMxMTJjMDA3Njk3MjkxMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3ZjU4MmE0ZTYzNWNhOWY4OTdhYWI3NjVhMWY0MmVhYjZjOGY3ZmFhMWU3M2FlYWVjMzJjMTY1NDVmMTgzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlMmI5ZTIxZmRjODZmYzJjMmVlNDQ3MjE4NWQ2NzY0NjdiZGQxY2JmMmUyNGI0ZGM2NDRhYjFhYmIzMzI1NDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJlZGIyYTU1ZTRkM2Y3MzkxMzM1MTJjZTIxMTBiY2M0NGRmMGZmYWM5ODZiYmZjOGI2ZDI3ZmMzMDBiYWVkMTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e564b4bcf7f24b6d8b487ebc987b249e",
+      "statement": "./gradlew test and ./gradlew bootTestRun both load src/test/resources/application.yaml (which pins Jev to an offline base URL and defines no API key) because it shadows src/main/resources/application.yaml on the test classpath; src/test/resources/application-dev.yaml is a dev-profile overlay that restores main's real Jev base URL, API key env var, and calibrated blend constants, and is only ever activated by TestMyfeederApplication for local bootTestRun/IDE runs, never by the test suite itself.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/DevProfileConfigTest.java#L1-L35",
+          "version": "repo-lines-v1:sha256:9a5dfedf3ba1accf7ef23c93edb387e7f7c1a66d23abe19a918487c5af40dc53:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiNzBiZDBhYTMwNWJlZmEyNzA4YzRkZmFmNDRjZTM3YjU2YzEwMjliYzEyODg0MDQ3ZjMxOTY5NDgzMmFkMTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkZTI1NDQ0MTFiMzdmMmM2YzE5MThjM2ExYzM2ZDBlYmJhOWUxZWExNjY0MGFjYzk2MWQ3YmMzZWRmZGE1OTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI5ODU3NDc0YjFlZTA4ZWUwNjEyMGJhZmUwZjVhY2M1Yzg1YTJjOGQ4YjRlY2UwZDQyYjJkYjcxZTE3ZjhmNjgifQ"
+        },
+        {
+          "resource": "repo://src/test/resources/application-dev.yaml#L1-L28",
+          "version": "repo-lines-v1:sha256:086922e8426cf24f874bcb05a3ad14a8792942a849075ac69c95c76cc3adc28f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliOGE0Y2EyNGFhMzYyN2NiN2JiMWQzMTQ2MzVjYmUwZWYzZGI5ODVjY2UwM2E2NjQ2YjNmNzBkMDJmNDdhMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjN2EzMzg2ODZjMTJlNzZiZjc1NTE3M2RkZjIxNzZiNGYxMGViZGI5MWM5ZGU3ZTdhMzIxN2U2MWExM2QwNGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/test/resources/application.yaml#L1-L17",
+          "version": "repo-lines-v1:sha256:4fdeaafe545596c1cfb80c814f62bfbc949f66ae01dabd73e91b73b83c1dd35d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiM2NkZjRmZDRiNmMxZWNlYWYzNDMxNWRkYjkyZDcxMTFiNTBhNTBjYjc3MTRmYjNiNGQ2NjQxNjBiMjBjNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhYmI5ZWZiZjNlODg4MDY1MWNlYjg3NmY0NzYxMTQ5ZDhjMDZkNDAzODhiY2E3MjIwYmU4ZmZhZWUwODAzOWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyNGU5YTNmZjAxMmRlNmY2MjY0MmNkZTkzMDMyYWVjYTgwOGYyNzEwZTBhOThiMzkzMDgzYjVlMWQ3N2VhNTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ca595b4ee5a64749b370da4d8b344703",
+      "statement": "DevProfileConfigTest enforces the test/dev application.yaml isolation rule by running Spring Boot's real ConfigData pipeline: with the dev profile active every key the overlay restores resolves to main's own value; without it the environment stays offline (no API key, loopback Jev base URL); and no test source file other than TestMyfeederApplication ever activates the dev profile, verified by scanning all test sources for profile-activation tokens.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/DevProfileConfigTest.java#L48-L123",
+          "version": "repo-lines-v1:sha256:fb3ee505e71cb19a3527d07bc9938636abce772c36f3afee54d6443890728e35:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0ZTJlY2MyMzI1ZjRiNTU1MzQ3OWM5YjFlM2I2ZWZiNzAzOTE4ZWFjYTQ3NmY0YjY1YWY1N2E2ZWVkMmYwYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3YjA4OWE2OGMwYzAxZjExY2UyNTg0MjljM2E4ZmUwYTZmMWNkZDkyNGRjY2QyOTliNTRlZjA3NTAxMTJlODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d276d0ef9194d36a14bf03e5e591ec0",
+      "statement": "Backend tests mock Jev in three distinct ways depending on the layer: pure service unit tests stub a Mockito @Mock JevApiClient directly; @SpringBootTest controller/integration slices that must never trigger scoring as a side effect replace the whole JevApiClient bean with @MockitoBean and assert judge() is never invoked; and transport-boundary tests (JevApiClientImplTest, JevResilienceTest) leave JevApiClient real and instead stub the underlying HTTP calls with Spring's MockRestServiceServer to exercise the actual Resilience4j retry/circuit-breaker chain.",
+      "evidence": [
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/controller/TopicSuggestionApiIntegrationTest.java#L41-L76",
+          "version": "repo-lines-v1:sha256:c23e53416330fa31d65753005a94ef50154536d1974d7af201f3ee365602eb54:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwZGU2YWNkYjk0MWI3YzQ3MjY3YzI2MTkxNDE4OGI4ODBjMmFhM2NiNTQyNjAzMzA2MzVkNzQ5NWU5ZDg3YjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkNDk5ZmRiMzE1OTUxMjdlOTIyOTQwYzFlYTEyNTlkOTI3OTMwNjI0ZDljNzA1NTEwY2M5YmEwZTdkYjQwN2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhMWIzMGFkMzUwMGEzZDJiMjk2ZDhjMmFkMzAyYmYzYTI1ZGIxMDkwMTVkZTI4M2UyZGU1Yzk3YzkxODM5YWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmNTQ3YWVmZTNjOThjM2ViMjVmYjg2MzNiYTJkNmI4MmZkNTk4ZTljMjJiNWE2ZjViY2NkMWQ0NjljMDk2NzcifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/integration/JevApiClientImplTest.java#L1-L50",
+          "version": "repo-lines-v1:sha256:a6766f40c8b49daf3515933acd1087631ac1807b5950b1382a7eb1c53e6fde2b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhMWQ4NWQyMTc4ZWE3NmVlYjc2OWZlMzdjNTIyMzBkZTRlMDRhYTUxYmEyN2Y5YzNkYjE3NjE0OTdhMGQxZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyMTc0MjBhNjM1ZGVlMzU0MGRhNTU5YmZkNGMxYmFlYWUxNzhiZWRjOWMyMjVhODc5NmRkODc5YWM4YzRjNmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNTE5ZjA0MGZkNzZhMzFiNTkxZjg5NTkyNDY2MWJhNTUzMjA5NTY0Y2RlNDE1YmNkMWZjZjg5YzI0MzgzZTIifQ"
+        },
+        {
+          "resource": "repo://src/test/java/org/bartram/myfeeder/service/ScoringIsolationTest.java#L1-L65",
+          "version": "repo-lines-v1:sha256:c6bacf433aa83a288ebc7938a803c77618f7d892619f313812c1cccd185e7de1:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmZmJjNTFiZDJjZWM3NDBkYzQxM2NhYjBiODI2YjU3NmM3MDY2YjczOWQxNzRhNGZkMDk4ZDdiMDcwNGE0NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyZGIwMzUxODE3MjFjZjYwYmYzNzEyZjUyNWQzNzRmYzAwMzEzMTgzMGVhN2MzOGRiOTBkNWNhYzAxZjRkM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1YzcyMThhZDBkYzBiYTM5YzMyZmViZjJlMTQ4YzIzZmQ1NDk4OWQyNDEyMDYxN2Y0NDlmMWQxNGNhZjQwNmUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-08T14:57:22.664Z"
+  }
+}

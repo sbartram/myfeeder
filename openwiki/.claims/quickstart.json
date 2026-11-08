@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:fc3ac6e70211619e38d2d6967d271f9783eccfbee471809493da66bba1e7dd20",
+  "claims": [
+    {
+      "id": "claim_3fafb50f11cd45debb4544398a1e657e",
+      "statement": "myfeeder is a self-hosted, single-user feed reader (RSS/Atom/JSON Feed) built on Spring Boot 4.0.8 with Java 25, using Spring Data JDBC (not JPA) and Flyway for PostgreSQL schema migration, with a React 19 + TypeScript SPA frontend embedded into the Spring Boot jar's static resources.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L1-L10",
+          "version": "repo-lines-v1:sha256:866a857c80add023ff25503be4a4d0f0233beee1afc82e9cc6737eaabb14804f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MTIyYmYyYmM2MmQ0OWZlYzRlYTBmMzU1YmIwMDBjYWJlZjJlMzk2ODc3OGI1MGMwNWVjMjNjOTc4YTY5NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkODU0MDBjNGE4YjYwNzg5ZDI4NjJmNjI5OGYxMWZhMjUwMzFkOGI3ZjkwMWZiY2I3MDhjYzk3ODNiMDIyNGYifQ"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L1-L55",
+          "version": "repo-lines-v1:sha256:37727087e95e0bfbee326bbcbfc237705ae283ef19b1b6e829922932caf619dd:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0MDQwMTAzMTViZGJiMGZlYTBmZDZmZjAyMTRkOGJjOTIxY2UyODM2ZDFjYzZiY2I4ODQ5ZjM1NzZjZjVhNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhNTgyOTA3NWY1OTRjNzE1MTEyZGNkMzQwYTMwZDQ3MWM4YmE2NjQ3Y2E1N2Y4ZGRlOTFkMzg2ZjVhMzJiODAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjYWZlMjgzYzk5OTBjMDg0NDlmZTlhZDQ2YzE1YmIxYzBhZmUyMGU0MDZiZDZiYTU3YWZlMTQ4NjdiNGRiNjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bdc91c71f881400abed978ffd9c1138a",
+      "statement": "The repository added a Jev (TypeSafe) interest-scoring/ranking subsystem via the org.springaicommunity:spring-ai-starter-typesafe dependency (explicit version, not managed by the Spring AI BOM), with an app-owned TypeSafeClient bean, and introduced a dedicated Priority view and Interests dialog in the frontend.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L1-L10",
+          "version": "repo-lines-v1:sha256:866a857c80add023ff25503be4a4d0f0233beee1afc82e9cc6737eaabb14804f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MTIyYmYyYmM2MmQ0OWZlYzRlYTBmMzU1YmIwMDBjYWJlZjJlMzk2ODc3OGI1MGMwNWVjMjNjOTc4YTY5NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkODU0MDBjNGE4YjYwNzg5ZDI4NjJmNjI5OGYxMWZhMjUwMzFkOGI3ZjkwMWZiY2I3MDhjYzk3ODNiMDIyNGYifQ"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L28-L47",
+          "version": "repo-lines-v1:sha256:4700a1cf10b7963f226f4893d2e9e45d2517fcbe130bd70c9c0231e827026830:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxYjYyMmRhZjQzM2FkN2E2NTgwMmZjMjhkZWRkNjQ1OWM5MjFmMzY5NzVjNGQxNzA3ZjM2NTg3MjQ2YzYyMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViNmU3YTMwMWE5YmM4ZjNlMWE0ZDY0YzcwMDZmNTRhNDY1NmJhYTgxMGEwMjhkNTQ2ZjRkMjJkOGVhMzcwZDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjZGVlOGRjNjY4MzAzMzU5Y2JhZjZiMjBkYWVhM2Y0MGQ5ZjFmMzU5NGY1Yzg0MWY4MWM4M2M0NDRlMDg4YjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0ODJmNGIyNTBjMWUyNTBkOWFkZDYxNmYzZThlMzA4OTQ2MTJkNzQ4ODY4NGI4MDgwZjNiYTQ0N2JhN2Q3NDMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3ad0991ce2814ec9b27ef3c0be3bea43",
+      "statement": "Flyway migrations V6 and V7 introduced the interest-scoring and engagement-capture/gap-discovery schema (interest_profile, interest_topic, article_score, article_topic_score, article_feedback(+topic), article_engagement, topic_suggestion_dismissal) on top of the original V1-V5 feed-reader schema.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L1-L10",
+          "version": "repo-lines-v1:sha256:866a857c80add023ff25503be4a4d0f0233beee1afc82e9cc6737eaabb14804f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MTIyYmYyYmM2MmQ0OWZlYzRlYTBmMzU1YmIwMDBjYWJlZjJlMzk2ODc3OGI1MGMwNWVjMjNjOTc4YTY5NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkODU0MDBjNGE4YjYwNzg5ZDI4NjJmNjI5OGYxMWZhMjUwMzFkOGI3ZjkwMWZiY2I3MDhjYzk3ODNiMDIyNGYifQ"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V6__interest_scoring.sql",
+          "version": "repo-file-v1:sha256:d30123e21133a3c127d7e4c5b4222e85de21cea87090447fb0f2ceb0ac699adc"
+        },
+        {
+          "resource": "repo://src/main/resources/db/migration/V7__engagement.sql",
+          "version": "repo-file-v1:sha256:23c8aa1ef98430548e9ccc56722b6e4da2b4add3836a939f45d75c8fb452f2e7"
+        }
+      ]
+    },
+    {
+      "id": "claim_3b4fd4fe59024c46bd052dc4807054cc",
+      "statement": "The product evolved through a deliberate v0.2.x-v0.3.x feature arc: interest scoring/ranking (V6), then engagement capture (V7, v0.3.0), then gap discovery/topic suggestions (v0.3.0 Phase 11), then calibration of blend/engagement constants (v0.3.1 Phase 12) using the interest-calibration skill and a read-only replay script.",
+      "evidence": [
+        {
+          "resource": "repo://.claude/skills/interest-calibration/SKILL.md",
+          "version": "repo-file-v1:sha256:495983d76b055693ecc2cf358aaab739c92e21985cef7ef68158231a5a276e5b"
+        },
+        {
+          "resource": "repo://CLAUDE.md",
+          "version": "repo-file-v1:sha256:765819d826f63995bd33f1d4414e8e0d10c50100820e0ddeb435f6d9f7c6ea38"
+        }
+      ]
+    },
+    {
+      "id": "claim_ffa1ee93c56040bf8b10c96433eb774b",
+      "statement": "CLAUDE.md is the fastest-changing, most detailed engineering reference in the repo (build commands, architecture notes, interest-ranking/Jev/engagement behavior details, and gotchas); the wiki is meant to synthesize and cross-link it rather than duplicate it.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L1-L18",
+          "version": "repo-lines-v1:sha256:a5788d3c214ea426f2c9ebc74f38d1df2dbf2afa15ac5f1e5da2768479b1042f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmMTgwZjljMTI2OTAzYmNjMzMxYWE5NTQ1NmU0OTQ0NGE3ZDRkMDExZThhMmE4M2Y1ZGM4NzAyMzkxODEyZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzMjYwNzgxODFkZjdkNDk1YjMzN2Q3Mjc3NzZkNjlkYzQwOGQ1YmZiNTVkMmFjOTEyMTkyM2ExZGU5YWFjYzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhZGU5YTMyMWZkMDMzYzY3MjFlNzI0MmJkY2JkYzI1MmNmODA4YmQyZjVkNWJhMmRiMDZmYzYzOTQ2MTkxZWUifQ"
+        },
+        {
+          "resource": "repo://CLAUDE.md",
+          "version": "repo-file-v1:sha256:765819d826f63995bd33f1d4414e8e0d10c50100820e0ddeb435f6d9f7c6ea38"
+        }
+      ]
+    },
+    {
+      "id": "claim_682e972fe27c46c69bd050a530051d5a",
+      "statement": ".claude/skills/release/SKILL.md documents the full release pipeline (axion tag, clean bootJar, docker build/push, deploy.sh, rollout check) and .claude/skills/interest-calibration/SKILL.md documents how to tune interest-ranking constants (tier thresholds, profile points, engagement open/save weight and cap) via a read-only calibration replay script before committing values to application.yaml.",
+      "evidence": [
+        {
+          "resource": "repo://.claude/skills/interest-calibration/SKILL.md#L1-L15",
+          "version": "repo-lines-v1:sha256:1a420dac8c0eba0be068d7204776b4ef05cae54399cd5d384f985c6b2b3c8d8d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MmQ3MTExMDNkNTBhNDM3ODMwYzZmYmNkMDRmYjRiYWI0OWEwZjgyZjZkMjZkMWM3OTFjNmU4NDg4ZGQwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2YzA3YmFkZmI2MTYzNzA2OGM4ZDJmMmNhNDg5M2Q5YzQzNGIwNmE2NTlhZmVhYTU2NWM0NmJkYTM0ZWE2ZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRjYzRjM2Q3M2NhODY5YWEwYjU2MmIwMDI4M2I5YjE4YzFmNjY0MDQ2NzA1OWNmYWNmMGEzMzdlMWMxOGViYmYifQ"
+        },
+        {
+          "resource": "repo://.claude/skills/release/SKILL.md#L1-L21",
+          "version": "repo-lines-v1:sha256:d07fcb8a65dbb3e2565e9db4661287636d2b4ecd5a80375894a103dadf359767:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MmQ3MTExMDNkNTBhNDM3ODMwYzZmYmNkMDRmYjRiYWI0OWEwZjgyZjZkMjZkMWM3OTFjNmU4NDg4ZGQwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3MmRlYmM3OWRiY2NkMzg5NDU3YjkxOGQ3YjQwZjg5N2Q3YTEyMTY1YTgxMWJhYmFlNDc2YmRhY2E1NjM2Y2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f01408da8eff48cbbb5891abf3cc44d9",
+      "statement": "The Spring AI Anthropic chat starter is present as a build dependency but is not wired to any controller or service, unlike the fully integrated Jev/TypeSafe starter which backs interest scoring.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L1-L10",
+          "version": "repo-lines-v1:sha256:866a857c80add023ff25503be4a4d0f0233beee1afc82e9cc6737eaabb14804f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MTIyYmYyYmM2MmQ0OWZlYzRlYTBmMzU1YmIwMDBjYWJlZjJlMzk2ODc3OGI1MGMwNWVjMjNjOTc4YTY5NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkODU0MDBjNGE4YjYwNzg5ZDI4NjJmNjI5OGYxMWZhMjUwMzFkOGI3ZjkwMWZiY2I3MDhjYzk3ODNiMDIyNGYifQ"
+        },
+        {
+          "resource": "repo://build.gradle.kts#L37-L47",
+          "version": "repo-lines-v1:sha256:3acc9ed5e50251721a3df59cd68c23dbe36b27513f0ff9bec91a039408b4283b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkYmZmMWY4YTQzZTU0YWM0MGQ1NjExNTdkODQyOWQ4ZTBmMzJjMzQzNGExM2YzZWFjZmYwY2RlYTBmZTIzZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViNmU3YTMwMWE5YmM4ZjNlMWE0ZDY0YzcwMDZmNTRhNDY1NmJhYTgxMGEwMjhkNTQ2ZjRkMjJkOGVhMzcwZDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4ZmIxZWFmNzg2YmVjNzVjYzljYzc4ZTBjMzJhZDg2NDczNzJjMjVmNDFhZjI5ZGE1MTlkZTY1OTU3YmYyMTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0ODJmNGIyNTBjMWUyNTBkOWFkZDYxNmYzZThlMzA4OTQ2MTJkNzQ4ODY4NGI4MDgwZjNiYTQ0N2JhN2Q3NDMifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-08T14:57:22.664Z"
+  }
+}

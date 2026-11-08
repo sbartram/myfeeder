@@ -1,9 +1,24 @@
 ---
 type: Integration
 title: Raindrop.io Integration
-description: Documents how myfeeder exports saved articles to Raindrop.io — the RaindropService/RaindropApiClient split, the Resilience4j circuit breaker and retry configuration, the RaindropNotConfiguredException fallback-rethrow pattern, and how the API token is configured without being stored in the database.
+description: Documents how myfeeder exports saved articles to Raindrop.io — the RaindropService/RaindropApiClient split, the Resilience4j circuit breaker and retry configuration, the RaindropNotConfiguredException fallback-rethrow pattern, post-call engagement recording, and how the API token is configured without being stored in the database.
 resource: src/main/java/org/bartram/myfeeder/integration
-tags: [integration, raindrop, resilience4j, external-api]
+tags: [integration, raindrop, resilience4j, external-api, engagement-capture]
+verified:
+  - by: openwiki/0.9.0
+    at: 2026-11-08T14:57:22.664Z
+sources:
+  - id: openwiki-source-bfd9e6b64553ce72d0555fce
+    resource: repo://src/main/java/org/bartram/myfeeder/integration/JevApiClientImpl.java
+  - id: openwiki-source-cef6cf34b0ee266bb62a613f
+    resource: repo://src/main/java/org/bartram/myfeeder/integration/RaindropApiClientImpl.java
+  - id: openwiki-source-51d12dd31a877d9b5909945d
+    resource: repo://src/main/java/org/bartram/myfeeder/integration/RaindropNotConfiguredException.java
+  - id: openwiki-source-8d62a855cfcce2a529d94a39
+    resource: repo://src/main/java/org/bartram/myfeeder/integration/RaindropService.java
+  - id: openwiki-source-8c225e8495f0b2dcc9d139b4
+    resource: repo://src/main/java/org/bartram/myfeeder/repository/ArticleEngagementStore.java
+generated: { by: "openwiki/0.9.0", at: "2026-11-08T14:57:22.664Z" }
 ---
 
 # Raindrop.io Integration
@@ -17,7 +32,7 @@ This split (commit `2e33949`, "move Raindrop resilience annotations to the API c
 - **`RaindropService`** (in `integration/`, but the business-rule layer) looks up the `IntegrationConfig` row for `IntegrationType.RAINDROP`, checks `enabled`, deserializes `RaindropConfig` (which holds the selected `collectionId`), and throws `IllegalStateException` (not configured/disabled, →409) or `IllegalArgumentException` (no collection picked, →400) *before* ever calling the API client. It also exposes `listCollections()`, cached via `@Cacheable("raindrop-collections")` (backed by Redis), so the Settings UI's collection picker doesn't hit Raindrop's API on every render.
 - **`RaindropApiClientImpl`** (implements `RaindropApiClient`) owns the actual `RestClient` calls (`listCollections`, `createBookmark`) and carries the `@CircuitBreaker(name = "raindrop")` + `@Retry(name = "raindrop")` annotations. This is a **separate Spring bean** deliberately: Resilience4j's annotations are AOP-proxy-based, so if `RaindropService` called an annotated method on *itself* (self-invocation), the proxy — and the resilience behavior — would be bypassed. Putting the annotated methods on a distinct bean that `RaindropService` calls through avoids that trap.
 
-**Convention for future external integrations:** follow this same pattern — `@CircuitBreaker`/`@Retry` on the API-client bean, not the service, with business-rule checks happening in the service before the client call.
+**Convention for future external integrations:** follow this same pattern — `@CircuitBreaker`/`@Retry` on the API-client bean, not the service, with business-rule checks happening in the service before the client call. This page is the template for "external integration with business validation outside the breaker": `RaindropApiClientImpl` carries the resilience annotations plus a `fallbackMethod` that explicitly rethrows a known typed exception (see below). The [Jev (TypeSafe) Scoring Integration](jev.md) follows the same aspect-ordering convention — business/configuration checks before the annotated call, the annotated call on its own client bean — but deliberately omits a `fallbackMethod` entirely: typed TypeSafe exceptions and `CallNotPermittedException` propagate out of `judge()` completely unchanged, by design (D-08), rather than being inspected and selectively rethrown the way Raindrop's fallback methods do.
 
 ## The fallback rethrow trap (and why it matters)
 
@@ -45,6 +60,10 @@ resilience4j:
         ignore-exceptions:
           - org.bartram.myfeeder.integration.RaindropNotConfiguredException
 ```
+
+## Engagement capture after a successful bookmark
+
+`RaindropService.saveToRaindrop(Article)` calls `raindropApiClient.createBookmark(...)` and, immediately after that call returns normally, calls `ArticleEngagementStore.recordQuietly(article.getId(), EngagementKind.RAINDROP)` before logging success. This call sits in `RaindropService`, outside the `@CircuitBreaker`/`@Retry`-annotated client bean entirely — it only runs on the success path, since `createBookmark` either returns normally or throws (the fallback methods described below always rethrow rather than returning a value), so a blocked, unconfigured, or failed save never records an engagement row. The store write is itself best-effort and never throws back into the save path. For the store's idempotency contract, failure-isolation behavior, and how `RAINDROP` engagement later feeds the learned interest-scoring weight, see the [Engagement Capture workflow](../workflows/engagement-capture.md) — this page only documents *where* in the Raindrop flow that call happens, not the store's internals.
 
 ## Configuration and secret handling
 

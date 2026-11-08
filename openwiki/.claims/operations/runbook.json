@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:eb3d7ecbeb635051eacefe596051da963e46d79b7885f39c71a1884d41e78a79",
+  "claims": [
+    {
+      "id": "claim_e726a0b3fd2b4069b071cf58cd6bcbe6",
+      "statement": "deploy.sh requires MYFEEDER_PG_PASSWORD and MYFEEDER_ANTHROPIC_API_KEY (passed to Helm as secrets.postgresPassword/secrets.anthropicApiKey with no fallback under set -euo pipefail), while MYFEEDER_RAINDROP_API_TOKEN and MYFEEDER_TYPESAFE_API_KEY are optional and default to an empty string with a printed warning when unset.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh#L1-L32",
+          "version": "repo-lines-v1:sha256:9bbe60767396efc241f35198f9d57261d2bb5e0ec513ea8f8aa13e3f21bc148e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzY2QwNTdiYjIyM2FmMmYzMjQxNmZhYzMwYWFkNGRhZTA2MmVmNjIxNzJkYTdkNmU4ZGFjZDdkYzVmOGVjZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b36fa498cff14ff28a69353bb9fcf6f9",
+      "statement": "A blank or unset MYFEEDER_TYPESAFE_API_KEY never crashes startup: config/TypeSafeConfig's TypeSafeClient bean backs off and the app only logs that TypeSafe Jev is not configured and interest scoring is disabled, unlike the required MYFEEDER_PG_PASSWORD/MYFEEDER_ANTHROPIC_API_KEY secrets.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L121-L124",
+          "version": "repo-lines-v1:sha256:ee8da5a4ef7828911b43e1b1d938abdb4dc71e7e6ab654cf7593bda3608ab429:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTg1Yjk4YTZhODEzYmQzMTRjNTYzYmU5YWNhMWFjMjRmYjIzZGE1MDc2MjRkZWMyM2JmODQ2MGVlYTk3MmRjZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2ZiODkyYjc5NTVmOTBlOGE2YWJmOGVkNGJmYjI4Y2JiMDgzZGM4ODczOGRlY2E1MzQwYzc1ZTg3YTBmMjhmYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDk5ZjRkYjE0YzU3NDkzMTgwZTVmZDY3YjRlZjM3M2MwYjZkZWZhNzc2Yjc2MzFlY2FhZWI5OTI1NDA5MDBjYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjNhYzNjZDBjNDhjZGQ3OTgwYzg1ZWNkN2FlZmU2MzEwZTg0YzBmNjRkNjI1MTdkMzhmODEwNjJhOTA5NTlhOSJ9"
+        },
+        {
+          "resource": "repo://deploy.sh#L18-L22",
+          "version": "repo-lines-v1:sha256:7d2e1ad8a3817b40faef89001addce3e1944f8532ac5bfae538d2e9b01283114:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzdlN2Y1OTkzMWVjYWM1NDY2NTM4YzE0ODIxODc0MmI2ZWQzMzE3Njc0YmY5OWQ0ZWUxNzZlZTVkNzRiMWE1MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzc2OWQyMzdjZDQyMGI5ZDM4Yjk4MWEwYTRmNjc3MDE5MGE0YTgzZGNhMWZlNTZjNGY1YmExZTJjYmMwZWY3NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODVjMjVlYzRjYmUyZjgyZDE0YTdkNDA4NGJhZGYzYTM5OTM0MzJmYTI4YTI0YjAyZDg4MzgxMWNhNDVkMjE0NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGNmMGY2NTUwOTkyNmZlY2M4ZDYyZjFmNDQxMDI3YTBlYzhmMzBkYzE4ZjhiOTQ1NTBiZmZjZWIzMjcwYmM1OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c9749bffbc7847118a57316405e997d6",
+      "statement": "The Helm chart wires MYFEEDER_RAINDROP_API_TOKEN and MYFEEDER_TYPESAFE_API_KEY into the app Deployment from a Secret populated by deploy.sh's --set secrets.raindropApiToken/--set secrets.typesafeApiKey, alongside the required Postgres and Anthropic secrets.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh#L24-L32",
+          "version": "repo-lines-v1:sha256:b2c07ba01b4213df0bc97a89b5c62a37399adfc647e87a45a3eec62361c7bc95:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWMwNjVhMTcwNWUzNzNjM2UzNGEyMzUzOWFiMThiOWY1ZGRiMzk2MjAyZWM0Y2QzZGFhNzIzOWMzNjA2ZWYzYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDNjZDA1N2JiMjIzYWYyZjMyNDE2ZmFjMzBhYWQ0ZGFlMDYyZWY2MjE3MmRhN2Q2ZThkYWNkN2RjNWY4ZWNmYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWY3YzU3OTQ4YTE0ZmNiOTIzNjljN2IzOTQwN2YzZTMyMWZjNzIzMDQzYzk4Zjc5OWI1NDI5ZTA2ZGI4ZjE5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-deployment.yaml#L30-L54",
+          "version": "repo-lines-v1:sha256:13d982579b20ad459f5480eaad736ee76380b4af8bf9ff9f74a584522870011f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyMWY2NzE3OTBjNWQ1MDc1MGE0ZDNiMDMyOTdmM2RiMjEzMGQwZjk1MTMzNWNjZjcxOGM5YjRjZjQ5ZTYwYWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiYTlkNWJlODVhZGM3YjhjZjM3NzExZjQ5NjI3MmM3OWJjNWMzNGYzMmUyOTdhMzk3MTRmZjBmYzU3YzYxMGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc0MDE1ZDIxYTFhNDg4YzMwZjExMWM3NjVkZTVhNWE2NTU1OTI5MDFkZGMxZmU2MDg3MzBmYTExNGFjMjk0MzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5MjE1MTMzNmU1MjgxY2FhNTEzZDI5ZTQyYjMwMjdhMzZlYzRkOTVmMTk3YjhmZDZmMmJlNGNiZWUzMzJjOTYifQ"
+        },
+        {
+          "resource": "repo://helm/myfeeder/templates/app-secret.yaml#L1-L13",
+          "version": "repo-lines-v1:sha256:47fcf2d9095c890e5d487041afe36f0ecda4f6bd4f7664d2676ca40fed4f48e6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3NmFlMTQyNDI4ZTc1NGI2N2Q3ZDZlM2RmZGJlMWI0NDhmMGJhYzM1NWQ4ZmEyNGVjOTQ3MWUyMWQ5MGI0MzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhNTBmMzYxMDIwYzQ2OGViMTlhMTMyMGIzMjBjNWQ2MThiNmI2ZjI3ZjYxYzRkNTNkMmM2NzcyNjM3NGIzNDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxM2YxYjlmZmNkYTczODExODM3YzQ3YWIyYWE5ZTgxYjY1NTFlN2MwOTRlYTY3MTYyZmQxNjg4MGVjYTgwOTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_89582466182d46959a7959bb7e111988",
+      "statement": "Calibrated interest-scoring blend/tier constants (engagement open-weight/save-weight/cap, suggestions near-miss, tiers.high/tiers.neutral, profile-points/learn-rate/learned-cap) live only in src/main/resources/application.yaml (plus src/test/resources/application-dev.yaml when a calibrated value differs from the test yaml) and must be changed only via the interest-calibration skill, never via Helm --set or ad hoc env overrides (decision D-14).",
+      "evidence": [
+        {
+          "resource": "repo://.claude/skills/interest-calibration/SKILL.md#L1-L8",
+          "version": "repo-lines-v1:sha256:1f4a1b476a41809a5e7fb46f1509c47eb8d54fb035022a9eeb7f147fae3e36eb:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjUyZDcxMTEwM2Q1MGE0Mzc4MzBjNmZiY2QwNGZiNGJhYjQ5YTBmODJmNmQyNmQxYzc5MWM2ZTg0ODhkZDA5MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2IzYTU4NzVkNzA3YjdmNjhiNjRhYjI2OThjYWE0ZDM3NTliMmUzMjBkYzExMjlhZDA0YTIzZjQ2ZTAxMjEzYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzUzYjA1MTQxZjhhNDJmZGE4NzRhNDg0NGM5ZjY0NzE5YzM5YTU3YWRkM2M0N2UzNWJmNjZmNmI4MDgxODJlNCJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L30-L54",
+          "version": "repo-lines-v1:sha256:7e0c62e2e32c82a9844924b9e002df6424f6ada2a9b7e930758889e035c4cb1e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkNTQyNGZmYjA1NWZkMWE3ZmZmODYxODNlZDUyMTUxOWM5ODhjMzQ5MzNkOWJkNWFmZmIwYTA1OTdhNTg3ZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlMjBiMTRlZWU0YjI5NjViNDIzNjU5ZDRkMjA1ZTFkZTRmMTE3ODc0OWZmODk4YWY3MzhmZDQyYTEwMzlkMTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2N2M2YzVmMDkzZDM1NDEzYTRlODQ3YWMxMzFlMzQ3NDIyMjMxYmRiYWQ1YjU5ZmVkOWFkN2M0ZjhjYzdiMzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1MDhmZjNkNDY5YTI1MGNlN2FmMmI1YmQwYzMwZTkwMjhmZjcwZjVlODE4YWFlYjYwNWEwODU1MzZhMDU2ZTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_79556987313e4f548943c77cacd5863f",
+      "statement": "The Phase 12 engagement-constant calibration run (2026-10-02) kept the engagement defaults open-weight 0.25/save-weight 0.5/cap 8 under the D-03 fallback because prod data (13 of 30 required engaged-SCORED-unvoted articles, 0 of 3 required non-negative topics with engagement) did not clear the D-02 data floor, and marked the constants as revisit; this history is recorded in .planning/milestones/v0.3.0-phases/12-calibration-release/12-CALIBRATION.md.",
+      "evidence": [
+        {
+          "resource": "repo://.planning/milestones/v0.3.0-phases/12-calibration-release/12-CALIBRATION.md#L1-L46",
+          "version": "repo-lines-v1:sha256:f54faddbe4da95bc4d2cf5f41cf1b5f870ccf9ba27de25a66f36e847076bdb14:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkYTg5ZDBlZGM0MDVkMWY2NGRkZjRiM2Q5ZGFhMGEyMTdmMDc0NmUzMDcwOTQzNTYwYmI0MDZlMmY5YjBjOGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3MjIxNWIzZDlhNGUxZjBkZmJkZDM4YWNmMTEyMjQ5MmRlNmZhZTZlZjZhNTc5NWVmOTA5NzRiNTNlZTdhNzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmNjcyMTU4YmI4NDYyYjJmOGZmMDFmYzU5YmRhZjI5NjJkMTAzZTFjMzA3ODNiNzZiOTIyZDE4NGZlOTZlYzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3cf04e6b42724da89d4b003b4c0508ff",
+      "statement": "For sustained 429s or jev circuit-breaker trips, the sanctioned fix is lowering myfeeder.interest.sweep-batch-size and/or lengthening myfeeder.interest.sweep-delay in application.yaml; an out-of-band emergency lever `kubectl -n myfeeder set env deploy/myfeeder MYFEEDER_INTEREST_SWEEPBATCHSIZE=20` restarts the pod with a lower batch size immediately, but must be removed with `kubectl -n myfeeder set env deploy/myfeeder MYFEEDER_INTEREST_SWEEPBATCHSIZE-` once the equivalent value is committed to application.yaml and deployed, because a Helm upgrade's three-way merge can otherwise leave the out-of-band env var in place.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L140-L142",
+          "version": "repo-lines-v1:sha256:ea521570b26ef8d07d6f642c2400f7da20f8fa4ec7d69b3368e66985efc6c592:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjU2ODBiYzNjY2Q1ZDE4YTdkY2UxNDI1MzgwYmNlNWU5ZDk2MDdlZWEyYmEzNjNhNWYyZDhkMmY2OWQzOTRhZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmI0ODU2ZTg1YjBlZTNlMmQ2ODAwYzNhZDQ5ZWY5OTE4NjYyZWNiNzA1YjRiMzBmOGZmZTc3YTA3YzllNDBhYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODRmZmM4NTkyMTk1Mzc4ODI2MzU0N2YzZjRiOGQxNTBjM2UzZGIzYzc0ODI5ZGNiNjVjNTQ5MWQwNGJiNzEzMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWIzOWQ4NTFkN2VhYjdlOGVjMTFlMWM1M2NlYTQyNDQyN2VlOWZhNDAxNDdiM2VhODE0ZjFlOTJiOWU1YmI2NiJ9"
+        },
+        {
+          "resource": "repo://src/main/resources/application.yaml#L31-L38",
+          "version": "repo-lines-v1:sha256:ee5d5417b64724ded9acdbb8d68bce08a86f997f6fe7068e1c488fd07e8ba61b:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzM3MTIxY2JmOWQ1OTUzYzU4NjM0NmRhODJmMmEwZDM4ZTAwMjQxMTllNDgwNWExOTliNjE0MDk1MTg4ZmI5MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzJkMmIwY2ZiOGI3YjNjZDliMGIzYjI2ZTRmMmE0NjM5ZTdhMmEyYzA4ZmZiODk1MDhkOWFjODE4ODUyMmI5MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTBiMTEwOGIxZjI0NGExNGZjODY5MTQzN2JhMzc3Nzc3MTRlZDkwZDMyZDcyN2UxY2U5MjU0ZGQ4NTcwOWY2YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTgyYTc3Y2U3ZTgxZGQwZDEzYmQyMjMxY2U2MTZhZjZjZjNiMTk1OGMwN2Q1M2ExY2MyYjYyNTg2ZDUxOTUxYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7dd17e8e7a674d239300042ade895a7f",
+      "statement": "A full emergency stop of interest scoring is performed by unsetting MYFEEDER_TYPESAFE_API_KEY and redeploying with deploy.sh, which disables the TypeSafeClient bean (logged, not fatal) without touching any other secret or rolling back the app version.",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md#L140-L142",
+          "version": "repo-lines-v1:sha256:ea521570b26ef8d07d6f642c2400f7da20f8fa4ec7d69b3368e66985efc6c592:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjU2ODBiYzNjY2Q1ZDE4YTdkY2UxNDI1MzgwYmNlNWU5ZDk2MDdlZWEyYmEzNjNhNWYyZDhkMmY2OWQzOTRhZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmI0ODU2ZTg1YjBlZTNlMmQ2ODAwYzNhZDQ5ZWY5OTE4NjYyZWNiNzA1YjRiMzBmOGZmZTc3YTA3YzllNDBhYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODRmZmM4NTkyMTk1Mzc4ODI2MzU0N2YzZjRiOGQxNTBjM2UzZGIzYzc0ODI5ZGNiNjVjNTQ5MWQwNGJiNzEzMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWIzOWQ4NTFkN2VhYjdlOGVjMTFlMWM1M2NlYTQyNDQyN2VlOWZhNDAxNDdiM2VhODE0ZjFlOTJiOWU1YmI2NiJ9"
+        },
+        {
+          "resource": "repo://deploy.sh#L18-L22",
+          "version": "repo-lines-v1:sha256:7d2e1ad8a3817b40faef89001addce3e1944f8532ac5bfae538d2e9b01283114:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzdlN2Y1OTkzMWVjYWM1NDY2NTM4YzE0ODIxODc0MmI2ZWQzMzE3Njc0YmY5OWQ0ZWUxNzZlZTVkNzRiMWE1MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzc2OWQyMzdjZDQyMGI5ZDM4Yjk4MWEwYTRmNjc3MDE5MGE0YTgzZGNhMWZlNTZjNGY1YmExZTJjYmMwZWY3NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODVjMjVlYzRjYmUyZjgyZDE0YTdkNDA4NGJhZGYzYTM5OTM0MzJmYTI4YTI0YjAyZDg4MzgxMWNhNDVkMjE0NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGNmMGY2NTUwOTkyNmZlY2M4ZDYyZjFmNDQxMDI3YTBlYzhmMzBkYzE4ZjhiOTQ1NTBiZmZjZWIzMjcwYmM1OCJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-08T14:57:22.664Z"
+  }
+}
